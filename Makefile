@@ -1,10 +1,6 @@
-all: init build
-
-init:
-	cd s2client-api && ./cmake_gmake.sh
-
-build:
-	cd s2client-api/build_gmake && make
+all:
+	mkdir -p build
+	cd build && cmake .. && make
 
 run: build
-	s2client-api/build_gmake/bin/our_bot
+	cd build && bin/our_bot
