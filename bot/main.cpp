@@ -2,6 +2,8 @@
 #include "bot_examples.h"
 #include "sc2api/sc2_api.h"
 #include "sc2utils/sc2_manage_process.h"
+#include "UnitNodes.h"
+#include "sc2api/sc2_typeenums.h"
 
 using namespace sc2;
 using namespace BOT;
@@ -13,7 +15,6 @@ int main(int argc, char* argv[]) {
     }
 
     coordinator.SetMultithreaded(true);
-    BOT::Bot bot;
 
     coordinator.SetParticipants({
         CreateParticipant(Race::Terran, &bot), CreateComputer(Race::Terran, Difficulty::VeryEasy),
@@ -23,21 +24,20 @@ int main(int argc, char* argv[]) {
     coordinator.LaunchStarcraft();
     bool do_break = false;
 
+    auto tree = new SequenceNode{
+        new BuildUnit(ABILITY_ID::TRAIN_SCV, UNIT_TYPEID::TERRAN_COMMANDCENTER)
+    };
+
     for (; !do_break;) {
         coordinator.StartGame(kMapBelShirVestigeLE);
 
         while (coordinator.Update() && !do_break) {
+            tree->Tick();
             if (PollKeyPress()) {
                 do_break = true;
             }
         }
     }
 
-    auto tree = new SequenceNode{
-        new SelectorNode{
-
-        },
-        new SelectorNode{},
-    };
     return 0;
 }

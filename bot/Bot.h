@@ -14,3 +14,5 @@ class Bot : public sc2::Agent {
 };
 
 };  // namespace BOT
+
+extern BOT::Bot bot;

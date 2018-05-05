@@ -1,5 +1,9 @@
 #include "Bot.h"
 
-void BOT::Bot::OnGameStart() {}
+using namespace BOT;
 
-void BOT::Bot::OnStep() {}
+void Bot::OnGameStart() {}
+
+void Bot::OnStep() {}
+
+Bot bot = Bot();
