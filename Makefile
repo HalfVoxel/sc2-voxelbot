@@ -8,7 +8,7 @@ all:
 	mkdir -p build
 	cd build && $(BUILD)
 
-run: build
+run: all
 	cd build && bin/our_bot
 
 format:

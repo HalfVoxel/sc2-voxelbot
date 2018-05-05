@@ -31,7 +31,7 @@ namespace BOT {
 
 	};
 
-	class ParralelNode : public ControlFlowNode {
+	class ParallelNode : public ControlFlowNode {
 	public:
 		BOT::Status Tick() override;
 	};
