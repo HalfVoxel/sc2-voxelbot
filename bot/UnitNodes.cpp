@@ -25,6 +25,13 @@ Status BuildUnit::Tick() {
     if (observation->GetFoodUsed() >= observation->GetFoodCap() && abilityType != ABILITY_ID::TRAIN_OVERLORD) {
         return Status::Failure;
     }
+
+    const UnitTypeData& unitTypeData = observation->GetUnitTypeData(false)[unitType];
+
+    if (observation->GetMinerals() < unitTypeData.mineral_cost) {
+        return Status::Failure;
+    }
+
     const Unit* unit = nullptr;
     if (!GetRandomUnit(unit, observation, unitType)) {
         return Status::Failure;
