@@ -19,7 +19,7 @@ namespace BOT {
 	private:
 
 	protected:
-		std::vector<TreeNode*> children;
+		std::vector<std::unique_ptr<TreeNode>> children;
 	};
 
 	class ActionNode : public TreeNode {
