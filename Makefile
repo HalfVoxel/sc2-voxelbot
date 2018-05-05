@@ -12,4 +12,4 @@ run: all
 	cd build && bin/our_bot
 
 format:
-	clang-format -i bot/*.cpp
+	clang-format -i bot/*.cpp bot/*.h
