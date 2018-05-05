@@ -32,5 +32,13 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+
+    auto tree = new SequenceNode {
+        new SelectorNode {
+            
+        },
+        new SelectorNode {
+        },
+    };
     return 0;
 }
