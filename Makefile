@@ -10,3 +10,6 @@ all:
 
 run: build
 	cd build && bin/our_bot
+
+format:
+	clang-format -i bot/*.cpp
