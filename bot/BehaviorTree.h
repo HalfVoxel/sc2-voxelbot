@@ -14,7 +14,7 @@ namespace BOT {
 
 	class ControlFlowNode : public TreeNode {
 	public:
-		void Add(TreeNode* node);
+		void Add(std::unique_ptr<TreeNode> node);
 
 	private:
 
