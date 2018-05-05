@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-
+#include <memory>
 namespace BOT {
 
 enum Status { Running, Success, Failure, Idle, Halted };

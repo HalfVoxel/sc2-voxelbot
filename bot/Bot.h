@@ -7,10 +7,13 @@
 namespace BOT {
 
 class Bot : public sc2::Agent {
-   public:
+public:
     void OnGameStart() override final;
     void OnStep() override final;
     // void OnUnitDestroyed(const sc2::Unit* unit) override;
+
+private:
+    std::unique_ptr<TreeNode> tree;
 };
 
-};  // namespace BOT
+}; // namespace BOT

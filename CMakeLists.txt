@@ -46,7 +46,7 @@ include_directories(SYSTEM "${PROJECT_BINARY_DIR}/s2client-api/generated")
 # Function to generate an example project with extra libraries
 function (example_project_extra project_name source_code extra_libs)
 	# TODO: The .h files don't seem to be necessary (think only .cpp files should be included here anyway)
-    file (GLOB example_project_sources ${source_code} "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc")
+    file (GLOB example_project_sources ${source_code} "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc" "bot/*.h")
     add_executable(${project_name} ${example_project_sources})
 
     # Sets the grouping in IDEs like visual studio (last parameter is the group name)
