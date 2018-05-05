@@ -16,6 +16,12 @@ private:
     std::unique_ptr<TreeNode> tree;
 };
 
+<<<<<<< HEAD
 }; // namespace BOT
+||||||| merged common ancestors
+};  // namespace BOT
+=======
+};  // namespace BOT
 
 extern BOT::Bot bot;
+>>>>>>> 874692a77ccd4bdcf015bedf032d01c4f3473b28

@@ -1,15 +1,17 @@
 #include "Bot.h"
+#include "UnitNodes.h"
 using namespace BOT;
 using namespace std;
 
-void BOT::Bot::OnGameStart() {
+
+Bot bot = Bot();
+
+void Bot::OnGameStart() {
     tree = std::make_unique<SequenceNode>(SequenceNode{
-        new SelectorNode{},
-        new SelectorNode{},
+        new BuildUnit(sc2::ABILITY_ID::TRAIN_SCV, sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER)
     });
 }
 
-void BOT::Bot::OnStep() {
-    Status status = tree->Tick();
-    int i = 1;
+void Bot::OnStep() {
+    tree->Tick();
 }

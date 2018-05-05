@@ -1,0 +1,31 @@
+#include "Bot.h"
+using namespace BOT;
+using namespace std;
+
+<<<<<<< HEAD
+void BOT::Bot::OnGameStart() {
+    tree = std::make_unique<SequenceNode>(SequenceNode{
+        new SelectorNode{},
+        new SelectorNode{},
+    });
+}
+||||||| merged common ancestors
+void BOT::Bot::OnGameStart() {}
+=======
+using namespace BOT;
+>>>>>>> 874692a77ccd4bdcf015bedf032d01c4f3473b28
+
+<<<<<<< HEAD
+void BOT::Bot::OnStep() {
+    Status status = tree->Tick();
+    int i = 1;
+}
+||||||| merged common ancestors
+void BOT::Bot::OnStep() {}
+=======
+void Bot::OnGameStart() {}
+
+void Bot::OnStep() {}
+
+Bot bot = Bot();
+>>>>>>> 874692a77ccd4bdcf015bedf032d01c4f3473b28
