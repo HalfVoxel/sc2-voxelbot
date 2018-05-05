@@ -3,8 +3,11 @@
 #include "bot_examples.h"
 #include "Bot.h"
 
+using namespace sc2;
+using namespace BOT;
+
 int main(int argc, char* argv[]) {
-    sc2::Coordinator coordinator;
+    Coordinator coordinator;
     if (!coordinator.LoadSettings(argc, argv)) {
         return 1;
     }
@@ -13,8 +16,8 @@ int main(int argc, char* argv[]) {
     BOT::Bot bot;
 
     coordinator.SetParticipants({
-        CreateParticipant(sc2::Race::Terran, &bot),
-        CreateComputer(sc2::Race::Terran, sc2::Difficulty::VeryEasy)
+        CreateParticipant(Race::Terran, &bot),
+        CreateComputer(Race::Terran, Difficulty::VeryEasy)
     });
 
     // Start the game.
@@ -22,10 +25,10 @@ int main(int argc, char* argv[]) {
     bool do_break = false;
 
     for (; !do_break;) {
-        coordinator.StartGame(sc2::kMapBelShirVestigeLE);
+        coordinator.StartGame(kMapBelShirVestigeLE);
 
         while (coordinator.Update() && !do_break) {
-            if (sc2::PollKeyPress()) {
+            if (PollKeyPress()) {
                 do_break = true;
             }
         }

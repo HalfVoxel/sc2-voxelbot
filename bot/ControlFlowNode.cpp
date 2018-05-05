@@ -1,6 +1,6 @@
 ﻿#include "BehaviorTree.h"
+using namespace BOT;
 
-
-void BOT::ControlFlowNode::Add(TreeNode* node) {
+void ControlFlowNode::Add(TreeNode* node) {
 	children.push_back(node);
 }

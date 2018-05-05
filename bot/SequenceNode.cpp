@@ -1,12 +1,13 @@
 #include "BehaviorTree.h"
+using namespace BOT;
 
-BOT::Status BOT::SequenceNode::Tick() {
+Status SequenceNode::Tick() {
 	for (const auto& child : children) {
-		BOT::Status status = child->Tick();
-		if (status == BOT::Status::Running || status == BOT::Status::Failure ) {
+		Status status = child->Tick();
+		if (status == Status::Running || status == Status::Failure ) {
 			return status;
 		}
 	}
 
-	return BOT::Status::Success;
+	return Status::Success;
 }

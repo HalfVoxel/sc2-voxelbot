@@ -1,8 +1,9 @@
 #include "BehaviorTree.h"
+using namespace BOT;
 
-BOT::Status BOT::ParralelNode::Tick(){
+Status ParralelNode::Tick(){
 	for (const auto& child : children){
 		child->Tick();
 	}
-	return BOT::Status::Success;
+	return Status::Success;
 }
