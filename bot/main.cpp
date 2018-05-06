@@ -21,11 +21,12 @@ int main(int argc, char* argv[]) {
     });
 
     // Start the game.
+
+    coordinator.SetRealtime(true);
     coordinator.LaunchStarcraft();
     bool do_break = false;
 
   
-
     for (; !do_break;) {
         coordinator.StartGame(kMapBelShirVestigeLE);
 
