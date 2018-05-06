@@ -223,7 +223,7 @@ Status BuildGas::OnTick() {
 
     // Only search within this radius
     float minimumDistance = 15.0f;
-    Tag closestGeyser = 0;
+    Tag closestGeyser = NullTag;
     for (const auto& geyser : geysers) {
         float current_distance = Distance2D(baseLocation, geyser->pos);
         if (current_distance < minimumDistance) {
@@ -235,7 +235,7 @@ Status BuildGas::OnTick() {
     }
 
     // In the case where there are no more available geysers nearby
-    if (closestGeyser == 0) {
+    if (closestGeyser == NullTag) {
         return Failure;
     }
     
