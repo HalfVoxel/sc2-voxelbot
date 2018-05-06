@@ -1,6 +1,6 @@
 #pragma once
-#include <vector>
 #include <memory>
+#include <vector>
 namespace BOT {
 
 const bool Debug = true;
@@ -8,9 +8,10 @@ const bool Debug = true;
 enum Status { Running, Success, Failure, Idle, Halted };
 
 class TreeNode {
-protected:
+   protected:
     virtual BOT::Status OnTick() = 0;
-public:
+
+   public:
     virtual ~TreeNode() = default;
     virtual BOT::Status Tick();
 };
@@ -61,6 +62,7 @@ class SequenceNode : public ControlFlowNode {
 
 class Not : public BOT::ConditionNode {
     std::unique_ptr<TreeNode> child;
+
    public:
     Not(TreeNode* node) : child(node) {}
     BOT::Status OnTick() override;

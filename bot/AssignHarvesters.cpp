@@ -1,6 +1,6 @@
+#include "Predicates.h"
 #include "UnitNodes.h"
 #include "bot.h"
-#include "Predicates.h"
 
 using namespace BOT;
 using namespace std;
@@ -27,25 +27,24 @@ Status AssignHarvesters::ManageWorkers(UNIT_TYPEID worker_type, AbilityID worker
     }
 
     for (const auto& base : bases) {
-        //If we have already mined out or still building here skip the base.
+        // If we have already mined out or still building here skip the base.
         if (base->ideal_harvesters == 0 || base->build_progress != 1) {
             continue;
         }
-        //if base is
+        // if base is
         if (base->assigned_harvesters > base->ideal_harvesters) {
             Units workers = observation->GetUnits(Unit::Alliance::Self, IsUnit(worker_type));
 
             for (const auto& worker : workers) {
                 if (!worker->orders.empty()) {
                     if (worker->orders.front().target_unit_tag == base->tag) {
-                        //This should allow them to be picked up by mineidleworkers()
+                        // This should allow them to be picked up by mineidleworkers()
                         return MineIdleWorkers(worker, worker_gather_command, vespene_building_type);
                     }
                 }
             }
         }
     }
-
 
     Units workers = observation->GetUnits(Unit::Alliance::Self, IsUnit(worker_type));
     for (const auto& geyser : geysers) {
@@ -56,7 +55,7 @@ Status AssignHarvesters::ManageWorkers(UNIT_TYPEID worker_type, AbilityID worker
             for (const auto& worker : workers) {
                 if (!worker->orders.empty()) {
                     if (worker->orders.front().target_unit_tag == geyser->tag) {
-                        //This should allow them to be picked up by mineidleworkers()
+                        // This should allow them to be picked up by mineidleworkers()
                         return MineIdleWorkers(worker, worker_gather_command, vespene_building_type);
                     }
                 }
@@ -64,14 +63,13 @@ Status AssignHarvesters::ManageWorkers(UNIT_TYPEID worker_type, AbilityID worker
         } else if (geyser->assigned_harvesters < geyser->ideal_harvesters) {
             for (const auto& worker : workers) {
                 if (!worker->orders.empty()) {
-                    //This should move a worker that isn't mining gas to gas
-                    const Unit* target = observation->
-                        GetUnit(worker->orders.front().target_unit_tag);
+                    // This should move a worker that isn't mining gas to gas
+                    const Unit* target = observation->GetUnit(worker->orders.front().target_unit_tag);
                     if (target == nullptr) {
                         continue;
                     }
                     if (target->unit_type != vespene_building_type) {
-                        //This should allow them to be picked up by mineidleworkers()
+                        // This should allow them to be picked up by mineidleworkers()
                         return MineIdleWorkers(worker, worker_gather_command, vespene_building_type);
                     }
                 }
@@ -81,10 +79,9 @@ Status AssignHarvesters::ManageWorkers(UNIT_TYPEID worker_type, AbilityID worker
     return Status::Success;
 }
 
-
-
 // Mine the nearest mineral to Town hall.
-// If we don't do this, probes may mine from other patches if they stray too far from the base after building.
+// If we don't do this, probes may mine from other patches if they stray too far from the base after
+// building.
 Status AssignHarvesters::MineIdleWorkers(const Unit* worker, AbilityID worker_gather_command, UnitTypeID vespene_building_type) {
     const ObservationInterface* observation = bot.Observation();
     Units bases = observation->GetUnits(Unit::Alliance::Self, IsTownHall());
@@ -102,9 +99,9 @@ Status AssignHarvesters::MineIdleWorkers(const Unit* worker, AbilityID worker_ga
             return Status::Success;
         }
     }
-    //Search for a base that is missing workers.
+    // Search for a base that is missing workers.
     for (const auto& base : bases) {
-        //If we have already mined out here skip the base.
+        // If we have already mined out here skip the base.
         if (base->ideal_harvesters == 0 || base->build_progress != 1) {
             continue;
         }
@@ -119,13 +116,12 @@ Status AssignHarvesters::MineIdleWorkers(const Unit* worker, AbilityID worker_ga
         return Status::Success;
     }
 
-    //If all workers are spots are filled just go to any base.
+    // If all workers are spots are filled just go to any base.
     const Unit* random_base = GetRandomEntry(bases);
     valid_mineral_patch = FindNearestMineralPatch(random_base->pos);
     bot.Actions()->UnitCommand(worker, worker_gather_command, valid_mineral_patch);
     return Status::Success;
 }
-
 
 const Unit* AssignHarvesters::FindNearestMineralPatch(const Point2D& start) {
     Units units = bot.Observation()->GetUnits(Unit::Alliance::Neutral);
@@ -140,7 +136,7 @@ const Unit* AssignHarvesters::FindNearestMineralPatch(const Point2D& start) {
             }
         }
     }
-    //If we never found one return false;
+    // If we never found one return false;
     if (distance == std::numeric_limits<float>::max()) {
         return target;
     }

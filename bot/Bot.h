@@ -7,8 +7,7 @@
 namespace BOT {
 
 class Bot : public sc2::Agent {
-public:
-
+   public:
     int max_worker_count_ = 75;
     sc2::GameInfo game_info_;
     std::vector<sc2::Point3D> expansions_;
@@ -18,10 +17,10 @@ public:
     void OnStep() override final;
     // void OnUnitDestroyed(const sc2::Unit* unit) override;
 
-private:
+   private:
     std::unique_ptr<TreeNode> tree;
 };
 
-}; // namespace BOT
+};  // namespace BOT
 
 extern BOT::Bot bot;

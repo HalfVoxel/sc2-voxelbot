@@ -1,8 +1,8 @@
 #include "BehaviorTree.h"
 using namespace BOT;
 using namespace std;
-#include <typeinfo>
 #include <iostream>
+#include <typeinfo>
 
 void ControlFlowNode::Add(unique_ptr<TreeNode> node) {
     children.push_back(move(node));
@@ -10,9 +10,9 @@ void ControlFlowNode::Add(unique_ptr<TreeNode> node) {
 
 int depth = 0;
 Status TreeNode::Tick() {
-    //depth++;
+    // depth++;
     auto res = OnTick();
-    //depth--;
+    // depth--;
     return res;
 }
 
@@ -46,12 +46,12 @@ Status SequenceNode::OnTick() {
 
 Status Not::OnTick() {
     Status s = child->Tick();
-    switch(s) {
-    case Failure:
-        return Success;
-    case Success:
-        return Failure;
-    default:
-        throw invalid_argument("child node returned a status which was neither success nor failure");
+    switch (s) {
+        case Failure:
+            return Success;
+        case Success:
+            return Failure;
+        default:
+            throw invalid_argument("child node returned a status which was neither success nor failure");
     }
 }
