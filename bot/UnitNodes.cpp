@@ -1,6 +1,7 @@
 #include "UnitNodes.h"
 #include "bot.h"
 #include "Predicates.h"
+#include "Mappings.h"
 
 using namespace BOT;
 using namespace std;
@@ -22,13 +23,17 @@ bool GetRandomUnit(const Unit*& unit_out, const ObservationInterface* observatio
 Status BuildUnit::OnTick() {
     const ObservationInterface* observation = bot.Observation();
 
+    // Figure out which ability is used to build the unit and which building/unit it is built from.
+    const UnitTypeData& unitTypeData = observation->GetUnitTypeData(false)[unitType];
+    auto abilityType = unitTypeData.ability_id;
+    // Usually a building
+    auto builderUnitType = abilityToUnit(unitTypeData.ability_id);
+
     //If we are at supply cap, don't build anymore units, unless its an overlord.
     if (observation->GetFoodUsed() >= observation->GetFoodCap() && abilityType != ABILITY_ID::
         TRAIN_OVERLORD) {
         return Status::Failure;
     }
-
-    const UnitTypeData& unitTypeData = observation->GetUnitTypeData(false)[unitType];
 
     if (observation->GetMinerals() < unitTypeData.mineral_cost) {
         return Status::Failure;
@@ -36,7 +41,7 @@ Status BuildUnit::OnTick() {
 
     Units units = observation->GetUnits(Unit::Alliance::Self);
     for (auto unit : units) {
-        if (unit->unit_type != unitType) {
+        if (unit->unit_type != builderUnitType) {
             continue;
         }
 
@@ -55,10 +60,15 @@ Status BuildUnit::OnTick() {
     return Status::Failure;
 }
 
-Status BuildStructure::PlaceBuilding(AbilityID ability_type_for_structure, UnitTypeID unit_type, Point2D location, bool isExpansion = false) {
+Status BuildStructure::PlaceBuilding(UnitTypeID unitType, Point2D location, bool isExpansion = false) {
 
     const ObservationInterface* observation = bot.Observation();
-    Units workers = observation->GetUnits(Unit::Alliance::Self, IsUnit(unit_type));
+
+    const UnitTypeData& unitTypeData = observation->GetUnitTypeData(false)[unitType];
+    auto ability = unitTypeData.ability_id;
+    auto builderUnitType = abilityToUnit(unitTypeData.ability_id);
+
+    Units workers = observation->GetUnits(Unit::Alliance::Self, IsUnit(builderUnitType));
 
     //if we have no workers Don't build
     if (workers.empty()) {
@@ -68,7 +78,7 @@ Status BuildStructure::PlaceBuilding(AbilityID ability_type_for_structure, UnitT
     // Check to see if there is already a worker heading out to build it
     for (const auto& worker : workers) {
         for (const auto& order : worker->orders) {
-            if (order.ability_id == ability_type_for_structure) {
+            if (order.ability_id == ability) {
                 return Status::Failure;
             }
         }
@@ -89,16 +99,20 @@ Status BuildStructure::PlaceBuilding(AbilityID ability_type_for_structure, UnitT
         }
     }
     // Check to see if unit can build there
-    if (bot.Query()->Placement(ability_type_for_structure, location)) {
-        bot.Actions()->UnitCommand(unit, ability_type_for_structure, location);
+    if (bot.Query()->Placement(ability, location)) {
+        bot.Actions()->UnitCommand(unit, ability, location);
         return Status::Success;
     }
     return Status::Failure;
 
 }
 
-Status BuildStructure::PlaceBuilding(ABILITY_ID ability, UNIT_TYPEID unitType, Tag loc) {
+Status BuildStructure::PlaceBuilding(UnitTypeID unitType, Tag loc) {
     const ObservationInterface* observation = bot.Observation();
+
+    const UnitTypeData& unitTypeData = observation->GetUnitTypeData(false)[unitType];
+    auto ability = unitTypeData.ability_id;
+    auto builderUnitType = abilityToUnit(unitTypeData.ability_id);
 
     // If a unit already is building a supply structure of this type, do nothing.
     // Also get an scv to build the structure.
@@ -111,7 +125,7 @@ Status BuildStructure::PlaceBuilding(ABILITY_ID ability, UNIT_TYPEID unitType, T
             }
         }
 
-        if (unit->unit_type == unitType) {
+        if (unit->unit_type == builderUnitType) {
             builderUnit = unit;
         }
     }
@@ -148,7 +162,7 @@ Status BuildStructure::PlaceBuilding(ABILITY_ID ability, UNIT_TYPEID unitType, T
 }
 
 Status BuildStructure::OnTick() {
-    return PlaceBuilding(abilityType, builderUnitType, location);
+    return PlaceBuilding(unitType, location);
 }
 
 int countUnits(std::function<bool(const Unit*)> predicate) {
@@ -218,6 +232,8 @@ Status BuildGas::OnTick() {
     Units bases = observation->GetUnits(Unit::Alliance::Self, IsTownHall());
     if (bases.empty()) return Failure;
 
+    auto abilityType = observation->GetUnitTypeData(false)[unitType].ability_id;
+
     auto baseLocation = bases[0]->pos;
     Units geysers = observation->GetUnits(Unit::Alliance::Neutral, IsVespeneGeyser());
 
@@ -239,11 +255,13 @@ Status BuildGas::OnTick() {
         return Failure;
     }
     
-    return PlaceBuilding(abilityType, builderUnitType, closestGeyser);
+    return PlaceBuilding(unitType, closestGeyser);
 }
 
 BOT::Status Expand::OnTick() {
     const ObservationInterface* observation = bot.Observation();
+    auto abilityType = observation->GetUnitTypeData(false)[unitType].ability_id;
+
     float minimum_distance = std::numeric_limits<float>::max();
     Point3D closest_expansion;
     for (const auto& expansion : bot.expansions_) {
@@ -259,7 +277,7 @@ BOT::Status Expand::OnTick() {
             }
         }
     }
-    Status place_building = PlaceBuilding(abilityType, builderUnitType, closest_expansion, true);
+    Status place_building = PlaceBuilding(unitType, closest_expansion, true);
     //only update staging location up till 3 bases.
     if (place_building == Status::Success && observation->GetUnits(Unit::Self, IsTownHall()).size() < 4) {
         bot.staging_location_ = Point3D(((bot.staging_location_.x + closest_expansion.x) / 2), ((bot.staging_location_.y + closest_expansion.y) / 2),

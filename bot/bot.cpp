@@ -16,42 +16,42 @@ void Bot::OnGameStart() {
     tree = unique_ptr<TreeNode>(new ParallelNode{
         new SelectorNode{
             new HasUnit(UNIT_TYPEID::TERRAN_SCV, bot.max_worker_count_),
-            new BuildUnit(sc2::ABILITY_ID::TRAIN_SCV, sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER),
+            new BuildUnit(UNIT_TYPEID::TERRAN_SCV),
         },
         new SelectorNode{
             new Not(new ShouldBuildSupply()),
-            new BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, UNIT_TYPEID::TERRAN_SCV)
+            new BuildStructure(UNIT_TYPEID::TERRAN_SUPPLYDEPOT)
         },
         new SelectorNode{
             new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY),
-            new Expand(ABILITY_ID::BUILD_COMMANDCENTER, UNIT_TYPEID::TERRAN_SCV)
+            new Expand(UNIT_TYPEID::TERRAN_COMMANDCENTER)
         },
         new SequenceNode{
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_SUPPLYDEPOT),
-                new BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, UNIT_TYPEID::TERRAN_SCV)
+                new BuildStructure(UNIT_TYPEID::TERRAN_SUPPLYDEPOT)
             },
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_BARRACKS),
-                new BuildStructure(ABILITY_ID::BUILD_BARRACKS, UNIT_TYPEID::TERRAN_SCV)
+                new BuildStructure(UNIT_TYPEID::TERRAN_BARRACKS)
             },
             new SelectorNode{
                 new Not(new HasUnit(UNIT_TYPEID::TERRAN_BARRACKS)),
                 new HasUnit(UNIT_TYPEID::TERRAN_REFINERY, 1),
-                new BuildGas(ABILITY_ID::BUILD_REFINERY, UNIT_TYPEID::TERRAN_SCV),
+                new BuildGas(UNIT_TYPEID::TERRAN_REFINERY),
             },
             new SelectorNode{
                 new Not(new HasUnit(UNIT_TYPEID::TERRAN_FACTORY)),
                 new HasUnit(UNIT_TYPEID::TERRAN_REFINERY, 2),
-                new BuildGas(ABILITY_ID::BUILD_REFINERY, UNIT_TYPEID::TERRAN_SCV)
+                new BuildGas(UNIT_TYPEID::TERRAN_REFINERY)
             },
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_FACTORY),
-                new BuildStructure(ABILITY_ID::BUILD_FACTORY, UNIT_TYPEID::TERRAN_SCV)
+                new BuildStructure(UNIT_TYPEID::TERRAN_FACTORY)
             },
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_STARPORT, 1),
-                new BuildStructure(ABILITY_ID::BUILD_STARPORT, UNIT_TYPEID::TERRAN_SCV)
+                new BuildStructure(UNIT_TYPEID::TERRAN_STARPORT)
             },
         },
         new AssignHarvesters(UNIT_TYPEID::TERRAN_SCV, ABILITY_ID::HARVEST_GATHER,

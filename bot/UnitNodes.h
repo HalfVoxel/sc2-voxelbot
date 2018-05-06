@@ -4,9 +4,8 @@
 
 class BuildUnit : public BOT::ActionNode {
 	sc2::UnitTypeID unitType;
-	sc2::AbilityID abilityType;
 public:
-	BuildUnit(sc2::AbilityID ability, sc2::UnitTypeID unit) : abilityType(ability), unitType(unit) {}
+	BuildUnit(sc2::UnitTypeID unit) : unitType(unit) {}
 	BOT::Status OnTick() override;
 };
 
@@ -14,14 +13,14 @@ class BuildStructure : public BOT::ActionNode {
 	sc2::Tag location;
 
 protected:
-    sc2::UnitTypeID builderUnitType;
+    sc2::UnitTypeID unitType;
     sc2::AbilityID abilityType;
 
 public:
-    BOT::Status PlaceBuilding(sc2::AbilityID ability_type_for_structure, sc2::UnitTypeID unit_type, sc2::Point2D location, bool isExpansion); // Should be better, we should aim to use this instead of the method, I think
-    BOT::Status PlaceBuilding(sc2::ABILITY_ID ability, sc2::UNIT_TYPEID unitType, sc2::Tag loc);
-	BuildStructure(sc2::AbilityID ability, sc2::UnitTypeID unit) : abilityType(ability), builderUnitType(unit), location(sc2::NullTag) {}
-	BuildStructure(sc2::AbilityID ability, sc2::UnitTypeID unit, sc2::Tag location) : abilityType(ability), builderUnitType(unit), location(location) {}
+    BOT::Status PlaceBuilding(sc2::UnitTypeID unit, sc2::Point2D location, bool isExpansion); // Should be better, we should aim to use this instead of the method, I think
+    BOT::Status PlaceBuilding(sc2::UnitTypeID unit, sc2::Tag loc);
+	BuildStructure(sc2::UNIT_TYPEID unit) : unitType(unit), location(sc2::NullTag) {}
+	BuildStructure(sc2::UNIT_TYPEID unit, sc2::Tag location) : unitType(unit), location(location) {}
 	BOT::Status OnTick() override;
 };
 
@@ -50,13 +49,13 @@ public:
 class BuildGas : public BuildStructure {
 
 public:
-	BuildGas(sc2::AbilityID ability, sc2::UnitTypeID unit) : BuildStructure(ability, unit) {}
+	BuildGas(sc2::UnitTypeID unit) : BuildStructure(unit) {}
 	BOT::Status OnTick() override;
 };
 
 class Expand: public BuildStructure{
 public:
-    Expand(sc2::AbilityID ability, sc2::UnitTypeID unit) : BuildStructure(ability, unit) {}
+    Expand(sc2::UnitTypeID unit) : BuildStructure(unit) {}
     BOT::Status OnTick() override;
 };
 
