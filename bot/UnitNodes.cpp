@@ -1,13 +1,13 @@
 #include "UnitNodes.h"
 #include "bot.h"
-#include "bot_examples.h"
 #include "Predicates.h"
 
 using namespace BOT;
 using namespace std;
 using namespace sc2;
 
-bool GetRandomUnit(const Unit*& unit_out, const ObservationInterface* observation, UnitTypeID unit_type) {
+bool GetRandomUnit(const Unit*& unit_out, const ObservationInterface* observation,
+                   UnitTypeID unit_type) {
     Units my_units = observation->GetUnits(Unit::Alliance::Self);
     std::random_shuffle(my_units.begin(), my_units.end()); // Doesn't work, or doesn't work well.
     for (const auto unit : my_units) {
@@ -23,7 +23,8 @@ Status BuildUnit::OnTick() {
     const ObservationInterface* observation = bot.Observation();
 
     //If we are at supply cap, don't build anymore units, unless its an overlord.
-    if (observation->GetFoodUsed() >= observation->GetFoodCap() && abilityType != ABILITY_ID::TRAIN_OVERLORD) {
+    if (observation->GetFoodUsed() >= observation->GetFoodCap() && abilityType != ABILITY_ID::
+        TRAIN_OVERLORD) {
         return Status::Failure;
     }
 
@@ -70,7 +71,7 @@ Status BuildStructure::OnTick() {
         }
 
         if (unit->unit_type == builderUnitType) {
-           builderUnit = unit;
+            builderUnit = unit;
         }
     }
 
@@ -97,8 +98,9 @@ Status BuildStructure::OnTick() {
         float ry = GetRandomScalar();
 
         bot.Actions()->UnitCommand(builderUnit,
-            abilityType,
-            Point2D(builderUnit->pos.x + rx * 15.0f, builderUnit->pos.y + ry * 15.0f));
+                                   abilityType,
+                                   Point2D(builderUnit->pos.x + rx * 15.0f,
+                                           builderUnit->pos.y + ry * 15.0f));
 
         return Status::Success;
     }
@@ -110,7 +112,9 @@ int countUnits(std::function<bool(const Unit*)> predicate) {
 }
 
 Status HasUnit::OnTick() {
-    return countUnits([this](const Unit* unit) { return unit->unit_type == this->unit; }) >= count ? Status::Success : Status::Failure;
+    return countUnits([this](const Unit* unit) { return unit->unit_type == this->unit; }) >= count
+               ? Status::Success
+               : Status::Failure;
 }
 
 Status ShouldBuildSupply::OnTick() {
@@ -150,6 +154,9 @@ Status BuildGas::OnTick() {
     }
 
     // TODO: Maybe a way to replan this?
-    child = unique_ptr<TreeNode>(new BuildStructure(abilityType, UNIT_TYPEID::TERRAN_SCV, closestGeyser));
+    child = unique_ptr<TreeNode>(new BuildStructure(abilityType, UNIT_TYPEID::TERRAN_SCV,
+                                                    closestGeyser));
     return Tick();
 }
+
+

@@ -41,3 +41,16 @@ public:
 	BuildGas() {}
 	BOT::Status OnTick() override;
 };
+
+
+class AssignHarvesters : public BOT::ActionNode {
+    sc2::UnitTypeID workerUnitType;
+    sc2::AbilityID abilityType;
+    sc2::UNIT_TYPEID gasBuildingType;
+public:
+    BOT::Status OnTick() override;
+    BOT::Status MineIdleWorkers(const sc2::Unit* worker, sc2::AbilityID worker_gather_command, sc2::UnitTypeID vespene_building_type);
+    BOT::Status ManageWorkers(sc2::UNIT_TYPEID worker_type, sc2::AbilityID worker_gather_command, sc2::UNIT_TYPEID vespene_building_type);
+    AssignHarvesters(sc2::UnitTypeID workerUnitType,   sc2::AbilityID abilityType,  sc2::UNIT_TYPEID gasBuildingType) : workerUnitType(workerUnitType), abilityType(abilityType), gasBuildingType(gasBuildingType) {}
+    const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
+};

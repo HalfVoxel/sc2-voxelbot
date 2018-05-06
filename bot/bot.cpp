@@ -19,7 +19,7 @@ void Bot::OnGameStart() {
                 new BuildStructure(ABILITY_ID::BUILD_BARRACKS, UNIT_TYPEID::TERRAN_SCV)
             },
             new SelectorNode {
-                new HasUnit(UNIT_TYPEID::TERRAN_REFINERY),
+                new HasUnit(UNIT_TYPEID::TERRAN_REFINERY, 1),
                 new BuildGas()
             },
             new SelectorNode {
@@ -30,7 +30,8 @@ void Bot::OnGameStart() {
                 new HasUnit(UNIT_TYPEID::TERRAN_STARPORT,1),
                 new BuildStructure(ABILITY_ID::BUILD_STARPORT, UNIT_TYPEID::TERRAN_SCV)
             },
-        }
+        },
+        new AssignHarvesters(UNIT_TYPEID::TERRAN_SCV, ABILITY_ID::HARVEST_GATHER, UNIT_TYPEID::TERRAN_REFINERY)
     });
 }
 
