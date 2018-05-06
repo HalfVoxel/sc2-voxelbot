@@ -19,8 +19,8 @@ void Bot::OnGameStart() {
                 new BuildStructure(ABILITY_ID::BUILD_BARRACKS, UNIT_TYPEID::TERRAN_SCV)
             },
             new SelectorNode {
-                new HasUnit(UNIT_TYPEID::TERRAN_REFINERY, 1),
-                new BuildGas()
+                new HasUnit(UNIT_TYPEID::TERRAN_REFINERY, 2),
+                new BuildGas(ABILITY_ID::BUILD_REFINERY, UNIT_TYPEID::TERRAN_SCV)
             },
             new SelectorNode {
                 new HasUnit(UNIT_TYPEID::TERRAN_FACTORY),

@@ -11,10 +11,14 @@ public:
 };
 
 class BuildStructure : public BOT::ActionNode {
-	sc2::UnitTypeID builderUnitType;
-	sc2::AbilityID abilityType;
 	sc2::Tag location;
+
+protected:
+    sc2::UnitTypeID builderUnitType;
+    sc2::AbilityID abilityType;
+
 public:
+    BOT::Status PlaceBuilding(sc2::ABILITY_ID ability, sc2::UNIT_TYPEID unitType, sc2::Tag loc);
 	BuildStructure(sc2::AbilityID ability, sc2::UnitTypeID unit) : abilityType(ability), builderUnitType(unit), location(sc2::NullTag) {}
 	BuildStructure(sc2::AbilityID ability, sc2::UnitTypeID unit, sc2::Tag location) : abilityType(ability), builderUnitType(unit), location(location) {}
 	BOT::Status OnTick() override;
@@ -34,11 +38,10 @@ public:
 	BOT::Status OnTick() override;
 };
 
-class BuildGas : public BOT::ActionNode {
-	std::unique_ptr<BOT::TreeNode> child;
+class BuildGas : public BuildStructure {
 
 public:
-	BuildGas() {}
+	BuildGas(sc2::AbilityID ability, sc2::UnitTypeID unit) : BuildStructure(ability, unit) {}
 	BOT::Status OnTick() override;
 };
 

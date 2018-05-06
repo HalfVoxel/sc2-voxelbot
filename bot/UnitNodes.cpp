@@ -56,7 +56,7 @@ Status BuildUnit::OnTick() {
 }
 
 
-Status BuildStructure::OnTick() {
+Status BuildStructure::PlaceBuilding(ABILITY_ID ability, UNIT_TYPEID unitType, Tag loc) {
     const ObservationInterface* observation = bot.Observation();
 
     // If a unit already is building a supply structure of this type, do nothing.
@@ -65,12 +65,12 @@ Status BuildStructure::OnTick() {
     Units units = observation->GetUnits(Unit::Alliance::Self);
     for (const auto& unit : units) {
         for (const auto& order : unit->orders) {
-            if (order.ability_id == abilityType) {
+            if (order.ability_id == ability) {
                 return Status::Running;
             }
         }
 
-        if (unit->unit_type == builderUnitType) {
+        if (unit->unit_type == unitType) {
             builderUnit = unit;
         }
     }
@@ -79,15 +79,15 @@ Status BuildStructure::OnTick() {
         return Status::Failure;
     }
 
-    if (location != NullTag) {
+    if (loc != NullTag) {
         // TODO: Sort units based on distance to location
 
         // Build at a specific position
-        const Unit* target = observation->GetUnit(location);
+        const Unit* target = observation->GetUnit(loc);
 
         // Check to see if unit can build there
-        if (bot.Query()->Placement(abilityType, target->pos)) {
-            bot.Actions()->UnitCommand(builderUnit, abilityType, target);
+        if (bot.Query()->Placement(ability, target->pos)) {
+            bot.Actions()->UnitCommand(builderUnit, ability, target);
             return Success;
         } else {
             return Failure;
@@ -98,12 +98,16 @@ Status BuildStructure::OnTick() {
         float ry = GetRandomScalar();
 
         bot.Actions()->UnitCommand(builderUnit,
-                                   abilityType,
+                                   ability,
                                    Point2D(builderUnit->pos.x + rx * 15.0f,
                                            builderUnit->pos.y + ry * 15.0f));
 
         return Status::Success;
     }
+}
+
+Status BuildStructure::OnTick() {
+    return PlaceBuilding(abilityType, builderUnitType, location);
 }
 
 int countUnits(std::function<bool(const Unit*)> predicate) {
@@ -123,11 +127,6 @@ Status ShouldBuildSupply::OnTick() {
 }
 
 Status BuildGas::OnTick() {
-    if (child != nullptr) {
-        return child->Tick();
-    }
-
-    auto abilityType = ABILITY_ID::BUILD_REFINERY;
     auto observation = bot.Observation();
     Units bases = observation->GetUnits(Unit::Alliance::Self, IsTownHall());
     if (bases.empty()) return Failure;
@@ -152,11 +151,8 @@ Status BuildGas::OnTick() {
     if (closestGeyser == 0) {
         return Failure;
     }
-
-    // TODO: Maybe a way to replan this?
-    child = unique_ptr<TreeNode>(new BuildStructure(abilityType, UNIT_TYPEID::TERRAN_SCV,
-                                                    closestGeyser));
-    return Tick();
+    
+    return PlaceBuilding(abilityType, builderUnitType, closestGeyser);
 }
 
 
