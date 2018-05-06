@@ -18,6 +18,7 @@ protected:
     sc2::AbilityID abilityType;
 
 public:
+    BOT::Status PlaceBuilding(sc2::AbilityID ability_type_for_structure, sc2::UnitTypeID unit_type, sc2::Point2D location, bool isExpansion); // Should be better, we should aim to use this instead of the method, I think
     BOT::Status PlaceBuilding(sc2::ABILITY_ID ability, sc2::UNIT_TYPEID unitType, sc2::Tag loc);
 	BuildStructure(sc2::AbilityID ability, sc2::UnitTypeID unit) : abilityType(ability), builderUnitType(unit), location(sc2::NullTag) {}
 	BuildStructure(sc2::AbilityID ability, sc2::UnitTypeID unit, sc2::Tag location) : abilityType(ability), builderUnitType(unit), location(location) {}
@@ -38,6 +39,14 @@ public:
 	BOT::Status OnTick() override;
 };
 
+class ShouldExpand : public BOT::ConditionNode {
+    sc2::UNIT_TYPEID gasType;
+public:
+    ShouldExpand(sc2::UNIT_TYPEID gasType) : gasType(gasType) {}
+    BOT::Status OnTick() override;
+    int GetExpectedWorkers(sc2::UNIT_TYPEID vespene_building_type);
+};
+
 class BuildGas : public BuildStructure {
 
 public:
@@ -45,6 +54,11 @@ public:
 	BOT::Status OnTick() override;
 };
 
+class Expand: public BuildStructure{
+public:
+    Expand(sc2::AbilityID ability, sc2::UnitTypeID unit) : BuildStructure(ability, unit) {}
+    BOT::Status OnTick() override;
+};
 
 class AssignHarvesters : public BOT::ActionNode {
     sc2::UnitTypeID workerUnitType;

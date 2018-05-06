@@ -8,6 +8,12 @@ namespace BOT {
 
 class Bot : public sc2::Agent {
 public:
+
+    int max_worker_count_ = 75;
+    sc2::GameInfo game_info_;
+    std::vector<sc2::Point3D> expansions_;
+    sc2::Point3D startLocation_;
+    sc2::Point3D staging_location_;
     void OnGameStart() override final;
     void OnStep() override final;
     // void OnUnitDestroyed(const sc2::Unit* unit) override;

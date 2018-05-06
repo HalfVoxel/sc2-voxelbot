@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 
     // Start the game.
 
-    coordinator.SetRealtime(true);
+   // coordinator.SetRealtime(true);
     coordinator.LaunchStarcraft();
     bool do_break = false;
 

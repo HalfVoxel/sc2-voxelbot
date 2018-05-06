@@ -55,6 +55,47 @@ Status BuildUnit::OnTick() {
     return Status::Failure;
 }
 
+Status BuildStructure::PlaceBuilding(AbilityID ability_type_for_structure, UnitTypeID unit_type, Point2D location, bool isExpansion = false) {
+
+    const ObservationInterface* observation = bot.Observation();
+    Units workers = observation->GetUnits(Unit::Alliance::Self, IsUnit(unit_type));
+
+    //if we have no workers Don't build
+    if (workers.empty()) {
+        return Status::Failure;
+    }
+
+    // Check to see if there is already a worker heading out to build it
+    for (const auto& worker : workers) {
+        for (const auto& order : worker->orders) {
+            if (order.ability_id == ability_type_for_structure) {
+                return Status::Failure;
+            }
+        }
+    }
+
+    // If no worker is already building one, get a random worker to build one
+    const Unit* unit = GetRandomEntry(workers);
+
+    // Check to see if unit can make it there
+    if (bot.Query()->PathingDistance(unit, location) < 0.1f) {
+        return Status::Failure;
+    }
+    if (!isExpansion) {
+        for (const auto& expansion : bot.expansions_) {
+            if (Distance2D(location, Point2D(expansion.x, expansion.y)) < 7) {
+                return Status::Failure;
+            }
+        }
+    }
+    // Check to see if unit can build there
+    if (bot.Query()->Placement(ability_type_for_structure, location)) {
+        bot.Actions()->UnitCommand(unit, ability_type_for_structure, location);
+        return Status::Success;
+    }
+    return Status::Failure;
+
+}
 
 Status BuildStructure::PlaceBuilding(ABILITY_ID ability, UNIT_TYPEID unitType, Tag loc) {
     const ObservationInterface* observation = bot.Observation();
@@ -126,6 +167,52 @@ Status ShouldBuildSupply::OnTick() {
     return observation->GetFoodUsed() >= observation->GetFoodCap() - 2 ? Success : Failure;
 }
 
+Status ShouldExpand::OnTick() {    
+    const ObservationInterface* observation = bot.Observation();
+    Units bases = observation->GetUnits(Unit::Alliance::Self, IsTownHall());
+    //Don't have more active bases than we can provide workers for
+    if (GetExpectedWorkers(gasType) > bot.max_worker_count_) {
+        return Status::Failure;
+    }
+
+    // If we have extra workers around, try and build another Hatch.
+    if (GetExpectedWorkers(gasType) < observation->GetFoodWorkers() - 10) {
+        return Status::Success; 
+    }
+    //Only build another Hatch if we are floating extra minerals
+    if (observation->GetMinerals() > std::min<size_t>(bases.size() * 400, 1200)) {
+        return Status::Success; 
+    }
+
+    return Status::Failure;
+}
+
+int ShouldExpand::GetExpectedWorkers(UNIT_TYPEID vespene_building_type) {
+    const ObservationInterface* observation = bot.Observation();
+    Units bases = observation->GetUnits(Unit::Alliance::Self, IsTownHall());
+    Units geysers = observation->GetUnits(Unit::Alliance::Self, IsUnit(vespene_building_type));
+    int expected_workers = 0;
+    for (const auto& base : bases) {
+        if (base->build_progress != 1) {
+            continue;
+        }
+        expected_workers += base->ideal_harvesters;
+    }
+
+    for (const auto& geyser : geysers) {
+        if (geyser->vespene_contents > 0) {
+            if (geyser->build_progress != 1) {
+                continue;
+            }
+            expected_workers += geyser->ideal_harvesters;
+        }
+    }
+
+    return expected_workers;
+}
+
+
+
 Status BuildGas::OnTick() {
     auto observation = bot.Observation();
     Units bases = observation->GetUnits(Unit::Alliance::Self, IsTownHall());
@@ -153,6 +240,32 @@ Status BuildGas::OnTick() {
     }
     
     return PlaceBuilding(abilityType, builderUnitType, closestGeyser);
+}
+
+BOT::Status Expand::OnTick() {
+    const ObservationInterface* observation = bot.Observation();
+    float minimum_distance = std::numeric_limits<float>::max();
+    Point3D closest_expansion;
+    for (const auto& expansion : bot.expansions_) {
+        float current_distance = Distance2D(bot.startLocation_, expansion);
+        if (current_distance < .01f) {
+            continue;
+        }
+
+        if (current_distance < minimum_distance) {
+            if (bot.Query()->Placement(abilityType, expansion)) {
+                closest_expansion = expansion;
+                minimum_distance = current_distance;
+            }
+        }
+    }
+    Status place_building = PlaceBuilding(abilityType, builderUnitType, closest_expansion, true);
+    //only update staging location up till 3 bases.
+    if (place_building == Status::Success && observation->GetUnits(Unit::Self, IsTownHall()).size() < 4) {
+        bot.staging_location_ = Point3D(((bot.staging_location_.x + closest_expansion.x) / 2), ((bot.staging_location_.y + closest_expansion.y) / 2),
+            ((bot.staging_location_.z + closest_expansion.z) / 2));
+    }
+    return place_building;
 }
 
 
