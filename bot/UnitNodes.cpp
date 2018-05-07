@@ -178,7 +178,7 @@ Status HasUnit::OnTick() {
 
 Status ShouldBuildSupply::OnTick() {
     auto observation = bot.Observation();
-    return observation->GetFoodUsed() >= observation->GetFoodCap() - 2 ? Success : Failure;
+    return observation->GetFoodUsed() >= observation->GetFoodCap() - 6 ? Success : Failure;
 }
 
 Status ShouldExpand::OnTick() {    

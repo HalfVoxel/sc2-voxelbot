@@ -15,16 +15,16 @@ void Bot::OnGameStart() {
 
     tree = unique_ptr<TreeNode>(new ParallelNode{
         new SelectorNode{
+            new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY),
+            new Expand(UNIT_TYPEID::TERRAN_COMMANDCENTER)
+        },
+        new SelectorNode{
             new HasUnit(UNIT_TYPEID::TERRAN_SCV, bot.max_worker_count_),
             new BuildUnit(UNIT_TYPEID::TERRAN_SCV),
         },
         new SelectorNode{
             new Not(new ShouldBuildSupply()),
             new BuildStructure(UNIT_TYPEID::TERRAN_SUPPLYDEPOT)
-        },
-        new SelectorNode{
-            new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY),
-            new Expand(UNIT_TYPEID::TERRAN_COMMANDCENTER)
         },
         new SequenceNode{
             new SelectorNode{
@@ -51,22 +51,24 @@ void Bot::OnGameStart() {
                 new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB, 1),
                 new BuildAddon(ABILITY_ID::BUILD_TECHLAB_BARRACKS, bot.barrack_types)
             },
-            new SelectorNode{
-                new HasUnit(UNIT_TYPEID::TERRAN_FACTORYTECHLAB, 1),
-                new BuildAddon(ABILITY_ID::BUILD_TECHLAB_FACTORY, bot.factory_types)
-            },
-            new SelectorNode{
-                new HasUnit(UNIT_TYPEID::TERRAN_STARPORTREACTOR, 1),
-                new BuildAddon(ABILITY_ID::BUILD_REACTOR_STARPORT, bot.starport_types)
-            },
+            new HasUnit(UNIT_TYPEID::TERRAN_COMMANDCENTER, 2),
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_BARRACKS, 5),
                 new BuildStructure(UNIT_TYPEID::TERRAN_BARRACKS),
             },
             new SelectorNode{
+                new HasUnit(UNIT_TYPEID::TERRAN_FACTORYTECHLAB, 1),
+                new BuildAddon(ABILITY_ID::BUILD_TECHLAB_FACTORY, bot.factory_types)
+            },
+            new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSREACTOR, 4),
                 new BuildAddon(ABILITY_ID::BUILD_REACTOR_BARRACKS, bot.barrack_types)
             },
+            new SelectorNode{
+                new HasUnit(UNIT_TYPEID::TERRAN_STARPORTREACTOR, 1),
+                new BuildAddon(ABILITY_ID::BUILD_REACTOR_STARPORT, bot.starport_types)
+            },
+          
         },
         new AssignHarvesters(UNIT_TYPEID::TERRAN_SCV, ABILITY_ID::HARVEST_GATHER, UNIT_TYPEID::TERRAN_REFINERY),
         new SequenceNode{
