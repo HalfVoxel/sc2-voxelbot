@@ -40,10 +40,6 @@ void Bot::OnGameStart() {
                 new BuildStructure(UNIT_TYPEID::TERRAN_FACTORY)
             },
             new SelectorNode{
-                new HasUnit(UNIT_TYPEID::TERRAN_REFINERY, 2),
-                new BuildGas(UNIT_TYPEID::TERRAN_REFINERY)
-            },
-            new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_STARPORT, 1),
                 new BuildStructure(UNIT_TYPEID::TERRAN_STARPORT)
             },
@@ -52,6 +48,10 @@ void Bot::OnGameStart() {
                 new BuildAddon(ABILITY_ID::BUILD_TECHLAB_BARRACKS, bot.barrack_types)
             },
             new HasUnit(UNIT_TYPEID::TERRAN_COMMANDCENTER, 2),
+            new SelectorNode{
+                new HasUnit(UNIT_TYPEID::TERRAN_REFINERY, 2),
+                new BuildGas(UNIT_TYPEID::TERRAN_REFINERY)
+            },
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_BARRACKS, 5),
                 new BuildStructure(UNIT_TYPEID::TERRAN_BARRACKS),
