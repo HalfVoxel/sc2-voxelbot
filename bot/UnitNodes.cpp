@@ -46,9 +46,14 @@ Status BuildUnit::OnTick() {
             continue;
         }
        
-        bool hasReactor = observation->GetUnit(unit->add_on_tag) != nullptr && (observation->GetUnit(unit->add_on_tag)->unit_type == UNIT_TYPEID::TERRAN_BARRACKSREACTOR ||
-                                                                                observation->GetUnit(unit->add_on_tag)->unit_type == UNIT_TYPEID::TERRAN_STARPORTREACTOR || 
-                                                                                observation->GetUnit(unit->add_on_tag)->unit_type == UNIT_TYPEID::TERRAN_FACTORYREACTOR);
+        bool hasReactor = false;
+        if (observation->GetUnit(unit->add_on_tag) != nullptr) {
+            const UnitTypeID addonType = observation->GetUnit(unit->add_on_tag)->unit_type;
+            hasReactor = (addonType == UNIT_TYPEID::TERRAN_BARRACKSREACTOR ||
+                          addonType == UNIT_TYPEID::TERRAN_STARPORTREACTOR ||
+                          addonType == UNIT_TYPEID::TERRAN_FACTORYREACTOR);
+        }
+            
         if (!unit->orders.empty() && !hasReactor) {
             continue;
         }
