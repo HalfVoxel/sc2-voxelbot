@@ -68,7 +68,10 @@ void Bot::OnGameStart() {
                 new HasUnit(UNIT_TYPEID::TERRAN_STARPORTREACTOR, 1),
                 new BuildAddon(ABILITY_ID::BUILD_REACTOR_STARPORT, bot.starport_types)
             },
-          
+        },
+        new SequenceNode{
+            new HasUnit(UNIT_TYPEID::TERRAN_COMMANDCENTER, 3),
+            new SimpleAttackMove()
         },
         new AssignHarvesters(UNIT_TYPEID::TERRAN_SCV, ABILITY_ID::HARVEST_GATHER, UNIT_TYPEID::TERRAN_REFINERY),
         new SequenceNode{

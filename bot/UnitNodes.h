@@ -79,3 +79,7 @@ public:
     BOT::Status TryBuildAddon(sc2::AbilityID ability_type_for_structure, sc2::Tag base_structure);
     BuildAddon(sc2::AbilityID ability, std::vector<sc2::UNIT_TYPEID> types) : abilityType(ability), buildingTypes(types) {}
 };
+
+class SimpleAttackMove: public BOT::ActionNode{
+	BOT::Status OnTick() override;
+};

@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     coordinator.SetMultithreaded(true);
 
     coordinator.SetParticipants({
-        CreateParticipant(Race::Terran, &bot), CreateComputer(Race::Terran, Difficulty::VeryEasy),
+        CreateParticipant(Race::Terran, &bot), CreateComputer(Race::Zerg, Difficulty::Easy),
     });
 
     // Start the game.
