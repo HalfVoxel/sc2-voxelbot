@@ -287,3 +287,52 @@ BOT::Status Expand::OnTick() {
 }
 
 
+Status BuildAddon::TryBuildAddon(AbilityID ability_type_for_structure, Tag base_structure) {
+    float rx = GetRandomScalar();
+    float ry = GetRandomScalar();
+    const Unit* unit = bot.Observation()->GetUnit(base_structure);
+
+    if (unit->build_progress != 1) {
+        return Status::Failure;
+    }
+
+    Point2D build_location = Point2D(unit->pos.x + rx * 15, unit->pos.y + ry * 15);
+
+    Units units = bot.Observation()->GetUnits(Unit::Self, IsStructure(bot.Observation()));
+
+    if (bot.Query()->Placement(ability_type_for_structure, unit->pos, unit)) {
+        bot.Actions()->UnitCommand(unit, ability_type_for_structure);
+        return Status::Success;
+    }
+
+    float distance = std::numeric_limits<float>::max();
+    for (const auto& u : units) {
+        float d = Distance2D(u->pos, build_location);
+        if (d < distance) {
+            distance = d;
+        }
+    }
+    if (distance < 6) {
+        return Status::Failure;
+    }
+
+    if (bot.Query()->Placement(ability_type_for_structure, build_location, unit)) {
+        bot.Actions()->UnitCommand(unit, ability_type_for_structure, build_location);
+        return Status::Success;
+    }
+    return Status::Failure;
+
+}
+
+BOT::Status BuildAddon::OnTick() {
+    Units buildings = bot.Observation()->GetUnits(Unit::Self, IsUnits(buildingTypes));
+    for (const auto& building : buildings) {
+        if (!building->orders.empty() || building->build_progress != 1) {
+            continue;
+        }
+        if (bot.Observation()->GetUnit(building->add_on_tag) == nullptr) {
+            return TryBuildAddon(abilityType, building->tag);
+        }
+    }
+    return Status::Failure;
+}

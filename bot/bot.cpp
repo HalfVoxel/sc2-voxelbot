@@ -28,34 +28,54 @@ void Bot::OnGameStart() {
         },
         new SequenceNode{
             new SelectorNode{
-                new HasUnit(UNIT_TYPEID::TERRAN_SUPPLYDEPOT),
-                new BuildStructure(UNIT_TYPEID::TERRAN_SUPPLYDEPOT)
-            },
-            new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_BARRACKS),
                 new BuildStructure(UNIT_TYPEID::TERRAN_BARRACKS)
             },
             new SelectorNode{
-                new Not(new HasUnit(UNIT_TYPEID::TERRAN_BARRACKS)),
                 new HasUnit(UNIT_TYPEID::TERRAN_REFINERY, 1),
                 new BuildGas(UNIT_TYPEID::TERRAN_REFINERY),
-            },
-            new SelectorNode{
-                new Not(new HasUnit(UNIT_TYPEID::TERRAN_FACTORY)),
-                new HasUnit(UNIT_TYPEID::TERRAN_REFINERY, 2),
-                new BuildGas(UNIT_TYPEID::TERRAN_REFINERY)
             },
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_FACTORY),
                 new BuildStructure(UNIT_TYPEID::TERRAN_FACTORY)
             },
             new SelectorNode{
+                new HasUnit(UNIT_TYPEID::TERRAN_REFINERY, 2),
+                new BuildGas(UNIT_TYPEID::TERRAN_REFINERY)
+            },
+            new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_STARPORT, 1),
                 new BuildStructure(UNIT_TYPEID::TERRAN_STARPORT)
             },
+            new SelectorNode{
+                new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB, 1),
+                new BuildAddon(ABILITY_ID::BUILD_TECHLAB_BARRACKS, bot.barrack_types)
+            },
+            new SelectorNode{
+                new HasUnit(UNIT_TYPEID::TERRAN_FACTORYTECHLAB, 1),
+                new BuildAddon(ABILITY_ID::BUILD_TECHLAB_FACTORY, bot.factory_types)
+            },
+            new SelectorNode{
+                new HasUnit(UNIT_TYPEID::TERRAN_STARPORTREACTOR, 1),
+                new BuildAddon(ABILITY_ID::BUILD_REACTOR_STARPORT, bot.starport_types)
+            },
+            new SelectorNode{
+                new HasUnit(UNIT_TYPEID::TERRAN_BARRACKS, 5),
+                new BuildStructure(UNIT_TYPEID::TERRAN_BARRACKS),
+            },
+            new SelectorNode{
+                new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSREACTOR, 4),
+                new BuildAddon(ABILITY_ID::BUILD_REACTOR_BARRACKS, bot.barrack_types)
+            },
         },
-        new AssignHarvesters(UNIT_TYPEID::TERRAN_SCV, ABILITY_ID::HARVEST_GATHER,
-                             UNIT_TYPEID::TERRAN_REFINERY)
+        new AssignHarvesters(UNIT_TYPEID::TERRAN_SCV, ABILITY_ID::HARVEST_GATHER, UNIT_TYPEID::TERRAN_REFINERY),
+        new SequenceNode{
+            new HasUnit(UNIT_TYPEID::TERRAN_COMMANDCENTER, 2),
+            new BuildUnit(UNIT_TYPEID::TERRAN_MARAUDER),
+            new BuildUnit(UNIT_TYPEID::TERRAN_MEDIVAC),
+            new BuildUnit(UNIT_TYPEID::TERRAN_SIEGETANK)
+        },
+        new BuildUnit(UNIT_TYPEID::TERRAN_MARINE)
     });
 }
 

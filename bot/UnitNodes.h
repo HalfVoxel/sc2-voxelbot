@@ -70,3 +70,12 @@ public:
     AssignHarvesters(sc2::UnitTypeID workerUnitType,   sc2::AbilityID abilityType,  sc2::UNIT_TYPEID gasBuildingType) : workerUnitType(workerUnitType), abilityType(abilityType), gasBuildingType(gasBuildingType) {}
     const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
 };
+
+class BuildAddon: public BOT::ActionNode{
+    sc2::AbilityID abilityType;
+    std::vector<sc2::UNIT_TYPEID> buildingTypes;
+public:
+    BOT::Status OnTick() override;
+    BOT::Status TryBuildAddon(sc2::AbilityID ability_type_for_structure, sc2::Tag base_structure);
+    BuildAddon(sc2::AbilityID ability, std::vector<sc2::UNIT_TYPEID> types) : abilityType(ability), buildingTypes(types) {}
+};
