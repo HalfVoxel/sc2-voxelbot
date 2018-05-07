@@ -33,6 +33,7 @@ void Bot::OnGameStart() {
             },
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_REFINERY, 1),
+                new Not(new HasUnit(UNIT_TYPEID::TERRAN_BARRACKS, 1)),
                 new BuildGas(UNIT_TYPEID::TERRAN_REFINERY),
             },
             new SelectorNode{
@@ -70,7 +71,7 @@ void Bot::OnGameStart() {
             },
         },
         new SequenceNode{
-            new HasUnit(UNIT_TYPEID::TERRAN_COMMANDCENTER, 3),
+            new HasUnit(UNIT_TYPEID::TERRAN_MARINE, 30),
             new SimpleAttackMove()
         },
         new AssignHarvesters(UNIT_TYPEID::TERRAN_SCV, ABILITY_ID::HARVEST_GATHER, UNIT_TYPEID::TERRAN_REFINERY),
