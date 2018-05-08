@@ -172,7 +172,7 @@ UNIT_TYPEID abilityToUnit(ABILITY_ID ability) {
         case ABILITY_ID::TRAIN_LIBERATOR:
             return UNIT_TYPEID::TERRAN_STARPORT;
         case ABILITY_ID::TRAIN_MARAUDER:
-            return UNIT_TYPEID::TERRAN_BARRACKSTECHLAB;
+            return UNIT_TYPEID::TERRAN_BARRACKS;
         case ABILITY_ID::TRAIN_MARINE:
             return UNIT_TYPEID::TERRAN_BARRACKS;
         case ABILITY_ID::TRAIN_MEDIVAC:

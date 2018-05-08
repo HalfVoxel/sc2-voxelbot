@@ -134,8 +134,9 @@ Status BuildStructure::PlaceBuilding(UnitTypeID unitType, Tag loc) {
             }
         }
 
-        if (unit->unit_type == builderUnitType) {
+        if (unit->unit_type == builderUnitType && (unit->orders.empty() || unit->orders.at(0).ability_id == ABILITY_ID::HARVEST_GATHER)) {
             builderUnit = unit;
+            break;
         }
     }
 
@@ -187,7 +188,8 @@ Status HasUnit::OnTick() {
 
 Status ShouldBuildSupply::OnTick() {
     auto observation = bot.Observation();
-    return observation->GetFoodUsed() >= observation->GetFoodCap() - 6 ? Success : Failure;
+    int productionModifier = bot.Observation()->GetUnits(Unit::Alliance::Self, IsUnits(bot.production_types)).size() * 1.5;
+    return observation->GetFoodUsed() >= observation->GetFoodCap() - (4 + productionModifier ) ? Success : Failure;
 }
 
 Status ShouldExpand::OnTick() {    
@@ -349,7 +351,7 @@ BOT::Status BuildAddon::OnTick() {
 int tick = 0;
 BOT::Status SimpleAttackMove::OnTick() {
     tick++;
-    if ((tick % 1000) != 0) return Running;
+    if ((tick % 100) != 0) return Running;
 
     //If unit isn't doing anything make it attack.
     Units units = bot.Observation()->GetUnits(Unit::Self, IsArmy(bot.Observation()));

@@ -18,9 +18,10 @@ class Bot : public sc2::Agent {
    std::vector<UNIT_TYPEID> siege_tank_types = { UNIT_TYPEID::TERRAN_SIEGETANK, UNIT_TYPEID::TERRAN_SIEGETANKSIEGED };
    std::vector<UNIT_TYPEID> viking_types = { UNIT_TYPEID::TERRAN_VIKINGASSAULT, UNIT_TYPEID::TERRAN_VIKINGFIGHTER };
    std::vector<UNIT_TYPEID> hellion_types = { UNIT_TYPEID::TERRAN_HELLION, UNIT_TYPEID::TERRAN_HELLIONTANK };
+   std::vector<UNIT_TYPEID> production_types = { UNIT_TYPEID::TERRAN_BARRACKS, UNIT_TYPEID::TERRAN_FACTORY, UNIT_TYPEID::TERRAN_STARPORT};
 
 
-    int max_worker_count_ = 75;
+    int max_worker_count_ = 73;
     sc2::GameInfo game_info_;
     std::vector<sc2::Point3D> expansions_;
     sc2::Point3D startLocation_;

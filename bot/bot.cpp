@@ -71,7 +71,7 @@ void Bot::OnGameStart() {
             },
         },
         new SequenceNode{
-            new HasUnit(UNIT_TYPEID::TERRAN_MARINE, 30),
+            new HasUnit(UNIT_TYPEID::TERRAN_MARINE, 20),
             new SimpleAttackMove()
         },
         new AssignHarvesters(UNIT_TYPEID::TERRAN_SCV, ABILITY_ID::HARVEST_GATHER, UNIT_TYPEID::TERRAN_REFINERY),
