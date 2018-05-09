@@ -12,7 +12,15 @@ void Bot::OnGameStart() {
     expansions_ = search::CalculateExpansionLocations(Observation(), Query());
     startLocation_ = Observation()->GetStartLocation();
     staging_location_ = startLocation_;
-
+    size_t size = game_info_.placement_grid.data.size(); //Placementgrid 0 == pathing grid 1
+    std::vector<int> diff((size));
+    for(int i= 0; i < size; ++i){
+        if(game_info_.placement_grid.data[i] == 0 && game_info_.pathing_grid.data[i] == 0){  //game_info_.pathing_grid.data[i] == -1 for obstacles
+            bot.Debug()->DebugSphereOut(Point3D((i)%game_info_.width, game_info_.height-i/game_info_.width, startLocation_.z), 0.5, Colors::Purple);
+            diff[i] = 1;
+        }
+    }
+    bot.Debug()->SendDebug();
     tree = unique_ptr<TreeNode>(new ParallelNode{
         new SelectorNode{
             new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY),
@@ -86,5 +94,5 @@ void Bot::OnGameStart() {
 }
 
 void Bot::OnStep() {
-    tree->Tick();
+   tree->Tick();
 }
