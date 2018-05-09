@@ -16,7 +16,7 @@ void Bot::OnGameStart() {
     std::vector<int> diff((size));
     for(int i= 0; i < size; ++i){
         if(game_info_.placement_grid.data[i] == 0 && game_info_.pathing_grid.data[i] == 0){  //game_info_.pathing_grid.data[i] == -1 for obstacles
-            bot.Debug()->DebugSphereOut(Point3D((i)%game_info_.width, game_info_.height-i/game_info_.width, startLocation_.z), 0.5, Colors::Purple);
+            bot.Debug()->DebugSphereOut(Point3D((i)%game_info_.width+0.5, game_info_.height-i/game_info_.width-0.5, startLocation_.z), 0.5, Colors::Purple);
             diff[i] = 1;
         }
     }
@@ -94,5 +94,5 @@ void Bot::OnGameStart() {
 }
 
 void Bot::OnStep() {
-   tree->Tick();
+   //tree->Tick();
 }
