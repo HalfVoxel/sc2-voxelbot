@@ -27,6 +27,9 @@ class Bot : public sc2::Agent {
     sc2::Point3D startLocation_;
     sc2::Point3D staging_location_;
     void OnGameStart() override final;
+    int GetPositionIndex(int x, int y);
+    Point2D GetMapCoordinate(int i);
+    int ManhattanDistance(Point2D p1, Point2D p2);
     void OnStep() override final;
     // void OnUnitDestroyed(const sc2::Unit* unit) override;
 

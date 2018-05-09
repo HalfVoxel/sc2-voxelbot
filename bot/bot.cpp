@@ -1,6 +1,7 @@
 #include "Bot.h"
 #include "UnitNodes.h"
 #include "sc2lib/sc2_lib.h"
+#include <cmath>        
 using namespace BOT;
 using namespace std;
 using namespace sc2;
@@ -14,12 +15,27 @@ void Bot::OnGameStart() {
     staging_location_ = startLocation_;
     size_t size = game_info_.placement_grid.data.size(); //Placementgrid 0 == pathing grid 1
     std::vector<int> diff((size));
-    for(int i= 0; i < size; ++i){
-        if(game_info_.placement_grid.data[i] == 0 && game_info_.pathing_grid.data[i] == 0){  //game_info_.pathing_grid.data[i] == -1 for obstacles
-            bot.Debug()->DebugSphereOut(Point3D((i)%game_info_.width+0.5, game_info_.height-i/game_info_.width-0.5, startLocation_.z), 0.5, Colors::Purple);
+    for (int i = 0; i < size; ++i) {
+        if (game_info_.placement_grid.data[i] == 0 && game_info_.pathing_grid.data[i] == 0) {
             diff[i] = 1;
+            Point2D p = GetMapCoordinate(i);
+            bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z), 0.5, Colors::Red);
         }
     }
+    for (int depth = 1; depth < 4; ++depth) {
+        for (int i = 0; i < size; ++i) {
+            if (diff[i] == depth) {
+                for (int j = 0; j < size; ++j) {
+                    Point2D p = GetMapCoordinate(j);
+                    if (ManhattanDistance(GetMapCoordinate(i), p) == 1 && game_info_.placement_grid.data[j] != 0) {
+                        bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z), 0.5, Colors::Blue);
+                        diff[j] = depth + 1;
+                    }
+                }
+            }
+        }
+    }
+   
     bot.Debug()->SendDebug();
     tree = unique_ptr<TreeNode>(new ParallelNode{
         new SelectorNode{
@@ -82,7 +98,8 @@ void Bot::OnGameStart() {
             new HasUnit(UNIT_TYPEID::TERRAN_MARINE, 20),
             new SimpleAttackMove()
         },
-        new AssignHarvesters(UNIT_TYPEID::TERRAN_SCV, ABILITY_ID::HARVEST_GATHER, UNIT_TYPEID::TERRAN_REFINERY),
+        new AssignHarvesters(UNIT_TYPEID::TERRAN_SCV, ABILITY_ID::HARVEST_GATHER,
+                             UNIT_TYPEID::TERRAN_REFINERY),
         new SequenceNode{
             new HasUnit(UNIT_TYPEID::TERRAN_COMMANDCENTER, 2),
             new BuildUnit(UNIT_TYPEID::TERRAN_MARAUDER),
@@ -93,6 +110,18 @@ void Bot::OnGameStart() {
     });
 }
 
+int Bot::GetPositionIndex(int x, int y) {
+    return x + game_info_.width * (game_info_.height-y);
+}
+
+Point2D Bot::GetMapCoordinate(int i){
+    return Point2D(i % game_info_.width, game_info_.height - i / game_info_.width);
+}
+
+int Bot::ManhattanDistance(Point2D p1, Point2D p2) {
+    return std::abs(p1.x - p2.x) + std::abs(p1.y - p2.y);
+}
+
 void Bot::OnStep() {
-   tree->Tick();
+    tree->Tick();
 }
