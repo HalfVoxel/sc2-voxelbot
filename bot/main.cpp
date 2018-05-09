@@ -8,6 +8,15 @@
 using namespace sc2;
 using namespace BOT;
 
+const char* kMapBelShirVestigeLE = "Ladder/(2)Bel'ShirVestigeLE (Void).SC2Map";
+const char* AcidPlantLE = "Ladder/AcidPlantLE.SC2Map";
+const char* AbiogenesisLE = "Ladder/AbiogenesisLE.SC2Map";
+const char* BlackwaterLE = "Ladder/BackwaterLE.SC2Map";
+const char* CatalystLE = "Ladder/CatalystLE.SC2Map";
+const char* NeonVioletSquareLE = "Ladder/NeonVioletSquareLE.SC2Map";
+
+
+
 int main(int argc, char* argv[]) {
     Coordinator coordinator;
     if (!coordinator.LoadSettings(argc, argv)) {
@@ -27,7 +36,7 @@ int main(int argc, char* argv[]) {
     bool do_break = false;
 
     for (; !do_break;) {
-        coordinator.StartGame(kMapBelShirVestigeLE);
+        coordinator.StartGame(CatalystLE);
 
         while (coordinator.Update() && !do_break) {
             if (PollKeyPress()) {

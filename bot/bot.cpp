@@ -22,16 +22,13 @@ void Bot::OnGameStart() {
             bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z), 0.5, Colors::Red);
         }
     }
-    for (int depth = 1; depth < 2; ++depth) {
-        for (int i = 0; i < size; ++i) {
-            if (diff[i] == depth) {
-                for (int j = 0; j < size; ++j) {
-                    Point2D p = GetMapCoordinate(j);
-                    if (Distance2D(GetMapCoordinate(i),p) == 2 && game_info_.placement_grid.data[j] != 0) {
-                        bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z), 0.5, Colors::Blue);
-                        diff[j] = depth + 1;
-                    }
-                }
+
+    for (int i = 0; i < size; ++i) {
+        for (int j = 0; j < size; ++j) {
+            Point2D p = GetMapCoordinate(j);
+            if (ManhattanDistance(GetMapCoordinate(i),p) <= 3 && game_info_.placement_grid.data[j] != 0) {
+                bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z), 0.5, Colors::Blue);
+                diff[j] = 2;
             }
         }
     }
