@@ -94,5 +94,5 @@ void Bot::OnGameStart() {
 }
 
 void Bot::OnStep() {
-   //tree->Tick();
+   tree->Tick();
 }
