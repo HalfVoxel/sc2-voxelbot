@@ -23,15 +23,16 @@ void Bot::OnGameStart() {
         }
     }
 
+    int start_index = GetPositionIndex(staging_location_.x, staging_location_.y);
     for (int i = 0; i < size; ++i) {
         if (diff[i] == 1) {
             for (int j = 0; j < size; ++j) {
                 Point2D p = GetMapCoordinate(j);
-                if (Distance2D(GetMapCoordinate(i), p) <= 2 && game_info_.placement_grid.data[j] !=
-                    0) {
-                    bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z),
-                                                0.5, Colors::Blue);
-                    diff[j] = 2;
+                if (Distance2D(GetMapCoordinate(i), p) <= 2 && game_info_.placement_grid.data[j] != 0) {
+                    if (game_info_.terrain_height.data[j] == game_info_.terrain_height.data[start_index]) {
+                        bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z), 0.5, Colors::Blue);
+                        diff[j] = 2;
+                    }
                 }
             }
         }
