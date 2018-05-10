@@ -9,10 +9,10 @@ using namespace sc2;
 using namespace BOT;
 
 const char* BelShirVestigeLE = "Ladder/(2)Bel'ShirVestigeLE (Void).SC2Map";
-const char* AcidPlantLE = "Ladder/AcidPlantLE.SC2Map";
-const char* AbiogenesisLE = "Ladder/AbiogenesisLE.SC2Map";
-const char* BlackwaterLE = "Ladder/BackwaterLE.SC2Map";
+const char* BackwaterLE = "Ladder/BackwaterLE.SC2Map";
+const char* BlackpinkLE = "Ladder/BlackpinkLE.SC2Map";
 const char* CatalystLE = "Ladder/CatalystLE.SC2Map";
+const char* EastwatchLE = "Ladder/EastwatchLE.SC2Map";
 const char* NeonVioletSquareLE = "Ladder/NeonVioletSquareLE.SC2Map";
 
 
@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
     bool do_break = false;
 
     for (; !do_break;) {
-        coordinator.StartGame(BlackwaterLE);
+        coordinator.StartGame(BlackpinkLE);
 
         while (coordinator.Update() && !do_break) {
             if (PollKeyPress()) {
