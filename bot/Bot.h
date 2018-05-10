@@ -19,6 +19,7 @@ class Bot : public sc2::Agent {
    std::vector<UNIT_TYPEID> viking_types = { UNIT_TYPEID::TERRAN_VIKINGASSAULT, UNIT_TYPEID::TERRAN_VIKINGFIGHTER };
    std::vector<UNIT_TYPEID> hellion_types = { UNIT_TYPEID::TERRAN_HELLION, UNIT_TYPEID::TERRAN_HELLIONTANK };
    std::vector<UNIT_TYPEID> production_types = { UNIT_TYPEID::TERRAN_BARRACKS, UNIT_TYPEID::TERRAN_FACTORY, UNIT_TYPEID::TERRAN_STARPORT};
+   std::vector<Point2D> wallPlacements;
 
 
     int max_worker_count_ = 73;
@@ -26,16 +27,19 @@ class Bot : public sc2::Agent {
     std::vector<sc2::Point3D> expansions_;
     sc2::Point3D startLocation_;
     sc2::Point3D staging_location_;
+    std::vector<Point2D>* FindWallPlacements(size_t size);
     void OnGameStart() override final;
     int GetPositionIndex(int x, int y);
     Point2D GetMapCoordinate(int i);
     int ManhattanDistance(Point2D p1, Point2D p2);
     void OnStep() override final;
-    // void OnUnitDestroyed(const sc2::Unit* unit) override;
+    // void OnUnitDestroyed(const sc2::Unit* unit) override
+    Point2D * Rotate(Point2D p, float degrees);
 
    private:
     std::unique_ptr<TreeNode> tree;
 };
+
 
 };  // namespace BOT
 
