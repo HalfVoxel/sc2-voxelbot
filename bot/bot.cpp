@@ -16,7 +16,7 @@ void Bot::OnGameStart() {
     startLocation_ = Observation()->GetStartLocation();
     staging_location_ = startLocation_;
     size_t size = game_info_.placement_grid.data.size(); //Placementgrid 0 == pathing grid 1
-   
+
     wallPlacements = *FindWallPlacements(size);
     tree = unique_ptr<TreeNode>(new ParallelNode{
         new SelectorNode{
@@ -91,6 +91,10 @@ void Bot::OnGameStart() {
     });
 }
 
+void Bot::OnStep() {
+    tree->Tick();
+}
+
 int Bot::GetPositionIndex(int x, int y) {
     return x + game_info_.width * (game_info_.height - y);
 }
@@ -103,16 +107,6 @@ int Bot::ManhattanDistance(Point2D p1, Point2D p2) {
     return std::abs(p1.x - p2.x) + std::abs(p1.y - p2.y);
 }
 
-void Bot::OnStep() {
-    Units units = bot.Observation()->GetUnits(Unit::Alliance::Self);
-    for (const auto& unit : units) {
-        bot.Debug()->DebugSphereOut(Point3D(unit->pos.x + 0.5, unit->pos.y - 0.5, startLocation_.z),
-                                    0.5, Colors::Green);
-    }
-    //  bot.Debug()->SendDebug();
-    tree->Tick();
-}
-
 
 std::vector<Point2D>* Bot::FindWallPlacements(size_t size) {
     std::vector<Point2D>* placements = new std::vector<Point2D>();
@@ -121,7 +115,7 @@ std::vector<Point2D>* Bot::FindWallPlacements(size_t size) {
         if (game_info_.placement_grid.data[i] == 0 && game_info_.pathing_grid.data[i] == 0) {
             diff[i] = 1;
             Point2D p = GetMapCoordinate(i);
-            bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z), 0.5,Colors::Red);
+            bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z), 0.5, Colors::Red);
         }
     }
 
@@ -132,9 +126,10 @@ std::vector<Point2D>* Bot::FindWallPlacements(size_t size) {
         if (diff[i] == 1) {
             for (int j = 0; j < size; ++j) {
                 Point2D p = GetMapCoordinate(j);
-                if (Distance2D(GetMapCoordinate(i), p) <= 2 && game_info_.placement_grid.data[j] != 0) {
+                if (Distance2D(GetMapCoordinate(i), p) <= 2 && game_info_.placement_grid.data[j] !=0) {
                     if (game_info_.terrain_height.data[j] == game_info_.terrain_height.data[start_index] && Distance2D(p, start2D) < mapHeuristic / 2) {
-                        bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z), 0.5, Colors::Blue);
+                        bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z),
+                                                    0.5, Colors::Blue);
                         diff[j] = 2;
                     }
                 }
@@ -145,7 +140,8 @@ std::vector<Point2D>* Bot::FindWallPlacements(size_t size) {
     for (int i = 0; i < size; ++i) {
         if (diff[i] == 2) {
             Point2D p = GetMapCoordinate(i);
-            if (diff[GetPositionIndex(p.x - 1, p.y)] == 2 && diff[GetPositionIndex(p.x - 1, p.y + 1)] == 2 && diff[GetPositionIndex(p.x, p.y + 1)] == 2) {
+            if (diff[GetPositionIndex(p.x - 1, p.y)] == 2 && diff[GetPositionIndex(p.x - 1, p.y + 1)
+                ] == 2 && diff[GetPositionIndex(p.x, p.y + 1)] == 2) {
                 bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z), 0.5, Colors::Green);
                 placements->push_back(p);
             }
@@ -154,17 +150,20 @@ std::vector<Point2D>* Bot::FindWallPlacements(size_t size) {
     vector<Point2D>::value_type vec = (placements->at(1) - placements->at(0));
     vector<Point2D>::value_type point2_d = *Rotate(vec, 90);
     Normalize2D(point2_d);
-    Point2D newPoint = placements->at(0) + vec / 2 + point2_d * 1.5;
-    if(!bot.Query()->Placement(ABILITY_ID::BUILD_BARRACKS, newPoint)){
-        newPoint -= point2_d * 3;
-    } 
-    bot.Debug()->DebugSphereOut(Point3D(newPoint.x + 0.5, newPoint.y - 0.5, startLocation_.z), 0.5, Colors::Green);
+    point2_d *= 1.5;
+    Point2D newPoint = placements->at(0) + vec / 2 + point2_d;
+    if (!bot.Query()->Placement(ABILITY_ID::BUILD_BARRACKS, newPoint)) {
+        newPoint -= point2_d * 2;
+    }
+    bot.Debug()->DebugSphereOut(Point3D(newPoint.x + 0.5, newPoint.y - 0.5, startLocation_.z), 0.5,
+                                Colors::Green);
     bot.Debug()->SendDebug();
     placements->push_back(Point2D(newPoint.x + 0.5, newPoint.y - 0.5));
     return placements;
 }
 
-Point2D* Bot::Rotate(Point2D p, float degrees){
+Point2D* Bot::Rotate(Point2D p, float degrees) {
     degrees = degrees * 3.14159265358979323846 / 180;
-    return new Point2D(p.x * cos(degrees) - p.y * sin(degrees),  p.x * sin(degrees) + p.y * cos(degrees));
+    return new Point2D(p.x * cos(degrees) - p.y * sin(degrees),
+                       p.x * sin(degrees) + p.y * cos(degrees));
 }
