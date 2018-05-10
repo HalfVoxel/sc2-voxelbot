@@ -48,7 +48,7 @@ Status BuildUnit::OnTick() {
        
         bool hasReactor = false;
         if (observation->GetUnit(unit->add_on_tag) != nullptr) {
-            const UnitTypeID addonType = observation->GetUnit(unit->add_on_tag)->unit_type;
+            UNIT_TYPEID addonType = observation->GetUnit(unit->add_on_tag)->unit_type.ToType();
             hasReactor = (addonType == UNIT_TYPEID::TERRAN_BARRACKSREACTOR ||
                           addonType == UNIT_TYPEID::TERRAN_STARPORTREACTOR ||
                           addonType == UNIT_TYPEID::TERRAN_FACTORYREACTOR);
@@ -58,7 +58,11 @@ Status BuildUnit::OnTick() {
             continue;
         }
 
-        if (unit->build_progress != 1 && hasReactor && unit->orders.size() > 1) {
+        if (unit->build_progress != 1) {
+            continue;
+        }
+
+        if(hasReactor && unit->orders.size() > 1){
             continue;
         }
 
@@ -188,8 +192,8 @@ Status HasUnit::OnTick() {
 
 Status ShouldBuildSupply::OnTick() {
     auto observation = bot.Observation();
-    int productionModifier = bot.Observation()->GetUnits(Unit::Alliance::Self, IsUnits(bot.production_types)).size() * 1.5;
-    return observation->GetFoodUsed() >= observation->GetFoodCap() - (4 + productionModifier ) ? Success : Failure;
+    int productionModifier = bot.Observation()->GetUnits(Unit::Alliance::Self, IsUnits(bot.production_types)).size() * 2;
+    return observation->GetFoodUsed() >= observation->GetFoodCap() - (2 + productionModifier ) ? Success : Failure;
 }
 
 Status ShouldExpand::OnTick() {    
