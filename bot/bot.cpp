@@ -15,7 +15,7 @@ void Bot::OnGameStart() {
     expansions_ = search::CalculateExpansionLocations(Observation(), Query());
     startLocation_ = Observation()->GetStartLocation();
     staging_location_ = startLocation_;
-    size_t size = game_info_.placement_grid.data.size(); //Placementgrid 0 == pathing grid 1
+    size_t size = game_info_.placement_grid.data.size(); 
 
     wallPlacements = *FindWallPlacements(size);
     tree = unique_ptr<TreeNode>(new ParallelNode{
@@ -126,10 +126,9 @@ std::vector<Point2D>* Bot::FindWallPlacements(size_t size) {
         if (diff[i] == 1) {
             for (int j = 0; j < size; ++j) {
                 Point2D p = GetMapCoordinate(j);
-                if (Distance2D(GetMapCoordinate(i), p) <= 2 && game_info_.placement_grid.data[j] !=0) {
-                    if (game_info_.terrain_height.data[j] == game_info_.terrain_height.data[start_index] && Distance2D(p, start2D) < mapHeuristic / 2) {
-                        bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z),
-                                                    0.5, Colors::Blue);
+                if (Distance2D(GetMapCoordinate(i), p) <= 2 && game_info_.pathing_grid.data[j] ==0 && diff[j] == 0) {
+                    if (abs(game_info_.terrain_height.data[j] - game_info_.terrain_height.data[start_index]) < 2 && Distance2D(p, start2D) < mapHeuristic / 4) { //Height filter messes up on some maps: 
+                        bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z),0.5, Colors::Blue);
                         diff[j] = 2;
                     }
                 }
@@ -147,18 +146,21 @@ std::vector<Point2D>* Bot::FindWallPlacements(size_t size) {
             }
         }
     }
-    vector<Point2D>::value_type vec = (placements->at(1) - placements->at(0));
-    vector<Point2D>::value_type point2_d = *Rotate(vec, 90);
-    Normalize2D(point2_d);
-    point2_d *= 1.5;
-    Point2D newPoint = placements->at(0) + vec / 2 + point2_d;
-    if (!bot.Query()->Placement(ABILITY_ID::BUILD_BARRACKS, newPoint)) {
-        newPoint -= point2_d * 2;
+    if (placements->size() == 2) {
+        vector<Point2D>::value_type vec = (placements->at(1) - placements->at(0));
+        vector<Point2D>::value_type point2_d = *Rotate(vec, 90);
+        Normalize2D(point2_d);
+        point2_d *= 1.5;
+        Point2D newPoint = placements->at(0) + vec / 2 + point2_d;
+        if (!bot.Query()->Placement(ABILITY_ID::BUILD_BARRACKS, newPoint)) {
+            newPoint -= point2_d * 2;
+        }
+        bot.Debug()->DebugSphereOut(Point3D(newPoint.x + 0.5, newPoint.y - 0.5, startLocation_.z), 0.5,
+                                    Colors::Green);
+
+        placements->push_back(Point2D(newPoint.x + 0.5, newPoint.y - 0.5));
     }
-    bot.Debug()->DebugSphereOut(Point3D(newPoint.x + 0.5, newPoint.y - 0.5, startLocation_.z), 0.5,
-                                Colors::Green);
     bot.Debug()->SendDebug();
-    placements->push_back(Point2D(newPoint.x + 0.5, newPoint.y - 0.5));
     return placements;
 }
 
