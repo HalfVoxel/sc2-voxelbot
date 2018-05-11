@@ -16,9 +16,9 @@ void Bot::OnGameStart() {
     expansions_ = search::CalculateExpansionLocations(Observation(), Query());
     startLocation_ = Observation()->GetStartLocation();
     staging_location_ = startLocation_;
-
     buildingPlacement.OnGameStart();
 
+    tactical_manager = new TacticalManager(buildingPlacement.wallPlacement);
     tree = unique_ptr<TreeNode>(new ParallelNode{
         new SequenceNode{
             new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY),
@@ -96,6 +96,7 @@ void Bot::OnGameStart() {
 
     armyTree = unique_ptr<TreeNode>(new ParallelNode{
         new ControlSupplyDepots(),
+        new SimpleArmyPosition(),
         new SequenceNode{
             new HasUnit(UNIT_TYPEID::TERRAN_MARINE, 40),
             new SimpleAttackMove()
@@ -107,11 +108,31 @@ void Bot::OnStep() {
     tree->Tick();
     armyTree->Tick();
 
-    Units units = Observation()->GetUnits(Unit::Alliance::Self);
+  /*  Units units = Observation()->GetUnits(Unit::Alliance::Self);
     for (auto unit : units) {
         Debug()->DebugSphereOut(unit->pos, 0.5, Colors::Green);
     }
-    Debug()->SendDebug();
+    Debug()->SendDebug();*/
+}
+
+void Bot::OnUnitDestroyed(const Unit* unit) {
+    tactical_manager->OnUnitDestroyed(unit);
+}
+
+void Bot::OnUnitCreated(const Unit* unit) {
+    tactical_manager->OnUnitCreated(unit);
+}
+
+void Bot::OnNydusDetected() {
+    tactical_manager->OnNydusDetected();
+}
+
+void Bot::OnNuclearLaunchDetected() {
+    tactical_manager->OnNuclearLaunchDetected();
+}
+
+void Bot::OnUnitEnterVision(const Unit* unit) {
+    tactical_manager->OnUnitEnterVision(unit);
 }
 
 int Bot::GetPositionIndex(int x, int y) {

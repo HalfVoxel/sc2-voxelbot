@@ -4,6 +4,7 @@
 #include "sc2api/sc2_interfaces.h"
 #include "sc2api/sc2_map_info.h"
 #include "BuildingPlacement.h"
+#include "TacticalManager.h"
 
 namespace BOT {
 
@@ -22,22 +23,7 @@ public:
     std::vector<UNIT_TYPEID> supply_depot_types = {
         UNIT_TYPEID::TERRAN_SUPPLYDEPOT, UNIT_TYPEID::TERRAN_SUPPLYDEPOTLOWERED
     };
-    std::vector<UNIT_TYPEID> bio_types = {
-        UNIT_TYPEID::TERRAN_MARINE, UNIT_TYPEID::TERRAN_MARAUDER, UNIT_TYPEID::TERRAN_GHOST,
-        UNIT_TYPEID::TERRAN_REAPER /*reaper*/
-    };
-    std::vector<UNIT_TYPEID> widow_mine_types = {
-        UNIT_TYPEID::TERRAN_WIDOWMINE, UNIT_TYPEID::TERRAN_WIDOWMINEBURROWED
-    };
-    std::vector<UNIT_TYPEID> siege_tank_types = {
-        UNIT_TYPEID::TERRAN_SIEGETANK, UNIT_TYPEID::TERRAN_SIEGETANKSIEGED
-    };
-    std::vector<UNIT_TYPEID> viking_types = {
-        UNIT_TYPEID::TERRAN_VIKINGASSAULT, UNIT_TYPEID::TERRAN_VIKINGFIGHTER
-    };
-    std::vector<UNIT_TYPEID> hellion_types = {
-        UNIT_TYPEID::TERRAN_HELLION, UNIT_TYPEID::TERRAN_HELLIONTANK
-    };
+   
     std::vector<UNIT_TYPEID> production_types = {
         UNIT_TYPEID::TERRAN_COMMANDCENTER, UNIT_TYPEID::TERRAN_BARRACKS,
         UNIT_TYPEID::TERRAN_FACTORY, UNIT_TYPEID::TERRAN_STARPORT
@@ -45,6 +31,7 @@ public:
     std::vector<Point2D> wallPlacements;
 
 
+    TacticalManager* tactical_manager;
     int max_worker_count_ = 73;
     sc2::GameInfo game_info_;
     std::vector<sc2::Point3D> expansions_;
@@ -52,14 +39,25 @@ public:
     sc2::Point3D staging_location_;
     BuildingPlacement buildingPlacement;
     std::vector<Point2D>* FindWallPlacements(size_t size);
-    void OnGameStart() override final;
+    
     int GetPositionIndex(int x, int y);
     Point2D GetMapCoordinate(int i);
     int ManhattanDistance(Point2D p1, Point2D p2);
-    void OnStep() override final;
-    // void OnUnitDestroyed(const sc2::Unit* unit) override
-    Point2D* Rotate(Point2D p, float degrees);
+    void OnGameStart() override final;
 
+    void OnStep() override final;
+
+    void OnUnitDestroyed(const Unit* unit) override final;
+
+    void OnUnitCreated(const Unit* unit) override final;
+
+    void OnNydusDetected() override;
+
+    void OnNuclearLaunchDetected() override final;
+
+    void OnUnitEnterVision(const Unit* unit) override final;
+
+    Point2D* Rotate(Point2D p, float degrees);
 private:
     std::unique_ptr<TreeNode> tree;
 

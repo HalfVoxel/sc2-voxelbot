@@ -328,8 +328,7 @@ BOT::Status Expand::OnTick() {
     Status place_building = PlaceBuilding(unitType, closest_expansion, true);
     //only update staging location up till 3 bases.
     if (place_building == Status::Success && observation->GetUnits(Unit::Self, IsTownHall()).size() < 4) {
-        bot.staging_location_ = Point3D(((bot.staging_location_.x + closest_expansion.x) / 2), ((bot.staging_location_.y + closest_expansion.y) / 2),
-            ((bot.staging_location_.z + closest_expansion.z) / 2));
+        bot.staging_location_ = closest_expansion;
     }
     return place_building;
 }

@@ -12,13 +12,13 @@ Point2D Rotate(Point2D p, float degrees) {
 }
 
 void BuildingPlacement::OnGameStart() {
-    FindWallPlacements(bot.startLocation_, bot.staging_location_);
+    FindWallPlacements(bot.startLocation_);
 }
 
 void BuildingPlacement::OnStep() {
 
 }
-void BuildingPlacement::FindWallPlacements(Point3D startLocation_, Point3D staging_location_) {
+void BuildingPlacement::FindWallPlacements(Point3D startLocation_) {
     auto& game_info_ = bot.game_info_;
     size_t size = game_info_.placement_grid.data.size();
     vector<int> diff(size);
@@ -32,7 +32,7 @@ void BuildingPlacement::FindWallPlacements(Point3D startLocation_, Point3D stagi
     }
 
     int mapHeuristic = game_info_.height;
-    int start_index = bot.GetPositionIndex(staging_location_.x, staging_location_.y);
+    int start_index = bot.GetPositionIndex(startLocation_.x, startLocation_.y);
     Point2D start2D = Point2D(startLocation_.x, startLocation_.y);
     for (int i = 0; i < size; ++i) {
         if (diff[i] == 1) {
@@ -61,7 +61,6 @@ void BuildingPlacement::FindWallPlacements(Point3D startLocation_, Point3D stagi
         }
     }
 
-
     if (supplyDepotPositions.size() == 2) {
         Point2D vec = (supplyDepotPositions.at(1) - supplyDepotPositions.at(0));
         Point2D point2_d = Rotate(vec, 90);
@@ -73,7 +72,7 @@ void BuildingPlacement::FindWallPlacements(Point3D startLocation_, Point3D stagi
         }
         Point2D p(newPoint.x, newPoint.y);
         bot.Debug()->DebugSphereOut(Point3D(p.x, p.y, startLocation_.z), 0.5, Colors::Green);
-
+        wallPlacement = p;
         locationQueues[UNIT_TYPEID::TERRAN_BARRACKS].push_back(p);
     }
     bot.Debug()->SendDebug();

@@ -24,12 +24,20 @@ BOT::Status ControlSupplyDepots::OnTick() { //Just so we dont get stuck in base.
         }
     }
 
-
     return Success;
 }
 
-
-
+BOT::Status SimpleArmyPosition::OnTick() {
+    Point2D preferred_army_position = bot.tactical_manager->GetPreferredArmyPosition();
+    for(auto const& unit : bot.Observation()->GetUnits(Unit::Self, IsArmy(bot.Observation()))){
+        Point2D p = Point2D(unit->pos.x, unit->pos.y);
+        if(Distance2D(preferred_army_position, p) > 3 && unit->orders.size() == 0){
+            bot.Actions()->UnitCommand(unit, ABILITY_ID::SMART, preferred_army_position);
+            return Success;
+        }
+    }
+    return Success;
+}
 
 int tick = 0;
 BOT::Status SimpleAttackMove::OnTick() {
@@ -50,4 +58,10 @@ BOT::Status SimpleAttackMove::OnTick() {
         bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, target_pos);
     }
     return Success;
+}
+
+BOT::Status IsUnderAttack::OnTick() {
+    for (auto const& unit : bot.Observation()->GetUnits(Unit::Self)) {
+       
+    }
 }
