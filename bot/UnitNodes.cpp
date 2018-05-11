@@ -201,10 +201,14 @@ Status ShouldBuildSupply::OnTick() {
 
     int expectedAdditionalSupply = 0;
     const int SUPPLY_DEPOT_SUPPLY = 8;
+    const int COMMAND_CENTER_SUPPLY = 16;
     for (auto unit : bot.Observation()->GetUnits(Unit::Alliance::Self)) {
         for (auto order : unit->orders) {
             if (order.ability_id == ABILITY_ID::BUILD_SUPPLYDEPOT) {
                 expectedAdditionalSupply += SUPPLY_DEPOT_SUPPLY;
+            }
+            if (order.ability_id == ABILITY_ID::BUILD_COMMANDCENTER) {
+                expectedAdditionalSupply += COMMAND_CENTER_SUPPLY;
             }
         }
     }
@@ -218,6 +222,15 @@ Status ShouldBuildSupply::OnTick() {
 
 Status ShouldExpand::OnTick() {    
     const ObservationInterface* observation = bot.Observation();
+    int commsBuilding = 0;
+    for (auto unit : bot.Observation()->GetUnits(Unit::Alliance::Self)) {
+        for (auto order : unit->orders) {
+            if (order.ability_id == ABILITY_ID::BUILD_COMMANDCENTER) {
+                commsBuilding += 1;
+            }
+        }
+    }
+
     Units bases = observation->GetUnits(Unit::Alliance::Self, IsTownHall());
     //Don't have more active bases than we can provide workers for
     if (GetExpectedWorkers(gasType) > bot.max_worker_count_) {
@@ -226,11 +239,11 @@ Status ShouldExpand::OnTick() {
 
     // If we have extra workers around, try and build another Hatch.
     if (GetExpectedWorkers(gasType) < observation->GetFoodWorkers() - 10) {
-        return Status::Success; 
+        return commsBuilding == 0 ? Status::Success : Failure; 
     }
     //Only build another Hatch if we are floating extra minerals
     if (observation->GetMinerals() > std::min<size_t>(bases.size() * 400, 1200)) {
-        return Status::Success; 
+        return commsBuilding == 0 ? Status::Success : Failure;
     }
 
     return Status::Failure;

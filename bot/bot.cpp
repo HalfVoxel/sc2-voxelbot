@@ -19,7 +19,7 @@ void Bot::OnGameStart() {
     buildingPlacement.OnGameStart();
 
     tree = unique_ptr<TreeNode>(new ParallelNode{
-        new SelectorNode{
+        new SequenceNode{
             new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY),
             new Expand(UNIT_TYPEID::TERRAN_COMMANDCENTER)
         },
@@ -82,12 +82,19 @@ void Bot::OnGameStart() {
         new AssignHarvesters(UNIT_TYPEID::TERRAN_SCV, ABILITY_ID::HARVEST_GATHER,
                              UNIT_TYPEID::TERRAN_REFINERY),
         new SequenceNode{
-            new HasUnit(UNIT_TYPEID::TERRAN_COMMANDCENTER, 2),
-            new BuildUnit(UNIT_TYPEID::TERRAN_MARAUDER),
-            new BuildUnit(UNIT_TYPEID::TERRAN_MEDIVAC),
-            new BuildUnit(UNIT_TYPEID::TERRAN_SIEGETANK)
+            new Not(new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY)),
+            new SequenceNode{
+                new HasUnit(UNIT_TYPEID::TERRAN_COMMANDCENTER, 2),
+                new BuildUnit(UNIT_TYPEID::TERRAN_MARAUDER),
+                new BuildUnit(UNIT_TYPEID::TERRAN_MEDIVAC),
+                new BuildUnit(UNIT_TYPEID::TERRAN_SIEGETANK)
+            }
+
         },
-        new BuildUnit(UNIT_TYPEID::TERRAN_MARINE)
+        new SequenceNode{
+            new Not(new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY)),
+            new BuildUnit(UNIT_TYPEID::TERRAN_MARINE)
+        }
     });
 }
 
