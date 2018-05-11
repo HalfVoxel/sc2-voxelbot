@@ -3,6 +3,7 @@
 #include "sc2lib/sc2_lib.h"
 #include <cmath>
 #include <iostream>
+#include "TacticalNodes.h"
 using namespace BOT;
 using namespace std;
 using namespace sc2;
@@ -96,10 +97,15 @@ void Bot::OnGameStart() {
             new BuildUnit(UNIT_TYPEID::TERRAN_MARINE)
         }
     });
+
+    armyTree = unique_ptr<TreeNode>(new ParallelNode{
+        new ControlSupplyDepots()
+    });
 }
 
 void Bot::OnStep() {
     tree->Tick();
+    armyTree->Tick();
 
     Units units = Observation()->GetUnits(Unit::Alliance::Self);
     for (auto unit : units) {
