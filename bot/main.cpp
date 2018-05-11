@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
     bool do_break = false;
 
     for (; !do_break;) {
-        coordinator.StartGame(CatalystLE);
+        coordinator.StartGame(BelShirVestigeLE);
 
         while (coordinator.Update() && !do_break) {
             if (PollKeyPress()) {

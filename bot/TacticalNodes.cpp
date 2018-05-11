@@ -61,7 +61,5 @@ BOT::Status SimpleAttackMove::OnTick() {
 }
 
 BOT::Status IsUnderAttack::OnTick() {
-    for (auto const& unit : bot.Observation()->GetUnits(Unit::Self)) {
-       
-    }
+    return Failure;
 }
