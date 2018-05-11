@@ -76,10 +76,6 @@ void Bot::OnGameStart() {
                 new BuildAddon(ABILITY_ID::BUILD_REACTOR_STARPORT, bot.starport_types)
             },
         },
-        new SequenceNode{
-            new HasUnit(UNIT_TYPEID::TERRAN_MARINE, 20),
-            new SimpleAttackMove()
-        },
         new AssignHarvesters(UNIT_TYPEID::TERRAN_SCV, ABILITY_ID::HARVEST_GATHER,
                              UNIT_TYPEID::TERRAN_REFINERY),
         new SequenceNode{
@@ -99,7 +95,11 @@ void Bot::OnGameStart() {
     });
 
     armyTree = unique_ptr<TreeNode>(new ParallelNode{
-        new ControlSupplyDepots()
+        new ControlSupplyDepots(),
+        new SequenceNode{
+            new HasUnit(UNIT_TYPEID::TERRAN_MARINE, 40),
+            new SimpleAttackMove()
+        },
     });
 }
 

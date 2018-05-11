@@ -6,3 +6,7 @@ class ControlSupplyDepots : public BOT::ActionNode {
 public:
     BOT::Status OnTick() override;
 };
+
+class SimpleAttackMove : public BOT::ActionNode {
+    BOT::Status OnTick() override;
+};

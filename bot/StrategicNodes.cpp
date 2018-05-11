@@ -385,23 +385,3 @@ BOT::Status BuildAddon::OnTick() {
     return Status::Failure;
 }
 
-int tick = 0;
-BOT::Status SimpleAttackMove::OnTick() {
-    tick++;
-    if ((tick % 100) != 0) return Running;
-
-    //If unit isn't doing anything make it attack.
-    Units units = bot.Observation()->GetUnits(Unit::Self, IsArmy(bot.Observation()));
-    auto game_info = bot.Observation()->GetGameInfo();
-    if (game_info.enemy_start_locations.empty()) {
-        return Failure;
-    }
-    auto target_pos = game_info.enemy_start_locations.front();
-
-    // Just add an attack order
-    // TODO: Might be queued
-    for (auto* unit : units) {
-        bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, target_pos);
-    }
-    return Success;
-}
