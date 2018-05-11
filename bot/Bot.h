@@ -3,6 +3,7 @@
 #include "sc2api/sc2_agent.h"
 #include "sc2api/sc2_interfaces.h"
 #include "sc2api/sc2_map_info.h"
+#include "BuildingPlacement.h"
 
 namespace BOT {
 
@@ -18,7 +19,7 @@ class Bot : public sc2::Agent {
    std::vector<UNIT_TYPEID> siege_tank_types = { UNIT_TYPEID::TERRAN_SIEGETANK, UNIT_TYPEID::TERRAN_SIEGETANKSIEGED };
    std::vector<UNIT_TYPEID> viking_types = { UNIT_TYPEID::TERRAN_VIKINGASSAULT, UNIT_TYPEID::TERRAN_VIKINGFIGHTER };
    std::vector<UNIT_TYPEID> hellion_types = { UNIT_TYPEID::TERRAN_HELLION, UNIT_TYPEID::TERRAN_HELLIONTANK };
-   std::vector<UNIT_TYPEID> production_types = { UNIT_TYPEID::TERRAN_BARRACKS, UNIT_TYPEID::TERRAN_FACTORY, UNIT_TYPEID::TERRAN_STARPORT};
+   std::vector<UNIT_TYPEID> production_types = { UNIT_TYPEID::TERRAN_COMMANDCENTER, UNIT_TYPEID::TERRAN_BARRACKS, UNIT_TYPEID::TERRAN_FACTORY, UNIT_TYPEID::TERRAN_STARPORT};
    std::vector<Point2D> wallPlacements;
 
 
@@ -27,6 +28,7 @@ class Bot : public sc2::Agent {
     std::vector<sc2::Point3D> expansions_;
     sc2::Point3D startLocation_;
     sc2::Point3D staging_location_;
+    BuildingPlacement buildingPlacement;
     std::vector<Point2D>* FindWallPlacements(size_t size);
     void OnGameStart() override final;
     int GetPositionIndex(int x, int y);

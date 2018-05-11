@@ -26,6 +26,7 @@ Status BuildUnit::OnTick() {
 
     // Figure out which ability is used to build the unit and which building/unit it is built from.
     const UnitTypeData& unitTypeData = observation->GetUnitTypeData(false)[unitType];
+
     auto abilityType = unitTypeData.ability_id;
     // Usually a building
     auto builderUnitType = abilityToUnit(unitTypeData.ability_id);
@@ -53,16 +54,12 @@ Status BuildUnit::OnTick() {
                           addonType == UNIT_TYPEID::TERRAN_STARPORTREACTOR ||
                           addonType == UNIT_TYPEID::TERRAN_FACTORYREACTOR);
         }
-            
-        if (!unit->orders.empty() && !hasReactor) {
-            continue;
-        }
 
         if (unit->build_progress != 1) {
             continue;
         }
 
-        if(hasReactor && unit->orders.size() > 1){
+        if(unit->orders.size() > (hasReactor ? 1 : 0)) {
             continue;
         }
 
@@ -78,6 +75,11 @@ Status BuildStructure::PlaceBuilding(UnitTypeID unitType, Point2D location, bool
     const ObservationInterface* observation = bot.Observation();
 
     const UnitTypeData& unitTypeData = observation->GetUnitTypeData(false)[unitType];
+
+    if (observation->GetMinerals() < unitTypeData.mineral_cost) {
+        return Status::Failure;
+    }
+
     auto ability = unitTypeData.ability_id;
     auto builderUnitType = abilityToUnit(unitTypeData.ability_id);
 
@@ -124,6 +126,11 @@ Status BuildStructure::PlaceBuilding(UnitTypeID unitType, Tag loc) {
     const ObservationInterface* observation = bot.Observation();
 
     const UnitTypeData& unitTypeData = observation->GetUnitTypeData(false)[unitType];
+
+    if (observation->GetMinerals() < unitTypeData.mineral_cost) {
+        return Status::Failure;
+    }
+
     auto ability = unitTypeData.ability_id;
     auto builderUnitType = abilityToUnit(unitTypeData.ability_id);
 
@@ -162,15 +169,9 @@ Status BuildStructure::PlaceBuilding(UnitTypeID unitType, Tag loc) {
             return Failure;
         }
     } else {
-        // Such random placement
-        float rx = GetRandomScalar();
-        float ry = GetRandomScalar();
+        auto p = bot.buildingPlacement.GetReasonablePlacement(unitType);
 
-        bot.Actions()->UnitCommand(builderUnit,
-                                   ability,
-                                   Point2D(builderUnit->pos.x + rx * 15.0f,
-                                           builderUnit->pos.y + ry * 15.0f));
-
+        bot.Actions()->UnitCommand(builderUnit, ability, p);
         return Status::Success;
     }
 }
@@ -192,8 +193,27 @@ Status HasUnit::OnTick() {
 
 Status ShouldBuildSupply::OnTick() {
     auto observation = bot.Observation();
-    int productionModifier = bot.Observation()->GetUnits(Unit::Alliance::Self, IsUnits(bot.production_types)).size() * 2;
-    return observation->GetFoodUsed() >= observation->GetFoodCap() - (2 + productionModifier ) ? Success : Failure;
+    double productionModifier = bot.Observation()->GetUnits(Unit::Alliance::Self, IsUnits(bot.production_types)).size() * 1.0;
+
+    for (auto unit : bot.Observation()->GetUnits(Unit::Alliance::Self, IsUnits(bot.production_types))) {
+        if (unit->orders.size() > 0) productionModifier += 1.5;
+    }
+
+    int expectedAdditionalSupply = 0;
+    const int SUPPLY_DEPOT_SUPPLY = 8;
+    for (auto unit : bot.Observation()->GetUnits(Unit::Alliance::Self)) {
+        for (auto order : unit->orders) {
+            if (order.ability_id == ABILITY_ID::BUILD_SUPPLYDEPOT) {
+                expectedAdditionalSupply += SUPPLY_DEPOT_SUPPLY;
+            }
+        }
+    }
+
+    int expectedCap = observation->GetFoodCap() + expectedAdditionalSupply;
+    if (expectedCap >= 200) return Failure;
+
+    double expectedUse = observation->GetFoodUsed() + 1 + productionModifier;
+    return expectedUse >= expectedCap ? Success : Failure;
 }
 
 Status ShouldExpand::OnTick() {    

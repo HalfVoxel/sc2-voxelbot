@@ -15,9 +15,9 @@ void Bot::OnGameStart() {
     expansions_ = search::CalculateExpansionLocations(Observation(), Query());
     startLocation_ = Observation()->GetStartLocation();
     staging_location_ = startLocation_;
-    size_t size = game_info_.placement_grid.data.size(); 
 
-    wallPlacements = *FindWallPlacements(size);
+    buildingPlacement.OnGameStart();
+
     tree = unique_ptr<TreeNode>(new ParallelNode{
         new SelectorNode{
             new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY),
@@ -93,6 +93,12 @@ void Bot::OnGameStart() {
 
 void Bot::OnStep() {
     tree->Tick();
+
+    Units units = Observation()->GetUnits(Unit::Alliance::Self);
+    for (auto unit : units) {
+        Debug()->DebugSphereOut(unit->pos, 0.5, Colors::Green);
+    }
+    Debug()->SendDebug();
 }
 
 int Bot::GetPositionIndex(int x, int y) {
@@ -108,64 +114,3 @@ int Bot::ManhattanDistance(Point2D p1, Point2D p2) {
 }
 
 
-std::vector<Point2D>* Bot::FindWallPlacements(size_t size) {
-    std::vector<Point2D>* placements = new std::vector<Point2D>();
-    std::vector<int> diff((size));
-    for (int i = 0; i < size; ++i) {
-        if (game_info_.placement_grid.data[i] == 0 && game_info_.pathing_grid.data[i] == 0) {
-            diff[i] = 1;
-            Point2D p = GetMapCoordinate(i);
-            bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z), 0.5, Colors::Red);
-        }
-    }
-
-    int mapHeuristic = game_info_.height;
-    int start_index = GetPositionIndex(staging_location_.x, staging_location_.y);
-    Point2D start2D = Point2D(startLocation_.x, startLocation_.y);
-    for (int i = 0; i < size; ++i) {
-        if (diff[i] == 1) {
-            for (int j = 0; j < size; ++j) {
-                Point2D p = GetMapCoordinate(j);
-                if (Distance2D(GetMapCoordinate(i), p) <= 2 && game_info_.pathing_grid.data[j] ==0 && diff[j] == 0) {
-                    if (abs(game_info_.terrain_height.data[j] - game_info_.terrain_height.data[start_index]) < 2 && Distance2D(p, start2D) < mapHeuristic / 4) { //Height filter messes up on some maps: 
-                        bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z),0.5, Colors::Blue);
-                        diff[j] = 2;
-                    }
-                }
-            }
-        }
-    }
-
-    for (int i = 0; i < size; ++i) {
-        if (diff[i] == 2) {
-            Point2D p = GetMapCoordinate(i);
-            if (diff[GetPositionIndex(p.x - 1, p.y)] == 2 && diff[GetPositionIndex(p.x - 1, p.y + 1)
-                ] == 2 && diff[GetPositionIndex(p.x, p.y + 1)] == 2) {
-                bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z), 0.5, Colors::Green);
-                placements->push_back(p);
-            }
-        }
-    }
-    if (placements->size() == 2) {
-        vector<Point2D>::value_type vec = (placements->at(1) - placements->at(0));
-        vector<Point2D>::value_type point2_d = *Rotate(vec, 90);
-        Normalize2D(point2_d);
-        point2_d *= 1.5;
-        Point2D newPoint = placements->at(0) + vec / 2 + point2_d;
-        if (!bot.Query()->Placement(ABILITY_ID::BUILD_BARRACKS, newPoint)) {
-            newPoint -= point2_d * 2;
-        }
-        bot.Debug()->DebugSphereOut(Point3D(newPoint.x + 0.5, newPoint.y - 0.5, startLocation_.z), 0.5,
-                                    Colors::Green);
-
-        placements->push_back(Point2D(newPoint.x + 0.5, newPoint.y - 0.5));
-    }
-    bot.Debug()->SendDebug();
-    return placements;
-}
-
-Point2D* Bot::Rotate(Point2D p, float degrees) {
-    degrees = degrees * 3.14159265358979323846 / 180;
-    return new Point2D(p.x * cos(degrees) - p.y * sin(degrees),
-                       p.x * sin(degrees) + p.y * cos(degrees));
-}
