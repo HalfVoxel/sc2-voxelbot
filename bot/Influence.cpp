@@ -220,12 +220,15 @@ void InfluenceMap::maxInfluenceMultiple(const vector<vector<double> >& influence
     }
 }
 
+vector<double> temporary_buffer;
 void InfluenceMap::propagateMax(double decay, double speed) {
     double factor = 1 - decay;
     // Diagonal decay
     double factor2 = pow(factor, 1.41);
 
-    vector<double> newWeights (weights.size());
+    temporary_buffer.resize(weights.size());
+    vector<double>& newWeights = temporary_buffer;
+
     for (int y = 0; y < h; y++) {
         weights[y*w+0] = weights[y*w+1];
         weights[y*w+w-1] = weights[y*w+w-2];
@@ -240,6 +243,7 @@ void InfluenceMap::propagateMax(double decay, double speed) {
         for (int x = 1; x < w-1; x++) {
             int i = yw + x;
             double c = 0;
+            c = std::max(c, weights[i]);
             c = std::max(c, weights[i-1]);
             c = std::max(c, weights[i+1]);
             c = std::max(c, weights[i-w]);
@@ -254,12 +258,12 @@ void InfluenceMap::propagateMax(double decay, double speed) {
             c2 *= factor2;
             c = std::max(c, c2);
 
-            c = c*speed + (1-speed)*weights[yw+x];
-            newWeights[yw+x] = c;
+            c = c*speed + (1-speed)*weights[i];
+            newWeights[i] = c;
         }
     }
 
-    weights = newWeights;
+    swap(weights, temporary_buffer);
 }
 
 void InfluenceMap::propagateSum(double decay, double speed) {
@@ -267,7 +271,9 @@ void InfluenceMap::propagateSum(double decay, double speed) {
     // Diagonal decay
     double factor2 = pow(factor, 1.41);
 
-    vector<double> newWeights (weights.size());
+    temporary_buffer.resize(weights.size());
+    vector<double>& newWeights = temporary_buffer;
+    
     for (int y = 0; y < h; y++) {
         weights[y*w+0] = weights[y*w+1];
         weights[y*w+w-1] = weights[y*w+w-2];
@@ -304,7 +310,7 @@ void InfluenceMap::propagateSum(double decay, double speed) {
         }
     }
 
-    weights = newWeights;
+    swap(weights, temporary_buffer);
 }
 
 void InfluenceMap::print() const {

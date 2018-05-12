@@ -128,7 +128,7 @@ void DebugUnitPositions() {
 }
 
 void Bot::OnGameLoading() {
-    InitializeRenderer("Starcraft II Bot", 50, 50, 512, 512);
+    InitializeRenderer("Starcraft II Bot", 50, 50, 600, 512);
     Render();
 }
 
@@ -136,7 +136,9 @@ int ticks = 0;
 void Bot::OnStep() {
     if (ticks == 0) t0 = time(0);
     ticks++;
-    cout << "FPS: " << (ticks/(double)(time(0) - t0)) << endl;
+    if ((ticks % 100) == 0) {
+        cout << "FPS: " << (int)(ticks/(double)(time(0) - t0)) << endl;
+    }
     tree->Tick();
     armyTree->Tick();
 

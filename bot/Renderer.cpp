@@ -149,8 +149,9 @@ void ImageRGB(const char* bytes, int width, int height, int off_x, int off_y, in
     SDL_DestroyTexture(texture);
 }
 
+vector<Pixel> converted;
 void ImageGrayscale(const double* values, int width, int height, int off_x, int off_y, int scale) {
-    vector<Pixel> converted(width*height);
+    converted.resize(width*height);
     for (int i = 0; i < width*height; i++) {
         converted[i] = colormap[max(min((int)(values[i]*256/3.0),255),0)];
     }
