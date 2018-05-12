@@ -140,7 +140,7 @@ void Bot::OnStep() {
     tree->Tick();
     armyTree->Tick();
 
-    const InfluenceFrameInterval = 10;
+    const int InfluenceFrameInterval = 10;
     if ((ticks % InfluenceFrameInterval) == 0) {
         for (auto unit : Observation()->GetUnits(Unit::Alliance::Self)) {
             if (IsStructure(Observation())(*unit)) {
