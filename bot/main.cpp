@@ -2,6 +2,7 @@
 #include "bot_examples.h"
 #include "sc2api/sc2_api.h"
 #include "sc2utils/sc2_manage_process.h"
+#include <iostream>
 
 using namespace sc2;
 using namespace BOT;
@@ -21,6 +22,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    // sc2::FeatureLayerSettings settings(kCameraWidth, kFeatureLayerSize, kFeatureLayerSize, kFeatureLayerSize, kFeatureLayerSize);
+    // coordinator.SetFeatureLayers(settings);
+
     coordinator.SetMultithreaded(true);
    
     coordinator.SetParticipants({
@@ -34,6 +38,7 @@ int main(int argc, char* argv[]) {
     bool do_break = false;
 
     for (; !do_break;) {
+        bot.OnGameLoading();
         coordinator.StartGame(BelShirVestigeLE);
 
         while (coordinator.Update() && !do_break) {

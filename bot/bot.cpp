@@ -1,15 +1,24 @@
 #include "Bot.h"
 #include "StrategicNodes.h"
 #include "sc2lib/sc2_lib.h"
+// #include "sc2renderer/sc2_renderer.h"
+#include "Renderer.h"
 #include <cmath>
 #include <iostream>
 #include "TacticalNodes.h"
+#include "SDL.h"
+#include "Influence.h"
+#include "Predicates.h"
+
 using namespace BOT;
 using namespace std;
 using namespace sc2;
 
 Bot bot = Bot();
-
+InfluenceMap pathing_grid;
+InfluenceMap placement_grid;
+InfluenceMap mp;
+InfluenceMap mp2;
 
 void Bot::OnGameStart() {
     game_info_ = Observation()->GetGameInfo();
@@ -102,17 +111,53 @@ void Bot::OnGameStart() {
             new SimpleAttackMove()
         },
     });
+
+    pathing_grid = InfluenceMap(game_info_.pathing_grid);
+    placement_grid = InfluenceMap(game_info_.placement_grid);
+    mp = InfluenceMap(pathing_grid.w, pathing_grid.h);
+    mp2 = InfluenceMap(pathing_grid.w, pathing_grid.h);
+}
+
+void Bot::OnGameLoading() {
+    InitializeRenderer("Starcraft II Bot", 50, 50, 512, 512);
+    Render();
 }
 
 void Bot::OnStep() {
     tree->Tick();
     armyTree->Tick();
 
+    for (auto unit : Observation()->GetUnits(Unit::Alliance::Self)) {
+        if (IsStructure(Observation())(*unit)) {
+            mp.addInfluence(0.5, unit->pos);
+            mp2.addInfluence(0.5, unit->pos);
+        } else {
+            mp.addInfluence(0.2, unit->pos);
+            mp2.addInfluence(0.2, unit->pos);
+        }
+    }
+    mp.propagateSum(exp(-5) * 0, 0.3);
+    mp *= pathing_grid;
+
+    mp2.propagateMax(0.2, 0.3);
+    mp2 *= pathing_grid;
+
+    // ImageRGB((char*)map.data(), 256, 256, 0, 0, 3);
+    mp.render(0, 0, 2);
+    mp2.render(mp.w*2+5, 0, 2);
+    //pathing_grid.render(0, 0, 2);
+
+    Render();
+
   /*  Units units = Observation()->GetUnits(Unit::Alliance::Self);
     for (auto unit : units) {
         Debug()->DebugSphereOut(unit->pos, 0.5, Colors::Green);
     }
     Debug()->SendDebug();*/
+}
+
+void Bot::OnGameEnd() {
+    Shutdown();
 }
 
 void Bot::OnUnitDestroyed(const Unit* unit) {

@@ -63,4 +63,5 @@ function (example_project_extra project_name source_code extra_libs)
     target_link_libraries(${project_name} sc2api sc2lib sc2utils ${extra_libs})
 endfunction ()
 
-example_project_extra(our_bot "bot/*.cpp" "")
+example_project_extra(our_bot "bot/*.cpp" "SDL2-static")
+include_directories("s2client-api/contrib/SDL-mirror/include")

@@ -6,6 +6,11 @@
 #include "BuildingPlacement.h"
 #include "TacticalManager.h"
 
+const float kCameraWidth = 24.0f;
+const int kFeatureLayerSize = 80;
+const int kPixelDrawSize = 3;
+const int kDrawSize = kFeatureLayerSize * kPixelDrawSize;
+
 namespace BOT {
 
 using namespace sc2;
@@ -43,9 +48,12 @@ public:
     int GetPositionIndex(int x, int y);
     Point2D GetMapCoordinate(int i);
     int ManhattanDistance(Point2D p1, Point2D p2);
+    void OnGameLoading();
     void OnGameStart() override final;
 
     void OnStep() override final;
+
+    void OnGameEnd() override final;
 
     void OnUnitDestroyed(const Unit* unit) override final;
 
