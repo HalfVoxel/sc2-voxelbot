@@ -17,6 +17,22 @@ struct InfluenceMap {
 
     InfluenceMap(sc2::ImageData map);
 
+    double& operator()(int x, int y) {
+        return weights[y*w + x];
+    }
+
+    double operator()(int x, int y) const {
+        return weights[y*w + x];
+    }
+
+    double& operator[](int index) {
+        return weights[index];
+    }
+
+    double operator[](int index) const {
+        return weights[index];
+    }
+
     InfluenceMap& operator+= (const InfluenceMap& other);
 
     InfluenceMap& operator+= (double other);
@@ -57,8 +73,8 @@ struct InfluenceMap {
 
     void maxInfluenceMultiple(const std::vector<std::vector<double> >& influence, sc2::Point2D, double factor);
 
-    void propagateMax(double decay, double speed);
-    void propagateSum(double decay, double speed);
+    void propagateMax(double decay, double speed, const InfluenceMap& traversable);
+    void propagateSum(double decay, double speed, const InfluenceMap& traversable);
 
     void print() const;
 

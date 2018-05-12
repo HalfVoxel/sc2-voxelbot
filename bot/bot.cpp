@@ -153,11 +153,9 @@ void Bot::OnStep() {
                 mp2.addInfluence(0.2, unit->pos);
             }
         }
-        mp.propagateSum(exp(-5) * 0, 0.3);
-        mp *= pathing_grid;
+        mp.propagateSum(exp(-4), 1.0, pathing_grid);
 
-        mp2.propagateMax(0.2, 0.3);
-        mp2 *= pathing_grid;
+        mp2.propagateMax(0.2, 0.3, pathing_grid);
 
         mp.render(0, 0, 2);
         mp2.render(mp.w*2+5, 0, 2);

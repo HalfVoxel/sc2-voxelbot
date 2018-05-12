@@ -221,7 +221,7 @@ void InfluenceMap::maxInfluenceMultiple(const vector<vector<double> >& influence
 }
 
 vector<double> temporary_buffer;
-void InfluenceMap::propagateMax(double decay, double speed) {
+void InfluenceMap::propagateMax(double decay, double speed, const InfluenceMap& traversable) {
     double factor = 1 - decay;
     // Diagonal decay
     double factor2 = pow(factor, 1.41);
@@ -242,6 +242,11 @@ void InfluenceMap::propagateMax(double decay, double speed) {
         int yw = y*w;
         for (int x = 1; x < w-1; x++) {
             int i = yw + x;
+            if (traversable[i] == 0) {
+                newWeights[i] = 0;
+                continue;
+            }
+
             double c = 0;
             c = std::max(c, weights[i]);
             c = std::max(c, weights[i-1]);
@@ -266,14 +271,14 @@ void InfluenceMap::propagateMax(double decay, double speed) {
     swap(weights, temporary_buffer);
 }
 
-void InfluenceMap::propagateSum(double decay, double speed) {
+void InfluenceMap::propagateSum(double decay, double speed, const InfluenceMap& traversable) {
     double factor = 1 - decay;
     // Diagonal decay
     double factor2 = pow(factor, 1.41);
 
     temporary_buffer.resize(weights.size());
     vector<double>& newWeights = temporary_buffer;
-    
+
     for (int y = 0; y < h; y++) {
         weights[y*w+0] = weights[y*w+1];
         weights[y*w+w-1] = weights[y*w+w-2];
@@ -287,7 +292,17 @@ void InfluenceMap::propagateSum(double decay, double speed) {
         int yw = y*w;
         for (int x = 1; x < w-1; x++) {
             int i = yw + x;
+
+            if (traversable[i] == 0) {
+                newWeights[i] = 0;
+                continue;
+            }
+
+            double neighbours = 1;
+            neighbours += traversable[i-1] + traversable[i+1] + traversable[i-w] + traversable[i+w] + traversable[i-w-1] + traversable[i-w+1] + traversable[i+w-1] + traversable[i+w+1];
+
             double c = 0;
+            c += weights[i];
             c += weights[i-1];
             c += weights[i+1];
             c += weights[i-w];
@@ -303,7 +318,7 @@ void InfluenceMap::propagateSum(double decay, double speed) {
             c += c2;
 
             // To prevent the total weight values from increasing unbounded
-            c *= 0.125;
+            if (neighbours > 0) c /= neighbours;
 
             c = c*speed + (1-speed)*weights[i];
             newWeights[i] = c;
