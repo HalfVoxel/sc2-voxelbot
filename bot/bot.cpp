@@ -118,42 +118,52 @@ void Bot::OnGameStart() {
     mp2 = InfluenceMap(pathing_grid.w, pathing_grid.h);
 }
 
+time_t t0;
+
+void DebugUnitPositions() {
+    Units units = bot.Observation()->GetUnits(Unit::Alliance::Self);
+    for (auto unit : units) {
+        bot.Debug()->DebugSphereOut(unit->pos, 0.5, Colors::Green);
+    }
+}
+
 void Bot::OnGameLoading() {
     InitializeRenderer("Starcraft II Bot", 50, 50, 512, 512);
     Render();
 }
 
+int ticks = 0;
 void Bot::OnStep() {
+    if (ticks == 0) t0 = time(0);
+    ticks++;
+    cout << "FPS: " << (ticks/(double)(time(0) - t0)) << endl;
     tree->Tick();
     armyTree->Tick();
 
-    for (auto unit : Observation()->GetUnits(Unit::Alliance::Self)) {
-        if (IsStructure(Observation())(*unit)) {
-            mp.addInfluence(0.5, unit->pos);
-            mp2.addInfluence(0.5, unit->pos);
-        } else {
-            mp.addInfluence(0.2, unit->pos);
-            mp2.addInfluence(0.2, unit->pos);
+    const InfluenceFrameInterval = 10;
+    if ((ticks % InfluenceFrameInterval) == 0) {
+        for (auto unit : Observation()->GetUnits(Unit::Alliance::Self)) {
+            if (IsStructure(Observation())(*unit)) {
+                mp.addInfluence(0.5, unit->pos);
+                mp2.addInfluence(0.5, unit->pos);
+            } else {
+                mp.addInfluence(0.2, unit->pos);
+                mp2.addInfluence(0.2, unit->pos);
+            }
         }
+        mp.propagateSum(exp(-5) * 0, 0.3);
+        mp *= pathing_grid;
+
+        mp2.propagateMax(0.2, 0.3);
+        mp2 *= pathing_grid;
+
+        mp.render(0, 0, 2);
+        mp2.render(mp.w*2+5, 0, 2);
+        Render();
     }
-    mp.propagateSum(exp(-5) * 0, 0.3);
-    mp *= pathing_grid;
 
-    mp2.propagateMax(0.2, 0.3);
-    mp2 *= pathing_grid;
-
-    // ImageRGB((char*)map.data(), 256, 256, 0, 0, 3);
-    mp.render(0, 0, 2);
-    mp2.render(mp.w*2+5, 0, 2);
-    //pathing_grid.render(0, 0, 2);
-
-    Render();
-
-  /*  Units units = Observation()->GetUnits(Unit::Alliance::Self);
-    for (auto unit : units) {
-        Debug()->DebugSphereOut(unit->pos, 0.5, Colors::Green);
-    }
-    Debug()->SendDebug();*/
+    // DebugUnitPositions();
+    Debug()->SendDebug();
 }
 
 void Bot::OnGameEnd() {
