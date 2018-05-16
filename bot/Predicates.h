@@ -1,3 +1,4 @@
+#pragma once
 #include "Bot.h"
 
 struct IsAttackable {

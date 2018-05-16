@@ -162,6 +162,8 @@ void Bot::OnStep() {
         Render();
     }
 
+    cameraController.OnStep();
+
     // DebugUnitPositions();
     Debug()->SendDebug();
 }

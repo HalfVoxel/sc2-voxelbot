@@ -5,6 +5,7 @@
 #include "sc2api/sc2_map_info.h"
 #include "BuildingPlacement.h"
 #include "TacticalManager.h"
+#include "CameraController.h"
 
 const float kCameraWidth = 24.0f;
 const int kFeatureLayerSize = 80;
@@ -36,6 +37,7 @@ public:
     std::vector<Point2D> wallPlacements;
 
 
+    CameraController cameraController;
     TacticalManager* tactical_manager;
     int max_worker_count_ = 73;
     sc2::GameInfo game_info_;

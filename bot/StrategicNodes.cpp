@@ -29,7 +29,7 @@ Status BuildUnit::OnTick() {
 
     auto abilityType = unitTypeData.ability_id;
     // Usually a building
-    auto builderUnitType = abilityToUnit(unitTypeData.ability_id);
+    auto builderUnitType = abilityToCasterUnit(unitTypeData.ability_id);
 
     //If we are at supply cap, don't build anymore units, unless its an overlord.
     if (observation->GetFoodUsed() >= observation->GetFoodCap() && abilityType != ABILITY_ID::
@@ -81,7 +81,7 @@ Status BuildStructure::PlaceBuilding(UnitTypeID unitType, Point2D location, bool
     }
 
     auto ability = unitTypeData.ability_id;
-    auto builderUnitType = abilityToUnit(unitTypeData.ability_id);
+    auto builderUnitType = abilityToCasterUnit(unitTypeData.ability_id);
 
     Units workers = observation->GetUnits(Unit::Alliance::Self, IsUnit(builderUnitType));
 
@@ -132,7 +132,7 @@ Status BuildStructure::PlaceBuilding(UnitTypeID unitType, Tag loc) {
     }
 
     auto ability = unitTypeData.ability_id;
-    auto builderUnitType = abilityToUnit(unitTypeData.ability_id);
+    auto builderUnitType = abilityToCasterUnit(unitTypeData.ability_id);
 
     // If a unit already is building a supply structure of this type, do nothing.
     // Also get an scv to build the structure.
