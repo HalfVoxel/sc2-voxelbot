@@ -54,7 +54,7 @@ void BuildingPlacement::FindWallPlacements(Point3D startLocation_) {
             Point2D p = bot.GetMapCoordinate(i);
             if (diff[bot.GetPositionIndex(p.x - 1, p.y)] == 2 && diff[bot.GetPositionIndex(p.x - 1, p.y + 1)
                 ] == 2 && diff[bot.GetPositionIndex(p.x, p.y + 1)] == 2) {
-                bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z), 0.5, Colors::Green);
+                bot.Debug()->DebugSphereOut(Point3D(p.x, p.y, startLocation_.z), 0.5, Colors::Green);
 
                 supplyDepotPositions.push_back(p);
             }

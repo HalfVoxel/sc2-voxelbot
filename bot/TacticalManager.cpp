@@ -2,6 +2,8 @@
 #include "Bot.h"
 #include "Predicates.h"
 
+using namespace std;
+
 void TacticalManager::OnUnitDestroyed(const Unit* unit) {
     if (unit->alliance == Unit::Alliance::Self) {
         if (unit->unit_type == UNIT_TYPEID::TERRAN_SCV) {
@@ -30,7 +32,10 @@ void TacticalManager::OnUnitCreated(const Unit* unit) {
 void TacticalManager::OnUnitEnterVision(const Unit* unit) {
     if (unit->alliance == Unit::Alliance::Enemy) {
         if (IsArmy(bot.Observation()).operator()(*unit)) {
-            knownEnemies.push_back(*unit);
+            auto found = find_if(knownEnemies.begin(), knownEnemies.end(), [unit](Unit x) { return x.tag == unit->tag; });
+            if (found == knownEnemies.end()) {
+                knownEnemies.push_back(*unit);
+            }
         }
     }
 }
