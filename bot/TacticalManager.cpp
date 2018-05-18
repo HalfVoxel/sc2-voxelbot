@@ -50,11 +50,8 @@ void TacticalManager::OnNuclearLaunchDetected() {
 }
 
 Point2D TacticalManager::GetPreferredArmyPosition() {
-    Point2D p = bot.staging_location_ + (wallPlacement - bot.staging_location_) * (bot.staging_location_ == bot.startLocation_ ? 0.75 : 0.35);
-    Units units = bot.Observation()->GetUnits(Unit::Alliance::Self, IsTownHall());
-    if(units.size() > 2) {
-        
-    }
+    // Point2D p = bot.staging_location_ + (wallPlacement - bot.staging_location_) * (bot.staging_location_ == bot.startLocation_ ? 0.75 : 0.35);
+    Point2D p = preferredArmyPosition;
     bot.Debug()->DebugSphereOut(Point3D(p.x, p.y, bot.startLocation_.z), 0.5, Colors::Green);
     bot.Debug()->SendDebug();
     return p;

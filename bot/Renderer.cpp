@@ -150,11 +150,25 @@ void ImageRGB(const char* bytes, int width, int height, int off_x, int off_y, in
 }
 
 vector<Pixel> converted;
-void ImageGrayscale(const double* values, int width, int height, int off_x, int off_y, int scale) {
+void ImageGrayscale(const double* values, int width, int height, int off_x, int off_y, int scale, bool normalized) {
     converted.resize(width*height);
+    double multiplier = normalized ? 256.0 : 256.0/3.0;
     for (int i = 0; i < width*height; i++) {
-        converted[i] = colormap[max(min((int)(values[i]*256/3.0),255),0)];
+        if (isfinite(values[i])) {
+            converted[i] = colormap[max(min((int)(values[i]*multiplier),255),0)];
+        } else {
+            converted[i] = { 200, 0, 0 };
+        }
     }
+
+    // Make a border
+    for (int x = 0; x < width; x++) {
+        converted[0*width + x] = converted[width*(height-1) + x] = { 200, 200, 200 };
+    }
+    for (int y = 0; y < height; y++) {
+        converted[y*width + 0] = converted[width*y + width-1] = { 200, 200, 200 };
+    }
+
     ImageRGB((const char*)converted.data(), width, height, off_x, off_y, scale);
 }
 

@@ -6,11 +6,14 @@
 #include "BuildingPlacement.h"
 #include "TacticalManager.h"
 #include "CameraController.h"
+#include "InfluenceManager.h"
 
 const float kCameraWidth = 24.0f;
 const int kFeatureLayerSize = 80;
 const int kPixelDrawSize = 3;
 const int kDrawSize = kFeatureLayerSize * kPixelDrawSize;
+
+extern int ticks;
 
 namespace BOT {
 
@@ -39,6 +42,7 @@ public:
 
     CameraController cameraController;
     TacticalManager* tactical_manager;
+    InfluenceManager influenceManager;
     int max_worker_count_ = 73;
     sc2::GameInfo game_info_;
     std::vector<sc2::Point3D> expansions_;

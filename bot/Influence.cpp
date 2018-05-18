@@ -2,6 +2,9 @@
 #include <cmath>
 #include <iostream>
 #include <iomanip>
+#include <random>
+#include <ctime>
+
 #include "Renderer.h"
 
 using namespace std;
@@ -21,19 +24,15 @@ pair<int,int> round_point(Point2D p) {
 }
 
 InfluenceMap& InfluenceMap::operator+= (const InfluenceMap& other) {
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
-            weights[y*w+x] += other.weights[y*w+x];
-        }
+    for (int i = 0; i < w*h; i++) {
+        weights[i] += other.weights[i];
     }
     return (*this);
 }
 
 InfluenceMap& InfluenceMap::operator+= (double other) {
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
-            weights[y*w+x] += other;
-        }
+    for (int i = 0; i < w*h; i++) {
+        weights[i] += other;
     }
     return (*this);
 }
@@ -47,10 +46,8 @@ InfluenceMap& InfluenceMap::operator-= (const InfluenceMap& other) {
     assert(w == other.w);
     assert(h == other.h);
 
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
-            weights[y*w+x] -= other.weights[y*w+x];
-        }
+    for (int i = 0; i < w*h; i++) {
+        weights[i] -= other.weights[i];
     }
     return (*this);
 }
@@ -63,10 +60,8 @@ InfluenceMap InfluenceMap::operator- (const InfluenceMap& other) const {
 InfluenceMap& InfluenceMap::operator*= (const InfluenceMap& other) {
     assert(w == other.w);
     assert(h == other.h);
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
-            weights[y*w+x] *= other.weights[y*w+x];
-        }
+    for (int i = 0; i < w*h; i++) {
+        weights[i] *= other.weights[i];
     }
     return (*this);
 }
@@ -80,10 +75,8 @@ InfluenceMap& InfluenceMap::operator/= (const InfluenceMap& other) {
     assert(w == other.w);
     assert(h == other.h);
 
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
-            weights[y*w+x] /= other.weights[y*w+x];
-        }
+    for (int i = 0; i < w*h; i++) {
+        weights[i] /= other.weights[i];
     }
     return (*this);
 }
@@ -95,40 +88,36 @@ InfluenceMap InfluenceMap::operator/ (const InfluenceMap& other) const {
 
 InfluenceMap InfluenceMap::operator+ (double factor) const {
     InfluenceMap ret = InfluenceMap(w, h);
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
-            ret.weights[y*w+x] = weights[y*w+x] + factor;
-        }
+    for (int i = 0; i < w*h; i++) {
+        ret.weights[i] = weights[i] + factor;
     }
     return ret;
 }
 
 InfluenceMap InfluenceMap::operator- (double factor) const {
     InfluenceMap ret = InfluenceMap(w, h);
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
-            ret.weights[y*w+x] = weights[y*w+x] - factor;
-        }
+    for (int i = 0; i < w*h; i++) {
+        ret.weights[i] = weights[i] - factor;
     }
     return ret;
 }
 
 InfluenceMap InfluenceMap::operator* (double factor) const {
     InfluenceMap ret = InfluenceMap(w, h);
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
-            ret.weights[y*w+x] = weights[y*w+x] * factor;
-        }
+    for (int i = 0; i < w*h; i++) {
+        ret.weights[i] = weights[i] * factor;
     }
     return ret;
 }
 
 void InfluenceMap::operator*= (double factor) {
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
-            weights[y*w+x] *= factor;
-        }
+    for (int i = 0; i < w*h; i++) {
+        weights[i] *= factor;
     }
+}
+
+void InfluenceMap::threshold(double value) {
+    for (int i = 0; i < w*h; i++) weights[i] = weights[i] >= value ? 1 : 0;
 }
 
 double InfluenceMap::sum() const {
@@ -143,16 +132,50 @@ double InfluenceMap::sum() const {
 
 double InfluenceMap::max() const {
     double ret = 0.0;
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
-            ret = std::max(ret, weights[y*w+x]);
-        }
+    for (int i = 0; i < w*h; i++) {
+        ret = std::max(ret, weights[i]);
     }
     return ret;
 }
 
+double InfluenceMap::maxFinite() const {
+    double ret = 0.0;
+    for (auto w : weights) {
+        if (isfinite(w)) ret = std::max(ret, w);
+    }
+    return ret;
+}
+
+Point2DI InfluenceMap::argmax() const {
+    double mx = -100000;
+    Point2DI best(0,0);
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            if (weights[y*w+x] > mx && isfinite(weights[y*w+x])) {
+                mx = weights[y*w+x];
+                best = Point2DI(x,y);
+            }
+        }
+    }
+    return best;
+}
+
+InfluenceMap InfluenceMap::replace_nonzero(double with) const {
+    InfluenceMap ret = InfluenceMap(w, h);
+    for (int i = 0; i < w*h; i++) {
+        ret.weights[i] = weights[i] != 0 ? with : 0;
+    }
+    return ret;
+}
+
+void InfluenceMap::addInfluence(double influence, Point2DI pos) {
+    assert (pos.x >= 0 && pos.x < w && pos.y >= 0 && pos.y < h);
+    weights[pos.y*w + pos.x] += influence;
+}
+
 void InfluenceMap::addInfluence(double influence, Point2D pos) {
     auto p = round_point(pos);
+    assert (p.first >= 0 && p.first < w && p.second >= 0 && p.second < h);
     weights[p.second*w + p.first] += influence;
 }
 
@@ -272,9 +295,16 @@ void InfluenceMap::propagateMax(double decay, double speed, const InfluenceMap& 
 }
 
 void InfluenceMap::propagateSum(double decay, double speed, const InfluenceMap& traversable) {
+    // double decayCorrectionFactor = (5*(1-decay) + 4*pow(1-decay,1.41))/9;
+    // decay *= decay / (1 - decayCorrectionFactor);
     double factor = 1 - decay;
+    // cout << "Estimated decay at " << ((5*(1-decay) + 4*pow(1-decay,1.41))/9) << endl;
     // Diagonal decay
     double factor2 = pow(factor, 1.41);
+
+    double gaussianFactor0 = 1; //0.195346;
+    double gaussianFactor1 = 1; //0.123317;
+    double gaussianFactor2 = 0.75; //0.077847;
 
     temporary_buffer.resize(weights.size());
     vector<double>& newWeights = temporary_buffer;
@@ -298,30 +328,31 @@ void InfluenceMap::propagateSum(double decay, double speed, const InfluenceMap& 
                 continue;
             }
 
-            double neighbours = 1;
-            neighbours += traversable[i-1] + traversable[i+1] + traversable[i-w] + traversable[i+w] + traversable[i-w-1] + traversable[i-w+1] + traversable[i+w-1] + traversable[i+w+1];
+            double neighbours = gaussianFactor0;
+            neighbours += gaussianFactor1*(traversable[i-1] + traversable[i+1] + traversable[i-w] + traversable[i+w]) + gaussianFactor2*(traversable[i-w-1] + traversable[i-w+1] + traversable[i+w-1] + traversable[i+w+1]);
 
             double c = 0;
-            c += weights[i];
             c += weights[i-1];
             c += weights[i+1];
             c += weights[i-w];
             c += weights[i+w];
-            c *= factor;
+            c *= gaussianFactor1;
+
+            c += weights[i] * gaussianFactor0;
 
             double c2 = 0;
             c2 += weights[i-w-1];
             c2 += weights[i-w+1];
             c2 += weights[i+w-1];
             c2 += weights[i+w+1];
-            c2 *= factor2;
+            c2 *= gaussianFactor2;
             c += c2;
 
             // To prevent the total weight values from increasing unbounded
             if (neighbours > 0) c /= neighbours;
 
             c = c*speed + (1-speed)*weights[i];
-            newWeights[i] = c;
+            newWeights[i] = c * factor;
         }
     }
 
@@ -337,6 +368,31 @@ void InfluenceMap::print() const {
     }
 }
 
-void InfluenceMap::render(int x0, int y0, int scale) const {
-    ImageGrayscale((double*)weights.data(), w, h, x0, y0, scale);
+const int scale = 2;
+void InfluenceMap::render(int x0, int y0) const {
+    ImageGrayscale((double*)weights.data(), w, h, scale*x0*(w+5), scale*y0*(h+5), scale, false);
+}
+
+/** Renders a map, assuming it is in the [0,1] range */
+void InfluenceMap::renderNormalized(int x0, int y0) const {
+    ImageGrayscale((double*)weights.data(), w, h, scale*x0*(w+5), scale*y0*(h+5), scale, true);
+}
+
+default_random_engine generator(time(0));
+
+/** Sample a point from this influence map.
+ * The probability of picking each cell is proportional to its weight.
+ * The map does not have to be normalized.
+ */
+Point2DI InfluenceMap::samplePointFromProbabilityDistribution() const {
+    uniform_real_distribution<double> distribution(0.0, sum());
+    double picked = distribution(generator);
+
+    for (int i = 0; i < w*h; i++) {
+        picked -= weights[i];
+        if (picked <= 0) return Point2DI(i % w, i / w);
+    }
+
+    // Should in theory not happen, but it may actually happen because of floating point errors
+    return Point2DI(w-1, h-1);
 }
