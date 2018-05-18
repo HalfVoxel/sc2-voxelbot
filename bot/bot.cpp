@@ -9,16 +9,16 @@
 #include "SDL.h"
 #include "Influence.h"
 #include "Predicates.h"
+#include "Pathfinding.h"
+#include "buildingPlacement.h"
+#include <random>
+#include <limits>
 
 using namespace BOT;
 using namespace std;
 using namespace sc2;
 
 Bot bot = Bot();
-InfluenceMap pathing_grid;
-InfluenceMap placement_grid;
-InfluenceMap mp;
-InfluenceMap mp2;
 
 void Bot::OnGameStart() {
     game_info_ = Observation()->GetGameInfo();
@@ -112,10 +112,7 @@ void Bot::OnGameStart() {
         },
     });
 
-    pathing_grid = InfluenceMap(game_info_.pathing_grid);
-    placement_grid = InfluenceMap(game_info_.placement_grid);
-    mp = InfluenceMap(pathing_grid.w, pathing_grid.h);
-    mp2 = InfluenceMap(pathing_grid.w, pathing_grid.h);
+    influenceManager.Init();
 }
 
 time_t t0;
@@ -128,7 +125,7 @@ void DebugUnitPositions() {
 }
 
 void Bot::OnGameLoading() {
-    InitializeRenderer("Starcraft II Bot", 50, 50, 600, 512);
+    InitializeRenderer("Starcraft II Bot", 50, 50, 256*3+20, 256*4+30);
     Render();
 }
 
@@ -142,26 +139,7 @@ void Bot::OnStep() {
     tree->Tick();
     armyTree->Tick();
 
-    const int InfluenceFrameInterval = 10;
-    if ((ticks % InfluenceFrameInterval) == 0) {
-        for (auto unit : Observation()->GetUnits(Unit::Alliance::Self)) {
-            if (IsStructure(Observation())(*unit)) {
-                mp.addInfluence(0.5, unit->pos);
-                mp2.addInfluence(0.5, unit->pos);
-            } else {
-                mp.addInfluence(0.2, unit->pos);
-                mp2.addInfluence(0.2, unit->pos);
-            }
-        }
-        mp.propagateSum(exp(-4), 1.0, pathing_grid);
-
-        mp2.propagateMax(0.2, 0.3, pathing_grid);
-
-        mp.render(0, 0, 2);
-        mp2.render(mp.w*2+5, 0, 2);
-        Render();
-    }
-
+    influenceManager.OnStep();
     cameraController.OnStep();
 
     // DebugUnitPositions();

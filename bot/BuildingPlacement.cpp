@@ -5,6 +5,8 @@
 using namespace std;
 using namespace sc2;
 
+InfluenceMap safeBuildingMap;
+
 Point2D Rotate(Point2D p, float degrees) {
     degrees = degrees * 3.14159265358979323846 / 180;
     return Point2D(p.x * cos(degrees) - p.y * sin(degrees),
@@ -99,8 +101,13 @@ Point2D BuildingPlacement::GetReasonablePlacement(sc2::UnitTypeID unitType) {
 
     float rx, ry;
 
+    rx = GetRandomScalar();
+    ry = GetRandomScalar();
+    auto bestPos = Point2D(bot.startLocation_.x + rx * 15.0f, bot.startLocation_.y + ry * 15.0f);
     // Try to find a valid position close to another building
     if (units.size() > 0) {
+        // Pick the potential position with the highest score
+        double bestScore = -1000;
         for (int i = 0; i < 10; i++) {
             auto randomUnit = units[rand() % units.size()];
 
@@ -109,14 +116,14 @@ Point2D BuildingPlacement::GetReasonablePlacement(sc2::UnitTypeID unitType) {
             ry = GetRandomScalar();
 
             auto p = Point2D(randomUnit->pos.x + rx * 15.0f, randomUnit->pos.y + ry * 15.0f);
-            if (query->Placement(abilityType, p)) {
-                return p;
+
+            double score = safeBuildingMap(p);
+            if (score > bestScore && query->Placement(abilityType, p)) {
+                bestPos = p;
+                bestScore = score;
             }
         }
     }
 
-    rx = GetRandomScalar();
-    ry = GetRandomScalar();
-
-    return Point2D(bot.startLocation_.x + rx * 15.0f, bot.startLocation_.y + ry * 15.0f);
+    return bestPos;
 }

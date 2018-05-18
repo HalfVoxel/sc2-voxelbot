@@ -2,6 +2,10 @@
 #include "sc2api/sc2_agent.h"
 #include "sc2api/sc2_interfaces.h"
 #include "sc2api/sc2_map_info.h"
+#include "Influence.h"
+
+// Where it is safe to build buildings
+extern InfluenceMap safeBuildingMap;
 
 class BuildingPlacement {
     void FindWallPlacements(sc2::Point3D startLocation_);

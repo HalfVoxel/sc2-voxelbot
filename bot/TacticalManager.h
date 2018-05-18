@@ -19,6 +19,7 @@ private:
     std::vector<UNIT_TYPEID> thor_types = { UNIT_TYPEID::TERRAN_THOR, UNIT_TYPEID::TERRAN_THORAP };
 
 public:
+    Point2D preferredArmyPosition;
     void OnUnitDestroyed(const Unit* unit);
 
     void OnUnitCreated(const Unit* unit);
