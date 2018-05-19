@@ -13,8 +13,8 @@ public:
     std::shared_ptr<BOT::TreeNode> behavior;
     bool isActive = false;
 
-    bool IsDestroyed() const;
-    bool IsFunctional() const;
+    virtual bool IsDestroyed() const;
+    virtual bool IsFunctional() const;
     void AddUnit(const sc2::Unit* unit);
     void RemoveUnit(const sc2::Unit* unit);
     bool ContainsUnit(const sc2::Unit* unit);
@@ -24,8 +24,8 @@ public:
 class MainUnitGroup : public UnitGroup {
 public:
     MainUnitGroup();
-    bool IsDestroyed() const { return false; }
-    bool IsFunctional() const { return true; };
+    bool IsDestroyed()  const override { return false; }
+    bool IsFunctional() const override { return true; }
 };
 
 class ScoutGroup: public UnitGroup {
