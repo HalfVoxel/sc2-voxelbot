@@ -21,7 +21,7 @@ void UnitGroup::AddUnit(const sc2::Unit* unit) {
 }
 
 void UnitGroup::RemoveUnit(const sc2::Unit* unit) {
-    remove_if(units.begin(), units.end(), [unit](const Unit* x) { return x->tag == unit->tag; });
+    units.erase(remove_if(units.begin(), units.end(), [unit](const Unit* x) { return x->tag == unit->tag; }), units.end());
 }
 
 bool UnitGroup::ContainsUnit(const sc2::Unit* unit){
