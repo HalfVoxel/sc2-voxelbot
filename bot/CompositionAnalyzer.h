@@ -1,0 +1,1 @@
+void RunCompositionAnalyzer(int argc, char* argv[]);

@@ -11,5 +11,8 @@ all:
 run: all
 	cd build && bin/our_bot
 
+composition: all
+	cd build && bin/our_bot --composition
+
 format:
 	clang-format -i bot/*.cpp bot/*.h
