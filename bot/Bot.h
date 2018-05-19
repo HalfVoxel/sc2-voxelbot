@@ -81,3 +81,4 @@ private:
 };  // namespace BOT
 
 extern BOT::Bot bot;
+extern sc2::Agent& agent;

@@ -11,6 +11,7 @@
 #include "Predicates.h"
 #include "Pathfinding.h"
 #include "buildingPlacement.h"
+#include "MicroNodes.h"
 #include <random>
 #include <limits>
 
@@ -19,6 +20,7 @@ using namespace std;
 using namespace sc2;
 
 Bot bot = Bot();
+Agent& agent = bot;
 
 void Bot::OnGameStart() {
     game_info_ = Observation()->GetGameInfo();
@@ -138,6 +140,7 @@ void Bot::OnStep() {
     }
     tree->Tick();
     armyTree->Tick();
+    TickMicro();
 
     influenceManager.OnStep();
     cameraController.OnStep();
