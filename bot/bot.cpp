@@ -100,14 +100,9 @@ void Bot::OnGameStart() {
             new BuildUnit(UNIT_TYPEID::TERRAN_MARINE)
         }
     });
-
+   
     armyTree = unique_ptr<ControlFlowNode>(new ParallelNode{
-        new ControlSupplyDepots(),
-        new SimpleArmyPosition(),
-        new SequenceNode{
-            new HasUnit(UNIT_TYPEID::TERRAN_MARINE, 40),
-            new SimpleAttackMove()
-        },
+        new ControlSupplyDepots()
     });
 
     tactical_manager = new TacticalManager(armyTree ,buildingPlacement.wallPlacement);
@@ -130,6 +125,7 @@ void Bot::OnGameLoading() {
 }
 
 int ticks = 0;
+bool test = false;
 void Bot::OnStep() {
     if (ticks == 0) t0 = time(0);
     ticks++;
@@ -141,9 +137,10 @@ void Bot::OnStep() {
 
     influenceManager.OnStep();
     cameraController.OnStep();
-
-    //tactical_manager->CreateGroup(GroupType::Scout);
-
+    if (!test) {
+        tactical_manager->CreateGroup(Scout);
+        test = true;
+    }
     // DebugUnitPositions();
     Debug()->SendDebug();
 }

@@ -6,7 +6,7 @@
 class TacticalManager {
 private:
     sc2::Point2D wallPlacement;
-    std::list<const sc2::Unit*> availableArmy;
+    UnitGroup* main;
     std::list<const sc2::Unit*> availableWorkers;
     std::list<const sc2::Unit*> knownEnemies;
     std::vector<UnitGroup*> groups;
@@ -35,5 +35,5 @@ public:
 
     void OnUnitEnterVision(const sc2::Unit* unit);
 
-    TacticalManager(std::shared_ptr<BOT::ControlFlowNode> armyTree, sc2::Point2D wallPlacement) : armyTree(armyTree), wallPlacement(wallPlacement) {}
+    TacticalManager(std::shared_ptr<BOT::ControlFlowNode> armyTree, sc2::Point2D wallPlacement);
 };

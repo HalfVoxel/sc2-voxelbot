@@ -5,12 +5,24 @@
 using namespace std;
 using namespace sc2;
 
+
+TacticalManager::TacticalManager(std::shared_ptr<BOT::ControlFlowNode> armyTree, sc2::Point2D wallPlacement) : armyTree(armyTree), wallPlacement(wallPlacement){
+    main = new MainUnitGroup();
+    armyTree->Add(main->behavior);
+}
+
 void TacticalManager::OnUnitDestroyed(const Unit* unit) {
     if (unit->alliance == Unit::Alliance::Self) {
         if (unit->unit_type == UNIT_TYPEID::TERRAN_SCV) {
             availableWorkers.remove_if([unit](const Unit* x) { return x->tag == unit->tag; });
         } else if (IsArmy(bot.Observation()).operator()(*unit)) {
-            availableArmy.remove_if([unit](const Unit* x) { return x->tag == unit->tag; });
+            for(auto group: groups){
+                if(group->ContainsUnit(unit)){
+                    group->RemoveUnit(unit);
+                    break;
+                }
+            }
+            remove_if(groups.begin(), groups.end(), [](const UnitGroup* x) {return x->IsDestroyed();});
         }
     } else if (unit->alliance == Unit::Alliance::Enemy) {
         if (IsArmy(bot.Observation()).operator()(*unit)) {
@@ -24,7 +36,7 @@ void TacticalManager::OnUnitCreated(const Unit* unit) {
         if (unit->unit_type == UNIT_TYPEID::TERRAN_SCV && !IsCarryingVespene(*unit)) {
             availableWorkers.push_back(unit);
         } else if (IsArmy(bot.Observation()).operator()(*unit)) {
-            availableArmy.push_back(unit);
+            main->AddUnit(unit);
         }
     }
 }
@@ -61,9 +73,9 @@ Point2D TacticalManager::GetPreferredArmyPosition() {
 UnitGroup TacticalManager::CreateGroup(GroupType type) {
     UnitGroup* group;
     if (type == GroupType::Scout) {
-        if (!availableArmy.empty()) {//TODO: Choose marines over other units
-            group = new ScoutGroup(availableArmy.back());
-            availableArmy.pop_back();
+        if (!main->units.empty()) {//TODO: Choose marines over other units
+            group = new ScoutGroup(main->units[0]);
+            main->RemoveUnit(main->units[0]);
         } else {
             group = new ScoutGroup(availableWorkers.back());
             availableWorkers.pop_back();

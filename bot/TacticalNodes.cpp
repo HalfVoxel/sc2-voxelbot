@@ -1,6 +1,7 @@
 #include "TacticalNodes.h"
 #include "Bot.h"
 #include "Predicates.h"
+#include "StrategicNodes.h"
 
 using namespace BOT;
 using namespace sc2;
@@ -79,5 +80,18 @@ BOT::Status GroupAttackMove::OnTick() {
 }
 
 BOT::Status ScoutingBehavior::OnTick() {
+    auto group = static_cast<UnitGroup*>(context);
+    auto game_info = bot.Observation()->GetGameInfo();
+    if (game_info.enemy_start_locations.empty()) {
+        return Failure;
+    }
+    auto target_pos = game_info.enemy_start_locations.front();
+
+    for (auto* unit : group->units) {
+        bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, target_pos);
+    }
     return Success;
 }
+
+
+
