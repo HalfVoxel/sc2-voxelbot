@@ -9,6 +9,7 @@ using namespace sc2;
 TacticalManager::TacticalManager(std::shared_ptr<BOT::ControlFlowNode> armyTree, sc2::Point2D wallPlacement) : armyTree(armyTree), wallPlacement(wallPlacement){
     main = new MainUnitGroup();
     armyTree->Add(main->behavior);
+    groups.push_back(main);
 }
 
 void TacticalManager::OnUnitDestroyed(const Unit* unit) {
