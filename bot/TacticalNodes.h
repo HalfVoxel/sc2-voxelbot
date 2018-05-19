@@ -33,6 +33,7 @@ class GroupAttackMove : public GroupActionNode {
 public:
     GroupAttackMove(BOT::Context* group) : GroupActionNode(group) {}
     BOT::Status OnTick() override;
+    UnitGroup* GetGroup() { return (UnitGroup*)context; }
 };
 
 class ScoutingBehavior: public GroupActionNode{

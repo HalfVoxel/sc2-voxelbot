@@ -1,5 +1,7 @@
 #pragma once
-#include "TacticalNodes.h"
+#include "BehaviorTree.h"
+#include "sc2api/sc2_api.h"
+#include <vector>
 
 enum GroupType {Scout, Strike, Drop};
 class UnitGroup : public BOT::Context{
