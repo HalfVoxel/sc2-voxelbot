@@ -48,7 +48,7 @@ public:
 
 class MainGroupBehavior : public BOT::ParallelNode {
 public:
-    MainGroupBehavior::MainGroupBehavior(BOT::Context* group) :ParallelNode({ new SimpleArmyPosition(),
+    MainGroupBehavior(BOT::Context* group) :ParallelNode({ new SimpleArmyPosition(),
                                                                                 new BOT::SequenceNode{
                                                                                 new HasUnit(sc2::UNIT_TYPEID::TERRAN_MARINE, 40),
                                                                                 new GroupAttackMove(group)
