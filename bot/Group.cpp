@@ -26,10 +26,7 @@ void UnitGroup::RemoveUnit(const sc2::Unit* unit) {
 
 bool UnitGroup::ContainsUnit(const sc2::Unit* unit){
     auto found = find_if(units.begin(), units.end(), [unit](const Unit* x) {return x->tag == unit->tag; });
-    if (found == units.end()) {
-        return false;
-    }
-    return true;
+    return found != units.end();
 }
 
 MainUnitGroup::MainUnitGroup() : UnitGroup(GroupType::Main) {

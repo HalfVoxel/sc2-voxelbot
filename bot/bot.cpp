@@ -136,10 +136,10 @@ void Bot::OnStep() {
     }
     tree->Tick();
     armyTree->Tick();
-    TickMicro();
+   // TickMicro();
 
     influenceManager.OnStep();
-    cameraController.OnStep();
+   // cameraController.OnStep();
     if (!test) {
         tactical_manager->CreateGroup(Scout);
         test = true;
