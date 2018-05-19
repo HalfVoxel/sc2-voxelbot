@@ -18,12 +18,12 @@ const char* NeonVioletSquareLE = "Ladder/NeonVioletSquareLE.SC2Map";
 
 
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {/*
     std::cout << argc << " " << (std::string(argv[1]) == "--composition") << std::endl;
     if (argc >= 2 && std::string(argv[1]) == "--composition") {
         RunCompositionAnalyzer(argc-1, argv);
         return 0;
-    }
+    }*/
 
     Coordinator coordinator;
     if (!coordinator.LoadSettings(argc, argv)) {

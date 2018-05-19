@@ -142,7 +142,7 @@ void Bot::OnStep() {
     influenceManager.OnStep();
     cameraController.OnStep();
 
-    tactical_manager->CreateGroup(GroupType::Scout);
+    //tactical_manager->CreateGroup(GroupType::Scout);
 
     // DebugUnitPositions();
     Debug()->SendDebug();

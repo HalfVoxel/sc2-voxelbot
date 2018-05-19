@@ -20,11 +20,15 @@ class IsUnderAttack: public BOT::ConditionNode {
 };
 
 class GroupActionNode : public BOT::ContextAwareActionNode {
+protected:
+    UnitGroup * GetGroup() { return (UnitGroup*)context; }
 public:
     GroupActionNode(BOT::Context* context) : ContextAwareActionNode(context) {}
 };
 
 class GroupConditionNode : public BOT::ContextAwareConditionNode {
+protected:
+    UnitGroup * GetGroup() { return (UnitGroup*)context; }
 public:
     GroupConditionNode(BOT::Context* context) : BOT::ContextAwareConditionNode(context){}
 };
@@ -33,7 +37,6 @@ class GroupAttackMove : public GroupActionNode {
 public:
     GroupAttackMove(BOT::Context* group) : GroupActionNode(group) {}
     BOT::Status OnTick() override;
-    UnitGroup* GetGroup() { return (UnitGroup*)context; }
 };
 
 class ScoutingBehavior: public GroupActionNode{
