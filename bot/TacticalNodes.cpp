@@ -33,7 +33,7 @@ BOT::Status SimpleArmyPosition::OnTick() {
     for(auto const& unit : bot.Observation()->GetUnits(Unit::Self, IsArmy(bot.Observation()))){
         Point2D p = Point2D(unit->pos.x, unit->pos.y);
         if(Distance2D(preferred_army_position, p) > 3 && unit->orders.size() == 0){
-            bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, preferred_army_position);
+            bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, preferred_army_position);
             return Success;
         }
     }
