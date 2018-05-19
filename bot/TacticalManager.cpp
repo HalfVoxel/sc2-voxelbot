@@ -15,16 +15,14 @@ void TacticalManager::OnUnitDestroyed(const Unit* unit) {
     if (unit->alliance == Unit::Alliance::Self) {
         if (unit->unit_type == UNIT_TYPEID::TERRAN_SCV) {
             availableWorkers.remove_if([unit](const Unit* x) { return x->tag == unit->tag; });
-            groups.erase(remove_if(groups.begin(), groups.end(), [](const UnitGroup* x) {return x->IsDestroyed(); }), groups.end());;
-        } else if (IsArmy(bot.Observation()).operator()(*unit)) {
-            for(auto group: groups){
-                if(group->ContainsUnit(unit)){
-                    group->RemoveUnit(unit);
-                    break;
-                }
-            }
-            groups.erase(remove_if(groups.begin(), groups.end(), [](const UnitGroup* x) {return x->IsDestroyed(); }), groups.end());;
         }
+        for(auto group: groups){
+            if(group->ContainsUnit(unit)){
+                group->RemoveUnit(unit);
+                break;
+            }
+        }
+        groups.erase(remove_if(groups.begin(), groups.end(), [](const UnitGroup* x) {return x->IsDestroyed(); }), groups.end());
     } else if (unit->alliance == Unit::Alliance::Enemy) {
         if (IsArmy(bot.Observation()).operator()(*unit)) {
             knownEnemies.remove_if([unit](const Unit* x) { return x->tag == unit->tag; });
