@@ -76,7 +76,7 @@ void InfluenceManager::OnStep() {
 
         // How useful it is to defend a particular point
         // focuses on the perimeter of the base
-        auto defensivePotential = valueMap / distances;
+        auto defensivePotential = valueMap / (distances + 20);
         defensivePotential *= 1 / (0.001 + defensivePotential.maxFinite());
 
         // Find the best spot to defend
