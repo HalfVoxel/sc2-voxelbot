@@ -7,6 +7,8 @@ const bool Debug = true;
 
 enum Status { Running, Success, Failure, Idle, Halted };
 
+class Context{};
+
 class TreeNode {
    protected:
     virtual BOT::Status OnTick() = 0;
@@ -16,13 +18,28 @@ class TreeNode {
     virtual BOT::Status Tick();
 };
 
-// #define NODE_HELPERS(name) string Name() { return name; }
+class ContextAwareTreeNode : public TreeNode {
+public:
+    Context* context;
+public:
+    ContextAwareTreeNode(Context* context): context(context) {}
+};
 
-static std::vector<std::unique_ptr<TreeNode>> convertChildren(std::initializer_list<TreeNode*> ls) {
-    std::vector<std::unique_ptr<TreeNode>> result(ls.size());
+class ContextAwareActionNode : public ContextAwareTreeNode {
+public:
+    ContextAwareActionNode(Context* context) : ContextAwareTreeNode(context){}
+};
+
+class ContextAwareConditionNode : public ContextAwareTreeNode {
+public:
+    ContextAwareConditionNode(Context* context) : ContextAwareTreeNode(context) {}
+};
+
+static std::vector<std::shared_ptr<TreeNode>> convertChildren(std::initializer_list<TreeNode*> ls) {
+    std::vector<std::shared_ptr<TreeNode>> result(ls.size());
     int i = 0;
     for (auto* node : ls) {
-        result[i] = std::unique_ptr<TreeNode>(node);
+        result[i] = std::shared_ptr<TreeNode>(node);
         i++;
     }
     return result;
@@ -30,11 +47,11 @@ static std::vector<std::unique_ptr<TreeNode>> convertChildren(std::initializer_l
 
 class ControlFlowNode : public TreeNode {
    public:
-    void Add(std::unique_ptr<TreeNode> node);
+    void Add(std::shared_ptr<TreeNode> node);
 
    private:
    protected:
-    std::vector<std::unique_ptr<TreeNode>> children;
+    std::vector<std::shared_ptr<TreeNode>> children;
     ControlFlowNode(std::initializer_list<TreeNode*> ls) : children(convertChildren(ls)) {}
 };
 
@@ -60,7 +77,7 @@ class SequenceNode : public ControlFlowNode {
     BOT::Status OnTick() override;
 };
 
-class Not : public BOT::ConditionNode {
+class Not : public BOT::TreeNode {
     std::unique_ptr<TreeNode> child;
 
    public:

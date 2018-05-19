@@ -17,27 +17,26 @@ extern int ticks;
 
 namespace BOT {
 
-using namespace sc2;
 class Bot : public sc2::Agent {
 public:
-    std::vector<UNIT_TYPEID> barrack_types = {
-        UNIT_TYPEID::TERRAN_BARRACKSFLYING, UNIT_TYPEID::TERRAN_BARRACKS
+    std::vector<sc2::UNIT_TYPEID> barrack_types = {
+        sc2::UNIT_TYPEID::TERRAN_BARRACKSFLYING, sc2::UNIT_TYPEID::TERRAN_BARRACKS
     };
-    std::vector<UNIT_TYPEID> factory_types = {
-        UNIT_TYPEID::TERRAN_FACTORYFLYING, UNIT_TYPEID::TERRAN_FACTORY
+    std::vector<sc2::UNIT_TYPEID> factory_types = {
+        sc2::UNIT_TYPEID::TERRAN_FACTORYFLYING, sc2::UNIT_TYPEID::TERRAN_FACTORY
     };
-    std::vector<UNIT_TYPEID> starport_types = {
-        UNIT_TYPEID::TERRAN_STARPORTFLYING, UNIT_TYPEID::TERRAN_STARPORT
+    std::vector<sc2::UNIT_TYPEID> starport_types = {
+        sc2::UNIT_TYPEID::TERRAN_STARPORTFLYING, sc2::UNIT_TYPEID::TERRAN_STARPORT
     };
-    std::vector<UNIT_TYPEID> supply_depot_types = {
-        UNIT_TYPEID::TERRAN_SUPPLYDEPOT, UNIT_TYPEID::TERRAN_SUPPLYDEPOTLOWERED
+    std::vector<sc2::UNIT_TYPEID> supply_depot_types = {
+        sc2::UNIT_TYPEID::TERRAN_SUPPLYDEPOT, sc2::UNIT_TYPEID::TERRAN_SUPPLYDEPOTLOWERED
     };
    
-    std::vector<UNIT_TYPEID> production_types = {
-        UNIT_TYPEID::TERRAN_COMMANDCENTER, UNIT_TYPEID::TERRAN_BARRACKS,
-        UNIT_TYPEID::TERRAN_FACTORY, UNIT_TYPEID::TERRAN_STARPORT
+    std::vector<sc2::UNIT_TYPEID> production_types = {
+        sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER, sc2::UNIT_TYPEID::TERRAN_BARRACKS,
+        sc2::UNIT_TYPEID::TERRAN_FACTORY, sc2::UNIT_TYPEID::TERRAN_STARPORT
     };
-    std::vector<Point2D> wallPlacements;
+    std::vector<sc2::Point2D> wallPlacements;
 
 
     CameraController cameraController;
@@ -49,11 +48,11 @@ public:
     sc2::Point3D startLocation_;
     sc2::Point3D staging_location_;
     BuildingPlacement buildingPlacement;
-    std::vector<Point2D>* FindWallPlacements(size_t size);
+    std::vector<sc2::Point2D>* FindWallPlacements(size_t size);
     
     int GetPositionIndex(int x, int y);
-    Point2D GetMapCoordinate(int i);
-    int ManhattanDistance(Point2D p1, Point2D p2);
+    sc2::Point2D GetMapCoordinate(int i);
+    int ManhattanDistance(sc2::Point2D p1, sc2::Point2D p2);
     void OnGameLoading();
     void OnGameStart() override final;
 
@@ -61,21 +60,21 @@ public:
 
     void OnGameEnd() override final;
 
-    void OnUnitDestroyed(const Unit* unit) override final;
+    void OnUnitDestroyed(const sc2::Unit* unit) override final;
 
-    void OnUnitCreated(const Unit* unit) override final;
+    void OnUnitCreated(const sc2::Unit* unit) override final;
 
     void OnNydusDetected() override;
 
     void OnNuclearLaunchDetected() override final;
 
-    void OnUnitEnterVision(const Unit* unit) override final;
+    void OnUnitEnterVision(const sc2::Unit* unit) override final;
 
-    Point2D* Rotate(Point2D p, float degrees);
+    sc2::Point2D* Rotate(sc2::Point2D p, float degrees);
 private:
     std::unique_ptr<TreeNode> tree;
 
-    std::unique_ptr<TreeNode> armyTree;
+    std::shared_ptr<ControlFlowNode> armyTree;
 };
 
 

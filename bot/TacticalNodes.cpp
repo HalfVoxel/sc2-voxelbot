@@ -63,3 +63,21 @@ BOT::Status SimpleAttackMove::OnTick() {
 BOT::Status IsUnderAttack::OnTick() {
     return Failure;
 }
+
+BOT::Status GroupAttackMove::OnTick() {
+    auto group = static_cast<UnitGroup*>(context);
+    auto game_info = bot.Observation()->GetGameInfo();
+    if (game_info.enemy_start_locations.empty()) {
+        return Failure;
+    }
+    auto target_pos = game_info.enemy_start_locations.front();
+
+    for(auto* unit: group->units){
+        bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, target_pos);
+    }
+    return Success;
+}
+
+BOT::Status ScoutingBehavior::OnTick() {
+    return Success;
+}

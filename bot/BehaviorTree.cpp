@@ -4,7 +4,7 @@ using namespace std;
 #include <iostream>
 #include <typeinfo>
 
-void ControlFlowNode::Add(unique_ptr<TreeNode> node) {
+void ControlFlowNode::Add(shared_ptr<TreeNode> node) {
     children.push_back(move(node));
 }
 

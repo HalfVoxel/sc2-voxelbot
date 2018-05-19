@@ -26,8 +26,6 @@ void Bot::OnGameStart() {
     startLocation_ = Observation()->GetStartLocation();
     staging_location_ = startLocation_;
     buildingPlacement.OnGameStart();
-
-    tactical_manager = new TacticalManager(buildingPlacement.wallPlacement);
     tree = unique_ptr<TreeNode>(new ParallelNode{
         new SequenceNode{
             new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY),
@@ -103,7 +101,7 @@ void Bot::OnGameStart() {
         }
     });
 
-    armyTree = unique_ptr<TreeNode>(new ParallelNode{
+    armyTree = unique_ptr<ControlFlowNode>(new ParallelNode{
         new ControlSupplyDepots(),
         new SimpleArmyPosition(),
         new SequenceNode{
@@ -111,6 +109,8 @@ void Bot::OnGameStart() {
             new SimpleAttackMove()
         },
     });
+
+    tactical_manager = new TacticalManager(armyTree ,buildingPlacement.wallPlacement);
 
     influenceManager.Init();
 }
@@ -141,6 +141,8 @@ void Bot::OnStep() {
 
     influenceManager.OnStep();
     cameraController.OnStep();
+
+    tactical_manager->CreateGroup(GroupType::Scout);
 
     // DebugUnitPositions();
     Debug()->SendDebug();

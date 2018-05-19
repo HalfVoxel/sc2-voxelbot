@@ -1,36 +1,39 @@
 #pragma once
 #include "sc2api/sc2_api.h"
 #include <list>
-using namespace sc2;
+#include "Group.h"
 
 class TacticalManager {
 private:
-    Point2D wallPlacement;
-    std::list<Unit> availableArmy;
-    std::list<Unit> availableWorkers;
-    std::list<Unit> knownEnemies;
+    sc2::Point2D wallPlacement;
+    std::list<const sc2::Unit*> availableArmy;
+    std::list<const sc2::Unit*> availableWorkers;
+    std::list<const sc2::Unit*> knownEnemies;
+    std::vector<UnitGroup*> groups;
+    std::shared_ptr<BOT::ControlFlowNode> armyTree;
 
-    std::vector<UNIT_TYPEID> bio_types = { UNIT_TYPEID::TERRAN_MARINE, UNIT_TYPEID::TERRAN_MARAUDER, UNIT_TYPEID::TERRAN_GHOST, UNIT_TYPEID::TERRAN_REAPER /*reaper*/ };
-    std::vector<UNIT_TYPEID> widow_mine_types = { UNIT_TYPEID::TERRAN_WIDOWMINE, UNIT_TYPEID::TERRAN_WIDOWMINEBURROWED };
-    std::vector<UNIT_TYPEID> siege_tank_types = { UNIT_TYPEID::TERRAN_SIEGETANK, UNIT_TYPEID::TERRAN_SIEGETANKSIEGED };
-    std::vector<UNIT_TYPEID> viking_types = { UNIT_TYPEID::TERRAN_VIKINGASSAULT, UNIT_TYPEID::TERRAN_VIKINGFIGHTER };
-    std::vector<UNIT_TYPEID> hellion_types = { UNIT_TYPEID::TERRAN_HELLION, UNIT_TYPEID::TERRAN_HELLIONTANK };
-    std::vector<UNIT_TYPEID> liberator_types = { UNIT_TYPEID::TERRAN_LIBERATOR, UNIT_TYPEID::TERRAN_LIBERATORAG };
-    std::vector<UNIT_TYPEID> thor_types = { UNIT_TYPEID::TERRAN_THOR, UNIT_TYPEID::TERRAN_THORAP };
+    std::vector<sc2::UNIT_TYPEID> bio_types = { sc2::UNIT_TYPEID::TERRAN_MARINE, sc2::UNIT_TYPEID::TERRAN_MARAUDER, sc2::UNIT_TYPEID::TERRAN_GHOST, sc2::UNIT_TYPEID::TERRAN_REAPER /*reaper*/ };
+    std::vector<sc2::UNIT_TYPEID> widow_mine_types = { sc2::UNIT_TYPEID::TERRAN_WIDOWMINE, sc2::UNIT_TYPEID::TERRAN_WIDOWMINEBURROWED };
+    std::vector<sc2::UNIT_TYPEID> siege_tank_types = { sc2::UNIT_TYPEID::TERRAN_SIEGETANK, sc2::UNIT_TYPEID::TERRAN_SIEGETANKSIEGED };
+    std::vector<sc2::UNIT_TYPEID> viking_types = { sc2::UNIT_TYPEID::TERRAN_VIKINGASSAULT, sc2::UNIT_TYPEID::TERRAN_VIKINGFIGHTER };
+    std::vector<sc2::UNIT_TYPEID> hellion_types = { sc2::UNIT_TYPEID::TERRAN_HELLION, sc2::UNIT_TYPEID::TERRAN_HELLIONTANK };
+    std::vector<sc2::UNIT_TYPEID> liberator_types = { sc2::UNIT_TYPEID::TERRAN_LIBERATOR, sc2::UNIT_TYPEID::TERRAN_LIBERATORAG };
+    std::vector<sc2::UNIT_TYPEID> thor_types = { sc2::UNIT_TYPEID::TERRAN_THOR, sc2::UNIT_TYPEID::TERRAN_THORAP };
 
 public:
-    Point2D preferredArmyPosition;
-    void OnUnitDestroyed(const Unit* unit);
+    sc2::Point2D preferredArmyPosition;
 
-    void OnUnitCreated(const Unit* unit);
+    void OnUnitDestroyed(const sc2::Unit* unit);
+
+    void OnUnitCreated(const sc2::Unit* unit);
 
     void OnNydusDetected();
 
     void OnNuclearLaunchDetected();
-    Point2D GetPreferredArmyPosition();
+    sc2::Point2D GetPreferredArmyPosition();
+    UnitGroup CreateGroup(GroupType type);
 
-    void OnUnitEnterVision(const Unit* unit);
+    void OnUnitEnterVision(const sc2::Unit* unit);
 
-    TacticalManager(Point2D wallPlacement): wallPlacement(wallPlacement) {
-    }
+    TacticalManager(std::shared_ptr<BOT::ControlFlowNode> armyTree, sc2::Point2D wallPlacement) : armyTree(armyTree), wallPlacement(wallPlacement) {}
 };
