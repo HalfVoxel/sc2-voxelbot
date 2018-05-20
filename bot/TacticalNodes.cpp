@@ -30,9 +30,10 @@ BOT::Status ControlSupplyDepots::OnTick() { //Just so we dont get stuck in base.
 
 BOT::Status GroupPosition::OnTick() {
     Point2D preferred_army_position = bot.tacticalManager->GetPreferredArmyPosition();
-    for(auto const& unit : GetGroup()->units){
+    for (auto const& unit : GetGroup()->units) {
         Point2D p = Point2D(unit->pos.x, unit->pos.y);
-        if(Distance2D(preferred_army_position, p) > 3 && (unit->orders.size() == 0 || p != unit->orders[0].target_pos)){
+        if (Distance2D(preferred_army_position, p) > 3 && 
+            (unit->orders.size() == 0 || Distance2D(p, unit->orders[0].target_pos) < 1)) {
             bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, preferred_army_position);
             return Success;
         }
@@ -48,8 +49,8 @@ BOT::Status GroupAttackMove::OnTick() {
     }
     auto target_pos = game_info.enemy_start_locations.front();
 
-    for(auto* unit: group->units){
-        if ((unit->orders.size() == 0 || target_pos != unit->orders[0].target_pos)) {
+    for (auto* unit : group->units) {
+        if ((unit->orders.size() == 0 || Distance2D(target_pos, unit->orders[0].target_pos) < 1)) {
             bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, target_pos);
         }
     }
