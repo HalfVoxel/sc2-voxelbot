@@ -70,10 +70,14 @@ void InfluenceManager::OnStep() {
             scoutingMap.addInfluence(scoutingUncertainty, p);
         }
 
+        for(auto p : bot.expansions_){
+            scoutingMap.addInfluence(scoutingUncertainty, p);
+        }
+
         for(int i = 0; i < scoutingMap.w; i++){
             for (int j = 0; j < scoutingMap.h; j++) {
                 Point2D p = Point2D(i, j);
-                if(observation->GetVisibility(p) != Visibility::Visible){
+                if(observation->GetVisibility(p) != Visibility::Visible && pathing_grid(p) != 0){
                     scoutingMap.addInfluence(scoutingUncertainty, p);
                 } else {
                     scoutingMap.setInfluence(0, p);
