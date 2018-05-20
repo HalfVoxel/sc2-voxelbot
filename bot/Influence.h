@@ -88,6 +88,7 @@ struct InfluenceMap {
 
     void addInfluence(double influence, sc2::Point2DI pos);
     void addInfluence(double influence, sc2::Point2D pos);
+    void setInfluence(double influence, sc2::Point2D pos);
 
     void addInfluence(const std::vector<std::vector<double> >& influence, sc2::Point2D);
     

@@ -6,10 +6,8 @@ using namespace std;
 using namespace sc2;
 
 
-TacticalManager::TacticalManager(std::shared_ptr<BOT::ControlFlowNode> armyTree, sc2::Point2D wallPlacement) : armyTree(armyTree), wallPlacement(wallPlacement){
-    main = new MainUnitGroup();
-    armyTree->Add(main->behavior);
-    groups.push_back(main);
+TacticalManager::TacticalManager(std::shared_ptr<BOT::ControlFlowNode> armyTree, sc2::Point2D wallPlacement) : armyTree(armyTree), wallPlacement(wallPlacement) {
+    main = CreateGroup(GroupType::Main);
 }
 
 void TacticalManager::OnUnitDestroyed(const Unit* unit) {
@@ -17,13 +15,14 @@ void TacticalManager::OnUnitDestroyed(const Unit* unit) {
         if (unit->unit_type == UNIT_TYPEID::TERRAN_SCV) {
             availableWorkers.remove_if([unit](const Unit* x) { return x->tag == unit->tag; });
         }
-        for(auto group: groups){
-            if(group->ContainsUnit(unit)){
+        for (auto group : groups) {
+            if (group->ContainsUnit(unit)) {
                 group->RemoveUnit(unit);
                 break;
             }
         }
-        groups.erase(remove_if(groups.begin(), groups.end(), [](const UnitGroup* x) {return x->IsDestroyed(); }), groups.end());
+        groups.erase(remove_if(groups.begin(), groups.end(),
+                               [](const UnitGroup* x) { return x->IsDestroyed(); }), groups.end());
     } else if (unit->alliance == Unit::Alliance::Enemy) {
         if (IsArmy(bot.Observation()).operator()(*unit)) {
             knownEnemies.remove_if([unit](const Unit* x) { return x->tag == unit->tag; });
@@ -45,7 +44,10 @@ void TacticalManager::OnUnitCreated(const Unit* unit) {
 void TacticalManager::OnUnitEnterVision(const Unit* unit) {
     if (unit->alliance == Unit::Alliance::Enemy) {
         if (IsArmy(bot.Observation()).operator()(*unit)) {
-            auto found = find_if(knownEnemies.begin(), knownEnemies.end(), [unit](const Unit* x){return x->tag == unit->tag;});
+            auto found = find_if(knownEnemies.begin(), knownEnemies.end(), [unit](const Unit* x)
+            {
+                return x->tag == unit->tag;
+            });
             if (found == knownEnemies.end()) {
                 knownEnemies.push_back(unit);
             }
@@ -70,10 +72,13 @@ Point2D TacticalManager::GetPreferredArmyPosition() {
     return p;
 }
 
-UnitGroup TacticalManager::CreateGroup(GroupType type) {
+UnitGroup* TacticalManager::CreateGroup(GroupType type) {
     UnitGroup* group;
-    if (type == GroupType::Scout) {
-        if (!main->units.empty()) {//TODO: Choose marines over other units
+    if (type == GroupType::Main) {
+        group = new MainUnitGroup();
+    } else if (type == GroupType::Scout) {
+        if (!main->units.empty()) {
+            //TODO: Choose marines over other units
             group = new ScoutGroup(main->units[0]);
             main->RemoveUnit(main->units[0]);
         } else {
@@ -86,5 +91,5 @@ UnitGroup TacticalManager::CreateGroup(GroupType type) {
 
     armyTree->Add(group->behavior);
     groups.push_back(group);
-    return *group;
+    return group;
 }

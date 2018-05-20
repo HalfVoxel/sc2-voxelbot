@@ -31,7 +31,7 @@ public:
 
     void OnNuclearLaunchDetected();
     sc2::Point2D GetPreferredArmyPosition();
-    UnitGroup CreateGroup(GroupType type);
+    UnitGroup* CreateGroup(GroupType type);
 
     void OnUnitEnterVision(const sc2::Unit* unit);
 

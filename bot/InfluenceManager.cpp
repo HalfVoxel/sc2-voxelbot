@@ -12,6 +12,7 @@ InfluenceMap pathing_cost;
 InfluenceMap placement_grid;
 InfluenceMap enemyDensity;
 InfluenceMap valueMap;
+InfluenceMap scoutingMap;
 
 void InfluenceManager::Init() {
     // 1 at traversable cells, 0 at walls
@@ -31,11 +32,14 @@ void InfluenceManager::Init() {
     enemyDensity = InfluenceMap(pathing_grid.w, pathing_grid.h);
     valueMap = InfluenceMap(pathing_grid.w, pathing_grid.h);
     safeBuildingMap = InfluenceMap(pathing_grid.w, pathing_grid.h);
+    scoutingMap = InfluenceMap(pathing_grid.w, pathing_grid.h);
 }
 
 void InfluenceManager::OnStep() {
     const int InfluenceFrameInterval = 10;
     if ((ticks % InfluenceFrameInterval) == 0) {
+
+        double scoutingUncertainty = 0.005;
         double spread = 5;
         auto observation = bot.Observation();
         for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
@@ -53,6 +57,7 @@ void InfluenceManager::OnStep() {
         for (auto unit : observation->GetUnits(Unit::Alliance::Enemy)) {
             if (IsStructure(observation)(*unit)) {
                 enemyDensity.addInfluence(1, unit->pos);
+                scoutingMap.addInfluence(scoutingUncertainty, unit->pos);
             } else if (IsArmy(observation)(*unit)) {
                 enemyDensity.addInfluence(0.8, unit->pos);
             } else {
@@ -62,6 +67,18 @@ void InfluenceManager::OnStep() {
 
         for (auto p : bot.game_info_.enemy_start_locations) {
             enemyDensity.addInfluence(1, p);
+            scoutingMap.addInfluence(scoutingUncertainty, p);
+        }
+
+        for(int i = 0; i < scoutingMap.w; i++){
+            for (int j = 0; j < scoutingMap.h; j++) {
+                Point2D p = Point2D(i, j);
+                if(observation->GetVisibility(p) != Visibility::Visible){
+                    scoutingMap.addInfluence(scoutingUncertainty, p);
+                } else {
+                    scoutingMap.setInfluence(0, p);
+                }
+            }
         }
 
         enemyDensity.propagateSum(exp(-4), 0.2, pathing_grid);
@@ -91,9 +108,10 @@ void InfluenceManager::OnStep() {
         // Render all maps for debugging
         // Coordinates in a tile layout with 0,0 being the top-left corner of the debugging window.
         distances.render(0, 0);
-        flood.render(1, 1);
         enemyDensity.render(0, 1);
         valueMap.renderNormalized(0, 2);
+        scoutingMap.render(1, 0);
+        flood.render(1, 1);
         defensivePotential.render(1, 2);
         Render();
     }

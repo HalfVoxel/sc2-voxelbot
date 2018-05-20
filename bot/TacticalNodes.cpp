@@ -28,9 +28,9 @@ BOT::Status ControlSupplyDepots::OnTick() { //Just so we dont get stuck in base.
     return Success;
 }
 
-BOT::Status SimpleArmyPosition::OnTick() {
+BOT::Status GroupPosition::OnTick() {
     Point2D preferred_army_position = bot.tactical_manager->GetPreferredArmyPosition();
-    for(auto const& unit : bot.Observation()->GetUnits(Unit::Self, IsArmy(bot.Observation()))){
+    for(auto const& unit : GetGroup()->units){
         Point2D p = Point2D(unit->pos.x, unit->pos.y);
         if(Distance2D(preferred_army_position, p) > 3 && unit->orders.size() == 0){
             bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, preferred_army_position);
@@ -38,31 +38,6 @@ BOT::Status SimpleArmyPosition::OnTick() {
         }
     }
     return Success;
-}
-
-int tick = 0;
-BOT::Status SimpleAttackMove::OnTick() {
-    tick++;
-    if ((tick % 100) != 0) return Running;
-
-    //If unit isn't doing anything make it attack.
-    Units units = bot.Observation()->GetUnits(Unit::Self, IsArmy(bot.Observation()));
-    auto game_info = bot.Observation()->GetGameInfo();
-    if (game_info.enemy_start_locations.empty()) {
-        return Failure;
-    }
-    auto target_pos = game_info.enemy_start_locations.front();
-
-    // Just add an attack order
-    // TODO: Might be queued
-    for (auto* unit : units) {
-        bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, target_pos);
-    }
-    return Success;
-}
-
-BOT::Status IsUnderAttack::OnTick() {
-    return Failure;
 }
 
 BOT::Status GroupAttackMove::OnTick() {

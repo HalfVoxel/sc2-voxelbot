@@ -179,6 +179,13 @@ void InfluenceMap::addInfluence(double influence, Point2D pos) {
     weights[p.second*w + p.first] += influence;
 }
 
+void InfluenceMap::setInfluence(double influence, Point2D pos) {
+    auto p = round_point(pos);
+    assert(p.first >= 0 && p.first < w && p.second >= 0 && p.second < h);
+    weights[p.second*w + p.first] = influence;
+}
+
+
 void InfluenceMap::addInfluence(const vector<vector<double> >& influence, Point2D pos) {
     int x0, y0;
     tie(x0, y0) = round_point(pos);
