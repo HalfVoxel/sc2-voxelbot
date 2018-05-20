@@ -8,6 +8,10 @@ void ControlFlowNode::Add(shared_ptr<TreeNode> node) {
     children.push_back(move(node));
 }
 
+void ControlFlowNode::Remove(std::shared_ptr<TreeNode> node) {
+    children.erase(find(children.begin(), children.end(), node));
+}
+
 int depth = 0;
 Status TreeNode::Tick() {
     // depth++;

@@ -18,11 +18,18 @@ void TacticalManager::OnUnitDestroyed(const Unit* unit) {
         for (auto group : groups) {
             if (group->ContainsUnit(unit)) {
                 group->RemoveUnit(unit);
+                if(!group->IsFunctional()){
+                    for (auto unit : group->units) {
+                        main->AddUnit(unit);
+                    }
+                }
+                if(group->IsDestroyed() || !group->IsFunctional()){
+                    armyTree->Remove(group->behavior);
+                }
                 break;
             }
         }
-        groups.erase(remove_if(groups.begin(), groups.end(),
-                               [](const UnitGroup* x) { return x->IsDestroyed(); }), groups.end());
+        groups.erase(remove_if(groups.begin(), groups.end(),[](const UnitGroup* x) { return x->IsDestroyed() || !x->IsFunctional(); }), groups.end());
     } else if (unit->alliance == Unit::Alliance::Enemy) {
         if (IsArmy(bot.Observation()).operator()(*unit)) {
             knownEnemies.remove_if([unit](const Unit* x) { return x->tag == unit->tag; });

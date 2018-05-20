@@ -67,7 +67,7 @@ void InfluenceManager::OnStep() {
 
         for (auto p : bot.game_info_.enemy_start_locations) {
             enemyDensity.addInfluence(1, p);
-            scoutingMap.addInfluence(scoutingUncertainty, p);
+            scoutingMap.addInfluence(scoutingUncertainty*1.5, p);
         }
 
         for(auto p : bot.expansions_){
@@ -103,7 +103,7 @@ void InfluenceManager::OnStep() {
         // Find the best spot to defend
         // TODO: Send different squads to different positions
         auto best = defensivePotential.argmax();
-        bot.tactical_manager->preferredArmyPosition = Point2D(best.x, best.y);
+        bot.tacticalManager->preferredArmyPosition = Point2D(best.x, best.y);
 
         // Make it good to build buildings as far away from the enemy as possible
         // preferably behind other buildings and defences.

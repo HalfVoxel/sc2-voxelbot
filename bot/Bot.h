@@ -1,5 +1,6 @@
 #pragma once
 #include "BehaviorTree.h"
+#include "ScoutingManager.h"
 #include "sc2api/sc2_agent.h"
 #include "sc2api/sc2_interfaces.h"
 #include "sc2api/sc2_map_info.h"
@@ -40,7 +41,7 @@ public:
 
 
     CameraController cameraController;
-    TacticalManager* tactical_manager;
+    TacticalManager* tacticalManager;
     InfluenceManager influenceManager;
     int max_worker_count_ = 73;
     sc2::GameInfo game_info_;
@@ -48,6 +49,7 @@ public:
     sc2::Point3D startLocation_;
     sc2::Point3D staging_location_;
     BuildingPlacement buildingPlacement;
+    ScoutingManager* scoutingManager;
     std::vector<sc2::Point2D>* FindWallPlacements(size_t size);
     
     int GetPositionIndex(int x, int y);

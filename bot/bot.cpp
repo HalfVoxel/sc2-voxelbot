@@ -7,10 +7,9 @@
 #include <iostream>
 #include "TacticalNodes.h"
 #include "SDL.h"
-#include "Influence.h"
-#include "Predicates.h"
 #include "Pathfinding.h"
 #include "buildingPlacement.h"
+#include "ScoutingManager.h"
 #include "MicroNodes.h"
 #include <random>
 #include <limits>
@@ -107,7 +106,8 @@ void Bot::OnGameStart() {
         new ControlSupplyDepots()
     });
 
-    tactical_manager = new TacticalManager(armyTree ,buildingPlacement.wallPlacement);
+    tacticalManager = new TacticalManager(armyTree ,buildingPlacement.wallPlacement);
+    scoutingManager = new ScoutingManager();
 
     influenceManager.Init();
 }
@@ -139,11 +139,8 @@ void Bot::OnStep() {
    // TickMicro();
 
     influenceManager.OnStep();
+    scoutingManager->OnStep();
    // cameraController.OnStep();
-    if (!test) {
-        tactical_manager->CreateGroup(Scout);
-        test = true;
-    }
     // DebugUnitPositions();
     Debug()->SendDebug();
 }
@@ -153,23 +150,23 @@ void Bot::OnGameEnd() {
 }
 
 void Bot::OnUnitDestroyed(const Unit* unit) {
-    tactical_manager->OnUnitDestroyed(unit);
+    tacticalManager->OnUnitDestroyed(unit);
 }
 
 void Bot::OnUnitCreated(const Unit* unit) {
-    tactical_manager->OnUnitCreated(unit);
+    tacticalManager->OnUnitCreated(unit);
 }
 
 void Bot::OnNydusDetected() {
-    tactical_manager->OnNydusDetected();
+    tacticalManager->OnNydusDetected();
 }
 
 void Bot::OnNuclearLaunchDetected() {
-    tactical_manager->OnNuclearLaunchDetected();
+    tacticalManager->OnNuclearLaunchDetected();
 }
 
 void Bot::OnUnitEnterVision(const Unit* unit) {
-    tactical_manager->OnUnitEnterVision(unit);
+    tacticalManager->OnUnitEnterVision(unit);
 }
 
 int Bot::GetPositionIndex(int x, int y) {

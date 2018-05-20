@@ -29,7 +29,7 @@ BOT::Status ControlSupplyDepots::OnTick() { //Just so we dont get stuck in base.
 }
 
 BOT::Status GroupPosition::OnTick() {
-    Point2D preferred_army_position = bot.tactical_manager->GetPreferredArmyPosition();
+    Point2D preferred_army_position = bot.tacticalManager->GetPreferredArmyPosition();
     for(auto const& unit : GetGroup()->units){
         Point2D p = Point2D(unit->pos.x, unit->pos.y);
         if(Distance2D(preferred_army_position, p) > 3 && unit->orders.size() == 0){

@@ -48,7 +48,7 @@ static std::vector<std::shared_ptr<TreeNode>> convertChildren(std::initializer_l
 class ControlFlowNode : public TreeNode {
    public:
     void Add(std::shared_ptr<TreeNode> node);
-
+    void Remove(std::shared_ptr<TreeNode> node);
    private:
    protected:
     std::vector<std::shared_ptr<TreeNode>> children;
