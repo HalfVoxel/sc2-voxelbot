@@ -32,7 +32,7 @@ BOT::Status GroupPosition::OnTick() {
     Point2D preferred_army_position = bot.tacticalManager->GetPreferredArmyPosition();
     for(auto const& unit : GetGroup()->units){
         Point2D p = Point2D(unit->pos.x, unit->pos.y);
-        if(Distance2D(preferred_army_position, p) > 3 && unit->orders.size() == 0){
+        if(Distance2D(preferred_army_position, p) > 3 && (unit->orders.size() == 0 || p != unit->orders[0].target_pos)){
             bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, preferred_army_position);
             return Success;
         }
@@ -49,24 +49,11 @@ BOT::Status GroupAttackMove::OnTick() {
     auto target_pos = game_info.enemy_start_locations.front();
 
     for(auto* unit: group->units){
-        bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, target_pos);
+        if ((unit->orders.size() == 0 || target_pos != unit->orders[0].target_pos)) {
+            bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, target_pos);
+        }
     }
     return Success;
 }
-
-BOT::Status ScoutingBehavior::OnTick() {
-    auto group = static_cast<UnitGroup*>(context);
-    auto game_info = bot.Observation()->GetGameInfo();
-    if (game_info.enemy_start_locations.empty()) {
-        return Failure;
-    }
-    auto target_pos = game_info.enemy_start_locations.front();
-
-    for (auto* unit : group->units) {
-        bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, target_pos);
-    }
-    return Success;
-}
-
 
 

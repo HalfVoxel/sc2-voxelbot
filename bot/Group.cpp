@@ -1,5 +1,6 @@
 #include "Group.h"
 #include "TacticalNodes.h"
+#include "ScoutingNodes.h"
 
 using namespace sc2;
 using namespace std;

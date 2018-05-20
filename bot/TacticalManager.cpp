@@ -25,6 +25,9 @@ void TacticalManager::OnUnitDestroyed(const Unit* unit) {
                 }
                 if(group->IsDestroyed() || !group->IsFunctional()){
                     armyTree->Remove(group->behavior);
+                    if(group->type == Scout){
+                        bot.scoutingManager->ScoutDestroyed(group);
+                    }
                 }
                 break;
             }

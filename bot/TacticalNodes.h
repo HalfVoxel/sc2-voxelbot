@@ -30,12 +30,6 @@ public:
     BOT::Status OnTick() override;
 };
 
-class ScoutingBehavior: public GroupActionNode{
-public:
-    ScoutingBehavior(BOT::Context* group) : GroupActionNode(group) {}
-    BOT::Status OnTick() override;
-};
-
 class GroupPosition : public GroupActionNode {
 public:
     GroupPosition(BOT::Context* group) : GroupActionNode(group) {}
