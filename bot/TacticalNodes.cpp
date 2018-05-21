@@ -33,9 +33,8 @@ BOT::Status GroupPosition::OnTick() {
     for (auto const& unit : GetGroup()->units) {
         Point2D p = Point2D(unit->pos.x, unit->pos.y);
         if (Distance2D(preferred_army_position, p) > 3 && 
-            (unit->orders.size() == 0 || Distance2D(p, unit->orders[0].target_pos) > 1)) {
+            (unit->orders.size() == 0 || Distance2D(preferred_army_position, unit->orders[0].target_pos) > 1)) {
             bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, preferred_army_position);
-            return Success;
         }
     }
     return Success;
