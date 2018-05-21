@@ -30,7 +30,6 @@ void Bot::OnGameStart() {
     tree = unique_ptr<TreeNode>(new ParallelNode{
         new SequenceNode{
             new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY),
-            new HasUnit(UNIT_TYPEID::TERRAN_ORBITALCOMMAND),
             new Expand(UNIT_TYPEID::TERRAN_COMMANDCENTER)
         },
         new SelectorNode{
@@ -93,7 +92,6 @@ void Bot::OnGameStart() {
                              UNIT_TYPEID::TERRAN_REFINERY),
         new SequenceNode{
             new Not(new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY)),
-            new HasUnit(UNIT_TYPEID::TERRAN_ORBITALCOMMAND),
             new SequenceNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_COMMANDCENTER, 2),
                 new Build(UNIT_TYPEID::TERRAN_MARAUDER),
@@ -104,7 +102,6 @@ void Bot::OnGameStart() {
         },
         new SequenceNode{
             new Not(new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY)),
-            new HasUnit(UNIT_TYPEID::TERRAN_ORBITALCOMMAND),
             new Build(UNIT_TYPEID::TERRAN_MARINE)
         }
     });
