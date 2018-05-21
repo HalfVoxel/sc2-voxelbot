@@ -52,7 +52,7 @@ BOT::Status GroupAttackMove::OnTick() {
     //game_info.enemy_start_locations.front();
 
     for (auto* unit : group->units) {
-        if ((unit->orders.size() == 0 || Distance2D(target_pos, unit->orders[0].target_pos) > 1)) {
+        if (Distance2D(unit->pos, target_pos) > 5 && (unit->orders.size() == 0 || Distance2D(target_pos, unit->orders[0].target_pos) > 1)) {
             bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, target_pos);
         }
     }

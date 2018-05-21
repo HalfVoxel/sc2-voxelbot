@@ -36,14 +36,14 @@ public:
     BOT::Status OnTick() override;
 };
 
-class MainGroupBehavior : public BOT::ParallelNode {
+class MainGroupBehavior : public BOT::SelectorNode {
 public:
-    MainGroupBehavior(BOT::Context* group): ParallelNode({
-            new GroupPosition(group),
+    MainGroupBehavior(BOT::Context* group) : BOT::SelectorNode({
             new BOT::SequenceNode{
                 new HasUnit(sc2::UNIT_TYPEID::TERRAN_MARINE, 40),
                 new GroupAttackMove(group)
-            }
+            },
+            new GroupPosition(group)
         }) {
     }
 };
