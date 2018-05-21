@@ -40,9 +40,9 @@ Status Build::OnTick() {
         return Status::Failure;
     }
 
-    Units units = observation->GetUnits(Unit::Alliance::Self);
+    Units units = observation->GetUnits(Unit::Alliance::Self, IsStructure(observation));
     for (auto unit : units) {
-        if (unit->unit_type != builderUnitType) {
+        if (std::find(builderUnitType.begin(), builderUnitType.end(), unit->unit_type) == builderUnitType.end()) {
             continue;
         }
        
@@ -69,7 +69,7 @@ Status Build::OnTick() {
     return Status::Failure;
 }
 
-Status BuildStructure::PlaceBuilding(UnitTypeID unitType, Point2D location, bool isExpansion = false) {
+Status Construct::PlaceBuilding(UnitTypeID unitType, Point2D location, bool isExpansion = false) {
 
     const ObservationInterface* observation = bot.Observation();
 
@@ -82,7 +82,7 @@ Status BuildStructure::PlaceBuilding(UnitTypeID unitType, Point2D location, bool
     auto ability = unitTypeData.ability_id;
     auto builderUnitType = abilityToCasterUnit(unitTypeData.ability_id);
 
-    Units workers = observation->GetUnits(Unit::Alliance::Self, IsUnit(builderUnitType));
+    Units workers = observation->GetUnits(Unit::Alliance::Self, IsUnits(builderUnitType));
 
     //if we have no workers Don't build
     if (workers.empty()) {
@@ -121,7 +121,7 @@ Status BuildStructure::PlaceBuilding(UnitTypeID unitType, Point2D location, bool
 
 }
 
-Status BuildStructure::PlaceBuilding(UnitTypeID unitType, Tag loc) {
+Status Construct::PlaceBuilding(UnitTypeID unitType, Tag loc) {
     const ObservationInterface* observation = bot.Observation();
 
     const UnitTypeData& unitTypeData = observation->GetUnitTypeData(false)[unitType];
@@ -144,7 +144,8 @@ Status BuildStructure::PlaceBuilding(UnitTypeID unitType, Tag loc) {
             }
         }
 
-        if (unit->unit_type == builderUnitType && (unit->orders.empty() || unit->orders.at(0).ability_id == ABILITY_ID::HARVEST_GATHER)) {
+        if (std::find(builderUnitType.begin(), builderUnitType.end(), unit->unit_type) != builderUnitType.end() &&
+            (unit->orders.empty() || unit->orders.at(0).ability_id == ABILITY_ID::HARVEST_GATHER)) {
             builderUnit = unit;
             break;
         }
@@ -175,7 +176,7 @@ Status BuildStructure::PlaceBuilding(UnitTypeID unitType, Tag loc) {
     }
 }
 
-Status BuildStructure::OnTick() {
+Status Construct::OnTick() {
     return PlaceBuilding(unitType, location);
 }
 
@@ -333,7 +334,7 @@ BOT::Status Expand::OnTick() {
 }
 
 
-Status BuildAddon::TryBuildAddon(AbilityID ability_type_for_structure, Tag base_structure) {
+Status Addon::TryBuildAddon(AbilityID ability_type_for_structure, Tag base_structure) {
     float rx = GetRandomScalar();
     float ry = GetRandomScalar();
     const Unit* unit = bot.Observation()->GetUnit(base_structure);
@@ -384,7 +385,7 @@ BOT::Status HasUpgrade::OnTick() {
     return Failure;
 }
 
-BOT::Status BuildAddon::OnTick() {
+BOT::Status Addon::OnTick() {
     Units buildings = bot.Observation()->GetUnits(Unit::Self, IsUnits(buildingTypes));
     for (const auto& building : buildings) {
         if (!building->orders.empty() || building->build_progress != 1) {

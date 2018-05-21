@@ -33,6 +33,10 @@ void Bot::OnGameStart() {
             new Expand(UNIT_TYPEID::TERRAN_COMMANDCENTER)
         },
         new SelectorNode{
+            new HasUnit(UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 2),
+            new Build(UNIT_TYPEID::TERRAN_ORBITALCOMMAND),
+        },
+        new SelectorNode{
             new HasUnit(UNIT_TYPEID::TERRAN_SCV, bot.max_worker_count_),
             new Build(UNIT_TYPEID::TERRAN_SCV),
         },
@@ -88,6 +92,7 @@ void Bot::OnGameStart() {
                              UNIT_TYPEID::TERRAN_REFINERY),
         new SequenceNode{
             new Not(new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY)),
+            new HasUnit(UNIT_TYPEID::TERRAN_ORBITALCOMMAND),
             new SequenceNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_COMMANDCENTER, 2),
                 new Build(UNIT_TYPEID::TERRAN_MARAUDER),
@@ -98,6 +103,7 @@ void Bot::OnGameStart() {
         },
         new SequenceNode{
             new Not(new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY)),
+            new HasUnit(UNIT_TYPEID::TERRAN_ORBITALCOMMAND),
             new Build(UNIT_TYPEID::TERRAN_MARINE)
         }
     });
