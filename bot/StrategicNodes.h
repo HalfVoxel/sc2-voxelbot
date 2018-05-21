@@ -80,4 +80,28 @@ public:
     BuildAddon(sc2::AbilityID ability, std::vector<sc2::UNIT_TYPEID> types) : abilityType(ability), buildingTypes(types) {}
 };
 
+class BuildUpgrade: public BOT::ActionNode{
+};
+
+class HasUpgrade : public BOT::ActionNode {
+    sc2::UPGRADE_ID upgrade;
+    sc2::ABILITY_ID upgradeBuild;
+    std::vector<sc2::UNIT_TYPEID> buildingTypes = {
+        sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER,
+        sc2::UNIT_TYPEID::TERRAN_ENGINEERINGBAY,
+        sc2::UNIT_TYPEID::TERRAN_ARMORY,
+        sc2::UNIT_TYPEID::TERRAN_BARRACKSTECHLAB,
+        sc2::UNIT_TYPEID::TERRAN_FACTORYTECHLAB,
+        sc2::UNIT_TYPEID::TERRAN_STARPORTTECHLAB,
+        sc2::UNIT_TYPEID::TERRAN_GHOSTACADEMY,
+        sc2::UNIT_TYPEID::TERRAN_FUSIONCORE
+    };
+public:
+    HasUpgrade(sc2::UPGRADE_ID upgrade, sc2::ABILITY_ID): upgrade(upgrade), upgradeBuild(upgradeBuild){}
+    BOT::Status OnTick() override;
+};
+
+
+
+
 

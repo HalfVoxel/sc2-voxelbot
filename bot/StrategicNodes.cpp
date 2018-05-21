@@ -371,6 +371,20 @@ Status BuildAddon::TryBuildAddon(AbilityID ability_type_for_structure, Tag base_
 
 }
 
+BOT::Status HasUpgrade::OnTick() {
+    for(auto const i : bot.Observation()->GetUpgrades()){
+        if(upgrade == i){
+            return Success;
+        }
+    }
+    for(auto const unit : bot.Observation()->GetUnits(Unit::Self, IsUnits(buildingTypes))){
+        if(!unit->orders.empty()  && unit->orders[0].ability_id == upgradeBuild){
+            return Running;
+        }
+    }
+    return Failure;
+}
+
 BOT::Status BuildAddon::OnTick() {
     Units buildings = bot.Observation()->GetUnits(Unit::Self, IsUnits(buildingTypes));
     for (const auto& building : buildings) {
