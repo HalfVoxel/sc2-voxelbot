@@ -30,6 +30,7 @@ void Bot::OnGameStart() {
     tree = unique_ptr<TreeNode>(new ParallelNode{
         new SequenceNode{
             new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY),
+            new HasUnit(UNIT_TYPEID::TERRAN_ORBITALCOMMAND),
             new Expand(UNIT_TYPEID::TERRAN_COMMANDCENTER)
         },
         new SelectorNode{
@@ -55,16 +56,16 @@ void Bot::OnGameStart() {
                 new BuildGas(UNIT_TYPEID::TERRAN_REFINERY),
             },
             new SelectorNode{
+                new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB, 1),
+                new Addon(ABILITY_ID::BUILD_TECHLAB_BARRACKS, bot.barrack_types)
+            },
+            new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_FACTORY),
                 new Construct(UNIT_TYPEID::TERRAN_FACTORY)
             },
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_STARPORT, 1),
                 new Construct(UNIT_TYPEID::TERRAN_STARPORT)
-            },
-            new SelectorNode{
-                new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB, 1),
-                new Addon(ABILITY_ID::BUILD_TECHLAB_BARRACKS, bot.barrack_types)
             },
             new HasUnit(UNIT_TYPEID::TERRAN_COMMANDCENTER, 2),
             new SelectorNode{
