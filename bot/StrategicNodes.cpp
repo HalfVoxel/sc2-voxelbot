@@ -21,7 +21,7 @@ bool GetRandomUnit(const Unit*& unit_out, const ObservationInterface* observatio
     return false;
 }
 
-Status BuildUnit::OnTick() {
+Status Build::OnTick() {
     const ObservationInterface* observation = bot.Observation();
 
     // Figure out which ability is used to build the unit and which building/unit it is built from.
@@ -32,8 +32,7 @@ Status BuildUnit::OnTick() {
     auto builderUnitType = abilityToCasterUnit(unitTypeData.ability_id);
 
     //If we are at supply cap, don't build anymore units, unless its an overlord.
-    if (observation->GetFoodUsed() >= observation->GetFoodCap() && abilityType != ABILITY_ID::
-        TRAIN_OVERLORD) {
+    if (unitTypeData.food_required != 0 && observation->GetFoodUsed() >= observation->GetFoodCap() && abilityType != ABILITY_ID::TRAIN_OVERLORD) {
         return Status::Failure;
     }
 

@@ -2,14 +2,14 @@
 #include "BehaviorTree.h"
 #include "sc2api/sc2_api.h"
 
-class BuildUnit : public BOT::ActionNode {
+class Build : public BOT::ActionNode {
 	sc2::UnitTypeID unitType;
 public:
-	BuildUnit(sc2::UnitTypeID unit) : unitType(unit) {}
+	Build(sc2::UnitTypeID unit) : unitType(unit) {}
 	BOT::Status OnTick() override;
 };
 
-class BuildStructure : public BOT::ActionNode {
+class Construct : public BOT::ActionNode {
 	sc2::Tag location;
 
 protected:
@@ -19,8 +19,8 @@ protected:
 public:
     BOT::Status PlaceBuilding(sc2::UnitTypeID unit, sc2::Point2D location, bool isExpansion); // Should be better, we should aim to use this instead of the method, I think
     BOT::Status PlaceBuilding(sc2::UnitTypeID unit, sc2::Tag loc);
-	BuildStructure(sc2::UNIT_TYPEID unit) : unitType(unit), location(sc2::NullTag) {}
-	BuildStructure(sc2::UNIT_TYPEID unit, sc2::Tag location) : unitType(unit), location(location) {}
+	Construct(sc2::UNIT_TYPEID unit) : unitType(unit), location(sc2::NullTag) {}
+	Construct(sc2::UNIT_TYPEID unit, sc2::Tag location) : unitType(unit), location(location) {}
 	BOT::Status OnTick() override;
 };
 
@@ -46,16 +46,16 @@ public:
     int GetExpectedWorkers(sc2::UNIT_TYPEID vespene_building_type);
 };
 
-class BuildGas : public BuildStructure {
+class BuildGas : public Construct {
 
 public:
-	BuildGas(sc2::UnitTypeID unit) : BuildStructure(unit) {}
+	BuildGas(sc2::UnitTypeID unit) : Construct(unit) {}
 	BOT::Status OnTick() override;
 };
 
-class Expand: public BuildStructure{
+class Expand: public Construct{
 public:
-    Expand(sc2::UnitTypeID unit) : BuildStructure(unit) {}
+    Expand(sc2::UnitTypeID unit) : Construct(unit) {}
     BOT::Status OnTick() override;
 };
 
@@ -71,16 +71,13 @@ public:
     const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
 };
 
-class BuildAddon: public BOT::ActionNode{
+class Addon: public BOT::ActionNode{
     sc2::AbilityID abilityType;
     std::vector<sc2::UNIT_TYPEID> buildingTypes;
 public:
     BOT::Status OnTick() override;
     BOT::Status TryBuildAddon(sc2::AbilityID ability_type_for_structure, sc2::Tag base_structure);
-    BuildAddon(sc2::AbilityID ability, std::vector<sc2::UNIT_TYPEID> types) : abilityType(ability), buildingTypes(types) {}
-};
-
-class BuildUpgrade: public BOT::ActionNode{
+    Addon(sc2::AbilityID ability, std::vector<sc2::UNIT_TYPEID> types) : abilityType(ability), buildingTypes(types) {}
 };
 
 class HasUpgrade : public BOT::ActionNode {
