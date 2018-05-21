@@ -143,7 +143,9 @@ void Bot::OnStep() {
     }
     tree->Tick();
     armyTree->Tick();
-   // TickMicro();
+    if ((ticks % 10) == 0) {
+        TickMicro();
+    }
 
     influenceManager.OnStep();
     scoutingManager->OnStep();

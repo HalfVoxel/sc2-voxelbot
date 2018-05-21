@@ -94,7 +94,7 @@ class HasUpgrade : public BOT::ActionNode {
         sc2::UNIT_TYPEID::TERRAN_FUSIONCORE
     };
 public:
-    HasUpgrade(sc2::UPGRADE_ID upgrade, sc2::ABILITY_ID): upgrade(upgrade), upgradeBuild(upgradeBuild){}
+    HasUpgrade(sc2::UPGRADE_ID upgrade, sc2::ABILITY_ID upgradeBuild): upgrade(upgrade), upgradeBuild(upgradeBuild){}
     BOT::Status OnTick() override;
 };
 

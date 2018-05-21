@@ -42,12 +42,15 @@ BOT::Status GroupPosition::OnTick() {
 }
 
 BOT::Status GroupAttackMove::OnTick() {
+
     auto group = static_cast<UnitGroup*>(context);
     auto game_info = bot.Observation()->GetGameInfo();
     if (game_info.enemy_start_locations.empty()) {
         return Failure;
     }
-    auto target_pos = game_info.enemy_start_locations.front();
+    auto target_posI = bot.influenceManager.enemyDensity.argmax();
+    auto target_pos = Point2D(target_posI.x, target_posI.y);
+    //game_info.enemy_start_locations.front();
 
     for (auto* unit : group->units) {
         if ((unit->orders.size() == 0 || Distance2D(target_pos, unit->orders[0].target_pos) > 1)) {

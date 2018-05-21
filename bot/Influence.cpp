@@ -185,6 +185,37 @@ void InfluenceMap::setInfluence(double influence, Point2D pos) {
     weights[p.second*w + p.first] = influence;
 }
 
+void InfluenceMap::addInfluenceInDecayingCircle(double influence, double radius, Point2D pos) {
+    int x0, y0;
+    tie(x0, y0) = round_point(pos);
+
+    int r = (int)ceil(radius);
+    for (int dx = -r; dx <= r; dx++) {
+        for (int dy = -r; dy <= r; dy++) {
+            int x = x0 + dx;
+            int y = y0 + dy; 
+            if (x >= 0 && y >= 0 && x < w && y < h && dx*dx + dy*dy < radius*radius) {
+                weights[y*w+x] = influence / (1 + dx*dx + dy*dy);
+            }
+        }
+    }
+}
+
+void InfluenceMap::setInfluenceInCircle(double influence, double radius, Point2D pos) {
+    int x0, y0;
+    tie(x0, y0) = round_point(pos);
+
+    int r = (int)ceil(radius);
+    for (int dx = -r; dx <= r; dx++) {
+        for (int dy = -r; dy <= r; dy++) {
+            int x = x0 + dx;
+            int y = y0 + dy; 
+            if (x >= 0 && y >= 0 && x < w && y < h && dx*dx + dy*dy < radius*radius) {
+                weights[y*w+x] = influence;
+            }
+        }
+    }
+}
 
 void InfluenceMap::addInfluence(const vector<vector<double> >& influence, Point2D pos) {
     int x0, y0;

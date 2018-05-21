@@ -7,4 +7,5 @@ public:
     void OnStep();
     void ScoutDestroyed(UnitGroup* group);
     sc2::Point2D RequestScoutingPosition(UnitGroup* group);
+    void MarkUnreachable(sc2::Point2D unitPosition, sc2::Point2D unreachablePoint);
 };

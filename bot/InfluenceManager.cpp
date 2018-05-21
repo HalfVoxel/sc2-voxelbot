@@ -7,13 +7,6 @@
 using namespace std;
 using namespace sc2;
 
-InfluenceMap pathing_grid;
-InfluenceMap pathing_cost;
-InfluenceMap placement_grid;
-InfluenceMap enemyDensity;
-InfluenceMap valueMap;
-InfluenceMap scoutingMap;
-
 void InfluenceManager::Init() {
     // 1 at traversable cells, 0 at walls
     pathing_grid = InfluenceMap(bot.game_info_.pathing_grid);
@@ -33,6 +26,7 @@ void InfluenceManager::Init() {
     valueMap = InfluenceMap(pathing_grid.w, pathing_grid.h);
     safeBuildingMap = InfluenceMap(pathing_grid.w, pathing_grid.h);
     scoutingMap = InfluenceMap(pathing_grid.w, pathing_grid.h);
+    scanningMap = InfluenceMap(pathing_grid.w, pathing_grid.h);
 }
 
 void InfluenceManager::OnStep() {
@@ -74,6 +68,8 @@ void InfluenceManager::OnStep() {
             scoutingMap.addInfluence(scoutingUncertainty, p);
         }
 
+        // scoutingMap *= InfluenceMap(observation->GetRawObservation()->map_state().visibility);
+        
         for(int i = 0; i < scoutingMap.w; i++){
             for (int j = 0; j < scoutingMap.h; j++) {
                 Point2D p = Point2D(i, j);
@@ -81,6 +77,7 @@ void InfluenceManager::OnStep() {
                     scoutingMap.addInfluence(scoutingUncertainty, p);
                 } else {
                     scoutingMap.setInfluence(0, p);
+                    scanningMap.setInfluence(0, p);
                 }
             }
         }
@@ -111,12 +108,14 @@ void InfluenceManager::OnStep() {
 
         // Render all maps for debugging
         // Coordinates in a tile layout with 0,0 being the top-left corner of the debugging window.
-        distances.render(0, 0);
+        (distances * 0.5).render(0, 0);
         enemyDensity.render(0, 1);
         valueMap.renderNormalized(0, 2);
         scoutingMap.render(1, 0);
-        flood.render(1, 1);
+        // flood.render(1, 1);
+        scanningMap.render(1, 1);
         defensivePotential.render(1, 2);
+        
         Render();
     }
 }

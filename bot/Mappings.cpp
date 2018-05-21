@@ -406,6 +406,8 @@ UNIT_TYPEID simplifyUnitType(UNIT_TYPEID type) {
         case UNIT_TYPEID::TERRAN_STARPORTREACTOR:
         case UNIT_TYPEID::TERRAN_STARPORTTECHLAB:
             return UNIT_TYPEID::TERRAN_STARPORT;
+    case UNIT_TYPEID::TERRAN_LIBERATORAG:
+        return UNIT_TYPEID::TERRAN_LIBERATOR;
         default:
             return type;
     }

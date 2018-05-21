@@ -10,7 +10,8 @@ void ScoutingManager::OnStep() {
    
     if(scoutCount > scoutAssignments.size()){
         UnitGroup* unit_group = bot.tacticalManager->CreateGroup(Scout);
-        scoutAssignments.insert_or_assign(unit_group, bot.game_info_.enemy_start_locations[0]);
+        auto p = bot.influenceManager.scoutingMap.argmax();
+        scoutAssignments[unit_group] = Point2D(p.x, p.y);
     }
 }
 
@@ -19,5 +20,16 @@ void ScoutingManager::ScoutDestroyed(UnitGroup* group){
 }
 
 Point2D ScoutingManager::RequestScoutingPosition(UnitGroup* group){
-    return scoutAssignments.at(group);
+    //return scoutAssignments.at(group);
+    auto p = bot.influenceManager.scoutingMap.argmax();
+    return Point2D(p.x, p.y);
+}
+
+void ScoutingManager::MarkUnreachable(Point2D unitPosition, Point2D unreachablePoint) {
+	double dist = Distance2D(unitPosition, unreachablePoint);
+	if (dist < 60 && dist > 10) {
+		bot.influenceManager.scanningMap.addInfluenceInDecayingCircle(1, 10, unreachablePoint);
+	}
+
+	bot.influenceManager.scoutingMap.setInfluenceInCircle(0, 20, unreachablePoint);
 }
