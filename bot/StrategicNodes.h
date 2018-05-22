@@ -1,16 +1,20 @@
 #pragma once
 #include "BehaviorTree.h"
 #include "sc2api/sc2_api.h"
+#include <functional>
 
 class Build : public BOT::ActionNode {
 	sc2::UnitTypeID unitType;
+	std::function<double(sc2::UNIT_TYPEID)> score;
+
 public:
-	Build(sc2::UnitTypeID unit) : unitType(unit) {}
+	Build(sc2::UnitTypeID unit, std::function<double(sc2::UNIT_TYPEID)> score) : unitType(unit), score(score) {}
 	BOT::Status OnTick() override;
 };
 
 class Construct : public BOT::ActionNode {
 	sc2::Tag location;
+	std::function<double(sc2::UNIT_TYPEID)> score;
 
 protected:
     sc2::UnitTypeID unitType;
@@ -19,8 +23,8 @@ protected:
 public:
     BOT::Status PlaceBuilding(sc2::UnitTypeID unit, sc2::Point2D location, bool isExpansion); // Should be better, we should aim to use this instead of the method, I think
     BOT::Status PlaceBuilding(sc2::UnitTypeID unit, sc2::Tag loc);
-	Construct(sc2::UNIT_TYPEID unit) : unitType(unit), location(sc2::NullTag) {}
-	Construct(sc2::UNIT_TYPEID unit, sc2::Tag location) : unitType(unit), location(location) {}
+	Construct(sc2::UNIT_TYPEID unit, std::function<double(sc2::UNIT_TYPEID)> score) : unitType(unit), location(sc2::NullTag), score(score) {}
+	Construct(sc2::UNIT_TYPEID unit, sc2::Tag location, std::function<double(sc2::UNIT_TYPEID)> score) : unitType(unit), location(location), score(score) {}
 	BOT::Status OnTick() override;
 };
 
@@ -49,13 +53,13 @@ public:
 class BuildGas : public Construct {
 
 public:
-	BuildGas(sc2::UnitTypeID unit) : Construct(unit) {}
+	BuildGas(sc2::UnitTypeID unit, std::function<double(sc2::UNIT_TYPEID)> score) : Construct(unit, score) {}
 	BOT::Status OnTick() override;
 };
 
 class Expand: public Construct{
 public:
-    Expand(sc2::UnitTypeID unit) : Construct(unit) {}
+    Expand(sc2::UnitTypeID unit, std::function<double(sc2::UNIT_TYPEID)> score) : Construct(unit, score) {}
     BOT::Status OnTick() override;
 };
 
@@ -74,10 +78,11 @@ public:
 class Addon: public BOT::ActionNode{
     sc2::AbilityID abilityType;
     std::vector<sc2::UNIT_TYPEID> buildingTypes;
+	std::function<double(sc2::UNIT_TYPEID)> score;
 public:
     BOT::Status OnTick() override;
     BOT::Status TryBuildAddon(sc2::AbilityID ability_type_for_structure, sc2::Tag base_structure);
-    Addon(sc2::AbilityID ability, std::vector<sc2::UNIT_TYPEID> types) : abilityType(ability), buildingTypes(types) {}
+    Addon(sc2::AbilityID ability, std::vector<sc2::UNIT_TYPEID> types, std::function<double(sc2::UNIT_TYPEID)> score) : abilityType(ability), buildingTypes(types), score(score) {}
 };
 
 class HasUpgrade : public BOT::ActionNode {

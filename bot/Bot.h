@@ -8,6 +8,7 @@
 #include "TacticalManager.h"
 #include "CameraController.h"
 #include "InfluenceManager.h"
+#include "SpendingManager.h"
 
 const float kCameraWidth = 24.0f;
 const int kFeatureLayerSize = 80;
@@ -15,6 +16,8 @@ const int kPixelDrawSize = 3;
 const int kDrawSize = kFeatureLayerSize * kPixelDrawSize;
 
 extern int ticks;
+
+bool IsAbilityReady (const sc2::Unit* unit, sc2::ABILITY_ID ability);
 
 namespace BOT {
 
@@ -39,7 +42,7 @@ public:
     };
     std::vector<sc2::Point2D> wallPlacements;
 
-
+    SpendingManager spendingManager;
     CameraController cameraController;
     TacticalManager* tacticalManager;
     InfluenceManager influenceManager;
