@@ -53,7 +53,7 @@ Status Build::OnTick() {
             continue;
         }
 
-        if (!IsAbilityReady(unit, abilityType)) {
+        if (!IsAbilityReadyExcludingCosts(unit, abilityType)) {
             continue;
         }
 
