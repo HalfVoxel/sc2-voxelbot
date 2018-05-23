@@ -18,6 +18,7 @@ const int kDrawSize = kFeatureLayerSize * kPixelDrawSize;
 extern int ticks;
 
 bool IsAbilityReady (const sc2::Unit* unit, sc2::ABILITY_ID ability);
+bool IsAbilityReadyExcludingCosts (const sc2::Unit* unit, sc2::ABILITY_ID ability);
 
 namespace BOT {
 
