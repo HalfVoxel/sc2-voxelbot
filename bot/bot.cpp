@@ -76,7 +76,7 @@ void Bot::OnGameStart() {
             new ParallelNode{
                     new SelectorNode{
                             new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB, 1),
-                            new Addon(ABILITY_ID::BUILD_TECHLAB_BARRACKS, bot.barrack_types, [](auto) { return 2; })
+                            new Addon(ABILITY_ID::BUILD_TECHLAB_BARRACKS, bot.barrack_types, [](auto) { return 6; })
                     },
                     new SelectorNode{
                             new HasUnit(UNIT_TYPEID::TERRAN_FACTORY),

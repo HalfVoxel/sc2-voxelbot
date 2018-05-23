@@ -238,7 +238,7 @@ Status ShouldBuildSupply::OnTick() {
 
     int expectedAdditionalSupply = 0;
     const int SUPPLY_DEPOT_SUPPLY = 8;
-    const int COMMAND_CENTER_SUPPLY = 16;
+    const int COMMAND_CENTER_SUPPLY = 1;
     for (auto unit : bot.Observation()->GetUnits(Unit::Alliance::Self)) {
         for (auto order : unit->orders) {
             if (order.ability_id == ABILITY_ID::BUILD_SUPPLYDEPOT) {
