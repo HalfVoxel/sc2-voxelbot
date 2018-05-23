@@ -52,7 +52,7 @@ void Bot::OnGameStart() {
         },
         new SelectorNode{
             new HasUnit(UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 2),
-            new Build(UNIT_TYPEID::TERRAN_ORBITALCOMMAND, [](auto) { return 0.5; }),
+            new Build(UNIT_TYPEID::TERRAN_ORBITALCOMMAND, [](auto) { return 11; }),
         },
         new SelectorNode{
             new HasUnit(UNIT_TYPEID::TERRAN_SCV, bot.max_worker_count_),
