@@ -40,6 +40,17 @@ public:
         sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER, sc2::UNIT_TYPEID::TERRAN_BARRACKS,
         sc2::UNIT_TYPEID::TERRAN_FACTORY, sc2::UNIT_TYPEID::TERRAN_STARPORT
     };
+
+    std::vector<sc2::UNIT_TYPEID> researchBuildingTypes = {
+        sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER,
+        sc2::UNIT_TYPEID::TERRAN_ENGINEERINGBAY,
+        sc2::UNIT_TYPEID::TERRAN_ARMORY,
+        sc2::UNIT_TYPEID::TERRAN_BARRACKSTECHLAB,
+        sc2::UNIT_TYPEID::TERRAN_FACTORYTECHLAB,
+        sc2::UNIT_TYPEID::TERRAN_STARPORTTECHLAB,
+        sc2::UNIT_TYPEID::TERRAN_GHOSTACADEMY,
+        sc2::UNIT_TYPEID::TERRAN_FUSIONCORE
+    };
     std::vector<sc2::Point2D> wallPlacements;
 
     SpendingManager spendingManager;
@@ -53,6 +64,7 @@ public:
     sc2::Point3D staging_location_;
     BuildingPlacement buildingPlacement;
     ScoutingManager* scoutingManager;
+    std::shared_ptr<ControlFlowNode> researchTree;
     std::vector<sc2::Point2D>* FindWallPlacements(size_t size);
     
     int GetPositionIndex(int x, int y);

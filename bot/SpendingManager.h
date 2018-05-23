@@ -17,6 +17,7 @@ struct SpendingManager {
 private:
     std::vector<std::tuple<double, Cost, std::function<void()>>> actions;
 public:
+    static double GetUnitProportion(sc2::UNIT_TYPEID unitType);
     void AddAction (double score, Cost cost, std::function<void()> action);
     void OnStep();
 };

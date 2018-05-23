@@ -120,6 +120,12 @@ void Bot::OnGameStart() {
         new ControlSupplyDepots()
     });
 
+    researchTree = shared_ptr<ControlFlowNode>(new ParallelNode{
+        new SequenceNode{new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB),
+                        new Build(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB)
+        }
+    });
+
     tacticalManager = new TacticalManager(armyTree ,buildingPlacement.wallPlacement);
     scoutingManager = new ScoutingManager();
 

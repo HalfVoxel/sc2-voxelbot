@@ -35,6 +35,17 @@ double SCVScore (UNIT_TYPEID unitType) {
     return 1;
 }
 
+double SpendingManager::GetUnitProportion(UNIT_TYPEID unitType) {
+    double desiredMatching = 0;
+    double totalCompositionWeight = 0;
+    for (auto c : unitComposition) {
+        totalCompositionWeight += c.second;
+        if (c.first == unitType) desiredMatching += c.second;
+    }
+
+    return desiredMatching /= totalCompositionWeight + 0.0001;
+}
+
 double DefaultScore (UNIT_TYPEID unitType) {
     auto units = bot.Observation()->GetUnits(Unit::Alliance::Self);
 
@@ -51,18 +62,8 @@ double DefaultScore (UNIT_TYPEID unitType) {
             }
         }
     }
-
     matching /= total + 0.0001;
-
-    double desiredMatching = 0;
-    double totalCompositionWeight = 0;
-    for (auto c : unitComposition) {
-        totalCompositionWeight += c.second;
-        if (c.first == unitType) desiredMatching += c.second;
-    }
-
-    desiredMatching /= totalCompositionWeight + 0.0001;
-
+    double desiredMatching = SpendingManager::GetUnitProportion(unitType);
 
     // Score will be 1 exactly when we have the desired unit fraction.
     // It will go to a large value when the unit fraction we have is smaller than the desired one

@@ -67,6 +67,44 @@ Status Build::OnTick() {
     return Status::Failure;
 }
 
+BOT::Status Research::OnTick() {
+    const ObservationInterface* observation = bot.Observation();
+
+    // Figure out which ability is used to build the unit and which building/unit it is built from.
+    const UpgradeTypeData& unitTypeData = observation->GetUpgradeData(false)[research];
+
+    auto abilityType = unitTypeData.ability_id;
+    // Usually a building
+    auto builderUnitType = abilityToCasterUnit(unitTypeData.ability_id);
+
+    Units units = observation->GetUnits(Unit::Alliance::Self, IsStructure(observation));
+    for (auto unit : units) {
+        if (std::find(builderUnitType.begin(), builderUnitType.end(), unit->unit_type) == builderUnitType.end()) {
+            continue;
+        }
+
+        if (unit->build_progress != 1) {
+            continue;
+        }
+
+        if (!IsAbilityReady(unit, abilityType)) {
+            continue;
+        }
+
+        bot.spendingManager.AddAction(score(unitType), CostOfUnit(unitType), [=]() {
+            bot.Actions()->UnitCommand(unit, abilityType);
+        });
+
+        return Status::Running;
+    }
+    for (auto const unit : bot.Observation()->GetUnits(Unit::Self, IsUnits(bot.researchBuildingTypes))) {
+        if (!unit->orders.empty() && unit->orders[0].ability_id == upgradeBuild) {
+            return Running;
+        }
+    }
+    return Status::Failure;
+}
+
 Status Construct::PlaceBuilding(UnitTypeID unitType, Point2D location, bool isExpansion = false) {
 
     const ObservationInterface* observation = bot.Observation();
@@ -379,7 +417,7 @@ BOT::Status HasUpgrade::OnTick() {
             return Success;
         }
     }
-    for(auto const unit : bot.Observation()->GetUnits(Unit::Self, IsUnits(buildingTypes))){
+    for(auto const unit : bot.Observation()->GetUnits(Unit::Self, IsUnits(bot.researchBuildingTypes))){
         if(!unit->orders.empty()  && unit->orders[0].ability_id == upgradeBuild){
             return Running;
         }
