@@ -16,9 +16,21 @@ public:
 
 class Research: public BOT::ActionNode{
     sc2::UpgradeID research;
+<<<<<<< HEAD
     std::function<double(sc2::UPGRADE_ID)> score;
+||||||| merged common ancestors
+    std::function<double(sc2::UNIT_TYPEID)> score;
+=======
+    std::function<double(const sc2::UpgradeData&)> score;
+>>>>>>> 8cb6f1561cada4ddeff6ddcb330b2bd64975dd1a
 public:
+<<<<<<< HEAD
     Research(sc2::UPGRADE_ID research, std::function<double(sc2::UPGRADE_ID)> score) : research(research), score(score) {}
+||||||| merged common ancestors
+    Research(sc2::UPGRADE_ID research, std::function<double(sc2::UNIT_TYPEID)> score) : research(research), score(score) {}
+=======
+    Research(sc2::UPGRADE_ID research, std::function<double(const sc2::UpgradeData&)> score) : research(research), score(score) {}
+>>>>>>> 8cb6f1561cada4ddeff6ddcb330b2bd64975dd1a
     BOT::Status OnTick() override;
 };
 
@@ -96,10 +108,16 @@ public:
 };
 
 class HasUpgrade : public BOT::ActionNode {
-    sc2::UpgradeID upgrade;
-    sc2::AbilityID upgradeBuild;
+    sc2::UPGRADE_ID upgrade;
 public:
-    HasUpgrade(sc2::UpgradeID upgrade);
+    HasUpgrade(sc2::UPGRADE_ID upgrade): upgrade(upgrade)
+    {
+        const SC2APIProtocol::UpgradeData& data = bot.observation()->GetUpgradeData(false)[research];
+
+        auto abilityType = data.ability_id;
+        // Usually a building
+        auto builderUnitType = abilityToCasterUnit(data.ability_id);
+    }
     BOT::Status OnTick() override;
 };
 

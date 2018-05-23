@@ -12,6 +12,7 @@ struct Cost {
 double SCVScore (sc2::UNIT_TYPEID unitType);
 double DefaultScore (sc2::UNIT_TYPEID unitType);
 Cost CostOfUnit(sc2::UnitTypeID unitType);
+Cost CostOfUpgrade(sc2::UpgradeID upgrade);
 
 struct SpendingManager {
 private:

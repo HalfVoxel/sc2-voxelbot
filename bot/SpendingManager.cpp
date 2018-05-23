@@ -79,6 +79,18 @@ double DefaultScore (UNIT_TYPEID unitType) {
     return score;
 }
 
+Cost CostOfUpgrade(UpgradeID upgrade) {
+    auto& data = bot.Observation()->GetUpgradeData()[upgrade];
+    Cost result = {
+            data.mineral_cost,
+            data.vespene_cost,
+            0,
+            UNIT_TYPEID::INVALID
+    };
+
+    return result;
+}
+
 Cost CostOfUnit(UnitTypeID unit) {
     auto& unitData = bot.Observation()->GetUnitTypeData()[unit];
 

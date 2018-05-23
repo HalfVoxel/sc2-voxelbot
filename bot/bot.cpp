@@ -178,6 +178,7 @@ void Bot::OnStep() {
     }
     tree->Tick();
     armyTree->Tick();
+    researchTree->Tick();
     if ((ticks % 10) == 0) {
         TickMicro();
     }
