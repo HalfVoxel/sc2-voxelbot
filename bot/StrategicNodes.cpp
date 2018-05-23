@@ -342,9 +342,12 @@ Status Addon::TryBuildAddon(AbilityID ability_type_for_structure, Tag base_struc
     Point2D build_location = Point2D(unit->pos.x + rx * 15, unit->pos.y + ry * 15);
 
     Units units = bot.Observation()->GetUnits(Unit::Self, IsStructure(bot.Observation()));
+    auto unitType = abilityToUnit(ability_type_for_structure);
 
     if (bot.Query()->Placement(ability_type_for_structure, unit->pos, unit)) {
-        bot.Actions()->UnitCommand(unit, ability_type_for_structure);
+        bot.spendingManager.AddAction(score(unitType), CostOfUnit(unitType), [=]() {
+            bot.Actions()->UnitCommand(unit, ability_type_for_structure);
+        });
         return Status::Success;
     }
 
@@ -360,7 +363,6 @@ Status Addon::TryBuildAddon(AbilityID ability_type_for_structure, Tag base_struc
     }
 
     if (bot.Query()->Placement(ability_type_for_structure, build_location, unit)) {
-        auto unitType = abilityToUnit(ability_type_for_structure);
         bot.spendingManager.AddAction(score(unitType), CostOfUnit(unitType), [=]() {
             bot.Actions()->UnitCommand(unit, ability_type_for_structure, build_location);
         });

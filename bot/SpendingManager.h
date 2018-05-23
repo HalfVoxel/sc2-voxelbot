@@ -9,6 +9,7 @@ struct Cost {
     sc2::UNIT_TYPEID unit_type;
 };
 
+double SCVScore (sc2::UNIT_TYPEID unitType);
 double DefaultScore (sc2::UNIT_TYPEID unitType);
 Cost CostOfUnit(sc2::UnitTypeID unitType);
 

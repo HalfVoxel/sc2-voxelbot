@@ -40,7 +40,7 @@ void Bot::OnGameStart() {
     tree = unique_ptr<TreeNode>(new ParallelNode{
         new SequenceNode{
             new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY),
-            new Expand(UNIT_TYPEID::TERRAN_COMMANDCENTER, [](auto) { return 1; })
+            new Expand(UNIT_TYPEID::TERRAN_COMMANDCENTER, [](auto) { return 5; })
         },
         new SelectorNode{
             new HasUnit(UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 2),
@@ -48,7 +48,7 @@ void Bot::OnGameStart() {
         },
         new SelectorNode{
             new HasUnit(UNIT_TYPEID::TERRAN_SCV, bot.max_worker_count_),
-            new Build(UNIT_TYPEID::TERRAN_SCV, [](auto) { return 10; }),
+            new Build(UNIT_TYPEID::TERRAN_SCV, SCVScore),
         },
         new SelectorNode{
             new Not(new ShouldBuildSupply()),
@@ -64,17 +64,19 @@ void Bot::OnGameStart() {
                 new Not(new HasUnit(UNIT_TYPEID::TERRAN_BARRACKS, 1)),
                 new BuildGas(UNIT_TYPEID::TERRAN_REFINERY, [](auto) { return 2; }),
             },
-            new SelectorNode{
-                new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB, 1),
-                new Addon(ABILITY_ID::BUILD_TECHLAB_BARRACKS, bot.barrack_types, [](auto) { return 2; })
-            },
-            new SelectorNode{
-                new HasUnit(UNIT_TYPEID::TERRAN_FACTORY),
-                new Construct(UNIT_TYPEID::TERRAN_FACTORY, [](auto) { return 2; })
-            },
-            new SelectorNode{
-                new HasUnit(UNIT_TYPEID::TERRAN_STARPORT, 1),
-                new Construct(UNIT_TYPEID::TERRAN_STARPORT, [](auto) { return 2; })
+            new ParallelNode{
+                    new SelectorNode{
+                            new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB, 1),
+                            new Addon(ABILITY_ID::BUILD_TECHLAB_BARRACKS, bot.barrack_types, [](auto) { return 2; })
+                    },
+                    new SelectorNode{
+                            new HasUnit(UNIT_TYPEID::TERRAN_FACTORY),
+                            new Construct(UNIT_TYPEID::TERRAN_FACTORY, [](auto) { return 2; })
+                    },
+                    new SelectorNode{
+                            new HasUnit(UNIT_TYPEID::TERRAN_STARPORT, 1),
+                            new Construct(UNIT_TYPEID::TERRAN_STARPORT, [](auto) { return 2; })
+                    }
             },
             new HasUnit(UNIT_TYPEID::TERRAN_COMMANDCENTER, 2),
             new SelectorNode{
@@ -85,17 +87,19 @@ void Bot::OnGameStart() {
                 new HasUnit(UNIT_TYPEID::TERRAN_BARRACKS, 5),
                 new Construct(UNIT_TYPEID::TERRAN_BARRACKS, [](auto) { return 0.5; }),
             },
-            new SelectorNode{
-                new HasUnit(UNIT_TYPEID::TERRAN_FACTORYTECHLAB, 1),
-                new Addon(ABILITY_ID::BUILD_TECHLAB_FACTORY, bot.factory_types, [](auto) { return 2; })
-            },
-            new SelectorNode{
-                new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSREACTOR, 4),
-                new Addon(ABILITY_ID::BUILD_REACTOR_BARRACKS, bot.barrack_types, [](auto) { return 2; })
-            },
-            new SelectorNode{
-                new HasUnit(UNIT_TYPEID::TERRAN_STARPORTREACTOR, 1),
-                new Addon(ABILITY_ID::BUILD_REACTOR_STARPORT, bot.starport_types, [](auto) { return 2; })
+            new ParallelNode{
+                    new SelectorNode{
+                            new HasUnit(UNIT_TYPEID::TERRAN_FACTORYTECHLAB, 1),
+                            new Addon(ABILITY_ID::BUILD_TECHLAB_FACTORY, bot.factory_types, [](auto) { return 2; })
+                    },
+                    new SelectorNode{
+                            new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSREACTOR, 4),
+                            new Addon(ABILITY_ID::BUILD_REACTOR_BARRACKS, bot.barrack_types, [](auto) { return 2; })
+                    },
+                    new SelectorNode{
+                            new HasUnit(UNIT_TYPEID::TERRAN_STARPORTREACTOR, 1),
+                            new Addon(ABILITY_ID::BUILD_REACTOR_STARPORT, bot.starport_types, [](auto) { return 2; })
+                    },
             },
         },
         new AssignHarvesters(UNIT_TYPEID::TERRAN_SCV, ABILITY_ID::HARVEST_GATHER,
@@ -105,6 +109,10 @@ void Bot::OnGameStart() {
             new Build(UNIT_TYPEID::TERRAN_MEDIVAC, DefaultScore),
             new Build(UNIT_TYPEID::TERRAN_SIEGETANK, DefaultScore),
             new Build(UNIT_TYPEID::TERRAN_MARINE, DefaultScore),
+            new Build(UNIT_TYPEID::TERRAN_CYCLONE, DefaultScore),
+            new Build(UNIT_TYPEID::TERRAN_LIBERATOR, DefaultScore),
+            new Build(UNIT_TYPEID::TERRAN_VIKINGFIGHTER, DefaultScore),
+            new Build(UNIT_TYPEID::TERRAN_BANSHEE, DefaultScore),
         }
     });
    

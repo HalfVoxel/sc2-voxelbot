@@ -1,5 +1,7 @@
 #include "Mappings.h"
 #include "sc2api/sc2_api.h"
+#include <iostream>
+
 using namespace std;
 using namespace sc2;
 
@@ -263,6 +265,7 @@ std::vector<UNIT_TYPEID> abilityToCasterUnit(ABILITY_ID ability) {
         case ABILITY_ID::TRAIN_ZERGLING:
             return {UNIT_TYPEID::INVALID};
         default:
+            cerr << AbilityTypeToName(ability) << endl;
             throw invalid_argument("Not a train or build ability");
     }
 }

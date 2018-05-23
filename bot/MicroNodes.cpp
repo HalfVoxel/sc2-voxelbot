@@ -1,6 +1,7 @@
 #include "MicroNodes.h"
 #include "Bot.h"
 #include "Mappings.h"
+#include "Predicates.h"
 #include <iostream>
 #include <ctime>
 #include <map>
@@ -36,6 +37,28 @@ double SumUnits(function<double(const Unit*)> score, Point2D around, double rang
 	return sum;
 }
 
+Status MicroTank::OnTick() {
+	auto unit = GetUnit();
+	auto ability = agent.Observation()->GetAbilityData()[(int)ABILITY_ID::EFFECT_YAMATOGUN];
+	if (IsAbilityReady(unit, ABILITY_ID::MORPH_SIEGEMODE)) {
+		auto target = BestTarget([&](auto u) { return u->is_flying ? 0 : 1; }, unit->pos, 13.0);
+
+		if (target != nullptr) {
+			agent.Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SIEGEMODE, target);
+		}
+	}
+
+	if (IsAbilityReady(unit, ABILITY_ID::MORPH_UNSIEGE)) {
+		auto target = BestTarget([&](auto u) { return u->is_flying ? 0 : 1; }, unit->pos, 13.0);
+
+		if (target == nullptr) {
+			agent.Actions()->UnitCommand(unit, ABILITY_ID::MORPH_UNSIEGE, target);
+		}
+	}
+	
+	return Success;
+}
+
 Status MicroBattleCruiser::OnTick() {
 	auto unit = GetUnit();
 	auto ability = agent.Observation()->GetAbilityData()[(int)ABILITY_ID::EFFECT_YAMATOGUN];
@@ -54,13 +77,14 @@ Status MicroBattleCruiser::OnTick() {
 }
 
 Status MicroLiberator::OnTick() {
-	const double defender_radius = 10;
+	const double defender_radius = 5;
 	auto unit = GetUnit();
+	auto observation = agent.Observation();
 	if (IsAbilityReady(unit, ABILITY_ID::MORPH_LIBERATORAGMODE)) {
-		auto ability = agent.Observation()->GetAbilityData()[(int)ABILITY_ID::MORPH_LIBERATORAGMODE];
+		auto ability = observation->GetAbilityData()[(int)ABILITY_ID::MORPH_LIBERATORAGMODE];
 		// Center the defender circle on a unit such that the total health of all units in the circle
 		// is as high as possible. Only allow targets which return a positive sum.
-		auto target = BestTarget([&](auto u) { return SumUnits([&](auto u2) { return u2->is_flying ? 0.0 : u2->health; }, u->pos, defender_radius); }, unit->pos, ability.cast_range, 0);
+		auto target = BestTarget([&](auto u) { return SumUnits([&](auto u2) { return u2->is_flying || IsStructure(observation)(*u2) ? 0.0 : u2->health; }, u->pos, defender_radius); }, unit->pos, ability.cast_range, 0);
 
 		if (target != nullptr) {
 			defensive_point = target->pos;
@@ -68,7 +92,7 @@ Status MicroLiberator::OnTick() {
 		}
 	} else if (IsAbilityReady(unit, ABILITY_ID::MORPH_LIBERATORAAMODE)) {
 		// If there are no units in our current defender circle, then go to anti-air mode instead.
-		double score = SumUnits([&](auto u2) { return u2->is_flying ? 0.0 : u2->health; }, defensive_point, defender_radius);
+		double score = SumUnits([&](auto u2) { return u2->is_flying || IsStructure(observation)(*u2) ? 0.0 : u2->health; }, defensive_point, defender_radius);
 		if (score == 0) {
 			agent.Actions()->UnitCommand(unit, ABILITY_ID::MORPH_LIBERATORAAMODE);
 		}
@@ -126,6 +150,9 @@ void TickMicro () {
 				break;
 			case UNIT_TYPEID::TERRAN_ORBITALCOMMAND:
 				node = new MicroOrbitalCommand(unit);
+				break;
+			case UNIT_TYPEID::TERRAN_SIEGETANK:
+				node = new MicroTank(unit);
 				break;
 			default:
 				continue;
