@@ -28,10 +28,10 @@ BOT::Status ControlSupplyDepots::OnTick() { //Just so we dont get stuck in base.
 }
 
 BOT::Status GroupPosition::OnTick() {
-    auto group = static_cast<UnitGroup*>(context);
+    auto group = GetGroup();
     Point2DI request_target_position = bot.tacticalManager->RequestTargetPosition(group);
     Point2D preferred_army_position = Point2D(request_target_position.x, request_target_position.y);
-    for (auto const& unit : GetGroup()->units) {
+    for (auto const& unit : group->units) {
         Point2D p = Point2D(unit->pos.x, unit->pos.y);
         if (Distance2D(preferred_army_position, p) > 3 &&
             (unit->orders.size() == 0 || Distance2D(preferred_army_position, unit->orders[0].target_pos) > 1)) {
@@ -41,9 +41,23 @@ BOT::Status GroupPosition::OnTick() {
     return Success;
 }
 
+BOT::Status InCombat::OnTick() {
+    auto group = GetGroup();
+    for(auto unit : group->units){
+        if(!unit->orders.empty() && unit->orders[0].target_unit_tag != 0) {
+            const Unit* enemy = bot.Observation()->GetUnit(unit->orders[0].target_unit_tag);
+            if (enemy) {
+                group->SetCombatPosition(new Point2D(enemy->pos.x, enemy->pos.y));
+                return Success;
+            }
+        }
+    }
+    group->SetCombatPosition(nullptr);
+    return Failure;
+}
 
 BOT::Status TacticalMove::OnTick() {
-    auto group = static_cast<UnitGroup*>(context);
+    auto group = GetGroup();
     if (!group->units.empty()) {
         Point3D from = group->GetPosition();
         if (pathingTicker % 100 == 0) {
@@ -54,10 +68,10 @@ BOT::Status TacticalMove::OnTick() {
             bot.Debug()->DebugLineOut(from, Point3D(currentPath[0].x, currentPath[0].y, from.z), Colors::White);
             auto target_pos = Point2D(currentPath[0].x, currentPath[0].y);
             bool positionReached = true;
-            int allowedDist = 5;
+            int allowedDist = 7;
             for (auto* unit : group->units) {
                 bool withinDistance = Distance2D(unit->pos, target_pos) < allowedDist;
-                if (!withinDistance && (unit->orders.size() == 0 || Distance2D(target_pos, unit->orders[0].target_pos) > 1)) {
+                if (!withinDistance && (unit->orders.empty() || Distance2D(target_pos, unit->orders[0].target_pos) > 1)) {
                     bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, target_pos);
                 }
                 if (!withinDistance) {
@@ -74,3 +88,16 @@ BOT::Status TacticalMove::OnTick() {
 }
 
 
+BOT::Status GroupAttackMove::OnTick() {
+    auto group = GetGroup();
+    if (group->IsInCombat()) {
+        auto target_pos = *group->combatPosition;
+        for (auto* unit : group->units) {
+            if (unit->orders.empty() || Distance2D(target_pos, unit->orders[unit->orders.size() - 1].target_pos) > 1) {
+                bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, target_pos);
+            }
+        }
+        return Running;
+    }
+    return Success;
+}

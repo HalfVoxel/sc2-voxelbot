@@ -37,18 +37,41 @@ public:
     BOT::Status OnTick() override;
 };
 
-class MainGroupBehavior : public BOT::SelectorNode {
+
+class InCombat: public GroupConditionNode{
 public:
-    MainGroupBehavior(BOT::Context* group): BOT::SelectorNode({
-            new GroupPosition(group)
-        }) {
-    }
+    InCombat(BOT::Context* group) : GroupConditionNode(group) {}
+    BOT::Status OnTick() override;
+};
+
+class GroupAttackMove : public GroupActionNode {
+public:
+    GroupAttackMove(BOT::Context* group) : GroupActionNode(group) {}
+    BOT::Status OnTick() override;
 };
 
 class StrikeGroupBehavior : public BOT::SelectorNode {
 public:
-    StrikeGroupBehavior(BOT::Context* group): BOT::SelectorNode({
+    StrikeGroupBehavior(BOT::Context* group)
+        : BOT::SelectorNode({
+            new BOT::SequenceNode{
+                new InCombat(group),
+                new GroupAttackMove(group)
+            },
             new TacticalMove(group)
+        }) {
+    }
+};
+
+class MainGroupBehavior : public BOT::SelectorNode {
+public:
+    MainGroupBehavior(BOT::Context* group)
+        : BOT::SelectorNode({
+            new BOT::SequenceNode{
+                new InCombat(group),
+                new GroupAttackMove(group)
+            },
+            new GroupPosition(group)
         }) {
     }
 };

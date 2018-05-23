@@ -16,6 +16,7 @@ bool UnitGroup::IsFunctional() const {
     return units.empty();
 }
 
+
 void UnitGroup::AddUnit(const sc2::Unit* unit) {
     if (!ContainsUnit(unit)) {
        units.push_back(unit);
@@ -39,6 +40,18 @@ void UnitGroup::RemoveUnit(const sc2::Unit* unit) {
 bool UnitGroup::ContainsUnit(const sc2::Unit* unit){
     auto found = find_if(units.begin(), units.end(), [unit](const Unit* x) {return x->tag == unit->tag; });
     return found != units.end();
+}
+
+void UnitGroup::SetCombatPosition(const sc2::Point2D* point2_d) {
+    if (point2_d) {
+        combatPosition = new Point2D(point2_d->x, point2_d->y);
+    } else {
+        combatPosition = nullptr;
+    }
+}
+
+bool UnitGroup::IsInCombat() {
+    return combatPosition ? true : false;
 }
 
 sc2::Point3D UnitGroup::GetPosition() {
