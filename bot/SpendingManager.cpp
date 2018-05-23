@@ -120,7 +120,6 @@ bool HasTechFor(UnitTypeID unitType) {
         }
     }
 
-    cout << UnitTypeToName(unitType) << " requires " << UnitTypeToName(required) << endl;
     return false;
 }
 
