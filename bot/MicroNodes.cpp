@@ -44,7 +44,7 @@ Status MicroTank::OnTick() {
 		auto target = BestTarget([&](auto u) { return u->is_flying ? 0 : 1; }, unit->pos, 13.0);
 
 		if (target != nullptr) {
-			agent.Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SIEGEMODE, target);
+			agent.Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SIEGEMODE);
 		}
 	}
 
@@ -52,7 +52,7 @@ Status MicroTank::OnTick() {
 		auto target = BestTarget([&](auto u) { return u->is_flying ? 0 : 1; }, unit->pos, 13.0);
 
 		if (target == nullptr) {
-			agent.Actions()->UnitCommand(unit, ABILITY_ID::MORPH_UNSIEGE, target);
+			agent.Actions()->UnitCommand(unit, ABILITY_ID::MORPH_UNSIEGE);
 		}
 	}
 	

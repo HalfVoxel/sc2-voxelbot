@@ -22,10 +22,18 @@ using namespace sc2;
 Bot bot = Bot();
 Agent& agent = bot;
 map<const Unit*, AvailableAbilities> availableAbilities;
+map<const Unit*, AvailableAbilities> availableAbilitiesExcludingCosts;
 
 // TODO: Should move this to a better place
 bool IsAbilityReady (const Unit* unit, ABILITY_ID ability) {
     for (auto& a : availableAbilities[unit].abilities) {
+        if (a.ability_id == ability) return true;
+    }
+    return false;
+}
+
+bool IsAbilityReadyExcludingCosts(const Unit* unit, ABILITY_ID ability) {
+    for (auto& a : availableAbilitiesExcludingCosts[unit].abilities) {
         if (a.ability_id == ability) return true;
     }
     return false;
@@ -64,6 +72,7 @@ void Bot::OnGameStart() {
                 new Not(new HasUnit(UNIT_TYPEID::TERRAN_BARRACKS, 1)),
                 new BuildGas(UNIT_TYPEID::TERRAN_REFINERY, [](auto) { return 2; }),
             },
+            new HasUnit(UNIT_TYPEID::TERRAN_COMMANDCENTER, 2),
             new ParallelNode{
                     new SelectorNode{
                             new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB, 1),
@@ -78,7 +87,6 @@ void Bot::OnGameStart() {
                             new Construct(UNIT_TYPEID::TERRAN_STARPORT, [](auto) { return 2; })
                     }
             },
-            new HasUnit(UNIT_TYPEID::TERRAN_COMMANDCENTER, 2),
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_REFINERY, 2),
                 new BuildGas(UNIT_TYPEID::TERRAN_REFINERY, [](auto) { return 2; })
@@ -154,6 +162,12 @@ void Bot::OnStep() {
     availableAbilities.clear();
     for (int i = 0; i < ourUnits.size(); i++) {
         availableAbilities[ourUnits[i]] = abilities[i];
+    }
+
+    abilities = agent.Query()->GetAbilitiesForUnits(ourUnits, true);
+    availableAbilitiesExcludingCosts.clear();
+    for (int i = 0; i < ourUnits.size(); i++) {
+        availableAbilitiesExcludingCosts[ourUnits[i]] = abilities[i];
     }
 
 
