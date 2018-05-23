@@ -4,30 +4,35 @@
 
 struct UnitContext : BOT::Context {
     const sc2::Unit* unit;
-    UnitContext(const sc2::Unit* unit) : unit(unit) {}
+    explicit UnitContext(const sc2::Unit* unit) : unit(unit) {}
 };
 
 struct MicroNode : BOT::ContextAwareActionNode {
     const sc2::Unit* GetUnit() const { return ((UnitContext*)context)->unit; }
-    MicroNode(const sc2::Unit* unit) : BOT::ContextAwareActionNode(new UnitContext(unit)){}
+    explicit MicroNode(const sc2::Unit* unit) : BOT::ContextAwareActionNode(new UnitContext(unit)){}
+};
+
+struct MicroTank : MicroNode {
+    explicit MicroTank(const sc2::Unit* unit) : MicroNode(unit){}
+    BOT::Status OnTick() override;
 };
 
 struct MicroBattleCruiser : MicroNode {
 public:
-    MicroBattleCruiser(const sc2::Unit* unit) : MicroNode(unit){}
+    explicit MicroBattleCruiser(const sc2::Unit* unit) : MicroNode(unit){}
     BOT::Status OnTick() override;
 };
 
 struct MicroLiberator : MicroNode {
 public:
     sc2::Point2D defensive_point;
-    MicroLiberator(const sc2::Unit* unit) : MicroNode(unit){}
+    explicit MicroLiberator(const sc2::Unit* unit) : MicroNode(unit){}
     BOT::Status OnTick() override;
 };
 
 struct MicroOrbitalCommand : MicroNode {
 public:
-    MicroOrbitalCommand(const sc2::Unit* unit) : MicroNode(unit){}
+    explicit MicroOrbitalCommand(const sc2::Unit* unit) : MicroNode(unit){}
     BOT::Status OnTick() override;
 };
 
