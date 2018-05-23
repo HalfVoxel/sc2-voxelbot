@@ -32,6 +32,7 @@ Status Build::OnTick() {
     auto builderUnitType = abilityToCasterUnit(unitTypeData.ability_id);
 
     Units units = observation->GetUnits(Unit::Alliance::Self, IsStructure(observation));
+
     for (auto unit : units) {
         if (std::find(builderUnitType.begin(), builderUnitType.end(), unit->unit_type) == builderUnitType.end()) {
             continue;
@@ -234,7 +235,7 @@ Status ShouldExpand::OnTick() {
     }
 
     // If we have extra workers around, try and build another Hatch.
-    if (GetExpectedWorkers(gasType) < observation->GetFoodWorkers() - 10) {
+    if (observation->GetFoodWorkers() > GetExpectedWorkers(gasType) + 10) {
         return commsBuilding == 0 ? Status::Success : Failure; 
     }
     //Only build another Hatch if we are floating extra minerals
