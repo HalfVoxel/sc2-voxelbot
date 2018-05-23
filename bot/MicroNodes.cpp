@@ -3,20 +3,13 @@
 #include "Mappings.h"
 #include <iostream>
 #include <ctime>
+#include <map>
 
 using namespace std;
 using namespace BOT;
 using namespace sc2;
 
 vector<const Unit*> enemyUnits;
-map<const Unit*, AvailableAbilities> availableAbilities;
-
-bool IsAbilityReady (const Unit* unit, ABILITY_ID ability) {
-	for (auto& a : availableAbilities[unit].abilities) {
-		if (a.ability_id == ability) return true;
-	}
-	return false;
-}
 
 const Unit* BestTarget(function<double(const Unit*)> score, Point2D from, double range, double scoreThreshold = -1) {
 	const Unit* best = nullptr;
@@ -120,13 +113,6 @@ map<const Unit*, MicroNode*> microNodes;
 void TickMicro () {
 	// Cache for performance reasons
 	enemyUnits = agent.Observation()->GetUnits(Unit::Alliance::Enemy);
-	auto ourUnits = agent.Observation()->GetUnits(Unit::Alliance::Self);
-	auto abilities = agent.Query()->GetAbilitiesForUnits(ourUnits, false);
-	availableAbilities.clear();
-	for (int i = 0; i < ourUnits.size(); i++) {
-		availableAbilities[ourUnits[i]] = abilities[i];
-	}
-
 
 	for (auto* unit : agent.Observation()->GetUnits(Unit::Alliance::Self)) {
 		auto& node = microNodes[unit];

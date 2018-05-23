@@ -60,7 +60,7 @@ void InfluenceManager::OnStep() {
         }
 
         for (auto p : bot.game_info_.enemy_start_locations) {
-            enemyDensity.addInfluence(1, p);
+            // enemyDensity.addInfluence(1, p);
             scoutingMap.addInfluence(scoutingUncertainty*1.5, p);
         }
 

@@ -13,6 +13,7 @@
 #include "MicroNodes.h"
 #include <random>
 #include <limits>
+#include <map>
 
 using namespace BOT;
 using namespace std;
@@ -20,6 +21,15 @@ using namespace sc2;
 
 Bot bot = Bot();
 Agent& agent = bot;
+map<const Unit*, AvailableAbilities> availableAbilities;
+
+// TODO: Should move this to a better place
+bool IsAbilityReady (const Unit* unit, ABILITY_ID ability) {
+    for (auto& a : availableAbilities[unit].abilities) {
+        if (a.ability_id == ability) return true;
+    }
+    return false;
+}
 
 void Bot::OnGameStart() {
     game_info_ = Observation()->GetGameInfo();
@@ -30,79 +40,71 @@ void Bot::OnGameStart() {
     tree = unique_ptr<TreeNode>(new ParallelNode{
         new SequenceNode{
             new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY),
-            new Expand(UNIT_TYPEID::TERRAN_COMMANDCENTER)
+            new Expand(UNIT_TYPEID::TERRAN_COMMANDCENTER, [](auto) { return 1; })
         },
         new SelectorNode{
             new HasUnit(UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 2),
-            new Build(UNIT_TYPEID::TERRAN_ORBITALCOMMAND),
+            new Build(UNIT_TYPEID::TERRAN_ORBITALCOMMAND, [](auto) { return 0.5; }),
         },
         new SelectorNode{
             new HasUnit(UNIT_TYPEID::TERRAN_SCV, bot.max_worker_count_),
-            new Build(UNIT_TYPEID::TERRAN_SCV),
+            new Build(UNIT_TYPEID::TERRAN_SCV, [](auto) { return 10; }),
         },
         new SelectorNode{
             new Not(new ShouldBuildSupply()),
-            new Construct(UNIT_TYPEID::TERRAN_SUPPLYDEPOT)
+            new Construct(UNIT_TYPEID::TERRAN_SUPPLYDEPOT, [](auto) { return 9; })
         },
         new SequenceNode{
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_BARRACKS),
-                new Construct(UNIT_TYPEID::TERRAN_BARRACKS)
+                new Construct(UNIT_TYPEID::TERRAN_BARRACKS, [](auto) { return 2; })
             },
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_REFINERY, 1),
                 new Not(new HasUnit(UNIT_TYPEID::TERRAN_BARRACKS, 1)),
-                new BuildGas(UNIT_TYPEID::TERRAN_REFINERY),
+                new BuildGas(UNIT_TYPEID::TERRAN_REFINERY, [](auto) { return 2; }),
             },
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB, 1),
-                new Addon(ABILITY_ID::BUILD_TECHLAB_BARRACKS, bot.barrack_types)
+                new Addon(ABILITY_ID::BUILD_TECHLAB_BARRACKS, bot.barrack_types, [](auto) { return 2; })
             },
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_FACTORY),
-                new Construct(UNIT_TYPEID::TERRAN_FACTORY)
+                new Construct(UNIT_TYPEID::TERRAN_FACTORY, [](auto) { return 2; })
             },
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_STARPORT, 1),
-                new Construct(UNIT_TYPEID::TERRAN_STARPORT)
+                new Construct(UNIT_TYPEID::TERRAN_STARPORT, [](auto) { return 2; })
             },
             new HasUnit(UNIT_TYPEID::TERRAN_COMMANDCENTER, 2),
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_REFINERY, 2),
-                new BuildGas(UNIT_TYPEID::TERRAN_REFINERY)
+                new BuildGas(UNIT_TYPEID::TERRAN_REFINERY, [](auto) { return 2; })
             },
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_BARRACKS, 5),
-                new Construct(UNIT_TYPEID::TERRAN_BARRACKS),
+                new Construct(UNIT_TYPEID::TERRAN_BARRACKS, [](auto) { return 0.5; }),
             },
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_FACTORYTECHLAB, 1),
-                new Addon(ABILITY_ID::BUILD_TECHLAB_FACTORY, bot.factory_types)
+                new Addon(ABILITY_ID::BUILD_TECHLAB_FACTORY, bot.factory_types, [](auto) { return 2; })
             },
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSREACTOR, 4),
-                new Addon(ABILITY_ID::BUILD_REACTOR_BARRACKS, bot.barrack_types)
+                new Addon(ABILITY_ID::BUILD_REACTOR_BARRACKS, bot.barrack_types, [](auto) { return 2; })
             },
             new SelectorNode{
                 new HasUnit(UNIT_TYPEID::TERRAN_STARPORTREACTOR, 1),
-                new Addon(ABILITY_ID::BUILD_REACTOR_STARPORT, bot.starport_types)
+                new Addon(ABILITY_ID::BUILD_REACTOR_STARPORT, bot.starport_types, [](auto) { return 2; })
             },
         },
         new AssignHarvesters(UNIT_TYPEID::TERRAN_SCV, ABILITY_ID::HARVEST_GATHER,
                              UNIT_TYPEID::TERRAN_REFINERY),
-        new SequenceNode{
-            new Not(new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY)),
-            new SequenceNode{
-                new HasUnit(UNIT_TYPEID::TERRAN_COMMANDCENTER, 2),
-                new Build(UNIT_TYPEID::TERRAN_MARAUDER),
-                new Build(UNIT_TYPEID::TERRAN_MEDIVAC),
-                new Build(UNIT_TYPEID::TERRAN_SIEGETANK)
-            }
-
-        },
-        new SequenceNode{
-            new Not(new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY)),
-            new Build(UNIT_TYPEID::TERRAN_MARINE)
+        new ParallelNode{
+            new Build(UNIT_TYPEID::TERRAN_MARAUDER, DefaultScore),
+            new Build(UNIT_TYPEID::TERRAN_MEDIVAC, DefaultScore),
+            new Build(UNIT_TYPEID::TERRAN_SIEGETANK, DefaultScore),
+            new Build(UNIT_TYPEID::TERRAN_MARINE, DefaultScore),
         }
     });
    
@@ -133,6 +135,14 @@ void Bot::OnGameLoading() {
 int ticks = 0;
 bool test = false;
 void Bot::OnStep() {
+    auto ourUnits = agent.Observation()->GetUnits(Unit::Alliance::Self);
+    auto abilities = agent.Query()->GetAbilitiesForUnits(ourUnits, false);
+    availableAbilities.clear();
+    for (int i = 0; i < ourUnits.size(); i++) {
+        availableAbilities[ourUnits[i]] = abilities[i];
+    }
+
+
     if (ticks == 0) t0 = time(0);
     ticks++;
     if ((ticks % 100) == 0) {
@@ -144,6 +154,7 @@ void Bot::OnStep() {
         TickMicro();
     }
 
+    spendingManager.OnStep();
     influenceManager.OnStep();
     scoutingManager->OnStep();
     tacticalManager->OnStep();

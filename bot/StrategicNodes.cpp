@@ -31,21 +31,12 @@ Status Build::OnTick() {
     // Usually a building
     auto builderUnitType = abilityToCasterUnit(unitTypeData.ability_id);
 
-    //If we are at supply cap, don't build anymore units, unless its an overlord.
-    if (unitTypeData.food_required != 0 && observation->GetFoodUsed() >= observation->GetFoodCap() && abilityType != ABILITY_ID::TRAIN_OVERLORD) {
-        return Status::Failure;
-    }
-
-    if (observation->GetMinerals() < unitTypeData.mineral_cost) {
-        return Status::Failure;
-    }
-
     Units units = observation->GetUnits(Unit::Alliance::Self, IsStructure(observation));
     for (auto unit : units) {
         if (std::find(builderUnitType.begin(), builderUnitType.end(), unit->unit_type) == builderUnitType.end()) {
             continue;
         }
-       
+
         bool hasReactor = false;
         if (observation->GetUnit(unit->add_on_tag) != nullptr) {
             UNIT_TYPEID addonType = observation->GetUnit(unit->add_on_tag)->unit_type.ToType();
@@ -62,8 +53,15 @@ Status Build::OnTick() {
             continue;
         }
 
-        bot.Actions()->UnitCommand(unit, abilityType);
-        return Status::Success;
+        if (!IsAbilityReady(unit, abilityType)) {
+            continue;
+        }
+
+        bot.spendingManager.AddAction(score(unitType), CostOfUnit(unitType), [=]() {
+            bot.Actions()->UnitCommand(unit, abilityType);
+        });
+
+        return Status::Running;
     }
 
     return Status::Failure;
@@ -74,10 +72,6 @@ Status Construct::PlaceBuilding(UnitTypeID unitType, Point2D location, bool isEx
     const ObservationInterface* observation = bot.Observation();
 
     const UnitTypeData& unitTypeData = observation->GetUnitTypeData(false)[unitType];
-
-    if (observation->GetMinerals() < unitTypeData.mineral_cost) {
-        return Status::Failure;
-    }
 
     auto ability = unitTypeData.ability_id;
     auto builderUnitType = abilityToCasterUnit(unitTypeData.ability_id);
@@ -114,7 +108,9 @@ Status Construct::PlaceBuilding(UnitTypeID unitType, Point2D location, bool isEx
     }
     // Check to see if unit can build there
     if (bot.Query()->Placement(ability, location)) {
-        bot.Actions()->UnitCommand(unit, ability, location);
+        bot.spendingManager.AddAction(score(unitType), CostOfUnit(unitType), [=]() {
+            bot.Actions()->UnitCommand(unit, ability, location);
+        });
         return Status::Success;
     }
     return Status::Failure;
@@ -125,10 +121,6 @@ Status Construct::PlaceBuilding(UnitTypeID unitType, Tag loc) {
     const ObservationInterface* observation = bot.Observation();
 
     const UnitTypeData& unitTypeData = observation->GetUnitTypeData(false)[unitType];
-
-    if (observation->GetMinerals() < unitTypeData.mineral_cost) {
-        return Status::Failure;
-    }
 
     auto ability = unitTypeData.ability_id;
     auto builderUnitType = abilityToCasterUnit(unitTypeData.ability_id);
@@ -163,16 +155,20 @@ Status Construct::PlaceBuilding(UnitTypeID unitType, Tag loc) {
 
         // Check to see if unit can build there
         if (bot.Query()->Placement(ability, target->pos)) {
-            bot.Actions()->UnitCommand(builderUnit, ability, target);
-            return Success;
+            bot.spendingManager.AddAction(score(unitType), CostOfUnit(unitType), [=]() {
+                bot.Actions()->UnitCommand(builderUnit, ability, target);
+            });
+            return Running;
         } else {
             return Failure;
         }
     } else {
         auto p = bot.buildingPlacement.GetReasonablePlacement(unitType);
 
-        bot.Actions()->UnitCommand(builderUnit, ability, p);
-        return Status::Success;
+        bot.spendingManager.AddAction(score(unitType), CostOfUnit(unitType), [=]() {
+            bot.Actions()->UnitCommand(builderUnit, ability, p);
+        });
+        return Status::Running;
     }
 }
 
@@ -364,7 +360,11 @@ Status Addon::TryBuildAddon(AbilityID ability_type_for_structure, Tag base_struc
     }
 
     if (bot.Query()->Placement(ability_type_for_structure, build_location, unit)) {
-        bot.Actions()->UnitCommand(unit, ability_type_for_structure, build_location);
+        auto unitType = abilityToUnit(ability_type_for_structure);
+        bot.spendingManager.AddAction(score(unitType), CostOfUnit(unitType), [=]() {
+            bot.Actions()->UnitCommand(unit, ability_type_for_structure, build_location);
+        });
+
         return Status::Success;
     }
     return Status::Failure;
