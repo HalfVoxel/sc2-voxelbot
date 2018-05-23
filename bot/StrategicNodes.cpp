@@ -223,7 +223,7 @@ int countUnits(std::function<bool(const Unit*)> predicate) {
 }
 
 Status HasUnit::OnTick() {
-    return countUnits([this](const Unit* unit) { return unit->unit_type == simplifyUnitType(this->unit) || unit->unit_type == this->unit; }) >= count
+    return countUnits([this](const Unit* unit) { return simplifyUnitType(unit->unit_type) == this->unit || unit->unit_type == this->unit; }) >= count
                ? Status::Success
                : Status::Failure;
 }
