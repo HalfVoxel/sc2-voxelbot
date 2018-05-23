@@ -2,6 +2,8 @@
 #include "BehaviorTree.h"
 #include "sc2api/sc2_api.h"
 #include <functional>
+#include "Mappings.h"
+#include "Bot.h"
 
 class Build : public BOT::ActionNode {
 	sc2::UnitTypeID unitType;
@@ -14,9 +16,9 @@ public:
 
 class Research: public BOT::ActionNode{
     sc2::UpgradeID research;
-    std::function<double(sc2::UNIT_TYPEID)> score;
+    std::function<double(sc2::UPGRADE_ID)> score;
 public:
-    Research(sc2::UPGRADE_ID research, std::function<double(sc2::UNIT_TYPEID)> score) : research(research), score(score) {}
+    Research(sc2::UPGRADE_ID research, std::function<double(sc2::UPGRADE_ID)> score) : research(research), score(score) {}
     BOT::Status OnTick() override;
 };
 
@@ -95,10 +97,15 @@ public:
 
 class HasUpgrade : public BOT::ActionNode {
     sc2::UPGRADE_ID upgrade;
-    sc2::ABILITY_ID upgradeBuild;
-
 public:
-    HasUpgrade(sc2::UPGRADE_ID upgrade, sc2::ABILITY_ID upgradeBuild): upgrade(upgrade), upgradeBuild(upgradeBuild){}
+    HasUpgrade(sc2::UPGRADE_ID upgrade): upgrade(upgrade)
+    {
+        const SC2APIProtocol::UpgradeData& data = bot.observation()->GetUpgradeData(false)[research];
+
+        auto abilityType = data.ability_id;
+        // Usually a building
+        auto builderUnitType = abilityToCasterUnit(data.ability_id);
+    }
     BOT::Status OnTick() override;
 };
 

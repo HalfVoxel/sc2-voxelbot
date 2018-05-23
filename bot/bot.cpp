@@ -130,7 +130,7 @@ void Bot::OnGameStart() {
 
     researchTree = shared_ptr<ControlFlowNode>(new ParallelNode{
         new SequenceNode{new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB),
-                         new Research(UPGRADE_ID::STIMPACK,  [](auto) { return 15; })
+                         new Research(UPGRADE_ID::STIMPACK, [](auto) { return 9; })
         }
     });
 
