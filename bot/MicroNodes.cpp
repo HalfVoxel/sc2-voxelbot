@@ -41,7 +41,7 @@ Status MicroTank::OnTick() {
 	auto unit = GetUnit();
 	auto ability = agent.Observation()->GetAbilityData()[(int)ABILITY_ID::EFFECT_YAMATOGUN];
 	if (IsAbilityReady(unit, ABILITY_ID::MORPH_SIEGEMODE)) {
-		auto target = BestTarget([&](auto u) { return u->is_flying ? 0 : 1; }, unit->pos, 13.0);
+		auto target = BestTarget([&](auto u) { return u->is_flying ? 0 : 1; }, unit->pos, 13.0, 0);
 
 		if (target != nullptr) {
 			agent.Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SIEGEMODE);
@@ -49,7 +49,7 @@ Status MicroTank::OnTick() {
 	}
 
 	if (IsAbilityReady(unit, ABILITY_ID::MORPH_UNSIEGE)) {
-		auto target = BestTarget([&](auto u) { return u->is_flying ? 0 : 1; }, unit->pos, 13.0);
+		auto target = BestTarget([&](auto u) { return u->is_flying ? 0 : 1; }, unit->pos, 13.0, 0);
 
 		if (target == nullptr) {
 			agent.Actions()->UnitCommand(unit, ABILITY_ID::MORPH_UNSIEGE);
