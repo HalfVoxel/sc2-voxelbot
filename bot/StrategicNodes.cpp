@@ -78,6 +78,12 @@ BOT::Status Research::OnTick() {
     // Usually a building
     auto builderUnitType = abilityToCasterUnit(data.ability_id);
 
+    for (auto const unit : bot.Observation()->GetUnits(Unit::Self, IsUnits(bot.researchBuildingTypes))) {
+        if (!unit->orders.empty() && unit->orders[0].ability_id == abilityType) {
+            return Running;
+        }
+    }
+
     Units units = observation->GetUnits(Unit::Alliance::Self, IsStructure(observation));
     for (auto unit : units) {
         if (std::find(builderUnitType.begin(), builderUnitType.end(), unit->unit_type) == builderUnitType.end()) {
@@ -91,18 +97,14 @@ BOT::Status Research::OnTick() {
         if (!IsAbilityReady(unit, abilityType)) {
             continue;
         }
-/*
-        bot.spendingManager.AddAction(score(unitType), CostOfUnit(unitType), [=]() {
+
+        bot.spendingManager.AddAction(score(data), CostOfUpgrade(data), [=]() {
             bot.Actions()->UnitCommand(unit, abilityType);
         });
-        */
+
         return Status::Running;
-    }/*
-    for (auto const unit : bot.Observation()->GetUnits(Unit::Self, IsUnits(bot.researchBuildingTypes))) {
-        if (!unit->orders.empty() && unit->orders[0].ability_id == upgradeBuild) {
-            return Running;
-        }
-    }*/
+    }
+
     return Status::Failure;
 }
 

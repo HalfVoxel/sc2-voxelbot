@@ -14,9 +14,9 @@ public:
 
 class Research: public BOT::ActionNode{
     sc2::UpgradeID research;
-    std::function<double(sc2::UNIT_TYPEID)> score;
+    std::function<double(const sc2::UpgradeData&)> score;
 public:
-    Research(sc2::UPGRADE_ID research, std::function<double(sc2::UNIT_TYPEID)> score) : research(research), score(score) {}
+    Research(sc2::UPGRADE_ID research, std::function<double(const sc2::UpgradeData&)> score) : research(research), score(score) {}
     BOT::Status OnTick() override;
 };
 
