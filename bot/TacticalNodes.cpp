@@ -44,10 +44,11 @@ BOT::Status GroupPosition::OnTick() {
 BOT::Status InCombat::OnTick() {
     auto group = GetGroup();
     for(auto unit : group->units){
-        if(!unit->orders.empty() && unit->orders[0].target_unit_tag != 0) {
+        if(!unit->orders.empty() && unit->orders[0].target_unit_tag != NullTag) {
             const Unit* enemy = bot.Observation()->GetUnit(unit->orders[0].target_unit_tag);
             if (enemy) {
                 group->SetCombatPosition(new Point2D(enemy->pos.x, enemy->pos.y));
+                bot.Debug()->DebugLineOut(unit->pos, enemy->pos, Colors::Red);
                 return Success;
             }
         }
@@ -61,11 +62,14 @@ BOT::Status TacticalMove::OnTick() {
     if (!group->units.empty()) {
         Point3D from = group->GetPosition();
         if (pathingTicker % 100 == 0) {
-            currentPath = getPath(Point2DI(from.x, from.y), bot.tacticalManager->RequestTargetPosition(group), bot.influenceManager.pathing_cost);
+            currentPath = getPath(Point2DI((int)from.x, (int)from.y), bot.tacticalManager->RequestTargetPosition(group), bot.influenceManager.pathing_cost);
         }
         auto game_info = bot.Observation()->GetGameInfo();
         if (!currentPath.empty()) {
-            bot.Debug()->DebugLineOut(from, Point3D(currentPath[0].x, currentPath[0].y, from.z), Colors::White);
+            for (int i = 0; i < std::min(40, (int)currentPath.size()); i++) {
+                bot.Debug()->DebugLineOut(Point3D(currentPath[i].x, currentPath[i].y, from.z), Point3D(currentPath[i+1].x, currentPath[i+1].y, from.z), Colors::White);
+            }
+            // bot.Debug()->DebugLineOut(from, Point3D(currentPath[0].x, currentPath[0].y, from.z), Colors::White);
             auto target_pos = Point2D(currentPath[0].x, currentPath[0].y);
             bool positionReached = true;
             int allowedDist = 7;
