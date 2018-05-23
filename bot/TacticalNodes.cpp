@@ -12,7 +12,7 @@ BOT::Status ControlSupplyDepots::OnTick() { //Just so we dont get stuck in base.
     for (auto unit : bot.Observation()->GetUnits(Unit::Alliance::Self, IsUnits(bot.supply_depot_types))) {
         bool enemyNear = false;
         for (auto enemy : enemies) {
-            if (!enemy->is_flying && Distance2D(unit->pos, enemy->pos) < 8) {
+            if (!enemy->is_flying && Distance2D(unit->pos, enemy->pos) < 8 && !(enemy->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINE || enemy->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINESHIELD)) {
                 enemyNear = true; 
             }
         }
@@ -46,7 +46,7 @@ BOT::Status InCombat::OnTick() {
     for(auto unit : group->units){
         if(!unit->orders.empty() && unit->orders[0].target_unit_tag != 0) {
             const Unit* enemy = bot.Observation()->GetUnit(unit->orders[0].target_unit_tag);
-            if (enemy) {
+            if (enemy && !(enemy->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINE|| enemy->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINESHIELD)) {
                 group->SetCombatPosition(new Point2D(enemy->pos.x, enemy->pos.y));
                 return Success;
             }

@@ -11,7 +11,7 @@ TacticalManager::TacticalManager(std::shared_ptr<BOT::ControlFlowNode> armyTree,
 }
 
 void TacticalManager::OnStep(){
-    if(main->units.size() > 25) {
+    if(main->units.size() > 40) {
         groupAssignments[CreateGroup(Strike)] = bot.influenceManager.enemyDensity.argmax();
     }
 }
