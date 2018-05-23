@@ -1,6 +1,7 @@
 #include "Group.h"
 #include "TacticalNodes.h"
 #include "ScoutingNodes.h"
+#include <numeric>
 
 using namespace sc2;
 using namespace std;
@@ -21,6 +22,16 @@ void UnitGroup::AddUnit(const sc2::Unit* unit) {
     }
 }
 
+void UnitGroup::TransferUnits(UnitGroup* group) {
+    copy(units.begin(), units.end(), back_inserter(group->units));
+    units.clear();
+}
+
+void UnitGroup::TransferUnits(UnitGroup* group, int n) {
+    copy(units.begin(), units.begin()+n, back_inserter(group->units));
+    units.clear();
+}
+
 void UnitGroup::RemoveUnit(const sc2::Unit* unit) {
     units.erase(remove_if(units.begin(), units.end(), [unit](const Unit* x) { return x->tag == unit->tag; }), units.end());
 }
@@ -28,6 +39,11 @@ void UnitGroup::RemoveUnit(const sc2::Unit* unit) {
 bool UnitGroup::ContainsUnit(const sc2::Unit* unit){
     auto found = find_if(units.begin(), units.end(), [unit](const Unit* x) {return x->tag == unit->tag; });
     return found != units.end();
+}
+
+sc2::Point3D UnitGroup::GetPosition() {
+    Point3D sum = accumulate(units.begin(), units.end(), Point3D(0, 0, 0), [](Point3D a, auto b) {return a + b->pos; });
+    return sum / units.size();
 }
 
 MainUnitGroup::MainUnitGroup() : UnitGroup(GroupType::Main) {
@@ -42,6 +58,6 @@ ScoutGroup::ScoutGroup(const Unit* unit) : UnitGroup(GroupType::Scout){
     isActive = true;
 }
 
-StrikeGroup::StrikeGroup(vector<const Unit*> units) : UnitGroup(GroupType::Strike) {
-    behavior = std::make_shared<GroupAttackMove>(this);
+StrikeGroup::StrikeGroup() : UnitGroup(GroupType::Strike) {
+    behavior = std::make_shared<StrikeGroupBehavior>(this);
 }

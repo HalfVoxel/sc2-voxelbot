@@ -11,6 +11,7 @@ private:
     std::list<const sc2::Unit*> knownEnemies;
     std::vector<UnitGroup*> groups;
     std::shared_ptr<BOT::ControlFlowNode> armyTree;
+    std::map<UnitGroup*, sc2::Point2DI> groupAssignments;
 
     std::vector<sc2::UNIT_TYPEID> bio_types = { sc2::UNIT_TYPEID::TERRAN_MARINE, sc2::UNIT_TYPEID::TERRAN_MARAUDER, sc2::UNIT_TYPEID::TERRAN_GHOST, sc2::UNIT_TYPEID::TERRAN_REAPER /*reaper*/ };
     std::vector<sc2::UNIT_TYPEID> widow_mine_types = { sc2::UNIT_TYPEID::TERRAN_WIDOWMINE, sc2::UNIT_TYPEID::TERRAN_WIDOWMINEBURROWED };
@@ -32,8 +33,10 @@ public:
     void OnNuclearLaunchDetected();
     sc2::Point2D GetPreferredArmyPosition();
     UnitGroup* CreateGroup(GroupType type);
+    sc2::Point2DI RequestTargetPosition(UnitGroup* group);
 
     void OnUnitEnterVision(const sc2::Unit* unit);
 
     TacticalManager(std::shared_ptr<BOT::ControlFlowNode> armyTree, sc2::Point2D wallPlacement);
+    void OnStep();
 };

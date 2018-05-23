@@ -22,11 +22,12 @@ class ControlSupplyDepots : public BOT::ActionNode {
     BOT::Status OnTick() override;
 };
 
+class TacticalMove : public GroupActionNode {
+    int pathingTicker = 0;
+    std::vector<sc2::Point2DI> currentPath;
 
-
-class GroupAttackMove : public GroupActionNode {
 public:
-    GroupAttackMove(BOT::Context* group) : GroupActionNode(group) {}
+    TacticalMove(BOT::Context* group) : GroupActionNode(group) {}
     BOT::Status OnTick() override;
 };
 
@@ -38,12 +39,16 @@ public:
 
 class MainGroupBehavior : public BOT::SelectorNode {
 public:
-    MainGroupBehavior(BOT::Context* group) : BOT::SelectorNode({
-            new BOT::SequenceNode{
-                new HasUnit(sc2::UNIT_TYPEID::TERRAN_MARINE, 40),
-                new GroupAttackMove(group)
-            },
+    MainGroupBehavior(BOT::Context* group): BOT::SelectorNode({
             new GroupPosition(group)
+        }) {
+    }
+};
+
+class StrikeGroupBehavior : public BOT::SelectorNode {
+public:
+    StrikeGroupBehavior(BOT::Context* group): BOT::SelectorNode({
+            new TacticalMove(group)
         }) {
     }
 };

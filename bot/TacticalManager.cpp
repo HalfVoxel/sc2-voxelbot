@@ -10,6 +10,12 @@ TacticalManager::TacticalManager(std::shared_ptr<BOT::ControlFlowNode> armyTree,
     main = CreateGroup(GroupType::Main);
 }
 
+void TacticalManager::OnStep(){
+    if(main->units.size() > 30) {
+        groupAssignments[CreateGroup(Strike)] = bot.influenceManager.enemyDensity.argmax();
+    }
+}
+
 void TacticalManager::OnUnitDestroyed(const Unit* unit) {
     if (unit->alliance == Unit::Alliance::Self) {
         if (unit->unit_type == UNIT_TYPEID::TERRAN_SCV) {
@@ -96,10 +102,23 @@ UnitGroup* TacticalManager::CreateGroup(GroupType type) {
             availableWorkers.pop_back();
         }
     } else if (type == GroupType::Strike) {
-        // group = new StrikeGroup();
+        group = new StrikeGroup();
+        main->TransferUnits(group);
     }
 
     armyTree->Add(group->behavior);
     groups.push_back(group);
     return group;
+}
+
+Point2DI TacticalManager::RequestTargetPosition(UnitGroup* group){
+    if(group->type == Main) {
+        Point2D p = GetPreferredArmyPosition();
+        return Point2DI(p.x, p.y);
+    }
+    Point2DI point = groupAssignments[group];
+    if(Distance2D(group->GetPosition(), Point2D(point.x, point.y)) < 4) {
+        groupAssignments[group] = bot.influenceManager.enemyDensity.argmax();
+    }
+    return groupAssignments[group];
 }

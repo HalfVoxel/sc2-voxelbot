@@ -146,6 +146,7 @@ void Bot::OnStep() {
 
     influenceManager.OnStep();
     scoutingManager->OnStep();
+    tacticalManager->OnStep();
    // cameraController.OnStep();
     // DebugUnitPositions();
     Debug()->SendDebug();

@@ -16,8 +16,12 @@ public:
     virtual bool IsDestroyed() const;
     virtual bool IsFunctional() const;
     void AddUnit(const sc2::Unit* unit);
+    void TransferUnits(UnitGroup* group);
+    void TransferUnits(UnitGroup* group, int n);
     void RemoveUnit(const sc2::Unit* unit);
     bool ContainsUnit(const sc2::Unit* unit);
+
+    sc2::Point3D GetPosition();
 
 };
 
@@ -36,5 +40,5 @@ public:
 
 class StrikeGroup : public UnitGroup {
 public:
-    StrikeGroup(std::vector<const sc2::Unit*> units);
+    StrikeGroup();
 };
