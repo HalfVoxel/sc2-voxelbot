@@ -14,8 +14,26 @@ vector<pair<UNIT_TYPEID, double>> unitComposition = {
     { UNIT_TYPEID::TERRAN_MARINE, 5 },
     { UNIT_TYPEID::TERRAN_SIEGETANK, 1 },
     { UNIT_TYPEID::TERRAN_MEDIVAC, 1 },
-    { UNIT_TYPEID::TERRAN_MARAUDER, 3 }
+    { UNIT_TYPEID::TERRAN_MARAUDER, 3 },
+    { UNIT_TYPEID::TERRAN_CYCLONE, 2 },
+    { UNIT_TYPEID::TERRAN_LIBERATOR, 1 },
+    { UNIT_TYPEID::TERRAN_VIKINGFIGHTER, 1 },
+    { UNIT_TYPEID::TERRAN_BANSHEE, 1 },
 };
+
+double SCVScore (UNIT_TYPEID unitType) {
+    auto units = bot.Observation()->GetUnits(Unit::Alliance::Self);
+    int ideal = 0;
+    int assigned = 0;
+    for (auto unit : units) {
+        ideal += unit->ideal_harvesters;
+        assigned += unit->assigned_harvesters;
+    }
+
+    if (assigned < ideal) return 10;
+    if (assigned < ideal + 10) return 1.5;
+    return 1;
+}
 
 double DefaultScore (UNIT_TYPEID unitType) {
     auto units = bot.Observation()->GetUnits(Unit::Alliance::Self);
