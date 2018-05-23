@@ -72,11 +72,11 @@ BOT::Status Research::OnTick() {
     const ObservationInterface* observation = bot.Observation();
 
     // Figure out which ability is used to build the unit and which building/unit it is built from.
-    const UpgradeTypeData& unitTypeData = observation->GetUpgradeData(false)[research];
+    const UpgradeData& data = observation->GetUpgradeData(false)[research];
 
-    auto abilityType = unitTypeData.ability_id;
+    auto abilityType = data.ability_id;
     // Usually a building
-    auto builderUnitType = abilityToCasterUnit(unitTypeData.ability_id);
+    auto builderUnitType = abilityToCasterUnit(data.ability_id);
 
     Units units = observation->GetUnits(Unit::Alliance::Self, IsStructure(observation));
     for (auto unit : units) {
@@ -91,18 +91,18 @@ BOT::Status Research::OnTick() {
         if (!IsAbilityReady(unit, abilityType)) {
             continue;
         }
-
+/*
         bot.spendingManager.AddAction(score(unitType), CostOfUnit(unitType), [=]() {
             bot.Actions()->UnitCommand(unit, abilityType);
         });
-
+        */
         return Status::Running;
-    }
+    }/*
     for (auto const unit : bot.Observation()->GetUnits(Unit::Self, IsUnits(bot.researchBuildingTypes))) {
         if (!unit->orders.empty() && unit->orders[0].ability_id == upgradeBuild) {
             return Running;
         }
-    }
+    }*/
     return Status::Failure;
 }
 

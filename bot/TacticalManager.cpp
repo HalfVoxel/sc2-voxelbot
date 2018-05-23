@@ -12,7 +12,7 @@ TacticalManager::TacticalManager(std::shared_ptr<BOT::ControlFlowNode> armyTree,
 
 void TacticalManager::OnStep(){
     //if(main->units.size() > 40) {
-    if (bot.Observation()->GetFoodArmy() > 90) {
+    if (bot.Observation()->GetFoodArmy() > 90 && main->units.size() > 25) {
         groupAssignments[CreateGroup(Strike)] = bot.influenceManager.enemyDensity.argmax();
     }
 }
