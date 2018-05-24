@@ -36,6 +36,9 @@ void CameraController::OnStep() {
 	// and then pick the most interesting one to move the camera to.
 	vector<tuple<double, pair<double,double>, Tag>> points;
 	for (auto unit : observation->GetUnits()) {
+	    // Ignore units in fog of war
+		if (unit->display_type == Unit::DisplayType::Snapshot) continue;
+
 		double score = 0;
 		Point2D pos = unit->pos;
 		if (unit->alliance == Unit::Alliance::Self) {
