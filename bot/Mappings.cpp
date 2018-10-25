@@ -1,14 +1,45 @@
 #include "Mappings.h"
 #include <iostream>
+#include "generated/abilities.h"
+#include "sc2api/sc2_agent.h"
 #include "sc2api/sc2_api.h"
+#include "sc2api/sc2_interfaces.h"
+#include "sc2api/sc2_map_info.h"
 
 using namespace std;
 using namespace sc2;
+
+vector<vector<UNIT_TYPEID>> mAbilityToCasterUnit;
+vector<UNIT_TYPEID> mAbilityToCreatedUnit;
+
+void initMappings(const ObservationInterface* observation) {
+    int maxAbilityID = 0;
+    for (auto pair : unit_type_has_ability) {
+        maxAbilityID = max(maxAbilityID, pair.second);
+    }
+    mAbilityToCasterUnit = vector<vector<UNIT_TYPEID>>(maxAbilityID);
+    for (auto pair : unit_type_has_ability) {
+        mAbilityToCasterUnit[pair.second].push_back((UNIT_TYPEID)pair.first);
+    }
+
+    const sc2::UnitTypes& unitTypes = observation->GetUnitTypeData();
+    const auto abilities = observation->GetAbilityData();
+
+    mAbilityToCreatedUnit = vector<UNIT_TYPEID>(abilities.size(), UNIT_TYPEID::INVALID);
+    for (auto type : unitTypes) {
+        mAbilityToCreatedUnit[type.ability_id] = (UNIT_TYPEID)type.unit_type_id;
+    }
+}
 
 /** Maps an ability to the unit that primarily uses it.
  * In particular this is defined for BUILD_* and TRAIN_* abilities.
  */
 std::vector<UNIT_TYPEID> abilityToCasterUnit(ABILITY_ID ability) {
+    if ((int)ability > mAbilityToCasterUnit.size()) {
+        return { UNIT_TYPEID::INVALID };
+    }
+    return mAbilityToCasterUnit[(int)ability];
+    /*
     switch (ability) {
         case ABILITY_ID::RESEARCH_HISECAUTOTRACKING:
         case ABILITY_ID::RESEARCH_TERRANSTRUCTUREARMORUPGRADE:
@@ -44,7 +75,7 @@ std::vector<UNIT_TYPEID> abilityToCasterUnit(ABILITY_ID ability) {
         case ABILITY_ID::BUILD_ARMORY:
             return { UNIT_TYPEID::TERRAN_SCV };
         case ABILITY_ID::BUILD_ASSIMILATOR:
-            return { UNIT_TYPEID::TERRAN_SCV };
+            return { UNIT_TYPEID::PROTOSS_PROBE };
         case ABILITY_ID::BUILD_BANELINGNEST:
             return { UNIT_TYPEID::ZERG_DRONE };
         case ABILITY_ID::BUILD_BARRACKS:
@@ -80,7 +111,7 @@ std::vector<UNIT_TYPEID> abilityToCasterUnit(ABILITY_ID ability) {
         case ABILITY_ID::BUILD_GATEWAY:
             return { UNIT_TYPEID::PROTOSS_PROBE };
         case ABILITY_ID::BUILD_GHOSTACADEMY:
-            return { UNIT_TYPEID::PROTOSS_PROBE };
+            return { UNIT_TYPEID::TERRAN_SCV };
         case ABILITY_ID::BUILD_HATCHERY:
             return { UNIT_TYPEID::ZERG_DRONE };
         case ABILITY_ID::BUILD_HYDRALISKDEN:
@@ -128,7 +159,7 @@ std::vector<UNIT_TYPEID> abilityToCasterUnit(ABILITY_ID ability) {
         case ABILITY_ID::BUILD_SPINECRAWLER:
             return { UNIT_TYPEID::ZERG_DRONE };
         case ABILITY_ID::BUILD_SPIRE:
-            return { UNIT_TYPEID::INVALID };
+            return { UNIT_TYPEID::ZERG_DRONE };
         case ABILITY_ID::BUILD_SPORECRAWLER:
             return { UNIT_TYPEID::ZERG_DRONE };
         case ABILITY_ID::BUILD_STARGATE:
@@ -153,6 +184,9 @@ std::vector<UNIT_TYPEID> abilityToCasterUnit(ABILITY_ID ability) {
             return { UNIT_TYPEID::PROTOSS_PROBE };
         case ABILITY_ID::BUILD_ULTRALISKCAVERN:
             return { UNIT_TYPEID::ZERG_DRONE };
+
+        case ABILITY_ID::MORPH_GREATERSPIRE:
+            return { UNIT_TYPEID::ZERG_SPIRE };
 
         case ABILITY_ID::TRAINWARP_ADEPT:
             return { UNIT_TYPEID::PROTOSS_GATEWAY };
@@ -187,7 +221,7 @@ std::vector<UNIT_TYPEID> abilityToCasterUnit(ABILITY_ID ability) {
         case ABILITY_ID::TRAIN_DISRUPTOR:
             return { UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY };
         case ABILITY_ID::TRAIN_DRONE:
-            return { UNIT_TYPEID::PROTOSS_NEXUS };
+            return { UNIT_TYPEID::ZERG_HATCHERY, UNIT_TYPEID::ZERG_LAIR, UNIT_TYPEID::ZERG_HIVE };
         case ABILITY_ID::TRAIN_GHOST:
             return { UNIT_TYPEID::TERRAN_BARRACKSTECHLAB };
         case ABILITY_ID::TRAIN_HELLBAT:
@@ -213,7 +247,7 @@ std::vector<UNIT_TYPEID> abilityToCasterUnit(ABILITY_ID ability) {
         case ABILITY_ID::TRAIN_MOTHERSHIP:
             return { UNIT_TYPEID::PROTOSS_NEXUS };
         case ABILITY_ID::TRAIN_MOTHERSHIPCORE:
-            return { UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY };
+            return { UNIT_TYPEID::INVALID };
         case ABILITY_ID::TRAIN_MUTALISK:
             return { UNIT_TYPEID::INVALID };
         case ABILITY_ID::TRAIN_OBSERVER:
@@ -267,14 +301,15 @@ std::vector<UNIT_TYPEID> abilityToCasterUnit(ABILITY_ID ability) {
         default:
             cerr << AbilityTypeToName(ability) << endl;
             throw invalid_argument("Not a train or build ability");
-    }
+    }*/
 }
 
 /** Maps an ability to the unit that is built or trained by that ability.
  * In particular this is defined for BUILD_* abilities.
  */
 UNIT_TYPEID abilityToUnit(ABILITY_ID ability) {
-    switch (ability) {
+    return mAbilityToCreatedUnit[(int)ability];
+    /*switch (ability) {
         case ABILITY_ID::BUILD_ARMORY:
             return UNIT_TYPEID::TERRAN_ARMORY;
         case ABILITY_ID::BUILD_ASSIMILATOR:
@@ -387,9 +422,11 @@ UNIT_TYPEID abilityToUnit(ABILITY_ID ability) {
             return UNIT_TYPEID::PROTOSS_TWILIGHTCOUNCIL;
         case ABILITY_ID::BUILD_ULTRALISKCAVERN:
             return UNIT_TYPEID::ZERG_ULTRALISKCAVERN;
+        case ABILITY_ID::MORPH_GREATERSPIRE:
+            return UNIT_TYPEID::ZERG_GREATERSPIRE;
         default:
             return UNIT_TYPEID::INVALID;
-    }
+    }*/
 }
 
 UNIT_TYPEID simplifyUnitType(UNIT_TYPEID type) {
