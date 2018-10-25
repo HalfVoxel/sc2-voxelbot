@@ -11,6 +11,7 @@
 #include "buildingPlacement.h"
 #include "ScoutingManager.h"
 #include "MicroNodes.h"
+#include "Predicates.h"
 #include <random>
 #include <limits>
 #include <map>
@@ -174,7 +175,7 @@ void Bot::OnStep() {
     if (ticks == 0) t0 = time(0);
     ticks++;
     if ((ticks % 100) == 0) {
-        cout << "FPS: " << (int)(ticks/(double)(time(0) - t0)) << endl;
+        //cout << "FPS: " << (int)(ticks/(double)(time(0) - t0)) << endl;
     }
     tree->Tick();
     armyTree->Tick();
@@ -187,12 +188,19 @@ void Bot::OnStep() {
     influenceManager.OnStep();
     scoutingManager->OnStep();
     tacticalManager->OnStep();
-   // cameraController.OnStep();
+    cameraController.OnStep();
     // DebugUnitPositions();
     Debug()->SendDebug();
 }
 
 void Bot::OnGameEnd() {
+    auto ourUnits = Observation()->GetUnits(Unit::Alliance::Self, IsStructure(Observation()));
+    auto enemyUnits = Observation()->GetUnits(Unit::Alliance::Enemy, IsStructure(Observation()));
+    if (ourUnits.size() > enemyUnits.size()) {
+        cout << "Victory" << endl;
+    } else {
+        cout << "Defeat" << endl;
+    }
     Shutdown();
 }
 
