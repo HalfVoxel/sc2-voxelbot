@@ -7,6 +7,8 @@
 using namespace std;
 using namespace sc2;
 
+InfluenceMap distanceCache;
+
 void InfluenceManager::Init() {
     // 1 at traversable cells, 0 at walls
     pathing_grid = InfluenceMap(bot.game_info_.pathing_grid);
@@ -27,10 +29,16 @@ void InfluenceManager::Init() {
     safeBuildingMap = InfluenceMap(pathing_grid.w, pathing_grid.h);
     scoutingMap = InfluenceMap(pathing_grid.w, pathing_grid.h);
     scanningMap = InfluenceMap(pathing_grid.w, pathing_grid.h);
+    distanceCache = InfluenceMap(pathing_grid.w, pathing_grid.h);
+}
+
+double millis() {
+    return (1000*clock()) / CLOCKS_PER_SEC;
 }
 
 void InfluenceManager::OnStep() {
     const int InfluenceFrameInterval = 10;
+    const int DistanceFrameInterval = 50;
     if ((ticks % InfluenceFrameInterval) == 0) {
 
         double scoutingUncertainty = 0.005;
@@ -84,37 +92,44 @@ void InfluenceManager::OnStep() {
 
         enemyDensity.propagateSum(exp(-4), 0.2, pathing_grid);
 
-        // Binary map of where the enemy is
-        auto flood = enemyDensity;
-        flood.threshold(flood.max() * 0.2);
+        if ((ticks % DistanceFrameInterval) == 0) {
+            // Binary map of where the enemy is
+            auto flood = enemyDensity;
+            flood.threshold(flood.max() * 0.2);
 
-        // Normalized distances to the enemy between 0 and 1 where 1 the size of the whole map
-        auto distances = getDistances(flood, pathing_cost + valueMap*2000);
-        distances *= 1.0/max(distances.w, distances.h);
+            // Normalized distances to the enemy between 0 and 1 where 1 the size of the whole map
+            distanceCache = getDistances(flood, pathing_cost + valueMap * 2000);
+            auto& distances = distanceCache;
+            distances *= 1.0 / max(distances.w, distances.h);
 
-        // How useful it is to defend a particular point
-        // focuses on the perimeter of the base
-        auto defensivePotential = valueMap / (distances + 20);
-        defensivePotential *= 1 / (0.001 + defensivePotential.maxFinite());
+            // How useful it is to defend a particular point
+            // focuses on the perimeter of the base
+            auto defensivePotential = valueMap / (distances + 20);
+            defensivePotential *= 1 / (0.001 + defensivePotential.maxFinite());
 
-        // Find the best spot to defend
-        // TODO: Send different squads to different positions
-        auto best = defensivePotential.argmax();
-        bot.tacticalManager->preferredArmyPosition = Point2D(best.x, best.y);
+            // Find the best spot to defend
+            // TODO: Send different squads to different positions
+            auto best = defensivePotential.argmax();
+            bot.tacticalManager->preferredArmyPosition = Point2D(best.x, best.y);
 
-        // Make it good to build buildings as far away from the enemy as possible
-        // preferably behind other buildings and defences.
-        safeBuildingMap = distances;
+            // Make it good to build buildings as far away from the enemy as possible
+            // preferably behind other buildings and defences.
+            safeBuildingMap = distances;
+
+            defensivePotential *= 1.0 / defensivePotential.max();
+            defensivePotential.renderNormalized(1, 2);
+        }
 
         // Render all maps for debugging
         // Coordinates in a tile layout with 0,0 being the top-left corner of the debugging window.
-        (distances * 0.5).render(0, 0);
+        auto d2 = distanceCache;
+        d2 *= 1.0 / d2.maxFinite();
+        d2.renderNormalized(0, 0);
         enemyDensity.render(0, 1);
         valueMap.renderNormalized(0, 2);
         scoutingMap.render(1, 0);
         // flood.render(1, 1);
         scanningMap.render(1, 1);
-        defensivePotential.render(1, 2);
         
         Render();
     }
