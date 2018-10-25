@@ -12,11 +12,15 @@ using namespace sc2;
 
 vector<const Unit*> enemyUnits;
 
+bool IsChangeling(const Unit* unit) {
+	return unit->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINE || unit->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINESHIELD;
+}
+
 const Unit* BestTarget(function<double(const Unit*)> score, Point2D from, double range, double scoreThreshold = -1) {
 	const Unit* best = nullptr;
 	double bestScore = scoreThreshold;
 	for (auto unit : enemyUnits) {
-		if (Distance2D(from, unit->pos) < range) {
+		if (Distance2D(from, unit->pos) < range && !IsChangeling(unit)) {
 			double s = score(unit);
 			if (s > bestScore) {
 				best = unit;
@@ -30,7 +34,7 @@ const Unit* BestTarget(function<double(const Unit*)> score, Point2D from, double
 double SumUnits(function<double(const Unit*)> score, Point2D around, double range) {
 	double sum = 0;
 	for (auto unit : enemyUnits) {
-		if (Distance2D(around, unit->pos) < range) {
+		if (Distance2D(around, unit->pos) < range && !IsChangeling(unit)) {
 			sum += score(unit);
 		}
 	}
