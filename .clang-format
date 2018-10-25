@@ -2,7 +2,9 @@ BasedOnStyle: Google
 IndentWidth: 4
 TabWidth: 4
 UseTab: Never
-ColumnLimit: 200
+ColumnLimit: 0
 AllowShortIfStatementsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortLoopsOnASingleLine: false
+BreakBeforeBraces: Attach
+Cpp11BracedListStyle: false
