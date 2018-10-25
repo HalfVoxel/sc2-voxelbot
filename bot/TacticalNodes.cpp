@@ -75,7 +75,7 @@ BOT::Status TacticalMove::OnTick() {
             int allowedDist = 7;
             for (auto* unit : group->units) {
                 bool withinDistance = Distance2D(unit->pos, target_pos) < allowedDist;
-                if (!withinDistance && (unit->orders.empty() || Distance2D(target_pos, unit->orders[0].target_pos) > 1)) {
+                if (!withinDistance && (unit->orders.empty() || Distance2D(target_pos, unit->orders[0].target_pos) > 1 || (pathingTicker % 250 == 0))) {
                     bot.Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, target_pos);
                 }
                 if (!withinDistance) {
