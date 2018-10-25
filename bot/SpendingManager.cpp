@@ -15,7 +15,7 @@ vector<pair<UNIT_TYPEID, double>> unitComposition = {
     { UNIT_TYPEID::TERRAN_SIEGETANK, 1 },
     { UNIT_TYPEID::TERRAN_MEDIVAC, 1 },
     { UNIT_TYPEID::TERRAN_MARAUDER, 3 },
-    { UNIT_TYPEID::TERRAN_CYCLONE, 2 },
+    { UNIT_TYPEID::TERRAN_CYCLONE, 0 },
     { UNIT_TYPEID::TERRAN_LIBERATOR, 1 },
     { UNIT_TYPEID::TERRAN_VIKINGFIGHTER, 1 },
     { UNIT_TYPEID::TERRAN_BANSHEE, 1 },
@@ -64,6 +64,8 @@ double DefaultScore (UNIT_TYPEID unitType) {
     }
     matching /= total + 0.0001;
     double desiredMatching = SpendingManager::GetUnitProportion(unitType);
+
+    if (desiredMatching <= 0) return -10;
 
     // Score will be 1 exactly when we have the desired unit fraction.
     // It will go to a large value when the unit fraction we have is smaller than the desired one
