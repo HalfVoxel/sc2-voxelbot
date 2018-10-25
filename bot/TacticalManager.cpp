@@ -5,12 +5,12 @@
 using namespace std;
 using namespace sc2;
 
-
-TacticalManager::TacticalManager(std::shared_ptr<BOT::ControlFlowNode> armyTree, sc2::Point2D wallPlacement) : armyTree(armyTree), wallPlacement(wallPlacement) {
+TacticalManager::TacticalManager(std::shared_ptr<BOT::ControlFlowNode> armyTree, sc2::Point2D wallPlacement)
+    : armyTree(armyTree), wallPlacement(wallPlacement) {
     main = CreateGroup(GroupType::Main);
 }
 
-void TacticalManager::OnStep(){
+void TacticalManager::OnStep() {
     //if(main->units.size() > 40) {
     if (bot.Observation()->GetFoodArmy() > 90 && main->units.size() > 25) {
         groupAssignments[CreateGroup(Strike)] = bot.influenceManager.enemyDensity.argmax();
@@ -25,21 +25,21 @@ void TacticalManager::OnUnitDestroyed(const Unit* unit) {
         for (auto group : groups) {
             if (group->ContainsUnit(unit)) {
                 group->RemoveUnit(unit);
-                if(!group->IsFunctional()){
+                if (!group->IsFunctional()) {
                     for (auto unit : group->units) {
                         main->AddUnit(unit);
                     }
                 }
-                if(group->IsDestroyed() || !group->IsFunctional()){
+                if (group->IsDestroyed() || !group->IsFunctional()) {
                     armyTree->Remove(group->behavior);
-                    if(group->type == Scout){
+                    if (group->type == Scout) {
                         bot.scoutingManager->ScoutDestroyed(group);
                     }
                 }
                 break;
             }
         }
-        groups.erase(remove_if(groups.begin(), groups.end(),[](const UnitGroup* x) { return x->IsDestroyed() || !x->IsFunctional(); }), groups.end());
+        groups.erase(remove_if(groups.begin(), groups.end(), [](const UnitGroup* x) { return x->IsDestroyed() || !x->IsFunctional(); }), groups.end());
     } else if (unit->alliance == Unit::Alliance::Enemy) {
         if (IsArmy(bot.Observation()).operator()(*unit)) {
             knownEnemies.remove_if([unit](const Unit* x) { return x->tag == unit->tag; });
@@ -57,12 +57,10 @@ void TacticalManager::OnUnitCreated(const Unit* unit) {
     }
 }
 
-
 void TacticalManager::OnUnitEnterVision(const Unit* unit) {
     if (unit->alliance == Unit::Alliance::Enemy) {
         if (IsArmy(bot.Observation()).operator()(*unit)) {
-            auto found = find_if(knownEnemies.begin(), knownEnemies.end(), [unit](const Unit* x)
-            {
+            auto found = find_if(knownEnemies.begin(), knownEnemies.end(), [unit](const Unit* x) {
                 return x->tag == unit->tag;
             });
             if (found == knownEnemies.end()) {
@@ -72,13 +70,10 @@ void TacticalManager::OnUnitEnterVision(const Unit* unit) {
     }
 }
 
-
 void TacticalManager::OnNydusDetected() {
-
 }
 
 void TacticalManager::OnNuclearLaunchDetected() {
-
 }
 
 Point2D TacticalManager::GetPreferredArmyPosition() {
@@ -112,13 +107,13 @@ UnitGroup* TacticalManager::CreateGroup(GroupType type) {
     return group;
 }
 
-Point2DI TacticalManager::RequestTargetPosition(UnitGroup* group){
-    if(group->type == Main) {
+Point2DI TacticalManager::RequestTargetPosition(UnitGroup* group) {
+    if (group->type == Main) {
         Point2D p = GetPreferredArmyPosition();
         return Point2DI(p.x, p.y);
     }
     Point2DI point = groupAssignments[group];
-    if(Distance2D(group->GetPosition(), Point2D(point.x, point.y)) < 4) {
+    if (Distance2D(group->GetPosition(), Point2D(point.x, point.y)) < 4) {
         groupAssignments[group] = bot.influenceManager.enemyDensity.argmax();
     }
     return groupAssignments[group];

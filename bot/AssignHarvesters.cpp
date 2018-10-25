@@ -142,4 +142,3 @@ const Unit* AssignHarvesters::FindNearestMineralPatch(const Point2D& start) {
     }
     return target;
 }
-

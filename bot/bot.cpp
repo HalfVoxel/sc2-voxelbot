@@ -2,19 +2,19 @@
 #include "StrategicNodes.h"
 #include "sc2lib/sc2_lib.h"
 // #include "sc2renderer/sc2_renderer.h"
-#include "Renderer.h"
 #include <cmath>
 #include <iostream>
-#include "TacticalNodes.h"
-#include "SDL.h"
-#include "Pathfinding.h"
-#include "buildingPlacement.h"
-#include "ScoutingManager.h"
-#include "MicroNodes.h"
-#include "Predicates.h"
-#include <random>
 #include <limits>
 #include <map>
+#include <random>
+#include "MicroNodes.h"
+#include "Pathfinding.h"
+#include "Predicates.h"
+#include "Renderer.h"
+#include "SDL.h"
+#include "ScoutingManager.h"
+#include "TacticalNodes.h"
+#include "buildingPlacement.h"
 
 using namespace BOT;
 using namespace std;
@@ -26,20 +26,23 @@ map<const Unit*, AvailableAbilities> availableAbilities;
 map<const Unit*, AvailableAbilities> availableAbilitiesExcludingCosts;
 
 // TODO: Should move this to a better place
-bool IsAbilityReady (const Unit* unit, ABILITY_ID ability) {
+bool IsAbilityReady(const Unit* unit, ABILITY_ID ability) {
     for (auto& a : availableAbilities[unit].abilities) {
-        if (a.ability_id == ability) return true;
+        if (a.ability_id == ability)
+            return true;
     }
     return false;
 }
 
 bool IsAbilityReadyExcludingCosts(const Unit* unit, ABILITY_ID ability) {
     for (auto& a : availableAbilitiesExcludingCosts[unit].abilities) {
-        if (a.ability_id == ability) return true;
+        if (a.ability_id == ability)
+            return true;
     }
     return false;
 }
 
+// clang-format off
 void Bot::OnGameStart() {
     game_info_ = Observation()->GetGameInfo();
     expansions_ = search::CalculateExpansionLocations(Observation(), Query());
@@ -140,6 +143,7 @@ void Bot::OnGameStart() {
 
     influenceManager.Init();
 }
+// clang-format on
 
 time_t t0;
 
@@ -151,7 +155,7 @@ void DebugUnitPositions() {
 }
 
 void Bot::OnGameLoading() {
-    InitializeRenderer("Starcraft II Bot", 50, 50, 256*3+20, 256*4+30);
+    InitializeRenderer("Starcraft II Bot", 50, 50, 256 * 3 + 20, 256 * 4 + 30);
     Render();
 }
 
@@ -171,8 +175,8 @@ void Bot::OnStep() {
         availableAbilitiesExcludingCosts[ourUnits[i]] = abilities[i];
     }
 
-
-    if (ticks == 0) t0 = time(0);
+    if (ticks == 0)
+        t0 = time(0);
     ticks++;
     if ((ticks % 100) == 0) {
         //cout << "FPS: " << (int)(ticks/(double)(time(0) - t0)) << endl;
@@ -235,5 +239,3 @@ Point2D Bot::GetMapCoordinate(int i) {
 int Bot::ManhattanDistance(Point2D p1, Point2D p2) {
     return std::abs(p1.x - p2.x) + std::abs(p1.y - p2.y);
 }
-
-

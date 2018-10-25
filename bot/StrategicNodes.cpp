@@ -1,8 +1,8 @@
 #include "StrategicNodes.h"
-#include "bot.h"
-#include "Predicates.h"
-#include "Mappings.h"
 #include <iostream>
+#include "Mappings.h"
+#include "Predicates.h"
+#include "bot.h"
 
 using namespace BOT;
 using namespace std;
@@ -11,7 +11,7 @@ using namespace sc2;
 bool GetRandomUnit(const Unit*& unit_out, const ObservationInterface* observation,
                    UnitTypeID unit_type) {
     Units my_units = observation->GetUnits(Unit::Alliance::Self);
-    std::random_shuffle(my_units.begin(), my_units.end()); // Doesn't work, or doesn't work well.
+    std::random_shuffle(my_units.begin(), my_units.end());  // Doesn't work, or doesn't work well.
     for (const auto unit : my_units) {
         if (unit->unit_type == unit_type) {
             unit_out = unit;
@@ -50,7 +50,7 @@ Status Build::OnTick() {
             continue;
         }
 
-        if(unit->orders.size() > (hasReactor ? 1 : 0)) {
+        if (unit->orders.size() > (hasReactor ? 1 : 0)) {
             continue;
         }
 
@@ -109,7 +109,6 @@ BOT::Status Research::OnTick() {
 }
 
 Status Construct::PlaceBuilding(UnitTypeID unitType, Point2D location, bool isExpansion = false) {
-
     const ObservationInterface* observation = bot.Observation();
 
     const UnitTypeData& unitTypeData = observation->GetUnitTypeData(false)[unitType];
@@ -155,7 +154,6 @@ Status Construct::PlaceBuilding(UnitTypeID unitType, Point2D location, bool isEx
         return Status::Success;
     }
     return Status::Failure;
-
 }
 
 Status Construct::PlaceBuilding(UnitTypeID unitType, Tag loc) {
@@ -233,7 +231,8 @@ Status ShouldBuildSupply::OnTick() {
     double productionModifier = bot.Observation()->GetUnits(Unit::Alliance::Self, IsUnits(bot.production_types)).size() * 1.0;
 
     for (auto unit : bot.Observation()->GetUnits(Unit::Alliance::Self, IsUnits(bot.production_types))) {
-        if (unit->orders.size() > 0) productionModifier += 1.5;
+        if (unit->orders.size() > 0)
+            productionModifier += 1.5;
     }
 
     int expectedAdditionalSupply = 0;
@@ -251,13 +250,14 @@ Status ShouldBuildSupply::OnTick() {
     }
 
     int expectedCap = observation->GetFoodCap() + expectedAdditionalSupply;
-    if (expectedCap >= 200) return Failure;
+    if (expectedCap >= 200)
+        return Failure;
 
     double expectedUse = observation->GetFoodUsed() + 1 + productionModifier;
     return expectedUse >= expectedCap ? Success : Failure;
 }
 
-Status ShouldExpand::OnTick() {    
+Status ShouldExpand::OnTick() {
     const ObservationInterface* observation = bot.Observation();
     int commsBuilding = 0;
     for (auto unit : bot.Observation()->GetUnits(Unit::Alliance::Self)) {
@@ -276,7 +276,7 @@ Status ShouldExpand::OnTick() {
 
     // If we have extra workers around, try and build another Hatch.
     if (observation->GetFoodWorkers() > GetExpectedWorkers(gasType) + 10) {
-        return commsBuilding == 0 ? Status::Success : Failure; 
+        return commsBuilding == 0 ? Status::Success : Failure;
     }
     //Only build another Hatch if we are floating extra minerals
     if (observation->GetMinerals() > std::min<size_t>(bases.size() * 400, 1200)) {
@@ -310,12 +310,11 @@ int ShouldExpand::GetExpectedWorkers(UNIT_TYPEID vespene_building_type) {
     return expected_workers;
 }
 
-
-
 Status BuildGas::OnTick() {
     auto observation = bot.Observation();
     Units bases = observation->GetUnits(Unit::Alliance::Self, IsTownHall());
-    if (bases.empty()) return Failure;
+    if (bases.empty())
+        return Failure;
 
     auto abilityType = observation->GetUnitTypeData(false)[unitType].ability_id;
 
@@ -339,7 +338,7 @@ Status BuildGas::OnTick() {
     if (closestGeyser == NullTag) {
         return Failure;
     }
-    
+
     return PlaceBuilding(unitType, closestGeyser);
 }
 
@@ -369,7 +368,6 @@ BOT::Status Expand::OnTick() {
     }
     return place_building;
 }
-
 
 Status Addon::TryBuildAddon(AbilityID ability_type_for_structure, Tag base_structure) {
     float rx = GetRandomScalar();
@@ -411,10 +409,10 @@ Status Addon::TryBuildAddon(AbilityID ability_type_for_structure, Tag base_struc
         return Status::Success;
     }
     return Status::Failure;
-
 }
 
-HasUpgrade::HasUpgrade(sc2::UpgradeID upgrade) : upgrade(upgrade) {
+HasUpgrade::HasUpgrade(sc2::UpgradeID upgrade)
+    : upgrade(upgrade) {
     const UpgradeData& data = bot.Observation()->GetUpgradeData(false)[upgrade];
 
     upgradeBuild = data.ability_id;
@@ -423,13 +421,13 @@ HasUpgrade::HasUpgrade(sc2::UpgradeID upgrade) : upgrade(upgrade) {
 }
 
 BOT::Status HasUpgrade::OnTick() {
-    for(auto const i : bot.Observation()->GetUpgrades()){
-        if(upgrade == i){
+    for (auto const i : bot.Observation()->GetUpgrades()) {
+        if (upgrade == i) {
             return Success;
         }
     }
-    for(auto const unit : bot.Observation()->GetUnits(Unit::Self, IsUnits(bot.researchBuildingTypes))){
-        if(!unit->orders.empty()  && unit->orders[0].ability_id == upgradeBuild){
+    for (auto const unit : bot.Observation()->GetUnits(Unit::Self, IsUnits(bot.researchBuildingTypes))) {
+        if (!unit->orders.empty() && unit->orders[0].ability_id == upgradeBuild) {
             return Running;
         }
     }
@@ -448,4 +446,3 @@ BOT::Status Addon::OnTick() {
     }
     return Status::Failure;
 }
-

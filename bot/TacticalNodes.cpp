@@ -1,25 +1,25 @@
 #include "TacticalNodes.h"
 #include "Bot.h"
+#include "Pathfinding.h"
 #include "Predicates.h"
 #include "StrategicNodes.h"
-#include "Pathfinding.h"
 
 using namespace BOT;
 using namespace sc2;
 
-BOT::Status ControlSupplyDepots::OnTick() { //Just so we dont get stuck in base. This is probably overkill in terms of computation
+BOT::Status ControlSupplyDepots::OnTick() {  //Just so we dont get stuck in base. This is probably overkill in terms of computation
     Units enemies = bot.Observation()->GetUnits(Unit::Alliance::Enemy);
     for (auto unit : bot.Observation()->GetUnits(Unit::Alliance::Self, IsUnits(bot.supply_depot_types))) {
         bool enemyNear = false;
         for (auto enemy : enemies) {
             if (!enemy->is_flying && Distance2D(unit->pos, enemy->pos) < 8 && !(enemy->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINE || enemy->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINESHIELD)) {
-                enemyNear = true; 
+                enemyNear = true;
             }
         }
-        if(!enemyNear && unit->unit_type == UNIT_TYPEID::TERRAN_SUPPLYDEPOT) {
+        if (!enemyNear && unit->unit_type == UNIT_TYPEID::TERRAN_SUPPLYDEPOT) {
             bot.Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SUPPLYDEPOT_LOWER);
-        } 
-        if(enemyNear && unit->unit_type == UNIT_TYPEID::TERRAN_SUPPLYDEPOTLOWERED){
+        }
+        if (enemyNear && unit->unit_type == UNIT_TYPEID::TERRAN_SUPPLYDEPOTLOWERED) {
             bot.Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SUPPLYDEPOT_RAISE);
         }
     }
@@ -43,10 +43,10 @@ BOT::Status GroupPosition::OnTick() {
 
 BOT::Status InCombat::OnTick() {
     auto group = GetGroup();
-    for(auto unit : group->units){
-        if(!unit->orders.empty() && unit->orders[0].target_unit_tag != NullTag) {
+    for (auto unit : group->units) {
+        if (!unit->orders.empty() && unit->orders[0].target_unit_tag != NullTag) {
             const Unit* enemy = bot.Observation()->GetUnit(unit->orders[0].target_unit_tag);
-            if (enemy && !(enemy->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINE|| enemy->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINESHIELD)) {
+            if (enemy && !(enemy->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINE || enemy->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINESHIELD)) {
                 group->SetCombatPosition(new Point2D(enemy->pos.x, enemy->pos.y));
                 bot.Debug()->DebugLineOut(unit->pos, enemy->pos, Colors::Red);
                 return Success;
@@ -67,7 +67,7 @@ BOT::Status TacticalMove::OnTick() {
         auto game_info = bot.Observation()->GetGameInfo();
         if (!currentPath.empty()) {
             for (int i = 0; i < std::min(40, (int)currentPath.size()); i++) {
-                bot.Debug()->DebugLineOut(Point3D(currentPath[i].x, currentPath[i].y, from.z), Point3D(currentPath[i+1].x, currentPath[i+1].y, from.z), Colors::White);
+                bot.Debug()->DebugLineOut(Point3D(currentPath[i].x, currentPath[i].y, from.z), Point3D(currentPath[i + 1].x, currentPath[i + 1].y, from.z), Colors::White);
             }
             // bot.Debug()->DebugLineOut(from, Point3D(currentPath[0].x, currentPath[0].y, from.z), Colors::White);
             auto target_pos = Point2D(currentPath[0].x, currentPath[0].y);
@@ -90,7 +90,6 @@ BOT::Status TacticalMove::OnTick() {
     }
     return Success;
 }
-
 
 BOT::Status GroupAttackMove::OnTick() {
     auto group = GetGroup();

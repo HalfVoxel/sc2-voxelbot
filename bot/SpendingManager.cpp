@@ -1,11 +1,11 @@
 #include "SpendingManager.h"
 #include <algorithm>
-#include "bot.h"
-#include "Mappings.h"
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <sstream>
-#include <iomanip>
+#include "Mappings.h"
+#include "bot.h"
 
 using namespace std;
 using namespace sc2;
@@ -21,7 +21,7 @@ vector<pair<UNIT_TYPEID, double>> unitComposition = {
     { UNIT_TYPEID::TERRAN_BANSHEE, 1 },
 };
 
-double SCVScore (UNIT_TYPEID unitType) {
+double SCVScore(UNIT_TYPEID unitType) {
     auto units = bot.Observation()->GetUnits(Unit::Alliance::Self);
     int ideal = 0;
     int assigned = 0;
@@ -30,8 +30,10 @@ double SCVScore (UNIT_TYPEID unitType) {
         assigned += unit->assigned_harvesters;
     }
 
-    if (assigned < ideal) return 10;
-    if (assigned < ideal + 10) return 1.5;
+    if (assigned < ideal)
+        return 10;
+    if (assigned < ideal + 10)
+        return 1.5;
     return 1;
 }
 
@@ -40,13 +42,14 @@ double SpendingManager::GetUnitProportion(UNIT_TYPEID unitType) {
     double totalCompositionWeight = 0;
     for (auto c : unitComposition) {
         totalCompositionWeight += c.second;
-        if (c.first == unitType) desiredMatching += c.second;
+        if (c.first == unitType)
+            desiredMatching += c.second;
     }
 
     return desiredMatching /= totalCompositionWeight + 0.0001;
 }
 
-double DefaultScore (UNIT_TYPEID unitType) {
+double DefaultScore(UNIT_TYPEID unitType) {
     auto units = bot.Observation()->GetUnits(Unit::Alliance::Self);
 
     double matching = 0;
@@ -65,7 +68,8 @@ double DefaultScore (UNIT_TYPEID unitType) {
     matching /= total + 0.0001;
     double desiredMatching = SpendingManager::GetUnitProportion(unitType);
 
-    if (desiredMatching <= 0) return -10;
+    if (desiredMatching <= 0)
+        return -10;
 
     // Score will be 1 exactly when we have the desired unit fraction.
     // It will go to a large value when the unit fraction we have is smaller than the desired one
@@ -84,10 +88,10 @@ double DefaultScore (UNIT_TYPEID unitType) {
 Cost CostOfUpgrade(UpgradeID upgrade) {
     auto& data = bot.Observation()->GetUpgradeData()[upgrade];
     Cost result = {
-            (int)data.mineral_cost,
-            (int)data.vespene_cost,
-            0,
-            UNIT_TYPEID::INVALID
+        (int)data.mineral_cost,
+        (int)data.vespene_cost,
+        0,
+        UNIT_TYPEID::INVALID
     };
 
     return result;
@@ -179,7 +183,8 @@ void SpendingManager::OnStep() {
             stringstream ss2;
             ss2 << setw(4) << setprecision(2) << score << setw(22) << UnitTypeToName(cost.unit_type) << " min: " << setw(3) << cost.minerals << " gas: " << setw(3) << cost.gas << " food: " << cost.supply;
             latestActions.push_back(ss2.str());
-            if (latestActions.size() > 10) latestActions.erase(latestActions.begin());
+            if (latestActions.size() > 10)
+                latestActions.erase(latestActions.begin());
 
             // Ok, we can use this ability
             callback();

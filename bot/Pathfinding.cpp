@@ -1,8 +1,8 @@
 #include "Pathfinding.h"
 #include <cmath>
 #include <iostream>
-#include <vector>
 #include <queue>
+#include <vector>
 
 using namespace std;
 using namespace sc2;
@@ -11,31 +11,33 @@ struct PathfindingEntry {
     double cost;
     Point2DI pos;
 
-    PathfindingEntry (double _cost, Point2DI _pos) : cost(_cost), pos(_pos) {
+    PathfindingEntry(double _cost, Point2DI _pos)
+        : cost(_cost), pos(_pos) {
     }
 
-    bool operator< (const PathfindingEntry& other) const {
+    bool operator<(const PathfindingEntry& other) const {
         return cost > other.cost;
     }
 };
 
 const int MAX_MAP_SIZE = 256;
 
-int dx[8]={1,1,1,0,0,-1,-1,-1};
-int dy[8]={1,0,-1,1,-1,1,0,-1};
-double dc[8]={1.41,1,1.41,1,1,1.41,1,1.41};
+int dx[8] = { 1, 1, 1, 0, 0, -1, -1, -1 };
+int dy[8] = { 1, 0, -1, 1, -1, 1, 0, -1 };
+double dc[8] = { 1.41, 1, 1.41, 1, 1, 1.41, 1, 1.41 };
 
 /** Returns a map of distances from the starting points.
  * A point is considered a starting point if the element in the startingPoints map is non-zero.
  * The costs per cell are given by the costs map.
  * Diagonal movement costs sqrt(2) times more than axis aligned movement.
  */
-InfluenceMap getDistances (const InfluenceMap& startingPoints, const InfluenceMap& costs) {
+InfluenceMap getDistances(const InfluenceMap& startingPoints, const InfluenceMap& costs) {
     assert(startingPoints.w == costs.w);
     assert(startingPoints.h == costs.h);
 
     InfluenceMap distances(startingPoints.w, startingPoints.h);
-    for (auto& w : distances.weights) w = numeric_limits<double>::infinity();
+    for (auto& w : distances.weights)
+        w = numeric_limits<double>::infinity();
 
     static priority_queue<PathfindingEntry> pq;
 
@@ -44,9 +46,9 @@ InfluenceMap getDistances (const InfluenceMap& startingPoints, const InfluenceMa
 
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
-            if (startingPoints(x,y)) {
-                pq.push(PathfindingEntry(0.0, Point2DI(x,y)));
-                distances(x,y) = 0;
+            if (startingPoints(x, y)) {
+                pq.push(PathfindingEntry(0.0, Point2DI(x, y)));
+                distances(x, y) = 0;
             }
         }
     }
@@ -62,20 +64,21 @@ InfluenceMap getDistances (const InfluenceMap& startingPoints, const InfluenceMa
         for (int i = 0; i < 8; i++) {
             int x = currentPos.x + dx[i];
             int y = currentPos.y + dy[i];
-            if ((unsigned int)x >= w || (unsigned int)y >= h || isinf(costs(x,y))) {
+            if ((unsigned int)x >= w || (unsigned int)y >= h || isinf(costs(x, y))) {
                 continue;
             }
 
-            double newDistance = currentEntry.cost + costs(x,y) * dc[i];
-            if (newDistance < distances(x,y)) {
-                distances(x,y) = newDistance;
+            double newDistance = currentEntry.cost + costs(x, y) * dc[i];
+            if (newDistance < distances(x, y)) {
+                distances(x, y) = newDistance;
                 pq.push(PathfindingEntry(newDistance, Point2DI(x, y)));
             }
         }
     }
 
     // Clear queue (required as it is reused for the next pathfinding call)
-    while(!pq.empty()) pq.pop();
+    while (!pq.empty())
+        pq.pop();
     return distances;
 }
 
@@ -83,7 +86,7 @@ InfluenceMap getDistances (const InfluenceMap& startingPoints, const InfluenceMa
  * The costs per cell are given by the costs map.
  * Diagonal movement costs sqrt(2) times more than axis aligned movement.
  */
-vector<Point2DI> getPath (const Point2DI from, const Point2DI to, const InfluenceMap& costs) {
+vector<Point2DI> getPath(const Point2DI from, const Point2DI to, const InfluenceMap& costs) {
     static vector<vector<double> > cost(MAX_MAP_SIZE, vector<double>(MAX_MAP_SIZE));
     static vector<vector<int> > version(MAX_MAP_SIZE, vector<int>(MAX_MAP_SIZE));
     static vector<vector<Point2DI> > parent(MAX_MAP_SIZE, vector<Point2DI>(MAX_MAP_SIZE));
@@ -125,7 +128,7 @@ vector<Point2DI> getPath (const Point2DI from, const Point2DI to, const Influenc
                 continue;
             }
             // TODO: sqrt can be optimized
-            double newCost = currentEntry.cost + costs(x,y) * dc[i];
+            double newCost = currentEntry.cost + costs(x, y) * dc[i];
             if ((newCost < cost[x][y] || version[x][y] != pathfindingVersion) && isfinite(cost[x][y])) {
                 cost[x][y] = newCost;
                 parent[x][y] = currentPos;
@@ -136,12 +139,14 @@ vector<Point2DI> getPath (const Point2DI from, const Point2DI to, const Influenc
     }
 
     // Clear queue (required as it is reused for the next pathfinding call)
-    while(!pq.empty()) pq.pop();
+    while (!pq.empty())
+        pq.pop();
 
-    if (!reached) return vector<Point2DI>();
+    if (!reached)
+        return vector<Point2DI>();
 
     Point2DI currentPos = to;
-    vector<Point2DI> path = {currentPos};
+    vector<Point2DI> path = { currentPos };
     while (currentPos != from) {
         auto p = parent[currentPos.x][currentPos.y];
         path.push_back(p);

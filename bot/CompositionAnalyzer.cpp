@@ -1,10 +1,10 @@
-#include "sc2api/sc2_api.h"
-#include "sc2utils/sc2_manage_process.h"
+#include <fstream>
 #include <iostream>
 #include <queue>
-#include "MicroNodes.h"
 #include "Bot.h"
-#include <fstream>
+#include "MicroNodes.h"
+#include "sc2api/sc2_api.h"
+#include "sc2utils/sc2_manage_process.h"
 
 using namespace sc2;
 using namespace std;
@@ -105,9 +105,10 @@ class CompositionAnalyzer : public sc2::Agent {
         int state = 0;
         vector<const Unit*> units;
         int notInCombat = 0;
-        pair<vector<pair<UNIT_TYPEID,int>>, vector<pair<UNIT_TYPEID,int>>> queItem;
+        pair<vector<pair<UNIT_TYPEID, int>>, vector<pair<UNIT_TYPEID, int>>> queItem;
 
-        Site (CompositionAnalyzer& simulator, Point2D tileMn, Point2D tileMx) : simulator(simulator), tileMn(tileMn), tileMx(tileMx) {}
+        Site(CompositionAnalyzer& simulator, Point2D tileMn, Point2D tileMx)
+            : simulator(simulator), tileMn(tileMn), tileMx(tileMx) {}
 
         bool IsDone() {
             return (simulator.localSimulations > 400 || simulator.que.size() == 0) && state == 0;
@@ -120,7 +121,7 @@ class CompositionAnalyzer : public sc2::Agent {
             }
         }
 
-        void writeUnits(vector<pair<UNIT_TYPEID,int>> u) {
+        void writeUnits(vector<pair<UNIT_TYPEID, int>> u) {
             simulator.results << u.size() << "  ";
             for (auto p : u) {
                 simulator.results << (int)p.first << " " << p.second << "  ";
@@ -162,9 +163,10 @@ class CompositionAnalyzer : public sc2::Agent {
             }
         }
 
-        void OnStep () {
+        void OnStep() {
             if (state == 0) {
-                if (IsDone()) return;
+                if (IsDone())
+                    return;
 
                 notInCombat = 0;
                 auto p = queItem = simulator.que.front();
@@ -173,16 +175,20 @@ class CompositionAnalyzer : public sc2::Agent {
                 simulator.localSimulations++;
 
                 cout << "Simulation " << simulator.simulation << " (" << simulator.que.size() << " remaining)" << endl;
-                for (auto type : p.first) cout << type.second << " " << UnitTypeToName(type.first) << ", ";
+                for (auto type : p.first)
+                    cout << type.second << " " << UnitTypeToName(type.first) << ", ";
                 cout << endl;
-                for (auto type : p.second) cout << type.second << " " << UnitTypeToName(type.first) << ", ";
+                for (auto type : p.second)
+                    cout << type.second << " " << UnitTypeToName(type.first) << ", ";
                 cout << endl;
 
                 auto p1 = tileMn + (tileMx - tileMn) * 0.4;
                 auto p2 = tileMn + (tileMx - tileMn) * 0.6;
-                for (auto type : p.first) simulator.Debug()->DebugCreateUnit(type.first, p1, simulator.Observation()->GetPlayerID(), type.second);
-                for (auto type : p.second) simulator.Debug()->DebugCreateUnit(type.first, p2, simulator.Observation()->GetPlayerID()+1, type.second);
-                
+                for (auto type : p.first)
+                    simulator.Debug()->DebugCreateUnit(type.first, p1, simulator.Observation()->GetPlayerID(), type.second);
+                for (auto type : p.second)
+                    simulator.Debug()->DebugCreateUnit(type.first, p2, simulator.Observation()->GetPlayerID() + 1, type.second);
+
                 state++;
             } else if (state == 1) {
                 state++;
@@ -225,7 +231,6 @@ class CompositionAnalyzer : public sc2::Agent {
                 } else {
                     notInCombat = 0;
                     // simulator.Debug()->DebugTextOut("Combat", Point3D(middle.x, middle.y, 0));
-                    
                 }
 
                 if (notInCombat > TIMEOUT_TICKS) {
@@ -250,33 +255,33 @@ class CompositionAnalyzer : public sc2::Agent {
 
     int localSimulations = 0;
     ofstream results;
-public:
-    void OnGameLoading() {
 
+   public:
+    void OnGameLoading() {
     }
 
     CompositionAnalyzer() {
         results = ofstream("out.txt");
         for (int i = 0; i < unitTypes.size(); i++) {
             for (int j = 0; j < opponentTypes.size(); j++) {
-
                 for (int k = 1; k < 10; k += 2) {
                     for (int m = 1; m < 10; m += 2) {
-                        vector<pair<UNIT_TYPEID, int>> left = {{ unitTypes[i], k }};
-                        vector<pair<UNIT_TYPEID, int>> right = {{ opponentTypes[j], m }};
+                        vector<pair<UNIT_TYPEID, int>> left = { { unitTypes[i], k } };
+                        vector<pair<UNIT_TYPEID, int>> right = { { opponentTypes[j], m } };
                         que.push({ left, right });
                     }
                 }
             }
         }
 
-        for (int i = 0; i < 100; i++) {        
+        for (int i = 0; i < 100; i++) {
         }
     }
 
     bool ShouldReload() {
         for (auto site : sites) {
-            if (!site.IsDone()) return false;
+            if (!site.IsDone())
+                return false;
         }
         return true;
     }
@@ -297,14 +302,14 @@ public:
         double dy = (mx.y - mn.y) / tiles;
         for (int x = 0; x < tiles; x++) {
             for (int y = 0; y < tiles; y++) {
-                auto tileMn = mn + Point2D(x*dx, y*dy);
-                auto tileMx = mn + Point2D((x+1)*dx, (y+1)*dy);
+                auto tileMn = mn + Point2D(x * dx, y * dy);
+                auto tileMx = mn + Point2D((x + 1) * dx, (y + 1) * dy);
                 sites.push_back(Site(*this, tileMn, tileMx));
             }
         }
     }
 
-    queue<pair<vector<pair<UNIT_TYPEID,int>>, vector<pair<UNIT_TYPEID,int>>>> que;
+    queue<pair<vector<pair<UNIT_TYPEID, int>>, vector<pair<UNIT_TYPEID, int>>>> que;
 
     static const int TIMEOUT_TICKS = 11 * 30;
     int tick = 0;
@@ -314,7 +319,8 @@ public:
 
     void OnStep() override {
         tick++;
-        for (auto& site : sites) site.OnStep();
+        for (auto& site : sites)
+            site.OnStep();
 
         TickMicro();
 
@@ -333,9 +339,7 @@ void RunCompositionAnalyzer(int argc, char* argv[]) {
 
     CompositionAnalyzer bot;
     agent = bot;
-    coordinator.SetParticipants({
-        CreateParticipant(Race::Terran, &bot)
-    });
+    coordinator.SetParticipants({ CreateParticipant(Race::Terran, &bot) });
 
     // Start the game.
 

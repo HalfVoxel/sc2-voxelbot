@@ -1,7 +1,7 @@
-#include "Influence.h"
 #include "Bot.h"
-#include "Predicates.h"
+#include "Influence.h"
 #include "Pathfinding.h"
+#include "Predicates.h"
 #include "Renderer.h"
 
 using namespace std;
@@ -33,14 +33,13 @@ void InfluenceManager::Init() {
 }
 
 double millis() {
-    return (1000*clock()) / CLOCKS_PER_SEC;
+    return (1000 * clock()) / CLOCKS_PER_SEC;
 }
 
 void InfluenceManager::OnStep() {
     const int InfluenceFrameInterval = 10;
     const int DistanceFrameInterval = 50;
     if ((ticks % InfluenceFrameInterval) == 0) {
-
         double scoutingUncertainty = 0.005;
         double spread = 5;
         auto observation = bot.Observation();
@@ -54,7 +53,7 @@ void InfluenceManager::OnStep() {
         valueMap.propagateSum(0.0, 1.0, pathing_grid);
 
         // Normalize
-        valueMap *= 1.0/(0.0001 + valueMap.maxFinite());
+        valueMap *= 1.0 / (0.0001 + valueMap.maxFinite());
 
         for (auto unit : observation->GetUnits(Unit::Alliance::Enemy)) {
             if (IsStructure(observation)(*unit)) {
@@ -69,19 +68,19 @@ void InfluenceManager::OnStep() {
 
         for (auto p : bot.game_info_.enemy_start_locations) {
             // enemyDensity.addInfluence(1, p);
-            scoutingMap.addInfluence(scoutingUncertainty*1.5, p);
+            scoutingMap.addInfluence(scoutingUncertainty * 1.5, p);
         }
 
-        for(auto p : bot.expansions_){
+        for (auto p : bot.expansions_) {
             scoutingMap.addInfluence(scoutingUncertainty, p);
         }
 
         // scoutingMap *= InfluenceMap(observation->GetRawObservation()->map_state().visibility);
-        
-        for(int i = 0; i < scoutingMap.w; i++){
+
+        for (int i = 0; i < scoutingMap.w; i++) {
             for (int j = 0; j < scoutingMap.h; j++) {
                 Point2D p = Point2D(i, j);
-                if(observation->GetVisibility(p) != Visibility::Visible && pathing_grid(p) != 0){
+                if (observation->GetVisibility(p) != Visibility::Visible && pathing_grid(p) != 0) {
                     scoutingMap.addInfluence(scoutingUncertainty, p);
                 } else {
                     scoutingMap.setInfluence(0, p);
@@ -130,7 +129,7 @@ void InfluenceManager::OnStep() {
         scoutingMap.render(1, 0);
         // flood.render(1, 1);
         scanningMap.render(1, 1);
-        
+
         Render();
     }
 }

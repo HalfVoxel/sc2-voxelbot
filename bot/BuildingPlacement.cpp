@@ -10,7 +10,7 @@ InfluenceMap safeBuildingMap;
 Point2D Rotate(Point2D p, float degrees) {
     degrees = degrees * 3.14159265358979323846 / 180;
     return Point2D(p.x * cos(degrees) - p.y * sin(degrees),
-                       p.x * sin(degrees) + p.y * cos(degrees));
+                   p.x * sin(degrees) + p.y * cos(degrees));
 }
 
 void BuildingPlacement::OnGameStart() {
@@ -18,7 +18,6 @@ void BuildingPlacement::OnGameStart() {
 }
 
 void BuildingPlacement::OnStep() {
-
 }
 void BuildingPlacement::FindWallPlacements(Point3D startLocation_) {
     auto& game_info_ = bot.game_info_;
@@ -40,9 +39,9 @@ void BuildingPlacement::FindWallPlacements(Point3D startLocation_) {
         if (diff[i] == 1) {
             for (int j = 0; j < size; ++j) {
                 Point2D p = bot.GetMapCoordinate(j);
-                if (Distance2D(bot.GetMapCoordinate(i), p) <= 2 && game_info_.pathing_grid.data[j] ==0 && diff[j] == 0) {
-                    if (abs(game_info_.terrain_height.data[j] - game_info_.terrain_height.data[start_index]) < 2 && Distance2D(p, start2D) < mapHeuristic / 4) { //Height filter messes up on some maps: 
-                        bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z),0.5, Colors::Blue);
+                if (Distance2D(bot.GetMapCoordinate(i), p) <= 2 && game_info_.pathing_grid.data[j] == 0 && diff[j] == 0) {
+                    if (abs(game_info_.terrain_height.data[j] - game_info_.terrain_height.data[start_index]) < 2 && Distance2D(p, start2D) < mapHeuristic / 4) {  //Height filter messes up on some maps:
+                        bot.Debug()->DebugSphereOut(Point3D(p.x + 0.5, p.y - 0.5, startLocation_.z), 0.5, Colors::Blue);
                         diff[j] = 2;
                     }
                 }
@@ -54,8 +53,7 @@ void BuildingPlacement::FindWallPlacements(Point3D startLocation_) {
     for (int i = 0; i < size; ++i) {
         if (diff[i] == 2) {
             Point2D p = bot.GetMapCoordinate(i);
-            if (diff[bot.GetPositionIndex(p.x - 1, p.y)] == 2 && diff[bot.GetPositionIndex(p.x - 1, p.y + 1)
-                ] == 2 && diff[bot.GetPositionIndex(p.x, p.y + 1)] == 2) {
+            if (diff[bot.GetPositionIndex(p.x - 1, p.y)] == 2 && diff[bot.GetPositionIndex(p.x - 1, p.y + 1)] == 2 && diff[bot.GetPositionIndex(p.x, p.y + 1)] == 2) {
                 bot.Debug()->DebugSphereOut(Point3D(p.x, p.y, startLocation_.z), 0.5, Colors::Green);
 
                 supplyDepotPositions.push_back(p);
