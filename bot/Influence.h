@@ -17,35 +17,35 @@ struct InfluenceMap {
 
     InfluenceMap(sc2::ImageData map);
 
-    double& operator()(int x, int y) {
+    inline double& operator()(int x, int y) {
         return weights[y*w + x];
     }
 
-    double operator()(int x, int y) const {
+    inline double operator()(int x, int y) const {
         return weights[y*w + x];
     }
 
-    double& operator()(sc2::Point2DI p) {
+    inline double& operator()(sc2::Point2DI p) {
         return weights[p.y*w + p.x];
     }
 
-    double operator()(sc2::Point2DI p) const {
+    inline double operator()(sc2::Point2DI p) const {
         return weights[p.y*w + p.x];
     }
 
-    double& operator()(sc2::Point2D p) {
+    inline double& operator()(sc2::Point2D p) {
         return weights[std::min(h-1, std::max(0, (int)round(p.y)))*w + std::min(w-1, std::max(0, (int)round(p.x)))];
     }
 
-    double operator()(sc2::Point2D p) const {
+    inline double operator()(sc2::Point2D p) const {
         return weights[std::min(h-1, std::max(0, (int)round(p.y)))*w + std::min(w-1, std::max(0, (int)round(p.x)))];
     }
 
-    double& operator[](int index) {
+    inline double& operator[](int index) {
         return weights[index];
     }
 
-    double operator[](int index) const {
+    inline double operator[](int index) const {
         return weights[index];
     }
 
