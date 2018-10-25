@@ -2,9 +2,9 @@
 #include <iostream>
 #include <tuple>
 #include <vector>
-#include "Bot.h"
 #include "Mappings.h"
 #include "Predicates.h"
+#include "bot.h"
 #include "sc2api/sc2_api.h"
 
 using namespace sc2;

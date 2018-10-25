@@ -1,8 +1,8 @@
-#include "Bot.h"
 #include "Influence.h"
 #include "Pathfinding.h"
 #include "Predicates.h"
 #include "Renderer.h"
+#include "bot.h"
 
 using namespace std;
 using namespace sc2;

@@ -1,5 +1,5 @@
 #pragma once
-#include "Bot.h"
+#include "bot.h"
 
 struct IsAttackable {
     bool operator()(const sc2::Unit& unit);
@@ -24,3 +24,5 @@ struct IsStructure {
     IsStructure(const sc2::ObservationInterface* obs) : observation_(obs){};
     bool operator()(const sc2::Unit& unit);
 };
+
+bool isStructure(const sc2::UnitTypeData& unitType);

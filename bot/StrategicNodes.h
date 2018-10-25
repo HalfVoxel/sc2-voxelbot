@@ -3,7 +3,7 @@
 #include "sc2api/sc2_api.h"
 #include <functional>
 #include "Mappings.h"
-#include "Bot.h"
+#include "bot.h"
 
 class Build : public BOT::ActionNode {
 	sc2::UnitTypeID unitType;

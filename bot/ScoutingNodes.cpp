@@ -1,6 +1,6 @@
 #include "ScoutingNodes.h"
-#include "Bot.h"
 #include "Predicates.h"
+#include "bot.h"
 using namespace sc2;
 using namespace BOT;
 

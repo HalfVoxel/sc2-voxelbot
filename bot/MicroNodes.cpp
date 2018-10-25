@@ -2,9 +2,9 @@
 #include <ctime>
 #include <iostream>
 #include <map>
-#include "Bot.h"
 #include "Mappings.h"
 #include "Predicates.h"
+#include "bot.h"
 
 using namespace std;
 using namespace BOT;

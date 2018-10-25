@@ -1,4 +1,4 @@
-#include "Bot.h"
+#include "bot.h"
 #include "StrategicNodes.h"
 #include "sc2lib/sc2_lib.h"
 // #include "sc2renderer/sc2_renderer.h"
@@ -44,6 +44,7 @@ bool IsAbilityReadyExcludingCosts(const Unit* unit, ABILITY_ID ability) {
 
 // clang-format off
 void Bot::OnGameStart() {
+    initMappings(Observation());
     game_info_ = Observation()->GetGameInfo();
     expansions_ = search::CalculateExpansionLocations(Observation(), Query());
     startLocation_ = Observation()->GetStartLocation();

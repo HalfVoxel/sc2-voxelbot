@@ -87,7 +87,11 @@ bool IsVespeneGeyser::operator()(const Unit& unit) {
 }
 
 bool IsStructure::operator()(const Unit& unit) {
-    auto& attributes = observation_->GetUnitTypeData().at(unit.unit_type).attributes;
+    return isStructure(observation_->GetUnitTypeData().at(unit.unit_type));
+}
+
+bool isStructure(const UnitTypeData& unitType) {
+    auto& attributes = unitType.attributes;
     bool is_structure = false;
     for (const auto& attribute : attributes) {
         if (attribute == Attribute::Structure) {
