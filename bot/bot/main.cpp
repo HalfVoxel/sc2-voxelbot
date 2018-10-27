@@ -30,12 +30,13 @@ int main(int argc, char* argv[]) { /*
 
     // sc2::FeatureLayerSettings settings(kCameraWidth, kFeatureLayerSize, kFeatureLayerSize, kFeatureLayerSize, kFeatureLayerSize);
     // coordinator.SetFeatureLayers(settings);
+    coordinator.SetPortStart(8020);
 
     coordinator.SetMultithreaded(true);
 
     coordinator.SetParticipants({
         CreateParticipant(Race::Terran, &bot),
-        CreateComputer(Race::Zerg, Difficulty::Hard),
+        CreateComputer(Race::Zerg, Difficulty::VeryHard),
     });
 
     // Start the game.

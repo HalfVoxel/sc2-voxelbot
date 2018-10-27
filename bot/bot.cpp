@@ -44,11 +44,21 @@ bool IsAbilityReadyExcludingCosts(const Unit* unit, ABILITY_ID ability) {
 
 // clang-format off
 void Bot::OnGameStart() {
+    // Debug()->DebugEnemyControl();
+    // Debug()->DebugShowMap();
+    // Debug()->DebugGiveAllTech();
+    // Debug()->DebugGiveAllUpgrades();
+
     initMappings(Observation());
+    deductionManager = DeductionManager();
+
     game_info_ = Observation()->GetGameInfo();
     expansions_ = search::CalculateExpansionLocations(Observation(), Query());
     startLocation_ = Observation()->GetStartLocation();
     staging_location_ = startLocation_;
+    dependencyAnalyzer.analyze(Observation());
+    deductionManager.OnGameStart();
+    ourDeductionManager.OnGameStart();
     buildingPlacement.OnGameStart();
     tree = unique_ptr<TreeNode>(new ParallelNode{
         new SequenceNode{
@@ -162,12 +172,43 @@ void Bot::OnGameLoading() {
 
 int ticks = 0;
 bool test = false;
+set<BuffID> seenBuffs;
+uint32_t lastEffectID;
+
 void Bot::OnStep() {
     auto ourUnits = agent.Observation()->GetUnits(Unit::Alliance::Self);
+    auto enemyUnits = agent.Observation()->GetUnits(Unit::Alliance::Enemy);
     auto abilities = agent.Query()->GetAbilitiesForUnits(ourUnits, false);
+
+    deductionManager.Observe(enemyUnits);
+    ourDeductionManager.Observe(ourUnits);
+
     availableAbilities.clear();
     for (int i = 0; i < ourUnits.size(); i++) {
         availableAbilities[ourUnits[i]] = abilities[i];
+    }
+
+    for (int i = 0; i < enemyUnits.size(); i++) {
+        vector<BuffID> buffs = enemyUnits[i]->buffs;
+        for (auto buff : buffs) {
+            if (seenBuffs.find(buff) == seenBuffs.end()) {
+                seenBuffs.insert(buff);
+                cout << "Observed buff: " << BuffIDToName(buff) << endl;
+            }
+        }
+
+        if (enemyUnits[i]->is_burrowed) {
+            cout << "Found out an enemy is burrowed!!!" << endl;
+        }
+    }
+
+    const auto& effectDatas = agent.Observation()->GetEffectData();
+    for (auto& eff : agent.Observation()->GetEffects()) {
+        if (lastEffectID != eff.effect_id) {
+            lastEffectID = eff.effect_id;
+            const EffectData& effectData = effectDatas[eff.effect_id];
+            cout << "Seen effect: " << effectData.friendly_name << endl;
+        }
     }
 
     abilities = agent.Query()->GetAbilitiesForUnits(ourUnits, true);
@@ -193,7 +234,7 @@ void Bot::OnStep() {
     influenceManager.OnStep();
     scoutingManager->OnStep();
     tacticalManager->OnStep();
-    cameraController.OnStep();
+    // cameraController.OnStep();
     // DebugUnitPositions();
     Debug()->SendDebug();
 }

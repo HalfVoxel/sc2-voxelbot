@@ -1,16 +1,28 @@
 #include "Mappings.h"
 #include <iostream>
+#include "Predicates.h"
 #include "generated/abilities.h"
 #include "sc2api/sc2_agent.h"
 #include "sc2api/sc2_api.h"
 #include "sc2api/sc2_interfaces.h"
 #include "sc2api/sc2_map_info.h"
+#include "stdutils.h"
 
 using namespace std;
 using namespace sc2;
 
 vector<vector<UNIT_TYPEID>> mAbilityToCasterUnit;
 vector<UNIT_TYPEID> mAbilityToCreatedUnit;
+vector<vector<UNIT_TYPEID>> mCanBecome;
+vector<vector<UNIT_TYPEID>> mHasBeen;
+
+vector<UNIT_TYPEID> hasBeen(sc2::UNIT_TYPEID type) {
+    return mHasBeen[(int)type];
+}
+
+vector<UNIT_TYPEID> canBecome(sc2::UNIT_TYPEID type) {
+    return mCanBecome[(int)type];
+}
 
 void initMappings(const ObservationInterface* observation) {
     int maxAbilityID = 0;
@@ -29,13 +41,114 @@ void initMappings(const ObservationInterface* observation) {
     for (auto type : unitTypes) {
         mAbilityToCreatedUnit[type.ability_id] = (UNIT_TYPEID)type.unit_type_id;
     }
+
+    mCanBecome = vector<vector<UNIT_TYPEID>>(unitTypes.size());
+    mHasBeen = vector<vector<UNIT_TYPEID>>(unitTypes.size());
+    for (int i = 0; i < unitTypes.size(); i++) {
+        const UnitTypeData& unitTypeData = unitTypes[i];
+        mHasBeen[i].push_back(unitTypeData.unit_type_id);
+
+        if (unitTypeData.unit_alias != UNIT_TYPEID::INVALID)
+            continue;
+
+        // Handle building upgrades
+        if (isStructure(unitTypeData)) {
+            auto currentTypeData = unitTypeData;
+            while (true) {
+                auto createdByAlternatives = abilityToCasterUnit(currentTypeData.ability_id);
+                if (createdByAlternatives.size() == 0 || createdByAlternatives[0] == UNIT_TYPEID::INVALID) {
+                    cout << "Cannot determine how " << currentTypeData.name << " was created (ability: " << AbilityTypeToName(currentTypeData.ability_id) << endl;
+                    break;
+                }
+                UNIT_TYPEID createdBy = createdByAlternatives[0];
+
+                currentTypeData = unitTypes[(int)createdBy];
+                if (isStructure(currentTypeData) || createdBy == UNIT_TYPEID::ZERG_DRONE) {
+                    if (contains(mHasBeen[i], createdBy)) {
+                        cout << "Loop in dependency tree for " << currentTypeData.name << endl;
+                        break;
+                    }
+                    mHasBeen[i].push_back(createdBy);
+
+                    if (createdBy == UNIT_TYPEID::ZERG_DRONE) {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+        } else {
+            // Special case the relevant units
+            switch ((UNIT_TYPEID)unitTypeData.unit_type_id) {
+                case UNIT_TYPEID::ZERG_RAVAGER:
+                    mHasBeen[i].push_back(UNIT_TYPEID::ZERG_ROACH);
+                    break;
+                case UNIT_TYPEID::ZERG_OVERSEER:
+                    mHasBeen[i].push_back(UNIT_TYPEID::ZERG_OVERLORD);
+                    break;
+                case UNIT_TYPEID::ZERG_BANELING:
+                    mHasBeen[i].push_back(UNIT_TYPEID::ZERG_ZERGLING);
+                    break;
+                case UNIT_TYPEID::ZERG_BROODLORD:
+                    mHasBeen[i].push_back(UNIT_TYPEID::ZERG_CORRUPTOR);
+                    break;
+                case UNIT_TYPEID::ZERG_LURKERMP:
+                    mHasBeen[i].push_back(UNIT_TYPEID::ZERG_HYDRALISK);
+                    break;
+                    // TODO: Tech labs?
+                default:
+                    break;
+            }
+        }
+
+        for (UNIT_TYPEID previous : mHasBeen[i]) {
+            auto& canBecomeArr = mCanBecome[(int)previous];
+            if (previous != (UNIT_TYPEID)i && find(canBecomeArr.begin(), canBecomeArr.end(), unitTypeData.unit_type_id) == canBecomeArr.end()) {
+                canBecomeArr.push_back(unitTypeData.unit_type_id);
+            }
+        }
+    }
+
+    for (int i = 0; i < unitTypes.size(); i++) {
+        if (mCanBecome[i].size() == 0)
+            continue;
+
+        // Sort by lowest cost first
+        sort(mCanBecome[i].begin(), mCanBecome[i].end(), [&](UNIT_TYPEID a, UNIT_TYPEID b) {
+            return unitTypes[(int)a].mineral_cost + unitTypes[(int)a].vespene_cost < unitTypes[(int)b].mineral_cost + unitTypes[(int)b].vespene_cost;
+        });
+        for (auto p : mCanBecome[i])
+            cout << UnitTypeToName(p) << " (" << unitTypes[(int)p].mineral_cost << ", " << unitTypes[(int)p].vespene_cost << "), ";
+        cout << endl;
+    }
 }
 
 /** Maps an ability to the unit that primarily uses it.
  * In particular this is defined for BUILD_* and TRAIN_* abilities.
  */
 std::vector<UNIT_TYPEID> abilityToCasterUnit(ABILITY_ID ability) {
-    if ((int)ability > mAbilityToCasterUnit.size()) {
+    switch (ability) {
+        case ABILITY_ID::BUILD_TECHLAB:
+            return { UNIT_TYPEID::INVALID };
+        case ABILITY_ID::BUILD_TECHLAB_BARRACKS:
+            return { UNIT_TYPEID::TERRAN_BARRACKS };
+        case ABILITY_ID::BUILD_TECHLAB_FACTORY:
+            return { UNIT_TYPEID::TERRAN_FACTORY };
+        case ABILITY_ID::BUILD_TECHLAB_STARPORT:
+            return { UNIT_TYPEID::TERRAN_STARPORT };
+        case ABILITY_ID::BUILD_REACTOR:
+            return { UNIT_TYPEID::INVALID };
+        case ABILITY_ID::BUILD_REACTOR_BARRACKS:
+            return { UNIT_TYPEID::TERRAN_BARRACKS };
+        case ABILITY_ID::BUILD_REACTOR_FACTORY:
+            return { UNIT_TYPEID::TERRAN_FACTORY };
+        case ABILITY_ID::BUILD_REACTOR_STARPORT:
+            return { UNIT_TYPEID::TERRAN_STARPORT };
+        default:
+            break;
+    }
+
+    if ((int)ability >= mAbilityToCasterUnit.size()) {
         return { UNIT_TYPEID::INVALID };
     }
     return mAbilityToCasterUnit[(int)ability];
@@ -456,5 +569,101 @@ UNIT_TYPEID simplifyUnitType(UNIT_TYPEID type) {
             return UNIT_TYPEID::TERRAN_LIBERATOR;
         default:
             return type;
+    }
+}
+
+/** Maps a buff to approximately which ability that causes it */
+ABILITY_ID buffToAbility(BUFF_ID type) {
+    switch (type) {
+        case BUFF_ID::INVALID:
+            return ABILITY_ID::INVALID;
+        case BUFF_ID::GRAVITONBEAM:
+            return ABILITY_ID::EFFECT_GRAVITONBEAM;
+        case BUFF_ID::GHOSTCLOAK:
+            return ABILITY_ID::BEHAVIOR_CLOAKON_GHOST;
+        case BUFF_ID::BANSHEECLOAK:
+            return ABILITY_ID::BEHAVIOR_CLOAKON_BANSHEE;
+        case BUFF_ID::POWERUSERWARPABLE:
+            return ABILITY_ID::INVALID;
+        case BUFF_ID::QUEENSPAWNLARVATIMER:
+            return ABILITY_ID::INVALID;
+        case BUFF_ID::GHOSTHOLDFIRE:
+            return ABILITY_ID::INVALID;
+        case BUFF_ID::GHOSTHOLDFIREB:
+            return ABILITY_ID::INVALID;
+        case BUFF_ID::EMPDECLOAK:
+            return ABILITY_ID::EFFECT_EMP;
+        case BUFF_ID::FUNGALGROWTH:
+            return ABILITY_ID::EFFECT_FUNGALGROWTH;
+        case BUFF_ID::GUARDIANSHIELD:
+            return ABILITY_ID::INVALID;
+        case BUFF_ID::TIMEWARPPRODUCTION:
+            return ABILITY_ID::EFFECT_TIMEWARP;
+        case BUFF_ID::NEURALPARASITE:
+            return ABILITY_ID::EFFECT_NEURALPARASITE;
+        case BUFF_ID::STIMPACKMARAUDER:
+            return ABILITY_ID::EFFECT_STIM_MARAUDER;
+        case BUFF_ID::SUPPLYDROP:
+            return ABILITY_ID::INVALID;
+        case BUFF_ID::STIMPACK:
+            return ABILITY_ID::EFFECT_STIM_MARINE;
+        case BUFF_ID::PSISTORM:
+            return ABILITY_ID::EFFECT_PSISTORM;
+        case BUFF_ID::CLOAKFIELDEFFECT:
+            return ABILITY_ID::INVALID;
+        case BUFF_ID::CHARGING:
+            return ABILITY_ID::EFFECT_CHARGE;
+        case BUFF_ID::SLOW:
+            return ABILITY_ID::INVALID;
+        case BUFF_ID::CONTAMINATED:
+            return ABILITY_ID::EFFECT_CONTAMINATE;
+        case BUFF_ID::BLINDINGCLOUDSTRUCTURE:
+            return ABILITY_ID::EFFECT_BLINDINGCLOUD;
+        case BUFF_ID::ORACLEREVELATION:
+            return ABILITY_ID::EFFECT_ORACLEREVELATION;
+        case BUFF_ID::VIPERCONSUMESTRUCTURE:
+            return ABILITY_ID::EFFECT_VIPERCONSUME;
+        case BUFF_ID::BLINDINGCLOUD:
+            return ABILITY_ID::EFFECT_BLINDINGCLOUD;
+        case BUFF_ID::MEDIVACSPEEDBOOST:
+            return ABILITY_ID::EFFECT_MEDIVACIGNITEAFTERBURNERS;
+        case BUFF_ID::PURIFY:
+            return ABILITY_ID::EFFECT_PURIFICATIONNOVA;
+        case BUFF_ID::ORACLEWEAPON:
+            return ABILITY_ID::INVALID;
+        case BUFF_ID::IMMORTALOVERLOAD:
+            return ABILITY_ID::EFFECT_IMMORTALBARRIER;
+        case BUFF_ID::LOCKON:
+            return ABILITY_ID::EFFECT_LOCKON;
+        case BUFF_ID::SEEKERMISSILE:
+            return ABILITY_ID::EFFECT_HUNTERSEEKERMISSILE;
+        case BUFF_ID::TEMPORALFIELD:
+            return ABILITY_ID::INVALID;
+        case BUFF_ID::VOIDRAYSWARMDAMAGEBOOST:
+            return ABILITY_ID::EFFECT_VOIDRAYPRISMATICALIGNMENT;
+        case BUFF_ID::ORACLESTASISTRAPTARGET:
+            return ABILITY_ID::BUILD_STASISTRAP;
+        case BUFF_ID::PARASITICBOMB:
+            return ABILITY_ID::EFFECT_PARASITICBOMB;
+        case BUFF_ID::PARASITICBOMBUNITKU:
+            return ABILITY_ID::EFFECT_PARASITICBOMB;
+        case BUFF_ID::PARASITICBOMBSECONDARYUNITSEARCH:
+            return ABILITY_ID::EFFECT_PARASITICBOMB;
+        case BUFF_ID::LURKERHOLDFIREB:
+            return ABILITY_ID::BURROWDOWN_LURKER;
+        case BUFF_ID::CHANNELSNIPECOMBAT:
+            return ABILITY_ID::INVALID;
+        case BUFF_ID::TEMPESTDISRUPTIONBLASTSTUNBEHAVIOR:
+            return ABILITY_ID::EFFECT_TEMPESTDISRUPTIONBLAST;
+        case BUFF_ID::CARRYMINERALFIELDMINERALS:
+            return ABILITY_ID::INVALID;
+        case BUFF_ID::CARRYHIGHYIELDMINERALFIELDMINERALS:
+            return ABILITY_ID::INVALID;
+        case BUFF_ID::CARRYHARVESTABLEVESPENEGEYSERGAS:
+            return ABILITY_ID::INVALID;
+        case BUFF_ID::CARRYHARVESTABLEVESPENEGEYSERGASPROTOSS:
+            return ABILITY_ID::INVALID;
+        case BUFF_ID::CARRYHARVESTABLEVESPENEGEYSERGASZERG:
+            return ABILITY_ID::INVALID;
     }
 }

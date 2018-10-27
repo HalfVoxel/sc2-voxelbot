@@ -9,6 +9,8 @@
 #include "CameraController.h"
 #include "InfluenceManager.h"
 #include "SpendingManager.h"
+#include "DeductionManager.h"
+#include "DependencyAnalyzer.h"
 
 const float kCameraWidth = 24.0f;
 const int kFeatureLayerSize = 80;
@@ -66,6 +68,9 @@ public:
     sc2::Point3D staging_location_;
     BuildingPlacement buildingPlacement;
     ScoutingManager* scoutingManager;
+    DeductionManager deductionManager;
+    DeductionManager ourDeductionManager;
+    DependencyAnalyzer dependencyAnalyzer;
     std::shared_ptr<ControlFlowNode> researchTree;
     std::vector<sc2::Point2D>* FindWallPlacements(size_t size);
     

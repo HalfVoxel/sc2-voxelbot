@@ -65,14 +65,32 @@ void DependencyAnalyzer::analyze(const ObservationInterface* obs) {
         if (unitType.ability_id != ABILITY_ID::INVALID) {
             // cout << "Ability: " << AbilityTypeToName(unitType.ability_id) << endl;
             try {
-                auto requiredUnit = abilityToCasterUnit(unitType.ability_id)[0];
-                if (requiredUnit != UNIT_TYPEID::INVALID) {
-                    requirements[unitType.unit_type_id].insert(requiredUnit);
+                auto requiredUnitOptions = abilityToCasterUnit(unitType.ability_id);
+                if (requiredUnitOptions.size() == 0) {
+                    cout << UnitTypeToName(unitType.unit_type_id) << " requires ability " << AbilityTypeToName(unitType.ability_id) << " but that ability is not cast by any known unit" << endl;
+                } else {
+                    auto requiredUnit = UNIT_TYPEID::INVALID;
+                    int minCost = 1000000;
 
-                    if (unitTypes[(int)requiredUnit].race != unitType.race) {
-                        cerr << "Error in definitions" << endl;
-                        ;
-                        cerr << unitType.name << " requires unit (via ability): " << UnitTypeToName(requiredUnit) << " via " << AbilityTypeToName(unitType.ability_id) << endl;
+                    // In case there are several buildings with the same ability, use the one with the lowest cost
+                    // Since costs are accumulative, this will find the one lowest in the tech tree.
+                    // This is useful to pick e.g. command center instead of orbital command, even though both can train SCVs.
+                    for (auto opt : requiredUnitOptions) {
+                        int cost = unitTypes[(int)opt].mineral_cost + unitTypes[(int)opt].vespene_cost;
+                        if (cost < minCost) {
+                            minCost = cost;
+                            requiredUnit = opt;
+                        }
+                    }
+
+                    if (requiredUnit != UNIT_TYPEID::INVALID) {
+                        requirements[unitType.unit_type_id].insert(requiredUnit);
+
+                        if (unitTypes[(int)requiredUnit].race != unitType.race) {
+                            cerr << "Error in definitions" << endl;
+                            ;
+                            cerr << unitType.name << " requires unit (via ability): " << UnitTypeToName(requiredUnit) << " via " << AbilityTypeToName(unitType.ability_id) << endl;
+                        }
                     }
                 }
             } catch (exception e) {
@@ -86,7 +104,6 @@ void DependencyAnalyzer::analyze(const ObservationInterface* obs) {
             requirements[unitType.unit_type_id].insert(requiredTechBuilding);
             if (unitTypes[requiredTechBuilding].race != unitType.race) {
                 cerr << "Error in definitions" << endl;
-                ;
                 cerr << unitType.name << " requires tech: " << UnitTypeToName(requiredTechBuilding) << endl;
             }
         }
@@ -102,7 +119,9 @@ void DependencyAnalyzer::analyze(const ObservationInterface* obs) {
         }
     }
 
-    for (UnitTypeData& unitType : unitTypes) {
+    allUnitDependencies = vector<vector<UNIT_TYPEID>>(unitTypes.size());
+    for (int i = 0; i < unitTypes.size(); i++) {
+        UnitTypeData& unitType = unitTypes[i];
         if (!unitType.available || unitType.race == RaceNeutral)
             continue;
         // if (unitType.unit_type_id != UNIT_TYPEID::ZERG_GREATERSPIRE) continue;
@@ -121,6 +140,7 @@ void DependencyAnalyzer::analyze(const ObservationInterface* obs) {
             }
         }
 
+        allUnitDependencies[i] = reqs;
         for (auto u : reqs) {
             cout << unitType.name << " requires " << unitTypes[(int)u].name << endl;
         }
