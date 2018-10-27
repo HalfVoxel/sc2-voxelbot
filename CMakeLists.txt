@@ -38,15 +38,19 @@ include_directories("s2client-api/examples/common")
 # Setup MSVC parallelized builds
 add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 
+if(!MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+endif()
+
 # More dependencies
 include_directories(SYSTEM "${PROJECT_BINARY_DIR}/s2client-api/generated")
 # Doesn't seem to be required, so it is commented out for now (might be required on Windows or something)
 # include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/s2client-api/contrib/SDL-mirror/include")
 
 # Function to generate an example project with extra libraries
-function (example_project_extra project_name source_code extra_libs)
+function (example_project_extra project_name source_code mainfile extra_libs)
 	# TODO: The .h files don't seem to be necessary (think only .cpp files should be included here anyway)
-    file (GLOB example_project_sources ${source_code} "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc" "bot/*.h")
+    file (GLOB example_project_sources ${source_code} "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc" "bot/*.h" "bot/generated/*.cpp" ${mainfile})
     add_executable(${project_name} ${example_project_sources})
 
     # Sets the grouping in IDEs like visual studio (last parameter is the group name)
@@ -63,5 +67,8 @@ function (example_project_extra project_name source_code extra_libs)
     target_link_libraries(${project_name} sc2api sc2lib sc2utils ${extra_libs})
 endfunction ()
 
-example_project_extra(our_bot "bot/*.cpp" "SDL2-static")
+example_project_extra(our_bot "bot/*.cpp" "bot/bot/main.cpp" "SDL2-static")
+example_project_extra(replay_analyzer "bot/*.cpp" "bot/replay_analyzer/main.cpp" "SDL2-static")
+example_project_extra(caching "bot/*.cpp" "bot/caching/main.cpp" "SDL2-static")
+
 include_directories("s2client-api/contrib/SDL-mirror/include")
