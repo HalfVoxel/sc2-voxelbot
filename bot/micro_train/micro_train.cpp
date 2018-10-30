@@ -48,12 +48,25 @@ struct SerializedPos {
     }
 };
 
+enum Actions {
+    N,
+    NW,
+    W,
+    SW,
+    S,
+    SE,
+    E,
+    NE,
+    Attack,
+};
+
 struct SerializedUnit {
     SerializedPos position;
     UNIT_TYPEID unit_type;
     UNIT_TYPEID canonical_unit_type;
     Unit::DisplayType display_type;
     Unit::CloakState cloak;
+    int action;
     int tag;
     int owner;
     float energy;

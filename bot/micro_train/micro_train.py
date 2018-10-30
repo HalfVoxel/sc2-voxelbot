@@ -82,6 +82,7 @@ class ReplayMemory(object):
                 u["shield"],
                 u["health"],
                 u["health"]/math.max(1, u["health_max"]),
+                # In attack range?
             ]
             if u["owner"] == state["playerID"]:
                 if len(allyNearby) < maxAllies:
@@ -239,6 +240,8 @@ class ReplayMemory(object):
                     t1 = createState(unit, s1)
                     t2 = createState(unit, s2)
                     reward, terminal_state = calculate_reward(s1, s2, unit)
+                    action = unit["action"]
+                    push(Transition(t1, action, t2, reward))
 
     def __len__(self):
         return len(self.memory)
