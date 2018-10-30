@@ -10,6 +10,7 @@ using namespace std;
 using namespace sc2;
 
 map<Tag, set<UNIT_TYPEID>> aliasTypes;
+Race enemyRace;
 
 void DeductionManager::OnGameStart() {
     const auto& unitTypes = bot.Observation()->GetUnitTypeData();
@@ -20,21 +21,27 @@ void DeductionManager::OnGameStart() {
     int ourID = bot.Observation()->GetPlayerID();
     for (auto& p : playerInfos) {
         if (p.player_id != ourID) {
-            // Players start with 50 minerals
-            spending.spentMinerals = -50;
+            enemyRace = p.race_requested;
+            startingResources = Spending(50, 0);
+
             // Set the initial units that the players start with
             switch (p.race_requested) {
                 case Race::Terran:
                     ExpectObservation(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
                     ExpectObservation(UNIT_TYPEID::TERRAN_SCV, 12);
+                    // Set the resources that are ignored due to free starting units
+                    freeResources = Spending(400 + 12*50, 0);
                     break;
                 case Race::Protoss:
                     ExpectObservation(UNIT_TYPEID::PROTOSS_NEXUS, 1);
                     ExpectObservation(UNIT_TYPEID::PROTOSS_PROBE, 12);
+                    freeResources = Spending(400 + 12*50, 0);
                     break;
                 case Race::Zerg:
                     ExpectObservation(UNIT_TYPEID::ZERG_HATCHERY, 1);
                     ExpectObservation(UNIT_TYPEID::ZERG_DRONE, 12);
+                    ExpectObservation(UNIT_TYPEID::ZERG_OVERLORD, 1);
+                    freeResources = Spending(300 + 12*50 + 100, 0);
                     break;
                 case Race::Random:
                     cout << "Opponent has random race, not sure what starting units they have" << endl;
@@ -47,13 +54,12 @@ void DeductionManager::OnGameStart() {
 void DeductionManager::Observe(vector<const Unit*>& units) {
     const auto& unitTypes = bot.Observation()->GetUnitTypeData();
 
-    int requiredFood = 0;
+    
     for (const Unit* unit : units) {
         Observe(unit);
-
-        const UnitTypeData& unitType = unitTypes[unit->unit_type];
-        requiredFood += unitType.food_required;
     }
+
+    int requiredFood = 0;
 
     cout << endl;
     cout << "Enemy has spent at least " << spending.spentMinerals << " + " << spending.spentGas << endl;
@@ -64,18 +70,40 @@ void DeductionManager::Observe(vector<const Unit*>& units) {
             cout << "Has at least " << info.total << " " << unitTypes[i].name << " (" << info.alive << " alive)"
                  << " alias: " << unitTypes[(int)unitTypes[i].unit_alias].name << endl;
         }
-    }
-}
 
-UNIT_TYPEID canonicalize(UNIT_TYPEID unitType) {
-    const auto& unitTypes = bot.Observation()->GetUnitTypeData();
-    const UnitTypeData& unitTypeData = unitTypes[(int)unitType];
-
-    // Use canonical representation (e.g SUPPLY_DEPOT instead of SUPPLY_DEPOT_LOWERED)
-    if (unitTypeData.unit_alias != UNIT_TYPEID::INVALID) {
-        return unitTypeData.unit_alias;
+        if (info.alive > 0) {
+            const UnitTypeData& unitTypeData = unitTypes[i];
+            requiredFood += info.alive * unitTypeData.food_required;
+            if (unitTypeData.food_provided > 0) {
+                UNIT_TYPEID unitType = (UNIT_TYPEID)i;
+                // Account for food from command centers and similar
+                if (unitType != UNIT_TYPEID::ZERG_OVERLORD && unitType != UNIT_TYPEID::ZERG_OVERSEER && unitType != UNIT_TYPEID::TERRAN_SUPPLYDEPOT && unitType != UNIT_TYPEID::PROTOSS_PYLON) {
+                    requiredFood -= unitTypeData.food_provided;
+                }
+            }
+        }
     }
-    return unitType;
+
+    // The enemy must have a way to get the remaining food, it must be using supply depots/corresponding or new bases, but don't assume that right now.
+    UNIT_TYPEID supplyType;
+    switch(enemyRace) {
+        case Race::Terran:
+            supplyType = UNIT_TYPEID::TERRAN_SUPPLYDEPOT;
+            break;
+        case Race::Protoss:
+            supplyType = UNIT_TYPEID::PROTOSS_PYLON;
+            break;
+        case Race::Zerg:
+            supplyType = UNIT_TYPEID::ZERG_OVERLORD;
+            break;
+        default:
+            assert(false);
+            break;
+    }
+    const int foodPerSupplyUnit = 8;
+    // Round up expected number of supply depots.
+    // Note that we *set* this value every time, so this may become lower if we for example discover a new enemy base (as a command center also provides some food).
+    expectedObservations[(int)supplyType] = (requiredFood+(foodPerSupplyUnit-1)) / foodPerSupplyUnit;
 }
 
 vector<UnitTypeInfo> DeductionManager::Summary() {
@@ -89,6 +117,9 @@ vector<UnitTypeInfo> DeductionManager::Summary() {
 
     for (int i = 0; i < currentExpectedObservations.size(); i++) {
         int toRemove = currentExpectedObservations[i];
+        if (toRemove == 0)
+            continue;
+
         auto unitType = (UNIT_TYPEID)i;
 
         // Go through each unit type this expectation could have been in the past
@@ -112,52 +143,87 @@ vector<UnitTypeInfo> DeductionManager::Summary() {
         }
     }
 
+    vector<bool> processedUnits(observedUnitInstances.size());
     // TODO: Does not remove existing drone units (the api does not mark them as dead)
-    for (int i = 0; i < observedUnitInstances.size(); i++) {
-        const Unit* u = observedUnitInstances[i];
+    // TODO: Take infestor::neural parasite into account (mind controlling a unit from another race adds a ton of dependencies that are not actually accurate)
+    // TODO: Dark archon can also do mind control?
 
-        auto unitType = canonicalize(u->unit_type);
-        observedUnitTypes[i] = unitType;
-        const UnitTypeData& unitTypeData = unitTypes[(int)unitType];
-        bool isVisible = u->last_seen_game_loop == gameLoop;
+    // Process units with short upgrade paths first.
+    // E.g. if we have both a drone and a hatchery, and we think the enemy has a hive
+    // then it is more likely that the hatchery was upgraded to a hive rather than a drone.
 
-        if (!isVisible && !u->is_alive) {
-            // If the unit is not visible then this unit could have been upgraded to something else.
-            // Check all units it could have been in the future:
-            // e.g: command center => [orbital command, planetary fortress]
-            // Loop through them in reverse order (i.e most expensive one first)
-            for (UNIT_TYPEID future : reverse(hasBeen(unitType))) {
-                // Remove an expected observation of that type
-                int& v = currentExpectedObservations[(int)future];
-                if (v > 0) {
-                    // Ok, assume this unit has been upgraded to #future
-                    unitType = future;
+    for (int maxUpgradeDistance = 0; maxUpgradeDistance <= 3; maxUpgradeDistance++) {
+        for (int i = 0; i < observedUnitInstances.size(); i++) {
+            if (processedUnits[i]) continue;
+
+            const Unit* u = observedUnitInstances[i];
+
+            auto unitType = canonicalize(u->unit_type);
+            observedUnitTypes[i] = unitType;
+            const UnitTypeData& unitTypeData = unitTypes[(int)unitType];
+            bool isVisible = u->last_seen_game_loop == gameLoop;
+
+            bool skip = false;
+
+            if (!isVisible && u->is_alive) {
+                // If the unit is not visible then this unit could have been upgraded to something else.
+                // If it is dead we presumably know the last possible type of it, so it couldn't have been upgraded.
+                // Check all units it could have been in the future:
+                // e.g: command center => [orbital command, planetary fortress]
+                // or
+                // hatchery => [lair, hive]
+                // Loop through them in reverse order (i.e most expensive one first)
+                for (UNIT_TYPEID future : reverse(canBecome(unitType))) {
+                    int& v = currentExpectedObservations[(int)future];
+                    if (v > 0) {
+                        // Check what the upgrade depth is.
+                        // e.g. drone -> hatchery = 1
+                        // drone -> (hatchery -> lair) -> hive = 3
+                        auto upgradePath = hasBeen(future);
+                        auto depth = find(upgradePath.begin(), upgradePath.end(), unitType) - upgradePath.begin();
+                        assert(depth < upgradePath.size());
+                        assert(depth <= 3);
+
+                        if  (depth > maxUpgradeDistance) {
+                            // Too high depth, try again in the next iteration
+                            skip = true;
+                            break;
+                        }
+
+                        // Ok, assume this unit has been upgraded to #future
+                        cout << "Assuming " << UnitTypeToName(unitType) << " has been upgraded to " << UnitTypeToName(future) << endl;
+
+                        unitType = future;
+
+                        break;
+                    }
                 }
             }
-        }
 
-        // Check all types that this unit has been in the past (or is right now)
-        // e.g hive => [hive -> lair -> hatchery -> drone]
-        // or orbital command => [orbital command -> command center]
+            if (skip)
+                continue;
 
-        // Handle building upgrades in a reasonable way.
-        // If we expect that the enemy has say a command center
-        // and then, say due to a scan effect, we infer that the enemy has an orbital command,
-        for (UNIT_TYPEID previous : hasBeen(unitType)) {
-            // Remove an expected observation of that type
-            int& v = currentExpectedObservations[(int)previous];
-            if (v > 0) {
-                v--;
+            // Check all types that this unit has been in the past (or is right now)
+            // e.g hive => [hive -> lair -> hatchery -> drone]
+            // or orbital command => [orbital command -> command center]
+            for (UNIT_TYPEID previous : hasBeen(unitType)) {
+                // Remove an expected observation of that type
+                int& v = currentExpectedObservations[(int)previous];
+                if (v > 0) {
+                    v--;
+                }
             }
-        }
 
-        observedUnitTypes[i] = unitType;
+            observedUnitTypes[i] = unitType;
+            processedUnits[i] = true;
+        }
     }
 
     vector<UnitTypeInfo> infos(unitTypes.size());
     for (int i = 0; i < observedUnitInstances.size(); i++) {
         const Unit* u = observedUnitInstances[i];
-        auto unitType = canonicalize(u->unit_type);
+        // Note: already canonicalized
+        auto unitType = observedUnitTypes[i];
         auto& info = infos[(int)unitType];
         info.total += 1;
         info.alive += u->is_alive;
@@ -177,6 +243,9 @@ vector<UnitTypeInfo> DeductionManager::Summary() {
         spending.spentMinerals += expected * unitTypeData.mineral_cost;
         spending.spentGas += expected * unitTypeData.vespene_cost;
     }
+
+    spending.spentMinerals -= freeResources.spentMinerals;
+    spending.spentGas -= freeResources.spentGas;
 
     return infos;
 }

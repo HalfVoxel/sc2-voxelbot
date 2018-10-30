@@ -6,6 +6,7 @@ project(bot)
 # This will make protoc easy to find.
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+set(PYTHON_EXECUTABLE:FILEPATH "/Users/arong/anaconda3/bin/python")
 
 # Windows builds subdirectories Debug/Release.
 # These variables will overwrite that and put binaries in bin.
@@ -34,6 +35,7 @@ add_subdirectory("s2client-api")
 # Add include directories for the SC2 API (the examples one should be removed eventually when our bot doesn't depend on it)
 include_directories("s2client-api/include")
 include_directories("s2client-api/examples/common")
+include_directories("cereal-1.2.2/include")
 
 # Setup MSVC parallelized builds
 add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
@@ -41,6 +43,8 @@ add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 if(!MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 endif()
+
+find_package(pybind11 REQUIRED)
 
 # More dependencies
 include_directories(SYSTEM "${PROJECT_BINARY_DIR}/s2client-api/generated")
@@ -64,11 +68,12 @@ function (example_project_extra project_name source_code mainfile extra_libs)
 		target_link_libraries(${project_name} legacy_stdio_definitions)
 	endif ()
 
-    target_link_libraries(${project_name} sc2api sc2lib sc2utils ${extra_libs})
+    target_link_libraries(${project_name} sc2api sc2lib sc2utils pybind11::embed ${extra_libs})
 endfunction ()
 
 example_project_extra(our_bot "bot/*.cpp" "bot/bot/main.cpp" "SDL2-static")
 example_project_extra(replay_analyzer "bot/*.cpp" "bot/replay_analyzer/main.cpp" "SDL2-static")
 example_project_extra(caching "bot/*.cpp" "bot/caching/main.cpp" "SDL2-static")
+example_project_extra(micro_train "bot/*.cpp" "bot/micro_train/micro_train.cpp" "SDL2-static")
 
 include_directories("s2client-api/contrib/SDL-mirror/include")

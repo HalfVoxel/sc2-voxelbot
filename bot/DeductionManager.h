@@ -6,6 +6,9 @@
 struct Spending {
 	int spentMinerals;
 	int spentGas;
+
+	inline Spending () : spentMinerals(0), spentGas(0) {}
+	inline Spending (int minerals, int gas) : spentMinerals(minerals), spentGas(gas) {}
 };
 
 struct UnitTypeInfo {
@@ -16,6 +19,8 @@ struct UnitTypeInfo {
 
 struct DeductionManager {
 	Spending spending;
+	Spending freeResources;
+	Spending startingResources;
 private:
 	std::vector<const sc2::Unit*> observedUnitInstances;
 	std::map<sc2::Tag, sc2::UNIT_TYPEID> observedUnits;

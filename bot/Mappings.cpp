@@ -15,16 +15,31 @@ vector<vector<UNIT_TYPEID>> mAbilityToCasterUnit;
 vector<UNIT_TYPEID> mAbilityToCreatedUnit;
 vector<vector<UNIT_TYPEID>> mCanBecome;
 vector<vector<UNIT_TYPEID>> mHasBeen;
+bool mappingInitialized = false;
 
-vector<UNIT_TYPEID> hasBeen(sc2::UNIT_TYPEID type) {
+UNIT_TYPEID canonicalize(UNIT_TYPEID unitType) {
+    const auto& unitTypes = bot.Observation()->GetUnitTypeData();
+    const UnitTypeData& unitTypeData = unitTypes[(int)unitType];
+
+    // Use canonical representation (e.g SUPPLY_DEPOT instead of SUPPLY_DEPOT_LOWERED)
+    if (unitTypeData.unit_alias != UNIT_TYPEID::INVALID) {
+        return unitTypeData.unit_alias;
+    }
+    return unitType;
+}
+
+const vector<UNIT_TYPEID>& hasBeen(sc2::UNIT_TYPEID type) {
     return mHasBeen[(int)type];
 }
 
-vector<UNIT_TYPEID> canBecome(sc2::UNIT_TYPEID type) {
+const vector<UNIT_TYPEID>& canBecome(sc2::UNIT_TYPEID type) {
     return mCanBecome[(int)type];
 }
 
 void initMappings(const ObservationInterface* observation) {
+    if (mappingInitialized) return;
+    mappingInitialized = true;
+
     int maxAbilityID = 0;
     for (auto pair : unit_type_has_ability) {
         maxAbilityID = max(maxAbilityID, pair.second);
