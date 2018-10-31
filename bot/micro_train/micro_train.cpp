@@ -60,6 +60,18 @@ enum Action {
     Attack,
 };
 
+vector<Point2D> action2dir = {
+    Point2D(  0, 1),  // N
+    Point2D(- 1, 1),  // NW
+    Point2D(- 1, 0),  // W
+    Point2D(- 1, -1), // SW
+    Point2D(  0, -1), // S
+    Point2D(  1, -1), // SE
+    Point2D(  1, 0),  // E
+    Point2D(  1, 1),  // NE
+    Point2D(  0, 0),  // Attack
+};
+
 struct SerializedUnit {
     SerializedPos position;
     UNIT_TYPEID unit_type;
@@ -146,22 +158,14 @@ struct State {
     }
 };
 
-struct Reward {
-    float reward;
-    int state1;
-    int state2;
-};
-
 struct Session {
     vector<State> states;
-    vector<float> rewards;
 };
 
 py::object predictFunction;
 py::object addSession;
+py::object optimizeFunction;
 
-// Model
-// Σ Pi + Σ PiSij
 class MicroTrainer : public sc2::ReplayObserver {
     int tick = 0;
     vector<State> states;
@@ -233,16 +237,37 @@ class MicroTrainer : public sc2::ReplayObserver {
         cout << "Time: " << chrono::duration_cast<chrono::nanoseconds>(t2 - t0).count() << " ns" << endl;
     }
 
+    void DoAction(const Unit* unit, Action action) {
+        Point2D moveDir = action2dir[action];
+        if (action == Action::Attack) {
+            bot.Actions()->UnitCommand(unit, ABILITY_ID::SMART, unit->position + moveDir*5);
+        } else {
+            bot.Actions()->UnitCommand(unit, ABILITY_ID::MOVE, unit->position + moveDir*5);
+        }
+    }
+
     void OnStep() override {
-        State state;
-        state.playerID = Observation()->GetPlayerID();
-        state.tick = Observation()->GetGameLoop();
-        auto ourUnits = Observation()->GetUnits(Unit::Alliance::Self);
-        auto enemyUnits = Observation()->GetUnits(Unit::Alliance::Enemy);
-        for (auto u : ourUnits) state.units.push_back(SerializedUnit(u));
-        for (auto u : enemyUnits) state.units.push_back(SerializedUnit(u));
-        
         if ((tick % 25) == 0) {
+            State state;
+            state.playerID = Observation()->GetPlayerID();
+            state.tick = Observation()->GetGameLoop();
+            auto ourUnits = Observation()->GetUnits(Unit::Alliance::Self);
+            auto enemyUnits = Observation()->GetUnits(Unit::Alliance::Enemy);
+            for (auto u : ourUnits) state.units.push_back(SerializedUnit(u));
+            for (auto u : enemyUnits) state.units.push_back(SerializedUnit(u));
+            stringstream os;
+            {
+                cereal::JSONOutputArchive archive(os);
+                archive(state);
+            }
+            Action action = (Action)predictFunction(os.str(), ourUnits[0]->tag).cast<int>();
+            DoAction(ourUnits[0], action);
+            for (auto& u : state.units) {
+                if (u.tag == ourUnits[0].tag) {
+                    u.action = action;
+                }
+            }
+
             cout << "Gathering state" << endl;
             states.push_back(state);
         }
@@ -251,15 +276,8 @@ class MicroTrainer : public sc2::ReplayObserver {
             Reset();
         }
 
-        stringstream os;
-        {
-            cereal::JSONOutputArchive archive(os);
-            archive(state);
-        }
-        Action action = (Action)predictFunction(os.str(), ourUnits[0]->tag).cast<int>();
-
-        // Actions()->SendActions();
-        // Debug()->SendDebug();
+        Actions()->SendActions();
+        Debug()->SendDebug();
         tick++;
     }
 };
@@ -273,6 +291,7 @@ int main(int argc, char* argv[]) {
     py::module trainer = py::module::import("micro_train");
     predictFunction = trainer.attr("predict");
     addSession = trainer.attr("addSession");
+    optimizeFunction = trainer.attr("optimize");
 
     /*py::print("Hello, World!");
     
