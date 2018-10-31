@@ -48,7 +48,7 @@ struct SerializedPos {
     }
 };
 
-enum Actions {
+enum Action {
     N,
     NW,
     W,
@@ -82,6 +82,7 @@ struct SerializedUnit {
     float shield;
     float health;
     float health_max;
+    Tag engaged_target_tag;
 
     SerializedUnit (const Unit* unit) {
         tag = unit->tag;
@@ -104,6 +105,7 @@ struct SerializedUnit {
         shield = unit->shield;
         health = unit->health;
         health_max = unit->health_max;
+        engaged_target_tag = unit->engaged_target_tag;
     }
 
     template<class Archive>
@@ -126,7 +128,8 @@ struct SerializedUnit {
             CEREAL_NVP(build_progress),
             CEREAL_NVP(shield),
             CEREAL_NVP(health),
-            CEREAL_NVP(health_max)
+            CEREAL_NVP(health_max),
+            CEREAL_NVP(engaged_target_tag),
         );
     }
 };
@@ -163,6 +166,7 @@ class MicroTrainer : public sc2::ReplayObserver {
     int tick = 0;
     vector<State> states;
     int fileIndex = 0;
+    int opponentPlayerID;
 
    public:
     void OnGameLoading() {
@@ -176,6 +180,8 @@ class MicroTrainer : public sc2::ReplayObserver {
         Debug()->DebugIgnoreResourceCost();
         // Debug()->DebugGiveAllTech();
         initMappings(Observation());
+
+        opponentPlayerID = Observation()->GetPlayerID() == 1 ? : 2 : 1;
 
         // DependencyAnalyzer deps;
         // deps.analyze(Observation());
@@ -198,6 +204,19 @@ class MicroTrainer : public sc2::ReplayObserver {
         
 
         Debug()->SendDebug();*/
+    }
+
+    void Reset() {
+        Point2D mn = Observation()->GetGameInfo().playable_min;
+        Point2D mx = Observation()->GetGameInfo().playable_max;
+
+        for (int i = 0; i < 40; i++) {
+            float x = mn.x + ((rand() % 1000) / 1000.0f) * (mx.x - mn.x);
+            float y = mn.y + ((rand() % 1000) / 1000.0f) * (mx.y - mn.y);
+            Debug()->DebugCreateUnit(UNIT_TYPEID::PROTOSS_ZEALOT, Point2D(x, y), opponentPlayerID);
+        }
+
+        Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_REAPER, Point2D((mn.x + mx.x)*0.5f, (mn.y + mx.y)*0.5f), Observation()->GetPlayerID());
     }
 
     void OnGameEnd() override {
@@ -228,12 +247,16 @@ class MicroTrainer : public sc2::ReplayObserver {
             states.push_back(state);
         }
 
+        if (ourUnits.size() == 0) {
+            Reset();
+        }
+
         stringstream os;
         {
             cereal::JSONOutputArchive archive(os);
             archive(state);
         }
-        predictFunction(os.str()).cast<string>();
+        Action action = (Action)predictFunction(os.str(), ourUnits[0]->tag).cast<int>();
 
         // Actions()->SendActions();
         // Debug()->SendDebug();

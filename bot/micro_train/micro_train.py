@@ -46,7 +46,7 @@ class ReplayMemory(object):
     def sample(self, batch_size):
         return random.sample(self.memory, batch_size)
 
-    def createState(unit, state):
+    def createState(self, unit, state):
         nearby = []
         for unit2 in state["units"]:
             if unit != unit2 and unitDistance(unit, unit2) < distanceThreshold:
@@ -61,13 +61,26 @@ class ReplayMemory(object):
         maxEnemies = 8
         allyNearby = []
         enemyNearby = []
-        meta = [
+
+        selfUnit = [
             0,  # Total allies
             0,  # Total enemies
+            unit["energy"],
+            unit["is_flying"],
+            unit["is_burrowed"],
+            unit["is_powered"],
+            unit["radius"],
+            unit["detect_range"],
+            unit["weapon_cooldown"],
+            unit["build_progress"],
+            unit["shield"],
+            unit["health"],
+            unit["health"]/math.max(1, unit["health_max"]),
         ]
+
         for u in nearby:
             relativeUnit = [
-                1,
+                1,  # Does unit exist
                 u["position"]["x"] - originx,
                 u["position"]["y"] - originy,
                 unitDistance(unit, u),
@@ -87,14 +100,14 @@ class ReplayMemory(object):
             if u["owner"] == state["playerID"]:
                 if len(allyNearby) < maxAllies:
                     allyNearby.append(relativeUnit)
-                meta[0] += 1
+                selfUnit[0] += 1
             else:
                 if len(enemyNearby) < maxEnemies:
                     enemyNearby.append(relativeUnit)
-                meta[1] += 1
+                selfUnit[1] += 1
 
         dummyUnit = [
-            1,
+            0,  # Does unit exist
             0,
             0,
             0,
@@ -108,20 +121,6 @@ class ReplayMemory(object):
             0,
             0,
             0,
-        ]
-
-        selfUnit = [
-            unit["energy"],
-            unit["is_flying"],
-            unit["is_burrowed"],
-            unit["is_powered"],
-            unit["radius"],
-            unit["detect_range"],
-            unit["weapon_cooldown"],
-            unit["build_progress"],
-            unit["shield"],
-            unit["health"],
-            unit["health"]/math.max(1, unit["health_max"]),
         ]
 
         while len(allyNearby) < maxAllies:
@@ -132,8 +131,7 @@ class ReplayMemory(object):
         enemyTensor = torch.tensor(enemyNearby, dtype=torch.float)
         allyTensor = torch.tensor(allyNearby, dtype=torch.float)
         selfTensor = torch.tensor(selfUnit, dtype=torch.float)
-        metaTensor = torch.tensor(meta, dtype=torch.float)
-        return [enemyTensor, allyTensor, selfTensor, metaTensor]
+        return [enemyTensor, allyTensor, selfTensor]
 
         # Input:
         # 2 x 8 x [
@@ -159,7 +157,7 @@ class ReplayMemory(object):
         # float health_max; -> health fraction
         # ] 
 
-    def calculate_reward(s1, s2, unit):
+    def calculate_reward(self, s1, s2, unit):
         tag2unit = {}
         for unit2 in s2["units"]:
             tag2unit[unit2["tag"]] = unit2
@@ -224,12 +222,12 @@ class ReplayMemory(object):
         terminal_state = unit["tag"] not in tag2unit
         return reward, terminal_state
 
+    def determine_action(self, s1, s2, unit):
+        pass
 
-
-    def loadSession(s):
+    def loadSession(self, s):
         data = json.loads(s)
         states = data["states"]
-        rewards = data["rewards"]
         for i in range(len(states)):
             s1 = states[i]
             s2 = states[i+1] if i + 1 < len(states) else None
@@ -237,41 +235,68 @@ class ReplayMemory(object):
             for unit in s1["units"]:
                 if unit["unit_type"] == TERRAN_REAPER and unit["owner"] == s1["playerID"]:
                     # Got a unit that we want to add a sample for
-                    t1 = createState(unit, s1)
-                    t2 = createState(unit, s2)
-                    reward, terminal_state = calculate_reward(s1, s2, unit)
+                    t1 = self.createState(unit, s1)
+                    t2 = self.createState(unit, s2)
+                    reward, terminal_state = self.calculate_reward(s1, s2, unit)
                     action = unit["action"]
-                    push(Transition(t1, action, t2, reward))
+                    self.push(Transition(t1, action, t2, reward))
 
     def __len__(self):
         return len(self.memory)
 
 
-print("AAAAAAAAA")
-
 class DQN(nn.Module):
 
     def __init__(self):
         super(DQN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 16, kernel_size=5, stride=2)
-        self.bn1 = nn.BatchNorm2d(16)
-        self.conv2 = nn.Conv2d(16, 32, kernel_size=5, stride=2)
-        self.bn2 = nn.BatchNorm2d(32)
-        self.conv3 = nn.Conv2d(32, 32, kernel_size=5, stride=2)
-        self.bn3 = nn.BatchNorm2d(32)
-        self.head = nn.Linear(448, 2)
+        self.lin1_1 = nn.Linear(TENSOR_ALLY_SIZE1, 32)
+        self.lin1_2 = nn.Linear(TENSOR_ENEMY_SIZE1, 32)
+        self.lin1_3 = nn.Linear(TENSOR_SELF_SIZE, 32)
 
-    def forward(self, x):
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = F.relu(self.bn2(self.conv2(x)))
-        x = F.relu(self.bn3(self.conv3(x)))
-        return self.head(x.view(x.size(0), -1))
+        self.lin2_1 = nn.Linear(32, 20)
+        self.lin2_2 = nn.Linear(32, 20)
+        self.lin2_3 = nn.Linear(32, 20)
+        self.bn1 = nn.BatchNorm1d(20)
+        self.bn2 = nn.BatchNorm1d(20)
+        self.bn3 = nn.BatchNorm1d(20)
+
+        self.drop1 = nn.Dropout(0.5)
+
+        self.lin3 = nn.Linear(TENSOR_SELF_SIZE + TENSOR_ALLY_SIZE1 + TENSOR_ENEMY_SIZE1, 20)
+        self.bn4 = nn.BatchNorm1d(20)
+        self.lin4 = nn.Linear(20, NUM_ACTIONS)
+
+    def forward(self, selfTensor, allyTensor, enemyTensor):
+        # selfTensor: B x 13
+        # allyTensor: B x 8 x 15
+        # enemyTensor: B x 8 x 15
+        x = F.relu(self.lin1_1x(selfTensor))
+        x = F.relu(self.bn1(self.lin2_1(selfTensor)))
+        selfTens = self.drop1(x)
+
+        x = F.relu(self.lin1_2(allyTensor))
+        x = F.relu(self.bn2(self.lin2_2(x)))
+        allyTens = self.drop1(x)
+
+        x = F.relu(self.lin1_3(enemyTensor))
+        x = F.relu(self.bn3(self.lin2_3(x)))
+        enemyTens = self.drop1(x)
+
+        allyTens = allyTens.sum(dim=1)
+        enemyTens = enemyTens.sum(dim=1)
+
+        allTens = torch.cat((selfTens, allyTens, enemyTens), dim=1)
+        x = F.relu(self.bn4(self.lin3(allTens)))
+        x = self.lin4(x)
+
+        return x  # B x NUM_ACTIONS
 
 
-def predict(s):
-    print(json.loads(s))
-    # return str(a) + str(b)
-    return ""
+def predict(s, unitTag):
+    state = json.loads(s)
+    print()
+    t1 = memory.createState(unit, state)
+    return select_action(t1)
 
 
 def addSession(s):
@@ -290,6 +315,12 @@ EPS_START = 0.9
 EPS_END = 0.05
 EPS_DECAY = 200
 TARGET_UPDATE = 10
+NUM_ACTIONS = 9
+TENSOR_SELF_SIZE = 13
+TENSOR_ALLY_SIZE0 = 8
+TENSOR_ALLY_SIZE1 = 15
+TENSOR_ENEMY_SIZE0 = 8
+TENSOR_ENEMY_SIZE1 = 15
 
 policy_net = DQN().to(device)
 target_net = DQN().to(device)
@@ -313,7 +344,7 @@ def select_action(state):
         with torch.no_grad():
             return policy_net(state).max(1)[1].view(1, 1)
     else:
-        return torch.tensor([[random.randrange(2)]], device=device, dtype=torch.long)
+        return torch.tensor([[random.randrange(NUM_ACTIONS)]], device=device, dtype=torch.long)
 
 
 episode_durations = []
