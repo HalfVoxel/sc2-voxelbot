@@ -40,14 +40,17 @@ void initMappings(const ObservationInterface* observation) {
     if (mappingInitialized) return;
     mappingInitialized = true;
 
+    cout << "A" << endl;
     int maxAbilityID = 0;
     for (auto pair : unit_type_has_ability) {
         maxAbilityID = max(maxAbilityID, pair.second);
     }
-    mAbilityToCasterUnit = vector<vector<UNIT_TYPEID>>(maxAbilityID);
+    mAbilityToCasterUnit = vector<vector<UNIT_TYPEID>>(maxAbilityID+1);
     for (auto pair : unit_type_has_ability) {
         mAbilityToCasterUnit[pair.second].push_back((UNIT_TYPEID)pair.first);
     }
+
+    cout << "B" << endl;
 
     const sc2::UnitTypes& unitTypes = observation->GetUnitTypeData();
     const auto abilities = observation->GetAbilityData();
@@ -56,6 +59,8 @@ void initMappings(const ObservationInterface* observation) {
     for (auto type : unitTypes) {
         mAbilityToCreatedUnit[type.ability_id] = (UNIT_TYPEID)type.unit_type_id;
     }
+
+    cout << "C" << endl;
 
     mCanBecome = vector<vector<UNIT_TYPEID>>(unitTypes.size());
     mHasBeen = vector<vector<UNIT_TYPEID>>(unitTypes.size());
@@ -124,6 +129,8 @@ void initMappings(const ObservationInterface* observation) {
         }
     }
 
+    cout << "D" << endl;
+
     for (int i = 0; i < unitTypes.size(); i++) {
         if (mCanBecome[i].size() == 0)
             continue;
@@ -136,6 +143,8 @@ void initMappings(const ObservationInterface* observation) {
             cout << UnitTypeToName(p) << " (" << unitTypes[(int)p].mineral_cost << ", " << unitTypes[(int)p].vespene_cost << "), ";
         cout << endl;
     }
+
+    cout << "E" << endl;
 }
 
 /** Maps an ability to the unit that primarily uses it.

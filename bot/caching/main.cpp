@@ -1,4 +1,4 @@
-#include "../bot/main.h"
+#include "../Bot.h"
 #include <fstream>
 #include <iostream>
 #include <queue>
