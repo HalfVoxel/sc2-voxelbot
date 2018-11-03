@@ -50,18 +50,9 @@ struct SerializedPos {
 };
 
 enum Action {
-    N,
-    NW,
-    W,
-    SW,
-    S,
-    SE,
-    E,
-    NE,
-    Attack_N,
-    Attack_W,
-    Attack_S,
-    Attack_E
+    Flee,
+    MoveRandom,
+    Attack_Closest,
 };
 
 vector<Point2D> action2dir = {
@@ -99,6 +90,7 @@ struct SerializedUnit {
     float weapon_cooldown;
     float build_progress;
     float shield;
+    float shield_max;
     float health;
     float health_max;
     Tag engaged_target_tag;
@@ -122,6 +114,7 @@ struct SerializedUnit {
         weapon_cooldown = unit->weapon_cooldown;
         build_progress = unit->build_progress;
         shield = unit->shield;
+        shield_max = unit->shield_max;
         health = unit->health;
         health_max = unit->health_max;
         engaged_target_tag = unit->engaged_target_tag;
@@ -149,6 +142,7 @@ struct SerializedUnit {
             CEREAL_NVP(shield),
             CEREAL_NVP(health),
             CEREAL_NVP(health_max),
+            CEREAL_NVP(shield_max),
             CEREAL_NVP(engaged_target_tag),
             CEREAL_NVP(action)
         );
@@ -269,11 +263,79 @@ class MicroTrainer : public sc2::Agent {
     }
 
     void DoAction(const Unit* unit, Action action) {
-        Point2D moveDir = action2dir[action];
+        /*Point2D moveDir = action2dir[action];
         if (action == Action::Attack_N || action == Action::Attack_W || action == Action::Attack_S || action == Action::Attack_E) {
             Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, unit->pos + moveDir*5);
         } else {
             Actions()->UnitCommand(unit, ABILITY_ID::MOVE, unit->pos + moveDir*5);
+        }*/
+        auto enemyUnits = Observation()->GetUnits(Unit::Alliance::Enemy);
+        const Unit* closestUnit = nullptr;
+        float closestDist = 10000000;
+        Point2D avgEnemyPos;
+        float totalWeight = 0;
+        for (auto enemy : enemyUnits) {
+            auto d = DistanceSquared2D(unit->pos, enemy->pos);
+            if (d < closestDist) {
+                closestDist = d;
+                closestUnit = enemy;
+            }
+
+            float w = max(0.0f, 1.0f - sqrt(d)/10.0f);
+            if (w > 0) {
+                totalWeight += w;
+                avgEnemyPos += w*enemy->pos;
+            }
+        }
+
+        if (totalWeight > 0) {
+            avgEnemyPos /= totalWeight;
+        } else {
+            avgEnemyPos = unit->pos;
+        }
+        closestDist = DistanceSquared2D(avgEnemyPos, unit->pos);
+        Debug()->DebugSphereOut(Point3D(avgEnemyPos.x, avgEnemyPos.y, unit->pos.z), 0.5);
+
+        /*if (unit->weapon_cooldown == 0) {
+            if (closestDist > 0 && closestDist < 2*2) action = Action::Flee;
+            else action = Action::Attack_Closest;
+        } else {
+            if (closestDist > 0 && closestDist < 5*5) action = Action::Flee;
+            else action = Action::Attack_Closest;
+        }
+
+        cout << "Action: " << action << " " << closestDist << " " << (closestUnit != nullptr) << " " << unit->weapon_cooldown << endl;*/
+
+        switch(action) {
+            case Action::MoveRandom:
+            case Action::Attack_Closest: {
+                if (closestUnit != nullptr) {
+                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, closestUnit->pos);
+                } else {
+                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, unit->pos);
+                }
+                break;
+            }
+            /*case Action::MoveRandom: {
+                float x = tick / 250.0f;
+                float dx = -0.143*sin(1.75*(x+1.73))-0.18*sin(2.96*(x+4.98))-0.012*sin(6.23*(x+3.17))+0.088*sin(8.07*(x+4.63));
+                float y = (tick + 512357) / 250.0f;
+                float dy = -0.143*sin(1.75*(y+1.73))-0.18*sin(2.96*(y+4.98))-0.012*sin(6.23*(y+3.17))+0.088*sin(8.07*(y+4.63));
+
+                // float dx = ((rand() % 10000) / 5000.0f) - 1.0f;
+                // float dy = ((rand() % 10000) / 5000.0f) - 1.0f;
+                Actions()->UnitCommand(unit, ABILITY_ID::MOVE, unit->pos + Point2D(dx, dy) * 10);
+                break;
+            }*/
+            case Action::Flee: {
+                if (closestUnit != nullptr) {
+                    float dist = sqrt(closestDist);
+                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE, unit->pos + ((unit->pos - avgEnemyPos)/(dist+0.001))*10);
+                } else {
+                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE, unit->pos);
+                }
+                break;
+            }
         }
     }
 
@@ -303,7 +365,7 @@ class MicroTrainer : public sc2::Agent {
             Debug()->DebugMoveCamera(ourUnits[0]->pos);
         }
 
-        if ((tick % 12) == 0) {
+        if ((tick % 10) == 0) {
             State state;
             state.playerID = Observation()->GetPlayerID();
             state.tick = Observation()->GetGameLoop();
