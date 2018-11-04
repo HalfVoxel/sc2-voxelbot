@@ -58,8 +58,8 @@ class ReplayMemory(object):
         originx = unit["position"]["x"]
         originy = unit["position"]["y"]
 
-        maxAllies = 3  # TENSOR_ALLY_SIZE0
-        maxEnemies = 3  # TENSOR_ENEMY_SIZE0
+        maxAllies = TENSOR_ALLY_SIZE0
+        maxEnemies = TENSOR_ENEMY_SIZE0
         allyNearby = []
         enemyNearby = []
 
@@ -100,7 +100,7 @@ class ReplayMemory(object):
                 # u["detect_range"],
                 # u["weapon_cooldown"],
                 # u["build_progress"],
-                (u["health"] + u["shield"]) / 100.0,  # Make values be roughly 1 in most cases
+                (u["health"] + u["shield"]) / (u["health_max"] + u["shield_max"]),  # Make values be roughly 1 in most cases
                 # u["health"] / 100.0,
                 # u["health"]/max(1, u["health_max"]),
                 # In attack range?
@@ -133,51 +133,51 @@ class ReplayMemory(object):
         # assert(len(dummyUnit) == TENSOR_ALLY_SIZE1)
         # assert(len(dummyUnit) == TENSOR_ENEMY_SIZE1)
 
-        # while len(allyNearby) < maxAllies:
-        #     allyNearby.append(dummyUnit)
-        # while len(enemyNearby) < maxEnemies:
-        #     enemyNearby.append(dummyUnit)
+        while len(allyNearby) < maxAllies:
+            allyNearby.append(dummyUnit)
+        while len(enemyNearby) < maxEnemies:
+            enemyNearby.append(dummyUnit)
 
-        # enemyTensor = torch.tensor(enemyNearby, dtype=torch.float)
-        # allyTensor = torch.tensor(allyNearby, dtype=torch.float)
-        # selfTensor = torch.tensor(selfUnit, dtype=torch.float)
+        enemyTensor = torch.tensor(enemyNearby, dtype=torch.float)
+        allyTensor = torch.tensor(allyNearby, dtype=torch.float)
+        selfTensor = torch.tensor(selfUnit, dtype=torch.float)
 
-        enemyTensor = torch.zeros((1, 2))
-        allyTensor = torch.zeros((1, 2))
+        # enemyTensor = torch.zeros((1, 2))
+        # allyTensor = torch.zeros((1, 1))
 
-        healthIndex = int(min(3, round(3*unit["health"]/max(1, unit["health_max"]))))
-        nearbyEnemyIndex = len(enemyNearby)
-        enemyHealthIndex = min(3, round(3*((closestEnemy["health"] + closestEnemy["shield"])/(closestEnemy["health_max"] + closestEnemy["shield_max"])))) if closestEnemy is not None else 0
-        enemyDistIndex = unitDistance(closestEnemy, unit) if closestEnemy is not None else 0
-        enemyDistIndex = min(5, int(math.floor(enemyDistIndex)))
+        # healthIndex = int(min(3, round(3*unit["health"]/max(1, unit["health_max"]))))
+        # nearbyEnemyIndex = len(enemyNearby)
+        # enemyHealthIndex = min(3, round(3*((closestEnemy["health"] + closestEnemy["shield"])/(closestEnemy["health_max"] + closestEnemy["shield_max"])))) if closestEnemy is not None else 0
+        # enemyDistIndex = unitDistance(closestEnemy, unit) if closestEnemy is not None else 0
+        # enemyDistIndex = min(5, int(math.floor(enemyDistIndex)))
 
-        index = 0
-        m = 1
+        # index = 0
+        # m = 1
 
-        index += m * healthIndex
-        assert healthIndex <= 4
-        m *= 3+1
+        # index += m * healthIndex
+        # assert healthIndex <= 4
+        # m *= 3+1
 
-        index += m * (1 if unit["weapon_cooldown"] == 0 else 0)
-        m *= 2
+        # index += m * (1 if unit["weapon_cooldown"] == 0 else 0)
+        # m *= 2
 
-        index += m * nearbyEnemyIndex
-        assert nearbyEnemyIndex <= maxEnemies
-        m *= maxEnemies+1
+        # index += m * nearbyEnemyIndex
+        # assert nearbyEnemyIndex <= maxEnemies
+        # m *= maxEnemies+1
 
-        index += m * int(enemyHealthIndex)
-        assert int(enemyHealthIndex) <= 4
-        m *= 3+1
+        # index += m * int(enemyHealthIndex)
+        # assert int(enemyHealthIndex) <= 4
+        # m *= 3+1
 
-        index += m * enemyDistIndex
-        assert enemyDistIndex <= 5
-        m *= 5+1
+        # index += m * enemyDistIndex
+        # assert enemyDistIndex <= 5
+        # m *= 5+1
 
-        assert(m == TABLE_SIZE)
-        assert(index < TABLE_SIZE)
+        # assert(m == TABLE_SIZE)
+        # assert(index < TABLE_SIZE)
 
-        dat = torch.tensor(index, dtype=torch.long)
-        return [dat, allyTensor, enemyTensor]
+        # dat = torch.tensor(index, dtype=torch.long)
+        return [selfTensor, allyTensor, enemyTensor]
 
         # Input:
         # 2 x 8 x [
@@ -270,9 +270,9 @@ class ReplayMemory(object):
 
         # Avoid hiding in a corner
         if distanceToEnemy >= 8:
-            reward -= 0.2
+            reward -= 0.3
         else:
-            reward -= 0.2 * (distanceToEnemy/8)
+            reward -= 0.3 * (distanceToEnemy/8)
 
         terminal_state = unit["tag"] not in tag2unit
 
@@ -345,32 +345,32 @@ class DQN(nn.Module):
 
     def __init__(self):
         super(DQN, self).__init__()
-        # self.lin1_1 = nn.Linear(TENSOR_SELF_SIZE, 20)
-        # self.lin1_2 = nn.Linear(TENSOR_ALLY_SIZE1, 20)
-        # self.lin1_3 = nn.Linear(TENSOR_ENEMY_SIZE1, 20)
+        self.lin1_1 = nn.Linear(TENSOR_SELF_SIZE, 20)
+        self.lin1_2 = nn.Linear(TENSOR_ALLY_SIZE1, 20)
+        self.lin1_3 = nn.Linear(TENSOR_ENEMY_SIZE1, 20)
 
-        # self.lin2_1 = nn.Linear(20, 20)
-        # self.lin2_2 = nn.Linear(20, 20)
-        # self.lin2_3 = nn.Linear(20, 20)
+        self.lin2_1 = nn.Linear(20, 20)
+        self.lin2_2 = nn.Linear(20, 20)
+        self.lin2_3 = nn.Linear(20, 20)
         # self.bn1 = nn.BatchNorm1d(20)
         # self.bn2 = nn.BatchNorm1d(20)
         # self.bn3 = nn.BatchNorm1d(20)
 
-        # self.drop1 = nn.Dropout(0.5)
+        self.drop1 = nn.Dropout(0.5)
 
-        # self.lin3 = nn.Linear(20 + 20 + 20 + 20, 20)
+        self.lin3 = nn.Linear(20 + 20 + 20 + 20, 20)
         # self.bn4 = nn.BatchNorm1d(20)
-        # self.lin4 = nn.Linear(20, NUM_ACTIONS)
-        # self.lin5 = nn.Linear(TENSOR_SELF_SIZE, 20)
-        # self.lin6 = nn.Linear(20, NUM_ACTIONS)
+        self.lin4 = nn.Linear(20, NUM_ACTIONS)
+        self.lin5 = nn.Linear(TENSOR_SELF_SIZE, 20)
+        self.lin6 = nn.Linear(20, NUM_ACTIONS)
 
-        self.emb = nn.Embedding(TABLE_SIZE, NUM_ACTIONS)
+        # self.emb = nn.Embedding(TABLE_SIZE, NUM_ACTIONS)
 
     def forward(self, selfTensor, allyTensor, enemyTensor):
         # print(selfTensor)
-        res = self.emb(selfTensor)
+        # res = self.emb(selfTensor)
         # print(res)
-        return res
+        # return res
 
         # x = F.elu(self.lin5(selfTensor))
         # x = F.elu(self.lin6(x))
@@ -554,8 +554,8 @@ def optimize_model():
     state_batch0 = torch.cat([s[0].unsqueeze(0) for s in batch.state])  # selfTensor
     state_batch1 = torch.cat([s[1].unsqueeze(0) for s in batch.state])  # allyTensor
     state_batch2 = torch.cat([s[2].unsqueeze(0) for s in batch.state])  # enemyTensor
-    # assert state_batch1.size() == (BATCH_SIZE,TENSOR_ALLY_SIZE0, TENSOR_ALLY_SIZE1)
-    assert state_batch0.size() == (BATCH_SIZE,)
+    assert state_batch1.size() == (BATCH_SIZE,TENSOR_ALLY_SIZE0, TENSOR_ALLY_SIZE1)
+    # assert state_batch0.size() == (BATCH_SIZE,)
 
     action_batch = torch.tensor(batch.action).unsqueeze(1)
     assert(action_batch.size() == (BATCH_SIZE,1))
@@ -574,19 +574,19 @@ def optimize_model():
 
     assert next_state_values.size() == (BATCH_SIZE,)
 
-    torch.set_printoptions(threshold=10000)
+    # torch.set_printoptions(threshold=10000)
 
     # Compute the expected Q values
     expected_state_action_values = (next_state_values * GAMMA) + reward_batch
     assert expected_state_action_values.size() == (BATCH_SIZE,)
 
-    alpha = 0.01
-    for i in range(BATCH_SIZE):
-        v0 = policy_net.emb.weight.data[state_batch0[i]][action_batch[i]]
-        desired = expected_state_action_values[i]
-        policy_net.emb.weight.data[state_batch0[i]][action_batch[i]] = v0 * (1-alpha) + desired * alpha
+    # alpha = 0.01
+    # for i in range(BATCH_SIZE):
+    #     v0 = policy_net.emb.weight.data[state_batch0[i]][action_batch[i]]
+    #     desired = expected_state_action_values[i]
+    #     policy_net.emb.weight.data[state_batch0[i]][action_batch[i]] = v0 * (1-alpha) + desired * alpha
 
-    print(policy_net.emb.weight.data)
+    # print(policy_net.emb.weight.data)
 
     # print("BLAH", expected_state_action_values.unsqueeze(1).size(), state_action_values.size())
     # print(state_action_values)
@@ -599,11 +599,11 @@ def optimize_model():
     losses.append(loss.item())
 
     # Optimize the model
-    # optimizer.zero_grad()
-    # loss.backward()
+    optimizer.zero_grad()
+    loss.backward()
     # for param in policy_net.parameters():
         # param.grad.data.clamp_(-1, 1)
-    # optimizer.step()
+    optimizer.step()
 
 
 plt.ioff()
@@ -714,5 +714,5 @@ if __name__ == "__main__":
     while True:
         optimize(200)
 else:
-    # load_all(20)
+    load_all(20)
     pass
