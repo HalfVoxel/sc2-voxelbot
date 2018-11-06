@@ -14,6 +14,8 @@
 #include <cereal/types/vector.hpp>
 #include <fstream>
 #include <pybind11/embed.h> 
+#include <pybind11/stl.h>
+
 #include <thread>
 
 const char* kReplayFolder = "/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/replays";
@@ -53,6 +55,18 @@ enum Action {
     Flee,
     MoveRandom,
     Attack_Closest,
+    Idle,
+    MoveToAlly,
+    MoveAwayFromAlly,
+};
+
+vector<string> actionName = {
+    "Flee",
+    "Move Random",
+    "Attack Closest",
+    "Idle",
+    "Move to Ally",
+    "Move away from Ally",
 };
 
 vector<Point2D> action2dir = {
@@ -182,13 +196,22 @@ class MicroTrainer : public sc2::Agent {
     int opponentPlayerID;
     bool simulateRealtime = false;
     bool paused = false;
+    bool enableExploration = true;
+    bool interactive = false;
 
    public:
+    int resets = 1;
+
     void OnGameLoading() {
+    }
+
+    bool ShouldReload() {
+        return (resets % 30) == 0;
     }
 
     void OnGameStart() override {
         cout << "Starting..." << endl;
+        session = Session();
         Debug()->DebugEnemyControl();
         Debug()->DebugShowMap();
         Debug()->DebugIgnoreFood();
@@ -223,6 +246,10 @@ class MicroTrainer : public sc2::Agent {
     }
 
     void CompleteSession() {
+        if (session.states.size() <= 1) {
+            session = Session();
+            return;
+        }
         cout << "Completed session" << endl;
         fileIndex++;
         auto t0 = Clock::now();
@@ -240,7 +267,13 @@ class MicroTrainer : public sc2::Agent {
     }
 
     void Reset() {
+        cout << "Reset " << "(" << resets << ")" << endl;
         CompleteSession();
+
+        resets++;
+        if (ShouldReload()) {
+            return;
+        }
 
         for (auto unit : Observation()->GetUnits()) {
             Debug()->DebugKillUnit(unit);
@@ -250,13 +283,26 @@ class MicroTrainer : public sc2::Agent {
         Point2D mn = Observation()->GetGameInfo().playable_min;
         Point2D mx = Observation()->GetGameInfo().playable_max;
 
-        for (int i = 0; i < 160; i++) {
+        // for (int i = 0; i < 100; i++) {
+        //     float x = mn.x + ((rand() % 1000) / 1000.0f) * (mx.x - mn.x);
+        //     float y = mn.y + ((rand() % 1000) / 1000.0f) * (mx.y - mn.y);
+        //     Debug()->DebugCreateUnit(UNIT_TYPEID::PROTOSS_ZEALOT, Point2D(x, y), opponentPlayerID);
+        // }
+
+        for (int i = 0; i < 100; i++) {
             float x = mn.x + ((rand() % 1000) / 1000.0f) * (mx.x - mn.x);
             float y = mn.y + ((rand() % 1000) / 1000.0f) * (mx.y - mn.y);
-            Debug()->DebugCreateUnit(UNIT_TYPEID::PROTOSS_ZEALOT, Point2D(x, y), opponentPlayerID);
+
+            int num = 1; // (rand() % 2) + 1;
+            for (int j = 0; j < num; j++) {
+                Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_MARINE, Point2D(x, y), opponentPlayerID);
+            }
         }
 
         Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_REAPER, Point2D((mn.x + mx.x)*0.5f, (mn.y + mx.y)*0.5f), Observation()->GetPlayerID());
+        // Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_REAPER, Point2D((mn.x + mx.x)*0.5f, (mn.y + mx.y)*0.5f), Observation()->GetPlayerID());
+        // Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_REAPER, Point2D((mn.x + mx.x)*0.5f, (mn.y + mx.y)*0.5f), Observation()->GetPlayerID());
+        // Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_REAPER, Point2D((mn.x + mx.x)*0.5f, (mn.y + mx.y)*0.5f), Observation()->GetPlayerID());
     }
 
     void OnGameEnd() override {
@@ -270,6 +316,7 @@ class MicroTrainer : public sc2::Agent {
             Actions()->UnitCommand(unit, ABILITY_ID::MOVE, unit->pos + moveDir*5);
         }*/
         auto enemyUnits = Observation()->GetUnits(Unit::Alliance::Enemy);
+        auto allyUnits = Observation()->GetUnits(Unit::Alliance::Self);
         const Unit* closestUnit = nullptr;
         float closestDist = 10000000;
         Point2D avgEnemyPos;
@@ -293,8 +340,30 @@ class MicroTrainer : public sc2::Agent {
         } else {
             avgEnemyPos = unit->pos;
         }
+
+        Point2D avgAllyPos;
+        double totalAllyWeight = 0;
+        for (auto u : allyUnits) {
+            if (u != unit) {
+                auto d = Distance2D(unit->pos, u->pos);
+
+                double w = exp(-d/5.0);
+                if (w > 0.0000001) {
+                    totalAllyWeight += w;
+                    avgAllyPos += w*u->pos;
+                }
+            }
+        }
+
+        if (totalAllyWeight > 0) {
+            avgAllyPos /= totalAllyWeight;
+        } else {
+            avgAllyPos = unit->pos;
+        }
+
         closestDist = DistanceSquared2D(avgEnemyPos, unit->pos);
         Debug()->DebugSphereOut(Point3D(avgEnemyPos.x, avgEnemyPos.y, unit->pos.z), 0.5);
+        Debug()->DebugSphereOut(Point3D(avgAllyPos.x, avgAllyPos.y, unit->pos.z), 0.2);
 
         /*if (unit->weapon_cooldown == 0) {
             if (closestDist > 0 && closestDist < 2*2) action = Action::Flee;
@@ -306,8 +375,11 @@ class MicroTrainer : public sc2::Agent {
 
         cout << "Action: " << action << " " << closestDist << " " << (closestUnit != nullptr) << " " << unit->weapon_cooldown << endl;*/
 
+        if ((action == Action::MoveToAlly || action == Action::MoveAwayFromAlly) && totalAllyWeight == 0) {
+            action = Action::MoveRandom;
+        }
+
         switch(action) {
-            case Action::MoveRandom:
             case Action::Attack_Closest: {
                 if (closestUnit != nullptr) {
                     Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, closestUnit->pos);
@@ -316,7 +388,7 @@ class MicroTrainer : public sc2::Agent {
                 }
                 break;
             }
-            /*case Action::MoveRandom: {
+            case Action::MoveRandom: {
                 float x = tick / 250.0f;
                 float dx = -0.143*sin(1.75*(x+1.73))-0.18*sin(2.96*(x+4.98))-0.012*sin(6.23*(x+3.17))+0.088*sin(8.07*(x+4.63));
                 float y = (tick + 512357) / 250.0f;
@@ -326,7 +398,7 @@ class MicroTrainer : public sc2::Agent {
                 // float dy = ((rand() % 10000) / 5000.0f) - 1.0f;
                 Actions()->UnitCommand(unit, ABILITY_ID::MOVE, unit->pos + Point2D(dx, dy) * 10);
                 break;
-            }*/
+            }
             case Action::Flee: {
                 if (closestUnit != nullptr) {
                     float dist = sqrt(closestDist);
@@ -336,16 +408,49 @@ class MicroTrainer : public sc2::Agent {
                 }
                 break;
             }
+            case Action::MoveAwayFromAlly: {
+                float dist = Distance2D(unit->pos, avgAllyPos);
+                Actions()->UnitCommand(unit, ABILITY_ID::MOVE, unit->pos + ((unit->pos - avgAllyPos)/(dist+0.001))*10);
+                break;
+            }
+            case Action::MoveToAlly: {
+                Actions()->UnitCommand(unit, ABILITY_ID::MOVE, avgAllyPos);
+                break;
+            }
+            case Idle: {
+                Actions()->UnitCommand(unit, ABILITY_ID::MOVE, unit->pos);
+                break;
+            }
         }
     }
 
     void OnStep() override {
+        auto ourUnits = Observation()->GetUnits(Unit::Alliance::Self);
+
         for (auto message : Observation()->GetChatMessages()) {
             if (message.message == "r" || message.message == "realtime") {
                 simulateRealtime = !simulateRealtime;
+                Actions()->SendChat(simulateRealtime ? "Enabled realtime mode" : "Disabled realtime mode");
             }
             if (message.message == "p" || message.message == "pause") {
                 paused = !paused;
+                Actions()->SendChat(paused ? "Paused" : "Unpaused");
+            }
+            if (message.message == "e" || message.message == "exploration") {
+                enableExploration = !enableExploration;
+                Actions()->SendChat(enableExploration ? "Enabled exploration" : "Disabled exploration");
+            }
+            if (message.message == "i" || message.message == "interactive") {
+                interactive = !interactive;
+                Actions()->SendChat(interactive ? "Enabled interactive mode" : "Disabled interactive mode");
+            }
+
+            if (message.message.size() == 1 && message.message[0] > '0' && message.message[0] <= '9') {
+                Action action = (Action)(message.message[0] - '0');
+                DoAction(ourUnits[0], action);
+                stringstream ss;
+                ss << "Took action " << actionName[action];
+                Actions()->SendChat(ss.str());
             }
         }
 
@@ -359,13 +464,21 @@ class MicroTrainer : public sc2::Agent {
 
         session.ticks++;
 
-        auto ourUnits = Observation()->GetUnits(Unit::Alliance::Self);
-
         if (ourUnits.size() > 0) {
-            Debug()->DebugMoveCamera(ourUnits[0]->pos);
+            Point2D avgPos = Point2D(0,0);
+            float totalWeight = 0;
+            for (auto unit : ourUnits) {
+                avgPos += unit->pos;
+                totalWeight += 1;
+            }
+            avgPos /= totalWeight;
+
+            Debug()->DebugMoveCamera(avgPos);
         }
 
-        if ((tick % 10) == 0) {
+        if (interactive) {
+
+        } else if ((tick % 10) == 0) {
             State state;
             state.playerID = Observation()->GetPlayerID();
             state.tick = Observation()->GetGameLoop();
@@ -378,17 +491,24 @@ class MicroTrainer : public sc2::Agent {
                 state.serialize(archive);
             }
 
-            if (ourUnits.size() > 0) {
-                Action action = (Action)predictFunction(os.str(), ourUnits[0]->tag).cast<int>();
-                DoAction(ourUnits[0], action);
-                for (auto& u : state.units) {
-                    if (u.tag == ourUnits[0]->tag) {
-                        u.action = action;
-                    }
-                }
+            vector<Tag> unitTags;
+            for (auto unit : ourUnits) {
+                unitTags.push_back(unit->tag);
             }
 
-            // cout << "Gathering state" << endl;
+            vector<int> actions = predictFunction(os.str(), unitTags, enableExploration).cast<vector<int>>();
+            for (int i = 0; i < ourUnits.size(); i++) {
+                Action action = (Action)actions[i];
+                DoAction(ourUnits[i], action);
+                // Note: they come in exactly the same order in the state
+                state.units[i].action = action;
+
+                stringstream ss;
+                ss << "Took action " << actionName[action];
+                Actions()->SendChat(ss.str());
+            }
+
+            cout << "Gathering state" << endl;
             session.states.push_back(state);
 
             if (ourUnits.size() == 0 || session.ticks > 25*60*5) {
@@ -441,6 +561,10 @@ int main(int argc, char* argv[]) {
     coordinator.StartGame(EmptyMap);
 
     while (coordinator.Update() && !do_break) {
+        if (bot.ShouldReload()) {
+            bot.resets++;
+            coordinator.StartGame(EmptyMap);
+        }
         // if (PollKeyPress()) {
         //     do_break = true;
         // }

@@ -32,25 +32,74 @@ def unitDistance(unit1, unit2):
 class ReplayMemory(object):
     def __init__(self, capacity):
         self.capacity = capacity
-        self.memory = []
-        self.position = 0
+        # self.memory = []
+        # self.position = 0
         self.durations = []
         self.health_diffs = []
+        self.total_rewards = []
+        self.all_actions = []
+        self.max_error = 1000
+        self.error_buckets = []
+        for i in range(10):
+            self.error_buckets.append([])
+
+        self.count = 0
 
     def push(self, transition: Transition):
         """Saves a transition."""
-        if len(self.memory) < self.capacity:
-            self.memory.append(None)
-        self.memory[self.position] = transition
-        self.position = (self.position + 1) % self.capacity
+        # if len(self.memory) < self.capacity:
+            # self.memory.append(None)
+        # self.memory[self.position] = transition
+        # self.position = (self.position + 1) % self.capacity
+        random.choice(self.error_buckets).append(transition)
+        self.count += 1
 
     def sample(self, batch_size):
-        return random.sample(self.memory, batch_size)
+        result = []
+        changed = True
+        while len(result) < batch_size and changed:
+            changed = False
+            for bucket in self.error_buckets:
+                # Take N samples from each bucket according to the log2 of their size.
+                n = min(len(bucket), int(math.log2(max(2,len(bucket)))))
+                for i in range(n):
+                    changed = True
+                    idx = random.randrange(0, len(bucket))
+                    result.append(bucket[idx])
+                    bucket[idx] = bucket[-1]
+                    bucket.pop()
+                    self.count -= 1
 
-    def createState(self, unit, state):
+        return result
+        #return random.sample(self.memory, batch_size)
+
+    def discard_random(self):
+        idx = random.randrange(0, self.count)
+        for bucket in self.error_buckets:
+            if idx < len(bucket):
+                bucket[idx] = bucket[-1]
+                bucket.pop()
+                self.count -= 1
+                return
+            idx -= len(bucket)
+
+        assert False, (idx, self.count, sum(map(len, self.error_buckets)))
+
+    def insert(self, samples, errors):
+        assert len(samples) == len(errors)
+        for i in range(len(samples)):
+            # Discard a random sample
+            while self.count >= self.capacity:
+                self.discard_random()
+
+            bucket_idx = max(0, min(len(self.error_buckets)-1, math.floor(len(self.error_buckets) * errors[i].item() / self.max_error)))
+            self.error_buckets[bucket_idx].append(samples[i])
+            self.count += 1
+
+    def createState(self, unit, state, last_attacked_at):
         nearby = []
         for unit2 in state["units"]:
-            if unit != unit2 and unitDistance(unit, unit2) < NEARBY_UNIT_DISTANCE_THRESHOLD:
+            if unit != unit2 and unitDistance(unit, unit2) < (NEARBY_UNIT_DISTANCE_THRESHOLD if unit2["owner"] != unit["owner"] else NEARBY_ALLY_UNIT_DISTANCE_THRESHOLD):
                 nearby.append(unit2)
 
         nearby.sort(key=lambda u: unitDistance(unit, u))
@@ -63,9 +112,12 @@ class ReplayMemory(object):
         allyNearby = []
         enemyNearby = []
 
+        lastAttackedTick = last_attacked_at[unit["tag"]] if unit["tag"] in last_attacked_at else -1000
+        maxSeconds = 50
+        secondsSinceAttacked = min(maxSeconds, (state["tick"] - lastAttackedTick)/TICKS_PER_SECOND)
         selfUnit = [
-            # 0,  # Total allies
-            # 0,  # Total enemies
+            0,  # Total allies
+            0,  # Total enemies
             # originx,
             # originy,
             # unit["energy"],
@@ -78,6 +130,7 @@ class ReplayMemory(object):
             # unit["build_progress"],
             # (unit["health"] + unit["shield"]) / 100.0,  # Make values be roughly 1 in most cases
             unit["health"]/max(1, unit["health_max"]),  # TODO: shield
+            secondsSinceAttacked,
         ]
 
         closestEnemy = None
@@ -110,14 +163,14 @@ class ReplayMemory(object):
             if u["owner"] == state["playerID"]:
                 if len(allyNearby) < maxAllies:
                     allyNearby.append(relativeUnit)
-                # selfUnit[0] += 1
+                selfUnit[0] += 1
             else:
                 if closestEnemy is None:
                     closestEnemy = u
 
                 if len(enemyNearby) < maxEnemies:
                     enemyNearby.append(relativeUnit)
-                # selfUnit[1] += 1
+                selfUnit[1] += 1
 
         # print(f"Nearby units: {len(nearby)}, of which enemies: {len(enemyNearby)}")
 
@@ -129,9 +182,9 @@ class ReplayMemory(object):
             0,
         ]
 
-        # assert(len(selfUnit) == TENSOR_SELF_SIZE)
-        # assert(len(dummyUnit) == TENSOR_ALLY_SIZE1)
-        # assert(len(dummyUnit) == TENSOR_ENEMY_SIZE1)
+        assert(len(selfUnit) == TENSOR_SELF_SIZE)
+        assert(len(dummyUnit) == TENSOR_ALLY_SIZE1)
+        assert(len(dummyUnit) == TENSOR_ENEMY_SIZE1)
 
         while len(allyNearby) < maxAllies:
             allyNearby.append(dummyUnit)
@@ -222,17 +275,23 @@ class ReplayMemory(object):
             else:
                 nextUnitState.append((unit2, None))
 
+        allyUnits = []
+        for u in s1["units"]:
+            if u["owner"] == unit["owner"]:
+                allyUnits.append(u)
+
         distanceToEnemy = 10000
         for (u1, u2) in nextUnitState:
+            currentReward = 0
             if u1["owner"] == s1["playerID"]:
                 # Ally unit
                 if u2 is None:
                     # Lost a unit
                     if u1 == unit:
                         # This unit died!!
-                        reward -= 1000
+                        currentReward -= 1000
                     else:
-                        reward -= 30
+                        currentReward -= 30
                 else:
                     shieldDiff = u2["shield"] - u1["shield"]
                     healthDiff = u2["health"] - u1["health"]
@@ -241,20 +300,20 @@ class ReplayMemory(object):
                     if u1 == unit:
                         if totalDiff < 0:
                             # This unit lost health
-                            reward -= 20
+                            currentReward -= healthDiff
                         elif totalDiff > 0:
-                            reward += 0.1
+                            currentReward += 0.1
                     else:
                         if totalDiff < 0:
                             # An ally unit lost health
-                            reward -= 10
+                            currentReward -= healthDiff * 0.5
                         elif totalDiff > 0:
-                            reward += 1
+                            currentReward += 0.1
             else:
                 # Enemy unit
                 if u2 is None:
                     # Killed a unit!
-                    reward += 100
+                    currentReward += 100
                 else:
                     # distanceToEnemy = min(distanceToEnemy, unitDistance(unit, u2))
                     distanceToEnemy = min(distanceToEnemy, unitDistance(unit, u1))
@@ -264,9 +323,23 @@ class ReplayMemory(object):
                     totalDiff = 0.5 * shieldDiff + healthDiff
                     if totalDiff < 0:
                         # An enemy unit lost health
-                        reward += 5
+                        currentReward += healthDiff * 0.5
                     elif totalDiff > 0:
-                        reward -= 1
+                        currentReward -= 1
+
+            if currentReward != 0:
+                # Split up the reward among the nearby units
+                creditWeight = 0
+                totalCreditWeight = 0
+                for u in allyUnits:
+                    d = unitDistance(u, u1)
+                    w = max(0, 1 - d/10.0)
+                    totalCreditWeight += w
+                    if u == unit:
+                        creditWeight += w
+
+                normalizedCreditWeight = creditWeight / totalCreditWeight if creditWeight > 0 else 0
+                reward += currentReward * normalizedCreditWeight
 
         # Avoid hiding in a corner
         if distanceToEnemy >= 8:
@@ -299,33 +372,53 @@ class ReplayMemory(object):
         data = json.loads(s)
         # print(s)
         states = data["states"]
+        total_reward = 0
+        last_attacked_at = {}
+        last_health = {}
+
+        tensor_states = []
         for i in range(len(states)):
             s1 = states[i]
-            s2 = states[i+1] if i + 1 < len(states) else None
-            if s2 == None:
-                continue
+            statesForUnit = {}
             for unit in s1["units"]:
+                hp = unit["health"] + unit["shield"]
+                if hp < last_health[unit["tag"]]:
+                    last_attacked_at[unit["tag"]] = s1["tick"]
+                last_health[unit["tag"]] = hp
+
                 # unit["weapon_cooldown"] = 1 if random.uniform(0, 1) < 0.5 else 0
                 if unit["unit_type"] == TERRAN_REAPER and unit["owner"] == s1["playerID"]:
                     # Got a unit that we want to add a sample for
-                    t1 = self.createState(unit, s1)
-                    next_unit = None
-                    for u in s2["units"]:
-                        if u["tag"] == unit["tag"]:
-                            next_unit = u
+                    t1 = self.createState(unit, s1, last_attacked_at)
+                    statesForUnit[unit["tag"]] = (unit, t1)
+                    self.all_actions.append(unit["action"])
 
-                    reward, terminal_state = self.calculate_reward(s1, s2, unit)
-                    if terminal_state:
-                        t2 = None
-                        next_action = None
-                    else:
-                        t2 = self.createState(next_unit, s2)
-                        next_action = next_unit["action"]
+            tensor_states.append(statesForUnit)
 
-                    action = unit["action"]
-                    self.push(Transition(state=t1, action=action, next_state=t2, reward=reward, next_action=next_action))
+        for i in range(len(tensor_states)-1):
+            s1 = states[i]
+            s2 = states[i+1]
+
+            for tag, (t1_unit, t1) in tensor_states[i].items():
+                if tag in tensor_states[i+1]:
+                    t2_unit, t2 = tensor_states[i+1][tag]
+                else:
+                    t2_unit, t2 = (None, None)
+
+                reward, terminal_state = self.calculate_reward(s1, s2, t1_unit)
+                t1_action = t1_unit["action"]
+
+                assert terminal_state == (t2 is None)
+                if terminal_state:
+                    t2_action = None
+                else:
+                    t2_action = t2_unit["action"]
+
+                total_reward += reward
+                self.push(Transition(state=t1, action=t1_action, next_state=t2, reward=reward, next_action=t2_action))
 
         health_diff = self.total_health(states[0]) - self.total_health(states[-1])
+        self.total_rewards.append(total_reward)
         self.durations.append(len(states))
         self.health_diffs.append(health_diff)
 
@@ -338,7 +431,7 @@ class ReplayMemory(object):
         return t
 
     def __len__(self):
-        return len(self.memory)
+        return self.count
 
 
 class DQN(nn.Module):
@@ -348,6 +441,7 @@ class DQN(nn.Module):
         self.lin1_1 = nn.Linear(TENSOR_SELF_SIZE, 20)
         self.lin1_2 = nn.Linear(TENSOR_ALLY_SIZE1, 20)
         self.lin1_3 = nn.Linear(TENSOR_ENEMY_SIZE1, 20)
+        # self.enemy_emb = nn.Embedding(NUM_ENEMY_TYPES, 4)
 
         self.lin2_1 = nn.Linear(20, 20)
         self.lin2_2 = nn.Linear(20, 20)
@@ -372,11 +466,11 @@ class DQN(nn.Module):
         # print(res)
         # return res
 
-        # x = F.elu(self.lin5(selfTensor))
-        # x = F.elu(self.lin6(x))
+        # x = F.leaky_relu(self.lin5(selfTensor))
+        # x = F.leaky_relu(self.lin6(x))
         # return x
         # x = self.lin2_1(x)
-        # x = F.relu(x)
+        # x = F.leaky_relu(x)
         # selfTens = self.drop1(x)
 
         # return self.lin5(x)
@@ -384,26 +478,27 @@ class DQN(nn.Module):
         # selfTensor: B x 13
         # allyTensor: B x 8 x 15
         # enemyTensor: B x 8 x 15
-        x = F.elu(self.lin1_1(selfTensor))
+        x = F.leaky_relu(self.lin1_1(selfTensor))
         # x = self.lin2_1(x)
-        # x = F.elu(x)
+        # x = F.leaky_relu(x)
         selfTens = self.drop1(x)
 
-        x = F.elu(self.lin1_2(allyTensor))
+        x = F.leaky_relu(self.lin1_2(allyTensor))
         # x = self.lin2_2(x)
         # Flatten all nearby units as batches for batch normalization to work
         # origShape = x.size()
         # x = x.view(-1, x.size()[-1])
-        # x = F.elu(x)
+        # x = F.leaky_relu(x)
         # x = x.view(*origShape)
         allyTens = self.drop1(x)
 
-        x = F.elu(self.lin1_3(enemyTensor))
+        x = F.leaky_relu(self.lin1_3(enemyTensor))
+        # y = self.enemy_emb(enemyTypes)
         # x = self.lin2_3(x)
         # Flatten all nearby units as batches for batch normalization to work
         # origShape = x.size()
         # x = x.view(-1, x.size()[-1])
-        # x = F.elu(x)
+        # x = F.leaky_relu(x)
         # x = x.view(*origShape)
         enemyTens = self.drop1(x)
 
@@ -412,28 +507,32 @@ class DQN(nn.Module):
         enemyTens2 = enemyTens.max(dim=1)[0]
 
         allTens = torch.cat((selfTens, allyTens, enemyTens1, enemyTens2), dim=1)
-        # x = F.elu(self.bn4(self.lin3(allTens)))
-        x = F.elu(self.lin3(allTens))
+        # x = F.leaky_relu(self.bn4(self.lin3(allTens)))
+        x = F.leaky_relu(self.lin3(allTens))
         x = self.lin4(x)
 
         # print("OUTPUT: " + str(x.size()))
         return x  # B x NUM_ACTIONS
 
 
-def predict(s, unitTag):
+def predict(s, unitTags, enableExploration):
     state = json.loads(s)
     #print(state)
     unit = None
 
-    for u in state["units"]:
-        if u["tag"] == unitTag:
-            unit = u
-            break
+    result = []
+    for tag in unitTags:
+        for u in state["units"]:
+            if u["tag"] == tag:
+                unit = u
+                break
 
-    assert unit is not None, "unit did not exist in state"
-    t1 = memory.createState(unit, state)
-    # print(t1)
-    return select_action(t1)
+        assert unit is not None, "unit did not exist in state"
+        t1 = memory.createState(unit, state)
+        # print(t1)
+        result.append(select_action(t1, enableExploration))
+
+    return result
 
 
 def addSession(s):
@@ -458,7 +557,7 @@ def load_all(optimization_steps_per_load: int):
     print("Done")
 
 
-data_path = "training_data/2"
+data_path = "training_data/3"
 BATCH_SIZE = 128
 GAMMA_PER_SECOND = 0.98
 TICKS_PER_STATE = 10
@@ -468,13 +567,14 @@ EPS_START = 0.9
 EPS_END = 0.05
 EPS_DECAY = 2000
 TARGET_UPDATE = 1
-NUM_ACTIONS = 3
-TENSOR_SELF_SIZE = 2  # 13
+NUM_ACTIONS = 4
+TENSOR_SELF_SIZE = 4  # 13
 TENSOR_ALLY_SIZE0 = 1
 TENSOR_ALLY_SIZE1 = 5  # 15
 TENSOR_ENEMY_SIZE0 = 2
 TENSOR_ENEMY_SIZE1 = 5  # 15
 NEARBY_UNIT_DISTANCE_THRESHOLD = 10
+NEARBY_ALLY_UNIT_DISTANCE_THRESHOLD = 50
 
 TABLE_SIZE = 768
 
@@ -484,20 +584,20 @@ target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
 
 optimizer = optim.Adam(policy_net.parameters(), lr=0.01)
-memory = ReplayMemory(50000)
+memory = ReplayMemory(10000)
 
 
 steps_done = 0
 
 
-def select_action(state):
+def select_action(state, enableExploration):
     global steps_done
     sample = random.random()
     eps_threshold = EPS_END + (EPS_START - EPS_END) * \
         math.exp(-1. * steps_done / EPS_DECAY)
     steps_done += 1
 
-    if sample > eps_threshold:
+    if sample > eps_threshold or not enableExploration:
         with torch.no_grad():
             policy_net.eval()
             q = policy_net(state[0].unsqueeze(0), state[1].unsqueeze(0), state[2].unsqueeze(0))
@@ -537,6 +637,7 @@ def optimize_model():
 
     policy_net.train()
     transitions = memory.sample(BATCH_SIZE)
+    batch_size = len(transitions)
     # Transpose the batch (see http://stackoverflow.com/a/19343/3343043 for
     # detailed explanation).
     batch = Transition(*zip(*transitions))
@@ -554,34 +655,34 @@ def optimize_model():
     state_batch0 = torch.cat([s[0].unsqueeze(0) for s in batch.state])  # selfTensor
     state_batch1 = torch.cat([s[1].unsqueeze(0) for s in batch.state])  # allyTensor
     state_batch2 = torch.cat([s[2].unsqueeze(0) for s in batch.state])  # enemyTensor
-    assert state_batch1.size() == (BATCH_SIZE,TENSOR_ALLY_SIZE0, TENSOR_ALLY_SIZE1)
-    # assert state_batch0.size() == (BATCH_SIZE,)
+    assert state_batch1.size() == (batch_size,TENSOR_ALLY_SIZE0, TENSOR_ALLY_SIZE1)
+    # assert state_batch0.size() == (batch_size,)
 
     action_batch = torch.tensor(batch.action).unsqueeze(1)
-    assert(action_batch.size() == (BATCH_SIZE,1))
+    assert(action_batch.size() == (batch_size,1))
     reward_batch = torch.tensor(batch.reward, dtype=torch.float)
-    assert reward_batch.size() == (BATCH_SIZE,)
+    assert reward_batch.size() == (batch_size,)
 
     # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
     # columns of actions taken
     state_action_values = policy_net(state_batch0, state_batch1, state_batch2).gather(1, action_batch)
-    assert state_action_values.size() == (BATCH_SIZE, 1)
+    assert state_action_values.size() == (batch_size, 1)
 
     # Compute V(s_{t+1}) for all next states.
-    next_state_values = torch.zeros(BATCH_SIZE, device=device)
+    next_state_values = torch.zeros(batch_size, device=device)
     if any_non_final:
         next_state_values[non_final_mask] = policy_net(non_final_next_states0, non_final_next_states1, non_final_next_states2).max(1)[0].detach()
 
-    assert next_state_values.size() == (BATCH_SIZE,)
+    assert next_state_values.size() == (batch_size,)
 
     # torch.set_printoptions(threshold=10000)
 
     # Compute the expected Q values
     expected_state_action_values = (next_state_values * GAMMA) + reward_batch
-    assert expected_state_action_values.size() == (BATCH_SIZE,)
+    assert expected_state_action_values.size() == (batch_size,)
 
     # alpha = 0.01
-    # for i in range(BATCH_SIZE):
+    # for i in range(batch_size):
     #     v0 = policy_net.emb.weight.data[state_batch0[i]][action_batch[i]]
     #     desired = expected_state_action_values[i]
     #     policy_net.emb.weight.data[state_batch0[i]][action_batch[i]] = v0 * (1-alpha) + desired * alpha
@@ -593,10 +694,12 @@ def optimize_model():
     # print(reward_batch)
     # print(torch.abs(expected_state_action_values.unsqueeze(1) - state_action_values))
     # Compute Huber loss
-    loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1))
+    transition_losses = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1), reduction='none')
+    loss = transition_losses.mean()
     # loss = (state_action_values - expected_state_action_values.unsqueeze(1)).pow(2).sum()
     print(loss.item())
     losses.append(loss.item())
+    memory.insert(transitions, transition_losses)
 
     # Optimize the model
     optimizer.zero_grad()
@@ -614,27 +717,50 @@ def plot_loss():
     durations_t = torch.tensor(losses, dtype=torch.float)
     fig = plt.figure(1)
     plt.clf()
-    ax = fig.add_subplot(111)
+    ax = fig.add_subplot(2,3,1)
     plt.title('Training...')
     plt.xlabel('Step')
     plt.ylabel('Loss')
     ax.set_yscale('log')
     plt.plot(durations_t.numpy())
-    plt.pause(0.001)  # pause a bit so that plots are updated
 
 
     x = torch.tensor(memory.health_diffs, dtype=torch.float)
     smooth = np.convolve(x.numpy(), np.ones((10,))/10, mode='valid')
-    fig = plt.figure(2)
-    plt.clf()
-    ax = fig.add_subplot(111)
+    ax = fig.add_subplot(2,3,2)
     plt.title('Training...')
-    plt.xlabel('Step')
+    plt.xlabel('Episode')
     plt.ylabel('Health Diff')
     plt.plot(x.numpy())
     plt.plot(smooth)
 
+    x = torch.tensor(memory.total_rewards, dtype=torch.float)
+    smooth = np.convolve(x.numpy(), np.ones((10,))/10, mode='valid')
+    ax = fig.add_subplot(2,3,3)
+    plt.title('Training...')
+    plt.xlabel('Episode')
+    plt.ylabel('Reward')
+    plt.plot(x.numpy())
+    plt.plot(smooth)
+
+    ax = fig.add_subplot(2,3,4)
+    # Use the last 50% of the actions
+    action_slice = memory.all_actions[len(memory.all_actions)//2:]
+    counts = np.bincount(action_slice)
+    plt.bar(range(len(counts)), counts)
+    plt.xlabel('Action')
+    plt.ylabel('Times Chosen')
+
+
+    ax = fig.add_subplot(2,3,5)
+    counts = [len(bucket) for bucket in memory.error_buckets]
+    plt.bar(range(len(counts)), counts)
+    plt.xlabel('Memory Bucket')
+    ax.set_yscale('log')
+    plt.ylabel('Size')
+
     plt.pause(0.001)  # pause a bit so that plots are updated
+
 
 
 def optimize(steps: int):
@@ -714,5 +840,5 @@ if __name__ == "__main__":
     while True:
         optimize(200)
 else:
-    load_all(20)
+    load_all(200)
     pass
