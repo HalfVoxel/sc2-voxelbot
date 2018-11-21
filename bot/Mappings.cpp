@@ -442,6 +442,22 @@ std::vector<UNIT_TYPEID> abilityToCasterUnit(ABILITY_ID ability) {
     }*/
 }
 
+float maxHealth(sc2::UNIT_TYPEID type) {
+    return unit_type_initial_health[(int)type].first;
+}
+
+float maxShield(sc2::UNIT_TYPEID type) {
+    return unit_type_initial_health[(int)type].second;
+}
+
+bool isFlying(sc2::UNIT_TYPEID type) {
+    return unit_type_is_flying[(int)type];
+}
+
+float unitRadius(sc2::UNIT_TYPEID type) {
+    return unit_type_radius[(int)type];
+}
+
 /** Maps an ability to the unit that is built or trained by that ability.
  * In particular this is defined for BUILD_* abilities.
  */

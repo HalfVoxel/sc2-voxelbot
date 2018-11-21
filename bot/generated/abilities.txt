@@ -1,57 +1,1910 @@
-Launched SC2 (/Volumes/Carbon/Applications/StarCraft II/Versions/Base69232/SC2.app/Contents/MacOS/SC2), PID: 98859
+Launched SC2 (/Volumes/Carbon/Applications/StarCraft II/Versions/Base70154/SC2.app/Contents/MacOS/SC2), PID: 38564
 NSWindowEdgeResizing is off!
-Waiting for connection........
+Waiting for connection.......
 Connected to 127.0.0.1:8167
 Waiting for the JoinGame response.
 WaitJoinGame finished successfully.
+A
+B
+C
+Cannot determine how TechLab was created (ability: UNKNOWN
+Cannot determine how Reactor was created (ability: UNKNOWN
+Cannot determine how PointDefenseDrone was created (ability: UNKNOWN
+Cannot determine how AutoTurret was created (ability: UNKNOWN
+Cannot determine how CreepTumor was created (ability: BUILD_CREEPTUMOR_TUMOR
+Cannot determine how RichMineralField was created (ability: UNKNOWN
+Cannot determine how RichMineralField750 was created (ability: UNKNOWN
+Cannot determine how XelNagaTower was created (ability: UNKNOWN
+Cannot determine how Rocks2x2NonConjoined was created (ability: UNKNOWN
+Cannot determine how MineralField was created (ability: UNKNOWN
+Cannot determine how VespeneGeyser was created (ability: UNKNOWN
+Cannot determine how RichVespeneGeyser was created (ability: UNKNOWN
+Cannot determine how DestructibleGarage was created (ability: UNKNOWN
+Cannot determine how DestructibleGarageLarge was created (ability: UNKNOWN
+Cannot determine how BraxisAlphaDestructible1x1 was created (ability: UNKNOWN
+Cannot determine how BraxisAlphaDestructible2x2 was created (ability: UNKNOWN
+Cannot determine how DestructibleDebris4x4 was created (ability: UNKNOWN
+Cannot determine how DestructibleDebris6x6 was created (ability: UNKNOWN
+Cannot determine how DestructibleRock2x4Vertical was created (ability: UNKNOWN
+Cannot determine how DestructibleRock2x4Horizontal was created (ability: UNKNOWN
+Cannot determine how DestructibleRock2x6Vertical was created (ability: UNKNOWN
+Cannot determine how DestructibleRock2x6Horizontal was created (ability: UNKNOWN
+Cannot determine how DestructibleRock4x4 was created (ability: UNKNOWN
+Cannot determine how DestructibleRock6x6 was created (ability: UNKNOWN
+Cannot determine how DestructibleRampDiagonalHugeULBR was created (ability: UNKNOWN
+Cannot determine how DestructibleRampDiagonalHugeBLUR was created (ability: UNKNOWN
+Cannot determine how DestructibleRampVerticalHuge was created (ability: UNKNOWN
+Cannot determine how DestructibleRampHorizontalHuge was created (ability: UNKNOWN
+Cannot determine how DestructibleDebrisRampDiagonalHugeULBR was created (ability: UNKNOWN
+Cannot determine how DestructibleDebrisRampDiagonalHugeBLUR was created (ability: UNKNOWN
+Cannot determine how MengskStatueAlone was created (ability: UNKNOWN
+Cannot determine how MengskStatue was created (ability: UNKNOWN
+Cannot determine how WolfStatue was created (ability: UNKNOWN
+Cannot determine how GlobeStatue was created (ability: UNKNOWN
+Cannot determine how UnbuildableRocksDestructible was created (ability: UNKNOWN
+Cannot determine how UnbuildableBricksDestructible was created (ability: UNKNOWN
+Cannot determine how UnbuildablePlatesDestructible was created (ability: UNKNOWN
+Cannot determine how Debris2x2NonConjoined was created (ability: UNKNOWN
+Cannot determine how MineralField750 was created (ability: UNKNOWN
+Cannot determine how CollapsibleTerranTowerDebris was created (ability: UNKNOWN
+Cannot determine how DebrisRampLeft was created (ability: UNKNOWN
+Cannot determine how DebrisRampRight was created (ability: UNKNOWN
+Cannot determine how CollapsibleRockTowerDebris was created (ability: UNKNOWN
+Cannot determine how NydusCanalAttacker was created (ability: UNKNOWN
+Cannot determine how NydusCanalCreeper was created (ability: UNKNOWN
+Loop in dependency tree for ExtendingBridgeNEWide8Out
+Loop in dependency tree for ExtendingBridgeNEWide8
+Loop in dependency tree for ExtendingBridgeNWWide8Out
+Loop in dependency tree for ExtendingBridgeNWWide8
+Loop in dependency tree for ExtendingBridgeNEWide10Out
+Loop in dependency tree for ExtendingBridgeNEWide10
+Loop in dependency tree for ExtendingBridgeNWWide10Out
+Loop in dependency tree for ExtendingBridgeNWWide10
+Loop in dependency tree for ExtendingBridgeNEWide12Out
+Loop in dependency tree for ExtendingBridgeNEWide12
+Loop in dependency tree for ExtendingBridgeNWWide12Out
+Loop in dependency tree for ExtendingBridgeNWWide12
+Cannot determine how CollapsibleRockTowerDebrisRampRight was created (ability: UNKNOWN
+Cannot determine how CollapsibleRockTowerDebrisRampLeft was created (ability: UNKNOWN
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeNE8Out
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeNE8
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeNW8Out
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeNW8
+Cannot determine how XelNaga_Caverns_Floating_BridgeNE10 was created (ability: UNKNOWN
+Cannot determine how XelNaga_Caverns_Floating_BridgeNE10 was created (ability: UNKNOWN
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeNW10Out
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeNW10
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeNE12Out
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeNE12
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeNW12Out
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeNW12
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeH8Out
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeH8
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeV8Out
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeV8
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeH10Out
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeH10
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeV10Out
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeV10
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeH12Out
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeH12
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeV12Out
+Loop in dependency tree for XelNaga_Caverns_Floating_BridgeV12
+Cannot determine how CollapsibleTerranTowerPushUnitRampLeft was created (ability: UNKNOWN
+Cannot determine how CollapsibleTerranTowerPushUnitRampRight was created (ability: UNKNOWN
+Cannot determine how CollapsibleRockTowerPushUnit was created (ability: UNKNOWN
+Cannot determine how CollapsibleTerranTowerPushUnit was created (ability: UNKNOWN
+Cannot determine how CollapsibleRockTowerPushUnitRampRight was created (ability: UNKNOWN
+Cannot determine how CollapsibleRockTowerPushUnitRampLeft was created (ability: UNKNOWN
+Cannot determine how DigesterCreepSprayTargetUnit was created (ability: UNKNOWN
+Cannot determine how ResourceBlocker was created (ability: UNKNOWN
+Cannot determine how CollapsibleRockTowerDiagonal was created (ability: UNKNOWN
+Cannot determine how CollapsibleTerranTowerDiagonal was created (ability: UNKNOWN
+Cannot determine how CollapsibleTerranTowerRampLeft was created (ability: UNKNOWN
+Cannot determine how CollapsibleTerranTowerRampRight was created (ability: UNKNOWN
+Cannot determine how Ice2x2NonConjoined was created (ability: UNKNOWN
+Cannot determine how CollapsibleRockTower was created (ability: UNKNOWN
+Cannot determine how CollapsibleTerranTower was created (ability: UNKNOWN
+Cannot determine how DestructibleRock6x6Weak was created (ability: UNKNOWN
+Cannot determine how DestructibleCityDebris2x4Vertical was created (ability: UNKNOWN
+Cannot determine how DestructibleCityDebris2x4Horizontal was created (ability: UNKNOWN
+Cannot determine how DestructibleCityDebris2x6Vertical was created (ability: UNKNOWN
+Cannot determine how DestructibleCityDebris2x6Horizontal was created (ability: UNKNOWN
+Cannot determine how DestructibleCityDebris4x4 was created (ability: UNKNOWN
+Cannot determine how DestructibleCityDebris6x6 was created (ability: UNKNOWN
+Cannot determine how DestructibleCityDebrisHugeDiagonalBLUR was created (ability: UNKNOWN
+Cannot determine how DestructibleCityDebrisHugeDiagonalULBR was created (ability: UNKNOWN
+Cannot determine how ZerusDestructibleArch was created (ability: UNKNOWN
+Cannot determine how CollapsibleRockTowerRampRight was created (ability: UNKNOWN
+Cannot determine how CollapsibleRockTowerRampLeft was created (ability: UNKNOWN
+Cannot determine how LabMineralField was created (ability: UNKNOWN
+Cannot determine how LabMineralField750 was created (ability: UNKNOWN
+Loop in dependency tree for SnowRefinery_Terran_ExtendingBridgeNEShort8Out
+Loop in dependency tree for SnowRefinery_Terran_ExtendingBridgeNEShort8
+Loop in dependency tree for SnowRefinery_Terran_ExtendingBridgeNWShort8Out
+Loop in dependency tree for SnowRefinery_Terran_ExtendingBridgeNWShort8
+Loop in dependency tree for AiurLightBridgeNE8Out
+Loop in dependency tree for AiurLightBridgeNE8
+Loop in dependency tree for AiurLightBridgeNE10Out
+Loop in dependency tree for AiurLightBridgeNE10
+Cannot determine how AiurLightBridgeNE12Out was created (ability: UNKNOWN
+Cannot determine how AiurLightBridgeNE12 was created (ability: UNKNOWN
+Loop in dependency tree for AiurLightBridgeNW8Out
+Loop in dependency tree for AiurLightBridgeNW8
+Loop in dependency tree for AiurLightBridgeNW10Out
+Loop in dependency tree for AiurLightBridgeNW10
+Cannot determine how AiurLightBridgeNW12Out was created (ability: UNKNOWN
+Cannot determine how AiurLightBridgeNW12Out was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeNE8Out was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeNE10Out was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeNE12Out was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeNW8Out was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeNW10Out was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeNW12Out was created (ability: UNKNOWN
+Loop in dependency tree for ShakurasLightBridgeNE8Out
+Loop in dependency tree for ShakurasLightBridgeNE8
+Cannot determine how ShakurasLightBridgeNE10 was created (ability: UNKNOWN
+Cannot determine how ShakurasLightBridgeNE10 was created (ability: UNKNOWN
+Cannot determine how ShakurasLightBridgeNE12Out was created (ability: UNKNOWN
+Cannot determine how ShakurasLightBridgeNE12Out was created (ability: UNKNOWN
+Loop in dependency tree for ShakurasLightBridgeNW8Out
+Loop in dependency tree for ShakurasLightBridgeNW8
+Loop in dependency tree for ShakurasLightBridgeNW10Out
+Loop in dependency tree for ShakurasLightBridgeNW10
+Loop in dependency tree for ShakurasLightBridgeNW12Out
+Loop in dependency tree for ShakurasLightBridgeNW12
+Loop in dependency tree for AiurLightBridgeAbandonedNE8Out
+Loop in dependency tree for AiurLightBridgeAbandonedNE8
+Loop in dependency tree for AiurLightBridgeAbandonedNE10Out
+Loop in dependency tree for AiurLightBridgeAbandonedNE10
+Loop in dependency tree for AiurLightBridgeAbandonedNE12Out
+Loop in dependency tree for AiurLightBridgeAbandonedNE12
+Loop in dependency tree for AiurLightBridgeAbandonedNW8Out
+Loop in dependency tree for AiurLightBridgeAbandonedNW8
+Cannot determine how AiurLightBridgeAbandonedNW10Out was created (ability: UNKNOWN
+Cannot determine how AiurLightBridgeAbandonedNW10Out was created (ability: UNKNOWN
+Loop in dependency tree for AiurLightBridgeAbandonedNW12Out
+Loop in dependency tree for AiurLightBridgeAbandonedNW12
+Cannot determine how CollapsiblePurifierTowerDebris was created (ability: UNKNOWN
+Loop in dependency tree for PortCity_Bridge_UnitNE8Out
+Loop in dependency tree for PortCity_Bridge_UnitNE8
+Loop in dependency tree for PortCity_Bridge_UnitSE8Out
+Loop in dependency tree for PortCity_Bridge_UnitSE8
+Loop in dependency tree for PortCity_Bridge_UnitNW8Out
+Loop in dependency tree for PortCity_Bridge_UnitNW8
+Loop in dependency tree for PortCity_Bridge_UnitSW8Out
+Loop in dependency tree for PortCity_Bridge_UnitSW8
+Loop in dependency tree for PortCity_Bridge_UnitNE10Out
+Loop in dependency tree for PortCity_Bridge_UnitNE10
+Loop in dependency tree for PortCity_Bridge_UnitSE10Out
+Loop in dependency tree for PortCity_Bridge_UnitSE10
+Cannot determine how PortCity_Bridge_UnitNW10Out was created (ability: UNKNOWN
+Cannot determine how PortCity_Bridge_UnitNW10Out was created (ability: UNKNOWN
+Cannot determine how PortCity_Bridge_UnitSW10Out was created (ability: UNKNOWN
+Cannot determine how PortCity_Bridge_UnitSW10Out was created (ability: UNKNOWN
+Cannot determine how PortCity_Bridge_UnitNE12 was created (ability: UNKNOWN
+Cannot determine how PortCity_Bridge_UnitNE12 was created (ability: UNKNOWN
+Loop in dependency tree for PortCity_Bridge_UnitSE12Out
+Loop in dependency tree for PortCity_Bridge_UnitSE12
+Cannot determine how PortCity_Bridge_UnitNW12Out was created (ability: UNKNOWN
+Cannot determine how PortCity_Bridge_UnitNW12Out was created (ability: UNKNOWN
+Loop in dependency tree for PortCity_Bridge_UnitSW12Out
+Loop in dependency tree for PortCity_Bridge_UnitSW12
+Loop in dependency tree for PortCity_Bridge_UnitN8Out
+Loop in dependency tree for PortCity_Bridge_UnitN8
+Loop in dependency tree for PortCity_Bridge_UnitS8Out
+Loop in dependency tree for PortCity_Bridge_UnitS8
+Cannot determine how PortCity_Bridge_UnitE8Out was created (ability: UNKNOWN
+Cannot determine how PortCity_Bridge_UnitE8Out was created (ability: UNKNOWN
+Loop in dependency tree for PortCity_Bridge_UnitW8Out
+Loop in dependency tree for PortCity_Bridge_UnitW8
+Loop in dependency tree for PortCity_Bridge_UnitN10Out
+Loop in dependency tree for PortCity_Bridge_UnitN10
+Cannot determine how PortCity_Bridge_UnitS10 was created (ability: UNKNOWN
+Cannot determine how PortCity_Bridge_UnitS10 was created (ability: UNKNOWN
+Loop in dependency tree for PortCity_Bridge_UnitE10Out
+Loop in dependency tree for PortCity_Bridge_UnitE10
+Loop in dependency tree for PortCity_Bridge_UnitW10Out
+Loop in dependency tree for PortCity_Bridge_UnitW10
+Loop in dependency tree for PortCity_Bridge_UnitN12Out
+Loop in dependency tree for PortCity_Bridge_UnitN12
+Loop in dependency tree for PortCity_Bridge_UnitS12Out
+Loop in dependency tree for PortCity_Bridge_UnitS12
+Cannot determine how PortCity_Bridge_UnitE12Out was created (ability: UNKNOWN
+Cannot determine how PortCity_Bridge_UnitE12Out was created (ability: UNKNOWN
+Loop in dependency tree for PortCity_Bridge_UnitW12Out
+Loop in dependency tree for PortCity_Bridge_UnitW12
+Cannot determine how PurifierRichMineralField was created (ability: UNKNOWN
+Cannot determine how PurifierRichMineralField750 was created (ability: UNKNOWN
+Cannot determine how CollapsiblePurifierTowerPushUnit was created (ability: UNKNOWN
+Cannot determine how KD8Charge was created (ability: UNKNOWN
+Cannot determine how DestructibleExpeditionGate6x6 was created (ability: UNKNOWN
+Cannot determine how DestructibleZergInfestation3x3 was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeDestructibleNE8Out was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeDestructibleNE10Out was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeDestructibleNE12Out was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeDestructibleNW8Out was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeDestructibleNW10Out was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeDestructibleNW12Out was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeDestructibleSW8Out was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeDestructibleSW10Out was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeDestructibleSW12Out was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeDestructibleSE8Out was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeDestructibleSE10Out was created (ability: UNKNOWN
+Cannot determine how AiurTempleBridgeDestructibleSE12Out was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleRampBlocker6S was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleRampBlocker6SE was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleRampBlocker6E was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleRampBlocker6NE was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleRampBlocker6N was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleRampBlocker6NW was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleRampBlocker6W was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleRampBlocker6SW was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleRampBlocker8S was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleRampBlocker8SE was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleRampBlocker8E was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleRampBlocker8NE was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleRampBlocker8N was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleRampBlocker8NW was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleRampBlocker8W was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleRampBlocker8SW was created (ability: UNKNOWN
+Cannot determine how CollapsiblePurifierTowerDiagonal was created (ability: UNKNOWN
+Cannot determine how PurifierMineralField was created (ability: UNKNOWN
+Cannot determine how PurifierMineralField750 was created (ability: UNKNOWN
+Cannot determine how BattleStationMineralField was created (ability: UNKNOWN
+Cannot determine how BattleStationMineralField750 was created (ability: UNKNOWN
+Cannot determine how Elsecaro_Colonist_Hut was created (ability: UNKNOWN
+Cannot determine how BypassArmorDrone was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleBlocker6S was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleBlocker6SE was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleBlocker6E was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleBlocker6NE was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleBlocker6N was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleBlocker6NW was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleBlocker6W was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleBlocker6SW was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleBlocker8S was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleBlocker8SE was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleBlocker8E was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleBlocker8NE was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleBlocker8N was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleBlocker8NW was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleBlocker8W was created (ability: UNKNOWN
+Cannot determine how XelNagaDestructibleBlocker8SW was created (ability: UNKNOWN
+Cannot determine how RavenRepairDrone was created (ability: UNKNOWN
+Cannot determine how RenegadeMissileTurret was created (ability: UNKNOWN
+D
+TERRAN_ORBITALCOMMAND (550, 0), TERRAN_PLANETARYFORTRESS (550, 150), 
+TERRAN_BARRACKSTECHLAB (50, 25), TERRAN_BARRACKSREACTOR (50, 50), 
+TERRAN_FACTORYTECHLAB (50, 25), TERRAN_FACTORYREACTOR (50, 50), 
+TERRAN_STARPORTTECHLAB (50, 25), TERRAN_STARPORTREACTOR (50, 50), 
+PROTOSS_WARPGATE (150, 0), 
+ZERG_LAIR (500, 100), ZERG_HIVE (700, 250), 
+ZERG_GREATERSPIRE (350, 350), 
+ZERG_NYDUSCANAL (50, 50), 
+ZERG_HIVE (700, 250), 
+ZERG_EXTRACTOR (75, 0), ZERG_NYDUSCANAL (50, 50), ZERG_EVOLUTIONCHAMBER (125, 0), ZERG_SPORECRAWLER (125, 0), ZERG_SPINECRAWLER (150, 0), ZERG_BANELINGNEST (150, 50), ZERG_ROACHWARREN (200, 0), ZERG_SPAWNINGPOOL (250, 0), ZERG_HYDRALISKDEN (150, 100), ZERG_INFESTATIONPIT (150, 100), ZERG_LURKERDENMP (150, 150), ZERG_HATCHERY (350, 0), ZERG_NYDUSNETWORK (200, 150), ZERG_ULTRALISKCAVERN (200, 200), ZERG_SPIRE (250, 200), ZERG_LAIR (500, 100), ZERG_GREATERSPIRE (350, 350), ZERG_HIVE (700, 250), 
+ZERG_BANELING (50, 25), 
+ZERG_OVERSEER (150, 50), 
+ZERG_LURKERMP (150, 150), 
+ZERG_RAVAGER (100, 100), 
+ZERG_BROODLORD (300, 250), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+UNKNOWN (0, 0), 
+E
+TERRAN_TECHLAB requires ability UNKNOWN but that ability is not cast by any known unit
+TERRAN_REACTOR requires ability UNKNOWN but that ability is not cast by any known unit
+ZERG_INFESTORTERRAN requires ability UNKNOWN but that ability is not cast by any known unit
+PROTOSS_MOTHERSHIP requires ability TRAIN_MOTHERSHIP but that ability is not cast by any known unit
+ZERG_CHANGELINGZEALOT requires ability UNKNOWN but that ability is not cast by any known unit
+ZERG_CHANGELINGMARINESHIELD requires ability UNKNOWN but that ability is not cast by any known unit
+ZERG_CHANGELINGMARINE requires ability UNKNOWN but that ability is not cast by any known unit
+ZERG_CHANGELINGZERGLINGWINGS requires ability UNKNOWN but that ability is not cast by any known unit
+ZERG_CHANGELINGZERGLING requires ability UNKNOWN but that ability is not cast by any known unit
+TERRAN_AUTOTURRET requires ability UNKNOWN but that ability is not cast by any known unit
+TERRAN_COMMANDCENTERFLYING requires ability LIFT_COMMANDCENTER but that ability is not cast by any known unit
+TERRAN_FACTORYFLYING requires ability LIFT_FACTORY but that ability is not cast by any known unit
+TERRAN_STARPORTFLYING requires ability LIFT_STARPORT but that ability is not cast by any known unit
+TERRAN_BARRACKSFLYING requires ability LIFT_BARRACKS but that ability is not cast by any known unit
+ZERG_CREEPTUMOR requires ability BUILD_CREEPTUMOR_TUMOR but that ability is not cast by any known unit
+ZERG_BANELINGBURROWED requires ability BURROWDOWN_BANELING but that ability is not cast by any known unit
+ZERG_DRONEBURROWED requires ability BURROWDOWN_DRONE but that ability is not cast by any known unit
+ZERG_HYDRALISKBURROWED requires ability BURROWDOWN_HYDRALISK but that ability is not cast by any known unit
+ZERG_ROACHBURROWED requires ability BURROWDOWN_ROACH but that ability is not cast by any known unit
+ZERG_ZERGLINGBURROWED requires ability BURROWDOWN_ZERGLING but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+ZERG_QUEENBURROWED requires ability BURROWDOWN_QUEEN but that ability is not cast by any known unit
+ZERG_INFESTORBURROWED requires ability BURROWDOWN_INFESTOR but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+TERRAN_ORBITALCOMMANDFLYING requires ability LIFT_ORBITALCOMMAND but that ability is not cast by any known unit
+ZERG_CREEPTUMORBURROWED requires ability UNKNOWN but that ability is not cast by any known unit
+ZERG_CREEPTUMORQUEEN requires ability BUILD_CREEPTUMOR_QUEEN but that ability is not cast by any known unit
+ZERG_SPINECRAWLERUPROOTED requires ability MORPH_SPINECRAWLERUPROOT but that ability is not cast by any known unit
+ZERG_SPORECRAWLERUPROOTED requires ability MORPH_SPORECRAWLERUPROOT but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+PROTOSS_MOTHERSHIPCORE requires ability TRAIN_MOTHERSHIPCORE but that ability is not cast by any known unit
+ZERG_LOCUSTMP requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+ZERG_SWARMHOSTBURROWEDMP requires ability BURROWDOWN_SWARMHOST but that ability is not cast by any known unit
+TERRAN_WIDOWMINEBURROWED requires ability BURROWDOWN_WIDOWMINE but that ability is not cast by any known unit
+ZERG_LURKERMP requires ability UNKNOWN but that ability is not cast by any known unit
+ZERG_LURKERMPBURROWED requires ability BURROWDOWN_LURKER but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability BURROWDOWN_RAVAGER but that ability is not cast by any known unit
+ZERG_LOCUSTMPFLYING requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+PROTOSS_DISRUPTORPHASED requires ability UNKNOWN but that ability is not cast by any known unit
+TERRAN_LIBERATORAG requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+UNKNOWN requires ability UNKNOWN but that ability is not cast by any known unit
+PROTOSS_PYLONOVERCHARGED requires ability UNKNOWN but that ability is not cast by any known unit
+Unit: Colossus
+Colossus requires Assimilator
+Colossus requires RoboticsBay
+Colossus requires RoboticsFacility
+Colossus requires Pylon
+Colossus requires CyberneticsCore
+Colossus requires Probe
+Colossus requires Nexus
+Colossus requires Gateway
+Unit: TechLab
+TechLab requires Refinery
+TechLab requires SCV
+TechLab requires CommandCenter
+Unit: Reactor
+Reactor requires Refinery
+Reactor requires SCV
+Reactor requires CommandCenter
+Unit: InfestorTerran
+Unit: BanelingCocoon
+BanelingCocoon requires Extractor
+BanelingCocoon requires Drone
+BanelingCocoon requires Larva
+Unit: Baneling
+Baneling requires Extractor
+Baneling requires BanelingNest
+Baneling requires Zergling
+Baneling requires SpawningPool
+Baneling requires Larva
+Baneling requires Hatchery
+Baneling requires Drone
+Unit: Mothership
+Mothership requires Assimilator
+Mothership requires Probe
+Mothership requires Nexus
+Unit: PointDefenseDrone
+Unit: Changeling
+Unit: ChangelingZealot
+Unit: ChangelingMarineShield
+Unit: ChangelingMarine
+Unit: ChangelingZerglingWings
+Unit: ChangelingZergling
+Unit: CommandCenter
+CommandCenter requires SCV
+CommandCenter requires CommandCenter
+Unit: SupplyDepot
+SupplyDepot requires SCV
+SupplyDepot requires CommandCenter
+Unit: Refinery
+Refinery requires SCV
+Refinery requires CommandCenter
+Unit: Barracks
+Barracks requires SupplyDepot
+Barracks requires SCV
+Barracks requires CommandCenter
+Unit: EngineeringBay
+EngineeringBay requires CommandCenter
+EngineeringBay requires SCV
+Unit: MissileTurret
+MissileTurret requires EngineeringBay
+MissileTurret requires SCV
+MissileTurret requires CommandCenter
+Unit: Bunker
+Bunker requires Barracks
+Bunker requires SCV
+Bunker requires CommandCenter
+Bunker requires SupplyDepot
+Unit: SensorTower
+SensorTower requires Refinery
+SensorTower requires EngineeringBay
+SensorTower requires SCV
+SensorTower requires CommandCenter
+Unit: GhostAcademy
+GhostAcademy requires Refinery
+GhostAcademy requires Barracks
+GhostAcademy requires SCV
+GhostAcademy requires CommandCenter
+GhostAcademy requires SupplyDepot
+Unit: Factory
+Factory requires Refinery
+Factory requires Barracks
+Factory requires SCV
+Factory requires CommandCenter
+Factory requires SupplyDepot
+Unit: Starport
+Starport requires Refinery
+Starport requires Factory
+Starport requires SCV
+Starport requires CommandCenter
+Starport requires Barracks
+Starport requires SupplyDepot
+Unit: Armory
+Armory requires Refinery
+Armory requires Factory
+Armory requires SCV
+Armory requires CommandCenter
+Armory requires Barracks
+Armory requires SupplyDepot
+Unit: FusionCore
+FusionCore requires Refinery
+FusionCore requires Starport
+FusionCore requires SCV
+FusionCore requires CommandCenter
+FusionCore requires Factory
+FusionCore requires Barracks
+FusionCore requires SupplyDepot
+Unit: AutoTurret
+Unit: SiegeTankSieged
+SiegeTankSieged requires Refinery
+SiegeTankSieged requires SiegeTank
+SiegeTankSieged requires TechLab
+SiegeTankSieged requires Factory
+SiegeTankSieged requires Barracks
+SiegeTankSieged requires SCV
+SiegeTankSieged requires CommandCenter
+SiegeTankSieged requires SupplyDepot
+Unit: SiegeTank
+SiegeTank requires TechLab
+SiegeTank requires Refinery
+SiegeTank requires Factory
+SiegeTank requires Barracks
+SiegeTank requires SCV
+SiegeTank requires CommandCenter
+SiegeTank requires SupplyDepot
+Unit: VikingAssault
+VikingAssault requires Refinery
+VikingAssault requires VikingFighter
+VikingAssault requires Starport
+VikingAssault requires Factory
+VikingAssault requires SCV
+VikingAssault requires CommandCenter
+VikingAssault requires Barracks
+VikingAssault requires SupplyDepot
+Unit: VikingFighter
+VikingFighter requires Refinery
+VikingFighter requires Starport
+VikingFighter requires Factory
+VikingFighter requires SCV
+VikingFighter requires CommandCenter
+VikingFighter requires Barracks
+VikingFighter requires SupplyDepot
+Unit: CommandCenterFlying
+Unit: BarracksTechLab
+BarracksTechLab requires Refinery
+BarracksTechLab requires Barracks
+BarracksTechLab requires SupplyDepot
+BarracksTechLab requires SCV
+BarracksTechLab requires CommandCenter
+Unit: BarracksReactor
+BarracksReactor requires Refinery
+BarracksReactor requires Barracks
+BarracksReactor requires SupplyDepot
+BarracksReactor requires SCV
+BarracksReactor requires CommandCenter
+Unit: FactoryTechLab
+FactoryTechLab requires Refinery
+FactoryTechLab requires Factory
+FactoryTechLab requires Barracks
+FactoryTechLab requires SCV
+FactoryTechLab requires CommandCenter
+FactoryTechLab requires SupplyDepot
+Unit: FactoryReactor
+FactoryReactor requires Refinery
+FactoryReactor requires Factory
+FactoryReactor requires Barracks
+FactoryReactor requires SCV
+FactoryReactor requires CommandCenter
+FactoryReactor requires SupplyDepot
+Unit: StarportTechLab
+StarportTechLab requires Refinery
+StarportTechLab requires Starport
+StarportTechLab requires Factory
+StarportTechLab requires SCV
+StarportTechLab requires CommandCenter
+StarportTechLab requires Barracks
+StarportTechLab requires SupplyDepot
+Unit: StarportReactor
+StarportReactor requires Refinery
+StarportReactor requires Starport
+StarportReactor requires Factory
+StarportReactor requires SCV
+StarportReactor requires CommandCenter
+StarportReactor requires Barracks
+StarportReactor requires SupplyDepot
+Unit: FactoryFlying
+FactoryFlying requires Refinery
+FactoryFlying requires SCV
+FactoryFlying requires CommandCenter
+Unit: StarportFlying
+StarportFlying requires Refinery
+StarportFlying requires SCV
+StarportFlying requires CommandCenter
+Unit: SCV
+SCV requires CommandCenter
+SCV requires SCV
+Unit: BarracksFlying
+Unit: SupplyDepotLowered
+SupplyDepotLowered requires SupplyDepot
+SupplyDepotLowered requires SCV
+SupplyDepotLowered requires CommandCenter
+Unit: Marine
+Marine requires Barracks
+Marine requires SupplyDepot
+Marine requires SCV
+Marine requires CommandCenter
+Unit: Reaper
+Reaper requires Refinery
+Reaper requires Barracks
+Reaper requires SupplyDepot
+Reaper requires SCV
+Reaper requires CommandCenter
+Unit: Ghost
+Ghost requires Refinery
+Ghost requires Barracks
+Ghost requires SupplyDepot
+Ghost requires SCV
+Ghost requires CommandCenter
+Unit: Marauder
+Marauder requires TechLab
+Marauder requires Refinery
+Marauder requires Barracks
+Marauder requires SupplyDepot
+Marauder requires SCV
+Marauder requires CommandCenter
+Unit: Thor
+Thor requires Refinery
+Thor requires Factory
+Thor requires Barracks
+Thor requires SCV
+Thor requires CommandCenter
+Thor requires SupplyDepot
+Unit: Hellion
+Hellion requires Factory
+Hellion requires Refinery
+Hellion requires Barracks
+Hellion requires SCV
+Hellion requires CommandCenter
+Hellion requires SupplyDepot
+Unit: Medivac
+Medivac requires Refinery
+Medivac requires Starport
+Medivac requires Factory
+Medivac requires SCV
+Medivac requires CommandCenter
+Medivac requires Barracks
+Medivac requires SupplyDepot
+Unit: Banshee
+Banshee requires TechLab
+Banshee requires Refinery
+Banshee requires Starport
+Banshee requires Factory
+Banshee requires SCV
+Banshee requires CommandCenter
+Banshee requires Barracks
+Banshee requires SupplyDepot
+Unit: Raven
+Raven requires TechLab
+Raven requires Refinery
+Raven requires Starport
+Raven requires Factory
+Raven requires SCV
+Raven requires CommandCenter
+Raven requires Barracks
+Raven requires SupplyDepot
+Unit: Battlecruiser
+Battlecruiser requires Refinery
+Battlecruiser requires Starport
+Battlecruiser requires Factory
+Battlecruiser requires SCV
+Battlecruiser requires CommandCenter
+Battlecruiser requires Barracks
+Battlecruiser requires SupplyDepot
+Unit: Nuke
+Nuke requires Refinery
+Nuke requires SCV
+Nuke requires CommandCenter
+Unit: Nexus
+Nexus requires Probe
+Nexus requires Nexus
+Unit: Pylon
+Pylon requires Probe
+Pylon requires Nexus
+Unit: Assimilator
+Assimilator requires Probe
+Assimilator requires Nexus
+Unit: Gateway
+Gateway requires Nexus
+Gateway requires Pylon
+Gateway requires Probe
+Unit: Forge
+Forge requires Nexus
+Forge requires Pylon
+Forge requires Probe
+Unit: FleetBeacon
+FleetBeacon requires Pylon
+FleetBeacon requires Assimilator
+FleetBeacon requires Stargate
+FleetBeacon requires Probe
+FleetBeacon requires Nexus
+FleetBeacon requires CyberneticsCore
+FleetBeacon requires Gateway
+Unit: TwilightCouncil
+TwilightCouncil requires Pylon
+TwilightCouncil requires Assimilator
+TwilightCouncil requires CyberneticsCore
+TwilightCouncil requires Probe
+TwilightCouncil requires Nexus
+TwilightCouncil requires Gateway
+Unit: PhotonCannon
+PhotonCannon requires Pylon
+PhotonCannon requires Forge
+PhotonCannon requires Probe
+PhotonCannon requires Nexus
+Unit: Stargate
+Stargate requires Pylon
+Stargate requires Assimilator
+Stargate requires CyberneticsCore
+Stargate requires Probe
+Stargate requires Nexus
+Stargate requires Gateway
+Unit: TemplarArchive
+TemplarArchive requires Pylon
+TemplarArchive requires Assimilator
+TemplarArchive requires TwilightCouncil
+TemplarArchive requires Probe
+TemplarArchive requires Nexus
+TemplarArchive requires CyberneticsCore
+TemplarArchive requires Gateway
+Unit: DarkShrine
+DarkShrine requires Pylon
+DarkShrine requires Assimilator
+DarkShrine requires TwilightCouncil
+DarkShrine requires Probe
+DarkShrine requires Nexus
+DarkShrine requires CyberneticsCore
+DarkShrine requires Gateway
+Unit: RoboticsBay
+RoboticsBay requires Pylon
+RoboticsBay requires Assimilator
+RoboticsBay requires RoboticsFacility
+RoboticsBay requires Probe
+RoboticsBay requires Nexus
+RoboticsBay requires CyberneticsCore
+RoboticsBay requires Gateway
+Unit: RoboticsFacility
+RoboticsFacility requires Pylon
+RoboticsFacility requires Assimilator
+RoboticsFacility requires CyberneticsCore
+RoboticsFacility requires Probe
+RoboticsFacility requires Nexus
+RoboticsFacility requires Gateway
+Unit: CyberneticsCore
+CyberneticsCore requires Pylon
+CyberneticsCore requires Gateway
+CyberneticsCore requires Probe
+CyberneticsCore requires Nexus
+Unit: Zealot
+Zealot requires Gateway
+Zealot requires Nexus
+Zealot requires Pylon
+Zealot requires Probe
+Unit: Stalker
+Stalker requires Assimilator
+Stalker requires Gateway
+Stalker requires CyberneticsCore
+Stalker requires Pylon
+Stalker requires Probe
+Stalker requires Nexus
+Unit: HighTemplar
+HighTemplar requires Assimilator
+HighTemplar requires Gateway
+HighTemplar requires TemplarArchive
+HighTemplar requires Pylon
+HighTemplar requires TwilightCouncil
+HighTemplar requires Probe
+HighTemplar requires Nexus
+HighTemplar requires CyberneticsCore
+Unit: DarkTemplar
+DarkTemplar requires Assimilator
+DarkTemplar requires Gateway
+DarkTemplar requires DarkShrine
+DarkTemplar requires Pylon
+DarkTemplar requires TwilightCouncil
+DarkTemplar requires Probe
+DarkTemplar requires Nexus
+DarkTemplar requires CyberneticsCore
+Unit: Sentry
+Sentry requires Assimilator
+Sentry requires Gateway
+Sentry requires CyberneticsCore
+Sentry requires Pylon
+Sentry requires Probe
+Sentry requires Nexus
+Unit: Phoenix
+Phoenix requires Assimilator
+Phoenix requires Stargate
+Phoenix requires Pylon
+Phoenix requires CyberneticsCore
+Phoenix requires Probe
+Phoenix requires Nexus
+Phoenix requires Gateway
+Unit: Carrier
+Carrier requires Assimilator
+Carrier requires FleetBeacon
+Carrier requires Stargate
+Carrier requires Pylon
+Carrier requires CyberneticsCore
+Carrier requires Probe
+Carrier requires Nexus
+Carrier requires Gateway
+Unit: VoidRay
+VoidRay requires Assimilator
+VoidRay requires Stargate
+VoidRay requires Pylon
+VoidRay requires CyberneticsCore
+VoidRay requires Probe
+VoidRay requires Nexus
+VoidRay requires Gateway
+Unit: WarpPrism
+WarpPrism requires RoboticsFacility
+WarpPrism requires Pylon
+WarpPrism requires Assimilator
+WarpPrism requires CyberneticsCore
+WarpPrism requires Probe
+WarpPrism requires Nexus
+WarpPrism requires Gateway
+Unit: Observer
+Observer requires Assimilator
+Observer requires RoboticsFacility
+Observer requires Pylon
+Observer requires CyberneticsCore
+Observer requires Probe
+Observer requires Nexus
+Observer requires Gateway
+Unit: Immortal
+Immortal requires Assimilator
+Immortal requires RoboticsFacility
+Immortal requires Pylon
+Immortal requires CyberneticsCore
+Immortal requires Probe
+Immortal requires Nexus
+Immortal requires Gateway
+Unit: Probe
+Probe requires Nexus
+Probe requires Probe
+Unit: Interceptor
+Unit: Hatchery
+Hatchery requires Drone
+Hatchery requires Larva
+Unit: CreepTumor
+Unit: Extractor
+Extractor requires Drone
+Extractor requires Larva
+Unit: SpawningPool
+SpawningPool requires Hatchery
+SpawningPool requires Drone
+SpawningPool requires Larva
+Unit: EvolutionChamber
+EvolutionChamber requires Hatchery
+EvolutionChamber requires Drone
+EvolutionChamber requires Larva
+Unit: HydraliskDen
+HydraliskDen requires Extractor
+HydraliskDen requires Lair
+HydraliskDen requires Drone
+HydraliskDen requires Larva
+HydraliskDen requires Hatchery
+Unit: Spire
+Spire requires Extractor
+Spire requires Lair
+Spire requires Drone
+Spire requires Larva
+Spire requires Hatchery
+Unit: UltraliskCavern
+UltraliskCavern requires Extractor
+UltraliskCavern requires Hive
+UltraliskCavern requires Drone
+UltraliskCavern requires Larva
+UltraliskCavern requires Lair
+UltraliskCavern requires Hatchery
+Unit: InfestationPit
+InfestationPit requires Extractor
+InfestationPit requires Lair
+InfestationPit requires Drone
+InfestationPit requires Larva
+InfestationPit requires Hatchery
+Unit: NydusNetwork
+NydusNetwork requires Extractor
+NydusNetwork requires Lair
+NydusNetwork requires Drone
+NydusNetwork requires Larva
+NydusNetwork requires Hatchery
+Unit: BanelingNest
+BanelingNest requires Extractor
+BanelingNest requires SpawningPool
+BanelingNest requires Drone
+BanelingNest requires Larva
+BanelingNest requires Hatchery
+Unit: RoachWarren
+RoachWarren requires SpawningPool
+RoachWarren requires Drone
+RoachWarren requires Larva
+RoachWarren requires Hatchery
+Unit: SpineCrawler
+SpineCrawler requires SpawningPool
+SpineCrawler requires Drone
+SpineCrawler requires Larva
+SpineCrawler requires Hatchery
+Unit: SporeCrawler
+SporeCrawler requires SpawningPool
+SporeCrawler requires Drone
+SporeCrawler requires Larva
+SporeCrawler requires Hatchery
+Unit: Lair
+Lair requires Hatchery
+Lair requires Extractor
+Lair requires Drone
+Lair requires Larva
+Unit: Hive
+Hive requires Extractor
+Hive requires Lair
+Hive requires Hatchery
+Hive requires Drone
+Hive requires Larva
+Unit: GreaterSpire
+GreaterSpire requires Extractor
+GreaterSpire requires Spire
+GreaterSpire requires Lair
+GreaterSpire requires Drone
+GreaterSpire requires Larva
+GreaterSpire requires Hatchery
+Unit: Egg
+Unit: Drone
+Drone requires Larva
+Unit: Zergling
+Zergling requires SpawningPool
+Zergling requires Larva
+Zergling requires Hatchery
+Zergling requires Drone
+Unit: Overlord
+Overlord requires Larva
+Unit: Hydralisk
+Hydralisk requires Extractor
+Hydralisk requires HydraliskDen
+Hydralisk requires Larva
+Hydralisk requires Lair
+Hydralisk requires Drone
+Hydralisk requires Hatchery
+Unit: Mutalisk
+Mutalisk requires Extractor
+Mutalisk requires Spire
+Mutalisk requires Larva
+Mutalisk requires Lair
+Mutalisk requires Drone
+Mutalisk requires Hatchery
+Unit: Ultralisk
+Ultralisk requires Extractor
+Ultralisk requires UltraliskCavern
+Ultralisk requires Larva
+Ultralisk requires Hive
+Ultralisk requires Drone
+Ultralisk requires Lair
+Ultralisk requires Hatchery
+Unit: Roach
+Roach requires Extractor
+Roach requires RoachWarren
+Roach requires Larva
+Roach requires SpawningPool
+Roach requires Drone
+Roach requires Hatchery
+Unit: Infestor
+Infestor requires Extractor
+Infestor requires InfestationPit
+Infestor requires Larva
+Infestor requires Lair
+Infestor requires Drone
+Infestor requires Hatchery
+Unit: Corruptor
+Corruptor requires Extractor
+Corruptor requires Spire
+Corruptor requires Larva
+Corruptor requires Lair
+Corruptor requires Drone
+Corruptor requires Hatchery
+Unit: BroodLordCocoon
+BroodLordCocoon requires Extractor
+BroodLordCocoon requires Drone
+BroodLordCocoon requires Larva
+Unit: BroodLord
+BroodLord requires Extractor
+BroodLord requires Corruptor
+BroodLord requires Spire
+BroodLord requires Larva
+BroodLord requires Lair
+BroodLord requires Drone
+BroodLord requires Hatchery
+Unit: BanelingBurrowed
+BanelingBurrowed requires Extractor
+BanelingBurrowed requires Drone
+BanelingBurrowed requires Larva
+Unit: DroneBurrowed
+Unit: HydraliskBurrowed
+HydraliskBurrowed requires Extractor
+HydraliskBurrowed requires Drone
+HydraliskBurrowed requires Larva
+Unit: RoachBurrowed
+RoachBurrowed requires Extractor
+RoachBurrowed requires Drone
+RoachBurrowed requires Larva
+Unit: ZerglingBurrowed
+Unit: InfestorTerranBurrowed
+Unit: QueenBurrowed
+Unit: Queen
+Queen requires Hatchery
+Queen requires SpawningPool
+Queen requires Drone
+Queen requires Larva
+Unit: InfestorBurrowed
+InfestorBurrowed requires Extractor
+InfestorBurrowed requires Drone
+InfestorBurrowed requires Larva
+Unit: OverlordCocoon
+OverlordCocoon requires Extractor
+OverlordCocoon requires Drone
+OverlordCocoon requires Larva
+Unit: Overseer
+Overseer requires Extractor
+Overseer requires OverlordTransport
+Overseer requires Overlord
+Overseer requires Larva
+Overseer requires Drone
+Unit: PlanetaryFortress
+PlanetaryFortress requires CommandCenter
+PlanetaryFortress requires Refinery
+PlanetaryFortress requires SCV
+Unit: UltraliskBurrowed
+UltraliskBurrowed requires Extractor
+UltraliskBurrowed requires Drone
+UltraliskBurrowed requires Larva
+Unit: OrbitalCommand
+OrbitalCommand requires CommandCenter
+OrbitalCommand requires SCV
+Unit: WarpGate
+WarpGate requires Pylon
+WarpGate requires Gateway
+WarpGate requires Nexus
+WarpGate requires Probe
+Unit: OrbitalCommandFlying
+Unit: ForceField
+Unit: WarpPrismPhasing
+WarpPrismPhasing requires WarpPrism
+WarpPrismPhasing requires RoboticsFacility
+WarpPrismPhasing requires Pylon
+WarpPrismPhasing requires Assimilator
+WarpPrismPhasing requires CyberneticsCore
+WarpPrismPhasing requires Probe
+WarpPrismPhasing requires Nexus
+WarpPrismPhasing requires Gateway
+Unit: CreepTumorBurrowed
+Unit: CreepTumorQueen
+Unit: SpineCrawlerUprooted
+Unit: SporeCrawlerUprooted
+Unit: Archon
+Archon requires Assimilator
+Archon requires Probe
+Archon requires Nexus
+Unit: NydusCanal
+NydusCanal requires Extractor
+NydusCanal requires NydusNetwork
+NydusCanal requires Lair
+NydusCanal requires Drone
+NydusCanal requires Larva
+NydusCanal requires Hatchery
+Unit: BroodlingEscort
+Unit: GhostAlternate
+GhostAlternate requires Refinery
+GhostAlternate requires SCV
+GhostAlternate requires CommandCenter
+Unit: GhostNova
+GhostNova requires Refinery
+GhostNova requires SCV
+GhostNova requires CommandCenter
+Unit: InfestedTerransEgg
+Unit: Larva
+Unit: ReaperPlaceholder
+Unit: CorruptionWeapon
+Unit: InfestedTerransWeapon
+Unit: NeuralParasiteWeapon
+Unit: PointDefenseDroneReleaseWeapon
+Unit: HunterSeekerWeapon
+Unit: MULE
+Unit: ThorAAWeapon
+Unit: PunisherGrenadesLMWeapon
+Unit: VikingFighterWeapon
+Unit: ATALaserBatteryLMWeapon
+Unit: ATSLaserBatteryLMWeapon
+Unit: LongboltMissileWeapon
+Unit: D8ChargeWeapon
+Unit: YamatoWeapon
+Unit: IonCannonsWeapon
+Unit: AcidSalivaWeapon
+Unit: SpineCrawlerWeapon
+Unit: SporeCrawlerWeapon
+Unit: GlaiveWurmWeapon
+Unit: GlaiveWurmM2Weapon
+Unit: GlaiveWurmM3Weapon
+Unit: StalkerWeapon
+Unit: EMP2Weapon
+Unit: BacklashRocketsLMWeapon
+Unit: PhotonCannonWeapon
+Unit: ParasiteSporeWeapon
+Unit: Broodling
+Unit: BroodLordBWeapon
+Unit: AutoTurretReleaseWeapon
+Unit: LarvaReleaseMissile
+Unit: AcidSpinesWeapon
+Unit: FrenzyWeapon
+Unit: ContaminateWeapon
+Unit: Adept
+Adept requires Assimilator
+Adept requires Gateway
+Adept requires CyberneticsCore
+Adept requires Pylon
+Adept requires Probe
+Adept requires Nexus
+Unit: FungalGrowthMissile
+Unit: NeuralParasiteTentacleMissile
+Unit: InfestedTerransEggPlacement
+Unit: InfestorTerransWeapon
+Unit: Weapon
+Unit: GlaiveWurmBounceWeapon
+Unit: BroodLordWeapon
+Unit: BroodLordAWeapon
+Unit: AutoTestAttackTargetGround
+AutoTestAttackTargetGround requires Refinery
+AutoTestAttackTargetGround requires SCV
+AutoTestAttackTargetGround requires CommandCenter
+Unit: AutoTestAttackTargetAir
+AutoTestAttackTargetAir requires Refinery
+AutoTestAttackTargetAir requires SCV
+AutoTestAttackTargetAir requires CommandCenter
+Unit: AutoTestAttacker
+Unit: ScopeTest
+Unit: HellionTank
+HellionTank requires Factory
+HellionTank requires Armory
+HellionTank requires Refinery
+HellionTank requires SCV
+HellionTank requires CommandCenter
+HellionTank requires Barracks
+HellionTank requires SupplyDepot
+Unit: MothershipCore
+MothershipCore requires Assimilator
+MothershipCore requires Probe
+MothershipCore requires Nexus
+Unit: LocustMP
+Unit: NydusCanalAttacker
+Unit: NydusCanalCreeper
+NydusCanalCreeper requires Extractor
+NydusCanalCreeper requires Drone
+NydusCanalCreeper requires Larva
+Unit: SwarmHostBurrowedMP
+SwarmHostBurrowedMP requires Extractor
+SwarmHostBurrowedMP requires Drone
+SwarmHostBurrowedMP requires Larva
+Unit: SwarmHostMP
+SwarmHostMP requires Extractor
+SwarmHostMP requires InfestationPit
+SwarmHostMP requires Larva
+SwarmHostMP requires Lair
+SwarmHostMP requires Drone
+SwarmHostMP requires Hatchery
+Unit: Oracle
+Oracle requires Assimilator
+Oracle requires Stargate
+Oracle requires Pylon
+Oracle requires CyberneticsCore
+Oracle requires Probe
+Oracle requires Nexus
+Oracle requires Gateway
+Unit: Tempest
+Tempest requires Assimilator
+Tempest requires FleetBeacon
+Tempest requires Stargate
+Tempest requires Pylon
+Tempest requires CyberneticsCore
+Tempest requires Probe
+Tempest requires Nexus
+Tempest requires Gateway
+Unit: WarHound
+WarHound requires Refinery
+WarHound requires SCV
+WarHound requires CommandCenter
+Unit: WidowMine
+WidowMine requires Refinery
+WidowMine requires Factory
+WidowMine requires Barracks
+WidowMine requires SCV
+WidowMine requires CommandCenter
+WidowMine requires SupplyDepot
+Unit: Viper
+Viper requires Extractor
+Viper requires Hive
+Viper requires Larva
+Viper requires Lair
+Viper requires Hatchery
+Viper requires Drone
+Unit: WidowMineBurrowed
+WidowMineBurrowed requires Refinery
+WidowMineBurrowed requires SCV
+WidowMineBurrowed requires CommandCenter
+Unit: LurkerMPEgg
+Unit: LurkerMP
+LurkerMP requires Extractor
+LurkerMP requires Drone
+LurkerMP requires Larva
+Unit: LurkerMPBurrowed
+LurkerMPBurrowed requires Extractor
+LurkerMPBurrowed requires Drone
+LurkerMPBurrowed requires Larva
+Unit: LurkerDenMP
+LurkerDenMP requires Extractor
+LurkerDenMP requires HydraliskDen
+LurkerDenMP requires Drone
+LurkerDenMP requires Larva
+LurkerDenMP requires Lair
+LurkerDenMP requires Hatchery
+Unit: ExtendingBridgeNEWide8Out
+ExtendingBridgeNEWide8Out requires ExtendingBridgeNEWide8
+ExtendingBridgeNEWide8Out requires ExtendingBridgeNEWide8Out
+Unit: ExtendingBridgeNEWide8
+ExtendingBridgeNEWide8 requires ExtendingBridgeNEWide8Out
+ExtendingBridgeNEWide8 requires ExtendingBridgeNEWide8
+Unit: ExtendingBridgeNWWide8Out
+ExtendingBridgeNWWide8Out requires ExtendingBridgeNWWide8
+ExtendingBridgeNWWide8Out requires ExtendingBridgeNWWide8Out
+Unit: ExtendingBridgeNWWide8
+ExtendingBridgeNWWide8 requires ExtendingBridgeNWWide8Out
+ExtendingBridgeNWWide8 requires ExtendingBridgeNWWide8
+Unit: ExtendingBridgeNEWide10Out
+ExtendingBridgeNEWide10Out requires ExtendingBridgeNEWide10
+ExtendingBridgeNEWide10Out requires ExtendingBridgeNEWide10Out
+Unit: ExtendingBridgeNEWide10
+ExtendingBridgeNEWide10 requires ExtendingBridgeNEWide10Out
+ExtendingBridgeNEWide10 requires ExtendingBridgeNEWide10
+Unit: ExtendingBridgeNWWide10Out
+ExtendingBridgeNWWide10Out requires ExtendingBridgeNWWide10
+ExtendingBridgeNWWide10Out requires ExtendingBridgeNWWide10Out
+Unit: ExtendingBridgeNWWide10
+ExtendingBridgeNWWide10 requires ExtendingBridgeNWWide10Out
+ExtendingBridgeNWWide10 requires ExtendingBridgeNWWide10
+Unit: ExtendingBridgeNEWide12Out
+ExtendingBridgeNEWide12Out requires ExtendingBridgeNEWide12
+ExtendingBridgeNEWide12Out requires ExtendingBridgeNEWide12Out
+Unit: ExtendingBridgeNEWide12
+ExtendingBridgeNEWide12 requires ExtendingBridgeNEWide12Out
+ExtendingBridgeNEWide12 requires ExtendingBridgeNEWide12
+Unit: ExtendingBridgeNWWide12Out
+ExtendingBridgeNWWide12Out requires ExtendingBridgeNWWide12
+ExtendingBridgeNWWide12Out requires ExtendingBridgeNWWide12Out
+Unit: ExtendingBridgeNWWide12
+ExtendingBridgeNWWide12 requires ExtendingBridgeNWWide12Out
+ExtendingBridgeNWWide12 requires ExtendingBridgeNWWide12
+Unit: XelNaga_Caverns_Floating_BridgeNE8Out
+XelNaga_Caverns_Floating_BridgeNE8Out requires XelNaga_Caverns_Floating_BridgeNE8
+XelNaga_Caverns_Floating_BridgeNE8Out requires XelNaga_Caverns_Floating_BridgeNE8Out
+Unit: XelNaga_Caverns_Floating_BridgeNE8
+XelNaga_Caverns_Floating_BridgeNE8 requires XelNaga_Caverns_Floating_BridgeNE8Out
+XelNaga_Caverns_Floating_BridgeNE8 requires XelNaga_Caverns_Floating_BridgeNE8
+Unit: XelNaga_Caverns_Floating_BridgeNW8Out
+XelNaga_Caverns_Floating_BridgeNW8Out requires XelNaga_Caverns_Floating_BridgeNW8
+XelNaga_Caverns_Floating_BridgeNW8Out requires XelNaga_Caverns_Floating_BridgeNW8Out
+Unit: XelNaga_Caverns_Floating_BridgeNW8
+XelNaga_Caverns_Floating_BridgeNW8 requires XelNaga_Caverns_Floating_BridgeNW8Out
+XelNaga_Caverns_Floating_BridgeNW8 requires XelNaga_Caverns_Floating_BridgeNW8
+Unit: XelNaga_Caverns_Floating_BridgeNE10Out
+XelNaga_Caverns_Floating_BridgeNE10Out requires XelNaga_Caverns_Floating_BridgeNE10
+Unit: XelNaga_Caverns_Floating_BridgeNE10
+Unit: XelNaga_Caverns_Floating_BridgeNW10Out
+XelNaga_Caverns_Floating_BridgeNW10Out requires XelNaga_Caverns_Floating_BridgeNW10
+XelNaga_Caverns_Floating_BridgeNW10Out requires XelNaga_Caverns_Floating_BridgeNW10Out
+Unit: XelNaga_Caverns_Floating_BridgeNW10
+XelNaga_Caverns_Floating_BridgeNW10 requires XelNaga_Caverns_Floating_BridgeNW10Out
+XelNaga_Caverns_Floating_BridgeNW10 requires XelNaga_Caverns_Floating_BridgeNW10
+Unit: XelNaga_Caverns_Floating_BridgeNE12Out
+XelNaga_Caverns_Floating_BridgeNE12Out requires XelNaga_Caverns_Floating_BridgeNE12
+XelNaga_Caverns_Floating_BridgeNE12Out requires XelNaga_Caverns_Floating_BridgeNE12Out
+Unit: XelNaga_Caverns_Floating_BridgeNE12
+XelNaga_Caverns_Floating_BridgeNE12 requires XelNaga_Caverns_Floating_BridgeNE12Out
+XelNaga_Caverns_Floating_BridgeNE12 requires XelNaga_Caverns_Floating_BridgeNE12
+Unit: XelNaga_Caverns_Floating_BridgeNW12Out
+XelNaga_Caverns_Floating_BridgeNW12Out requires XelNaga_Caverns_Floating_BridgeNW12
+XelNaga_Caverns_Floating_BridgeNW12Out requires XelNaga_Caverns_Floating_BridgeNW12Out
+Unit: XelNaga_Caverns_Floating_BridgeNW12
+XelNaga_Caverns_Floating_BridgeNW12 requires XelNaga_Caverns_Floating_BridgeNW12Out
+XelNaga_Caverns_Floating_BridgeNW12 requires XelNaga_Caverns_Floating_BridgeNW12
+Unit: XelNaga_Caverns_Floating_BridgeH8Out
+XelNaga_Caverns_Floating_BridgeH8Out requires XelNaga_Caverns_Floating_BridgeH8
+XelNaga_Caverns_Floating_BridgeH8Out requires XelNaga_Caverns_Floating_BridgeH8Out
+Unit: XelNaga_Caverns_Floating_BridgeH8
+XelNaga_Caverns_Floating_BridgeH8 requires XelNaga_Caverns_Floating_BridgeH8Out
+XelNaga_Caverns_Floating_BridgeH8 requires XelNaga_Caverns_Floating_BridgeH8
+Unit: XelNaga_Caverns_Floating_BridgeV8Out
+XelNaga_Caverns_Floating_BridgeV8Out requires XelNaga_Caverns_Floating_BridgeV8
+XelNaga_Caverns_Floating_BridgeV8Out requires XelNaga_Caverns_Floating_BridgeV8Out
+Unit: XelNaga_Caverns_Floating_BridgeV8
+XelNaga_Caverns_Floating_BridgeV8 requires XelNaga_Caverns_Floating_BridgeV8Out
+XelNaga_Caverns_Floating_BridgeV8 requires XelNaga_Caverns_Floating_BridgeV8
+Unit: XelNaga_Caverns_Floating_BridgeH10Out
+XelNaga_Caverns_Floating_BridgeH10Out requires XelNaga_Caverns_Floating_BridgeH10
+XelNaga_Caverns_Floating_BridgeH10Out requires XelNaga_Caverns_Floating_BridgeH10Out
+Unit: XelNaga_Caverns_Floating_BridgeH10
+XelNaga_Caverns_Floating_BridgeH10 requires XelNaga_Caverns_Floating_BridgeH10Out
+XelNaga_Caverns_Floating_BridgeH10 requires XelNaga_Caverns_Floating_BridgeH10
+Unit: XelNaga_Caverns_Floating_BridgeV10Out
+XelNaga_Caverns_Floating_BridgeV10Out requires XelNaga_Caverns_Floating_BridgeV10
+XelNaga_Caverns_Floating_BridgeV10Out requires XelNaga_Caverns_Floating_BridgeV10Out
+Unit: XelNaga_Caverns_Floating_BridgeV10
+XelNaga_Caverns_Floating_BridgeV10 requires XelNaga_Caverns_Floating_BridgeV10Out
+XelNaga_Caverns_Floating_BridgeV10 requires XelNaga_Caverns_Floating_BridgeV10
+Unit: XelNaga_Caverns_Floating_BridgeH12Out
+XelNaga_Caverns_Floating_BridgeH12Out requires XelNaga_Caverns_Floating_BridgeH12
+XelNaga_Caverns_Floating_BridgeH12Out requires XelNaga_Caverns_Floating_BridgeH12Out
+Unit: XelNaga_Caverns_Floating_BridgeH12
+XelNaga_Caverns_Floating_BridgeH12 requires XelNaga_Caverns_Floating_BridgeH12Out
+XelNaga_Caverns_Floating_BridgeH12 requires XelNaga_Caverns_Floating_BridgeH12
+Unit: XelNaga_Caverns_Floating_BridgeV12Out
+XelNaga_Caverns_Floating_BridgeV12Out requires XelNaga_Caverns_Floating_BridgeV12
+XelNaga_Caverns_Floating_BridgeV12Out requires XelNaga_Caverns_Floating_BridgeV12Out
+Unit: XelNaga_Caverns_Floating_BridgeV12
+XelNaga_Caverns_Floating_BridgeV12 requires XelNaga_Caverns_Floating_BridgeV12Out
+XelNaga_Caverns_Floating_BridgeV12 requires XelNaga_Caverns_Floating_BridgeV12
+Unit: NydusCanalAttackerWeapon
+Unit: ViperConsumeStructureWeapon
+Unit: ResourceBlocker
+ResourceBlocker requires Pylon
+ResourceBlocker requires Probe
+ResourceBlocker requires Nexus
+Unit: TempestWeapon
+Unit: YoinkMissile
+Unit: YoinkVikingAirMissile
+Unit: YoinkVikingGroundMissile
+Unit: YoinkSiegeTankMissile
+Unit: WarHoundWeapon
+Unit: EyeStalkWeapon
+Unit: WidowMineWeapon
+Unit: WidowMineAirWeapon
+Unit: MothershipCoreWeaponWeapon
+Unit: TornadoMissileWeapon
+Unit: TornadoMissileDummyWeapon
+Unit: TalonsMissileWeapon
+Unit: CreepTumorMissile
+Unit: LocustMPEggAMissileWeapon
+Unit: LocustMPEggBMissileWeapon
+Unit: LocustMPWeapon
+Unit: RepulsorCannonWeapon
+Unit: IceProtossCrates
+Unit: ProtossCrates
+Unit: TowerMine
+Unit: TestZerg
+Unit: SnowRefinery_Terran_ExtendingBridgeNEShort8Out
+SnowRefinery_Terran_ExtendingBridgeNEShort8Out requires SnowRefinery_Terran_ExtendingBridgeNEShort8
+SnowRefinery_Terran_ExtendingBridgeNEShort8Out requires SnowRefinery_Terran_ExtendingBridgeNEShort8Out
+Unit: SnowRefinery_Terran_ExtendingBridgeNEShort8
+SnowRefinery_Terran_ExtendingBridgeNEShort8 requires SnowRefinery_Terran_ExtendingBridgeNEShort8Out
+SnowRefinery_Terran_ExtendingBridgeNEShort8 requires SnowRefinery_Terran_ExtendingBridgeNEShort8
+Unit: SnowRefinery_Terran_ExtendingBridgeNWShort8Out
+SnowRefinery_Terran_ExtendingBridgeNWShort8Out requires SnowRefinery_Terran_ExtendingBridgeNWShort8
+SnowRefinery_Terran_ExtendingBridgeNWShort8Out requires SnowRefinery_Terran_ExtendingBridgeNWShort8Out
+Unit: SnowRefinery_Terran_ExtendingBridgeNWShort8
+SnowRefinery_Terran_ExtendingBridgeNWShort8 requires SnowRefinery_Terran_ExtendingBridgeNWShort8Out
+SnowRefinery_Terran_ExtendingBridgeNWShort8 requires SnowRefinery_Terran_ExtendingBridgeNWShort8
+Unit: RavagerCocoon
+Unit: Ravager
+Ravager requires Extractor
+Ravager requires Roach
+Ravager requires RoachWarren
+Ravager requires Larva
+Ravager requires SpawningPool
+Ravager requires Drone
+Ravager requires Hatchery
+Unit: Liberator
+Liberator requires Refinery
+Liberator requires Starport
+Liberator requires Factory
+Liberator requires SCV
+Liberator requires CommandCenter
+Liberator requires Barracks
+Liberator requires SupplyDepot
+Unit: RavagerBurrowed
+RavagerBurrowed requires Extractor
+RavagerBurrowed requires Drone
+RavagerBurrowed requires Larva
+Unit: ThorAP
+ThorAP requires Refinery
+ThorAP requires Thor
+ThorAP requires Factory
+ThorAP requires Barracks
+ThorAP requires SCV
+ThorAP requires CommandCenter
+ThorAP requires SupplyDepot
+Unit: Cyclone
+Cyclone requires TechLab
+Cyclone requires Refinery
+Cyclone requires Factory
+Cyclone requires Barracks
+Cyclone requires SCV
+Cyclone requires CommandCenter
+Cyclone requires SupplyDepot
+Unit: LocustMPFlying
+Unit: Disruptor
+Disruptor requires Assimilator
+Disruptor requires RoboticsBay
+Disruptor requires RoboticsFacility
+Disruptor requires Pylon
+Disruptor requires CyberneticsCore
+Disruptor requires Probe
+Disruptor requires Nexus
+Disruptor requires Gateway
+Unit: AiurLightBridgeNE8Out
+AiurLightBridgeNE8Out requires AiurLightBridgeNE8
+AiurLightBridgeNE8Out requires AiurLightBridgeNE8Out
+Unit: AiurLightBridgeNE8
+AiurLightBridgeNE8 requires AiurLightBridgeNE8Out
+AiurLightBridgeNE8 requires AiurLightBridgeNE8
+Unit: AiurLightBridgeNE10Out
+AiurLightBridgeNE10Out requires AiurLightBridgeNE10
+AiurLightBridgeNE10Out requires AiurLightBridgeNE10Out
+Unit: AiurLightBridgeNE10
+AiurLightBridgeNE10 requires AiurLightBridgeNE10Out
+AiurLightBridgeNE10 requires AiurLightBridgeNE10
+Unit: AiurLightBridgeNE12Out
+Unit: AiurLightBridgeNE12
+Unit: AiurLightBridgeNW8Out
+AiurLightBridgeNW8Out requires AiurLightBridgeNW8
+AiurLightBridgeNW8Out requires AiurLightBridgeNW8Out
+Unit: AiurLightBridgeNW8
+AiurLightBridgeNW8 requires AiurLightBridgeNW8Out
+AiurLightBridgeNW8 requires AiurLightBridgeNW8
+Unit: AiurLightBridgeNW10Out
+AiurLightBridgeNW10Out requires AiurLightBridgeNW10
+AiurLightBridgeNW10Out requires AiurLightBridgeNW10Out
+Unit: AiurLightBridgeNW10
+AiurLightBridgeNW10 requires AiurLightBridgeNW10Out
+AiurLightBridgeNW10 requires AiurLightBridgeNW10
+Unit: AiurLightBridgeNW12Out
+Unit: AiurLightBridgeNW12
+AiurLightBridgeNW12 requires AiurLightBridgeNW12Out
+Unit: AiurTempleBridgeNE8Out
+Unit: AiurTempleBridgeNE10Out
+Unit: AiurTempleBridgeNE12Out
+Unit: AiurTempleBridgeNW8Out
+Unit: AiurTempleBridgeNW10Out
+Unit: AiurTempleBridgeNW12Out
+Unit: ShakurasLightBridgeNE8Out
+ShakurasLightBridgeNE8Out requires ShakurasLightBridgeNE8
+ShakurasLightBridgeNE8Out requires ShakurasLightBridgeNE8Out
+Unit: ShakurasLightBridgeNE8
+ShakurasLightBridgeNE8 requires ShakurasLightBridgeNE8Out
+ShakurasLightBridgeNE8 requires ShakurasLightBridgeNE8
+Unit: ShakurasLightBridgeNE10Out
+ShakurasLightBridgeNE10Out requires ShakurasLightBridgeNE10
+Unit: ShakurasLightBridgeNE10
+Unit: ShakurasLightBridgeNE12Out
+Unit: ShakurasLightBridgeNE12
+ShakurasLightBridgeNE12 requires ShakurasLightBridgeNE12Out
+Unit: ShakurasLightBridgeNW8Out
+ShakurasLightBridgeNW8Out requires ShakurasLightBridgeNW8
+ShakurasLightBridgeNW8Out requires ShakurasLightBridgeNW8Out
+Unit: ShakurasLightBridgeNW8
+ShakurasLightBridgeNW8 requires ShakurasLightBridgeNW8Out
+ShakurasLightBridgeNW8 requires ShakurasLightBridgeNW8
+Unit: ShakurasLightBridgeNW10Out
+ShakurasLightBridgeNW10Out requires ShakurasLightBridgeNW10
+ShakurasLightBridgeNW10Out requires ShakurasLightBridgeNW10Out
+Unit: ShakurasLightBridgeNW10
+ShakurasLightBridgeNW10 requires ShakurasLightBridgeNW10Out
+ShakurasLightBridgeNW10 requires ShakurasLightBridgeNW10
+Unit: ShakurasLightBridgeNW12Out
+ShakurasLightBridgeNW12Out requires ShakurasLightBridgeNW12
+ShakurasLightBridgeNW12Out requires ShakurasLightBridgeNW12Out
+Unit: ShakurasLightBridgeNW12
+ShakurasLightBridgeNW12 requires ShakurasLightBridgeNW12Out
+ShakurasLightBridgeNW12 requires ShakurasLightBridgeNW12
+Unit: VoidMPImmortalReviveCorpse
+VoidMPImmortalReviveCorpse requires Assimilator
+VoidMPImmortalReviveCorpse requires Probe
+VoidMPImmortalReviveCorpse requires Nexus
+Unit: GuardianCocoonMP
+GuardianCocoonMP requires Extractor
+GuardianCocoonMP requires Drone
+GuardianCocoonMP requires Larva
+Unit: GuardianMP
+GuardianMP requires Extractor
+GuardianMP requires Drone
+GuardianMP requires Larva
+Unit: DevourerCocoonMP
+DevourerCocoonMP requires Extractor
+DevourerCocoonMP requires Drone
+DevourerCocoonMP requires Larva
+Unit: DevourerMP
+DevourerMP requires Extractor
+DevourerMP requires Drone
+DevourerMP requires Larva
+Unit: DefilerMPBurrowed
+DefilerMPBurrowed requires Extractor
+DefilerMPBurrowed requires Drone
+DefilerMPBurrowed requires Larva
+Unit: DefilerMP
+DefilerMP requires Extractor
+DefilerMP requires Drone
+DefilerMP requires Larva
+Unit: OracleStasisTrap
+OracleStasisTrap requires Pylon
+OracleStasisTrap requires Oracle
+OracleStasisTrap requires Assimilator
+OracleStasisTrap requires Stargate
+OracleStasisTrap requires CyberneticsCore
+OracleStasisTrap requires Probe
+OracleStasisTrap requires Nexus
+OracleStasisTrap requires Gateway
+Unit: DisruptorPhased
+Unit: LiberatorAG
+LiberatorAG requires Refinery
+LiberatorAG requires SCV
+LiberatorAG requires CommandCenter
+Unit: AiurLightBridgeAbandonedNE8Out
+AiurLightBridgeAbandonedNE8Out requires AiurLightBridgeAbandonedNE8
+AiurLightBridgeAbandonedNE8Out requires AiurLightBridgeAbandonedNE8Out
+Unit: AiurLightBridgeAbandonedNE8
+AiurLightBridgeAbandonedNE8 requires AiurLightBridgeAbandonedNE8Out
+AiurLightBridgeAbandonedNE8 requires AiurLightBridgeAbandonedNE8
+Unit: AiurLightBridgeAbandonedNE10Out
+AiurLightBridgeAbandonedNE10Out requires AiurLightBridgeAbandonedNE10
+AiurLightBridgeAbandonedNE10Out requires AiurLightBridgeAbandonedNE10Out
+Unit: AiurLightBridgeAbandonedNE10
+AiurLightBridgeAbandonedNE10 requires AiurLightBridgeAbandonedNE10Out
+AiurLightBridgeAbandonedNE10 requires AiurLightBridgeAbandonedNE10
+Unit: AiurLightBridgeAbandonedNE12Out
+AiurLightBridgeAbandonedNE12Out requires AiurLightBridgeAbandonedNE12
+AiurLightBridgeAbandonedNE12Out requires AiurLightBridgeAbandonedNE12Out
+Unit: AiurLightBridgeAbandonedNE12
+AiurLightBridgeAbandonedNE12 requires AiurLightBridgeAbandonedNE12Out
+AiurLightBridgeAbandonedNE12 requires AiurLightBridgeAbandonedNE12
+Unit: AiurLightBridgeAbandonedNW8Out
+AiurLightBridgeAbandonedNW8Out requires AiurLightBridgeAbandonedNW8
+AiurLightBridgeAbandonedNW8Out requires AiurLightBridgeAbandonedNW8Out
+Unit: AiurLightBridgeAbandonedNW8
+AiurLightBridgeAbandonedNW8 requires AiurLightBridgeAbandonedNW8Out
+AiurLightBridgeAbandonedNW8 requires AiurLightBridgeAbandonedNW8
+Unit: AiurLightBridgeAbandonedNW10Out
+Unit: AiurLightBridgeAbandonedNW10
+AiurLightBridgeAbandonedNW10 requires AiurLightBridgeAbandonedNW10Out
+Unit: AiurLightBridgeAbandonedNW12Out
+AiurLightBridgeAbandonedNW12Out requires AiurLightBridgeAbandonedNW12
+AiurLightBridgeAbandonedNW12Out requires AiurLightBridgeAbandonedNW12Out
+Unit: AiurLightBridgeAbandonedNW12
+AiurLightBridgeAbandonedNW12 requires AiurLightBridgeAbandonedNW12Out
+AiurLightBridgeAbandonedNW12 requires AiurLightBridgeAbandonedNW12
+Unit: PortCity_Bridge_UnitNE8Out
+PortCity_Bridge_UnitNE8Out requires PortCity_Bridge_UnitNE8
+PortCity_Bridge_UnitNE8Out requires PortCity_Bridge_UnitNE8Out
+Unit: PortCity_Bridge_UnitNE8
+PortCity_Bridge_UnitNE8 requires PortCity_Bridge_UnitNE8Out
+PortCity_Bridge_UnitNE8 requires PortCity_Bridge_UnitNE8
+Unit: PortCity_Bridge_UnitSE8Out
+PortCity_Bridge_UnitSE8Out requires PortCity_Bridge_UnitSE8
+PortCity_Bridge_UnitSE8Out requires PortCity_Bridge_UnitSE8Out
+Unit: PortCity_Bridge_UnitSE8
+PortCity_Bridge_UnitSE8 requires PortCity_Bridge_UnitSE8Out
+PortCity_Bridge_UnitSE8 requires PortCity_Bridge_UnitSE8
+Unit: PortCity_Bridge_UnitNW8Out
+PortCity_Bridge_UnitNW8Out requires PortCity_Bridge_UnitNW8
+PortCity_Bridge_UnitNW8Out requires PortCity_Bridge_UnitNW8Out
+Unit: PortCity_Bridge_UnitNW8
+PortCity_Bridge_UnitNW8 requires PortCity_Bridge_UnitNW8Out
+PortCity_Bridge_UnitNW8 requires PortCity_Bridge_UnitNW8
+Unit: PortCity_Bridge_UnitSW8Out
+PortCity_Bridge_UnitSW8Out requires PortCity_Bridge_UnitSW8
+PortCity_Bridge_UnitSW8Out requires PortCity_Bridge_UnitSW8Out
+Unit: PortCity_Bridge_UnitSW8
+PortCity_Bridge_UnitSW8 requires PortCity_Bridge_UnitSW8Out
+PortCity_Bridge_UnitSW8 requires PortCity_Bridge_UnitSW8
+Unit: PortCity_Bridge_UnitNE10Out
+PortCity_Bridge_UnitNE10Out requires PortCity_Bridge_UnitNE10
+PortCity_Bridge_UnitNE10Out requires PortCity_Bridge_UnitNE10Out
+Unit: PortCity_Bridge_UnitNE10
+PortCity_Bridge_UnitNE10 requires PortCity_Bridge_UnitNE10Out
+PortCity_Bridge_UnitNE10 requires PortCity_Bridge_UnitNE10
+Unit: PortCity_Bridge_UnitSE10Out
+PortCity_Bridge_UnitSE10Out requires PortCity_Bridge_UnitSE10
+PortCity_Bridge_UnitSE10Out requires PortCity_Bridge_UnitSE10Out
+Unit: PortCity_Bridge_UnitSE10
+PortCity_Bridge_UnitSE10 requires PortCity_Bridge_UnitSE10Out
+PortCity_Bridge_UnitSE10 requires PortCity_Bridge_UnitSE10
+Unit: PortCity_Bridge_UnitNW10Out
+Unit: PortCity_Bridge_UnitNW10
+PortCity_Bridge_UnitNW10 requires PortCity_Bridge_UnitNW10Out
+Unit: PortCity_Bridge_UnitSW10Out
+Unit: PortCity_Bridge_UnitSW10
+PortCity_Bridge_UnitSW10 requires PortCity_Bridge_UnitSW10Out
+Unit: PortCity_Bridge_UnitNE12Out
+PortCity_Bridge_UnitNE12Out requires PortCity_Bridge_UnitNE12
+Unit: PortCity_Bridge_UnitNE12
+Unit: PortCity_Bridge_UnitSE12Out
+PortCity_Bridge_UnitSE12Out requires PortCity_Bridge_UnitSE12
+PortCity_Bridge_UnitSE12Out requires PortCity_Bridge_UnitSE12Out
+Unit: PortCity_Bridge_UnitSE12
+PortCity_Bridge_UnitSE12 requires PortCity_Bridge_UnitSE12Out
+PortCity_Bridge_UnitSE12 requires PortCity_Bridge_UnitSE12
+Unit: PortCity_Bridge_UnitNW12Out
+Unit: PortCity_Bridge_UnitNW12
+PortCity_Bridge_UnitNW12 requires PortCity_Bridge_UnitNW12Out
+Unit: PortCity_Bridge_UnitSW12Out
+PortCity_Bridge_UnitSW12Out requires PortCity_Bridge_UnitSW12
+PortCity_Bridge_UnitSW12Out requires PortCity_Bridge_UnitSW12Out
+Unit: PortCity_Bridge_UnitSW12
+PortCity_Bridge_UnitSW12 requires PortCity_Bridge_UnitSW12Out
+PortCity_Bridge_UnitSW12 requires PortCity_Bridge_UnitSW12
+Unit: PortCity_Bridge_UnitN8Out
+PortCity_Bridge_UnitN8Out requires PortCity_Bridge_UnitN8
+PortCity_Bridge_UnitN8Out requires PortCity_Bridge_UnitN8Out
+Unit: PortCity_Bridge_UnitN8
+PortCity_Bridge_UnitN8 requires PortCity_Bridge_UnitN8Out
+PortCity_Bridge_UnitN8 requires PortCity_Bridge_UnitN8
+Unit: PortCity_Bridge_UnitS8Out
+PortCity_Bridge_UnitS8Out requires PortCity_Bridge_UnitS8
+PortCity_Bridge_UnitS8Out requires PortCity_Bridge_UnitS8Out
+Unit: PortCity_Bridge_UnitS8
+PortCity_Bridge_UnitS8 requires PortCity_Bridge_UnitS8Out
+PortCity_Bridge_UnitS8 requires PortCity_Bridge_UnitS8
+Unit: PortCity_Bridge_UnitE8Out
+Unit: PortCity_Bridge_UnitE8
+PortCity_Bridge_UnitE8 requires PortCity_Bridge_UnitE8Out
+Unit: PortCity_Bridge_UnitW8Out
+PortCity_Bridge_UnitW8Out requires PortCity_Bridge_UnitW8
+PortCity_Bridge_UnitW8Out requires PortCity_Bridge_UnitW8Out
+Unit: PortCity_Bridge_UnitW8
+PortCity_Bridge_UnitW8 requires PortCity_Bridge_UnitW8Out
+PortCity_Bridge_UnitW8 requires PortCity_Bridge_UnitW8
+Unit: PortCity_Bridge_UnitN10Out
+PortCity_Bridge_UnitN10Out requires PortCity_Bridge_UnitN10
+PortCity_Bridge_UnitN10Out requires PortCity_Bridge_UnitN10Out
+Unit: PortCity_Bridge_UnitN10
+PortCity_Bridge_UnitN10 requires PortCity_Bridge_UnitN10Out
+PortCity_Bridge_UnitN10 requires PortCity_Bridge_UnitN10
+Unit: PortCity_Bridge_UnitS10Out
+PortCity_Bridge_UnitS10Out requires PortCity_Bridge_UnitS10
+Unit: PortCity_Bridge_UnitS10
+Unit: PortCity_Bridge_UnitE10Out
+PortCity_Bridge_UnitE10Out requires PortCity_Bridge_UnitE10
+PortCity_Bridge_UnitE10Out requires PortCity_Bridge_UnitE10Out
+Unit: PortCity_Bridge_UnitE10
+PortCity_Bridge_UnitE10 requires PortCity_Bridge_UnitE10Out
+PortCity_Bridge_UnitE10 requires PortCity_Bridge_UnitE10
+Unit: PortCity_Bridge_UnitW10Out
+PortCity_Bridge_UnitW10Out requires PortCity_Bridge_UnitW10
+PortCity_Bridge_UnitW10Out requires PortCity_Bridge_UnitW10Out
+Unit: PortCity_Bridge_UnitW10
+PortCity_Bridge_UnitW10 requires PortCity_Bridge_UnitW10Out
+PortCity_Bridge_UnitW10 requires PortCity_Bridge_UnitW10
+Unit: PortCity_Bridge_UnitN12Out
+PortCity_Bridge_UnitN12Out requires PortCity_Bridge_UnitN12
+PortCity_Bridge_UnitN12Out requires PortCity_Bridge_UnitN12Out
+Unit: PortCity_Bridge_UnitN12
+PortCity_Bridge_UnitN12 requires PortCity_Bridge_UnitN12Out
+PortCity_Bridge_UnitN12 requires PortCity_Bridge_UnitN12
+Unit: PortCity_Bridge_UnitS12Out
+PortCity_Bridge_UnitS12Out requires PortCity_Bridge_UnitS12
+PortCity_Bridge_UnitS12Out requires PortCity_Bridge_UnitS12Out
+Unit: PortCity_Bridge_UnitS12
+PortCity_Bridge_UnitS12 requires PortCity_Bridge_UnitS12Out
+PortCity_Bridge_UnitS12 requires PortCity_Bridge_UnitS12
+Unit: PortCity_Bridge_UnitE12Out
+Unit: PortCity_Bridge_UnitE12
+PortCity_Bridge_UnitE12 requires PortCity_Bridge_UnitE12Out
+Unit: PortCity_Bridge_UnitW12Out
+PortCity_Bridge_UnitW12Out requires PortCity_Bridge_UnitW12
+PortCity_Bridge_UnitW12Out requires PortCity_Bridge_UnitW12Out
+Unit: PortCity_Bridge_UnitW12
+PortCity_Bridge_UnitW12 requires PortCity_Bridge_UnitW12Out
+PortCity_Bridge_UnitW12 requires PortCity_Bridge_UnitW12
+Unit: ReleaseInterceptorsBeacon
+Unit: AdeptPhaseShift
+Unit: RavagerCorrosiveBileMissile
+Unit: HydraliskImpaleMissile
+Unit: CycloneMissileLargeAir
+Unit: CycloneMissile
+Unit: CycloneMissileLarge
+Unit: ThorAALance
+Unit: OracleWeapon
+Unit: TempestWeaponGround
+Unit: RavagerWeaponMissile
+Unit: ScoutMPAirWeaponLeft
+Unit: ScoutMPAirWeaponRight
+Unit: ArbiterMPWeaponMissile
+Unit: GuardianMPWeapon
+Unit: DevourerMPWeaponMissile
+Unit: DefilerMPDarkSwarmWeapon
+Unit: QueenMPEnsnareMissile
+Unit: QueenMPSpawnBroodlingsMissile
+Unit: LightningBombWeapon
+Unit: HERCPlacement
+HERCPlacement requires Refinery
+HERCPlacement requires SCV
+HERCPlacement requires CommandCenter
+Unit: GrappleWeapon
+Unit: CausticSprayMissile
+Unit: ParasiticBombMissile
+Unit: ParasiticBombDummy
+Unit: AdeptWeapon
+Unit: AdeptUpgradeWeapon
+Unit: LiberatorMissile
+Unit: LiberatorDamageMissile
+Unit: LiberatorAGMissile
+Unit: KD8Charge
+Unit: KD8ChargeWeapon
+Unit: HERC
+HERC requires Refinery
+HERC requires SCV
+HERC requires CommandCenter
+Unit: Replicant
+Replicant requires Assimilator
+Replicant requires Probe
+Replicant requires Nexus
+Unit: SeekerMissile
+Unit: AiurTempleBridgeDestructibleNE8Out
+Unit: AiurTempleBridgeDestructibleNE10Out
+Unit: AiurTempleBridgeDestructibleNE12Out
+Unit: AiurTempleBridgeDestructibleNW8Out
+Unit: AiurTempleBridgeDestructibleNW10Out
+Unit: AiurTempleBridgeDestructibleNW12Out
+Unit: AiurTempleBridgeDestructibleSW8Out
+Unit: AiurTempleBridgeDestructibleSW10Out
+Unit: AiurTempleBridgeDestructibleSW12Out
+Unit: AiurTempleBridgeDestructibleSE8Out
+Unit: AiurTempleBridgeDestructibleSE10Out
+Unit: AiurTempleBridgeDestructibleSE12Out
+Unit: CorsairMP
+CorsairMP requires Assimilator
+CorsairMP requires Probe
+CorsairMP requires Nexus
+Unit: ScoutMP
+ScoutMP requires Assimilator
+ScoutMP requires Probe
+ScoutMP requires Nexus
+Unit: ArbiterMP
+ArbiterMP requires Assimilator
+ArbiterMP requires Probe
+ArbiterMP requires Nexus
+Unit: ScourgeMP
+ScourgeMP requires Extractor
+ScourgeMP requires Drone
+ScourgeMP requires Larva
+Unit: DefilerMPPlagueWeapon
+Unit: QueenMP
+Unit: Elsecaro_Colonist_Hut
+Unit: TransportOverlordCocoon
+TransportOverlordCocoon requires Extractor
+TransportOverlordCocoon requires Drone
+TransportOverlordCocoon requires Larva
+Unit: OverlordTransport
+OverlordTransport requires Overlord
+OverlordTransport requires Larva
+Unit: PylonOvercharged
+PylonOvercharged requires Pylon
+PylonOvercharged requires Probe
+PylonOvercharged requires Nexus
+Unit: BypassArmorDrone
+Unit: AdeptPiercingWeapon
+Unit: CorrosiveParasiteWeapon
+Unit: HighTemplarSkinPreview
+Unit: WarpPrismSkinPreview
+Unit: SiegeTankSkinPreview
+Unit: LiberatorSkinPreview
+Unit: ShieldBattery
+ShieldBattery requires Pylon
+ShieldBattery requires CyberneticsCore
+ShieldBattery requires Probe
+ShieldBattery requires Nexus
+ShieldBattery requires Gateway
+Unit: ObserverSiegeMode
+ObserverSiegeMode requires Assimilator
+ObserverSiegeMode requires Observer
+ObserverSiegeMode requires RoboticsFacility
+ObserverSiegeMode requires Pylon
+ObserverSiegeMode requires CyberneticsCore
+ObserverSiegeMode requires Probe
+ObserverSiegeMode requires Nexus
+ObserverSiegeMode requires Gateway
+Unit: OverseerSiegeMode
+OverseerSiegeMode requires Extractor
+OverseerSiegeMode requires Overseer
+OverseerSiegeMode requires OverlordTransport
+OverseerSiegeMode requires Overlord
+OverseerSiegeMode requires Larva
+OverseerSiegeMode requires Drone
+Unit: RavenRepairDrone
+Unit: HighTemplarWeaponMissile
+Unit: CycloneMissileLargeAirAlternative
+Unit: RavenScramblerMissile
+Unit: RavenRepairDroneReleaseWeapon
+Unit: RavenShredderMissileWeapon
+Unit: InfestedAcidSpinesWeapon
+Unit: RenegadeLongboltMissileWeapon
+Unit: Viking
+Unit: RenegadeMissileTurret
 Ball has UNKNOWN
 Ball has STOP
 Ball has MOVE
 Ball has PATROL
 Ball has HOLDPOSITION
 Ball has SMART
-Colossus has STOP
-Colossus has MOVE
-Colossus has PATROL
-Colossus has HOLDPOSITION
-Colossus has ATTACK
-Colossus has SMART
-InfestorTerran has STOP
-InfestorTerran has MOVE
-InfestorTerran has PATROL
-InfestorTerran has HOLDPOSITION
-InfestorTerran has ATTACK
-InfestorTerran has BURROWDOWN
-InfestorTerran has SMART
-BanelingCocoon has RALLY_UNITS
-BanelingCocoon has SMART
-Baneling has STOP
-Baneling has MOVE
-Baneling has PATROL
-Baneling has HOLDPOSITION
-Baneling has ATTACK
-Baneling has EFFECT_EXPLODE
-Baneling has BURROWDOWN
-Baneling has BEHAVIOR_BUILDINGATTACKON
-Baneling has SMART
-ChangelingMarineShield has STOP
-ChangelingMarineShield has MOVE
-ChangelingMarineShield has PATROL
-ChangelingMarineShield has HOLDPOSITION
-ChangelingMarineShield has ATTACK
-ChangelingMarineShield has SMART
-ChangelingZerglingWings has STOP
-ChangelingZerglingWings has MOVE
-ChangelingZerglingWings has PATROL
-ChangelingZerglingWings has HOLDPOSITION
-ChangelingZerglingWings has ATTACK
-ChangelingZerglingWings has SMART
-ChangelingZergling has STOP
-ChangelingZergling has MOVE
-ChangelingZergling has PATROL
-ChangelingZergling has HOLDPOSITION
-ChangelingZergling has ATTACK
-ChangelingZergling has SMART
+Changeling has STOP
+Changeling has MOVE
+Changeling has PATROL
+Changeling has HOLDPOSITION
+Changeling has ATTACK
+Changeling has SMART
+ChangelingZealot has STOP
+ChangelingZealot has MOVE
+ChangelingZealot has PATROL
+ChangelingZealot has HOLDPOSITION
+ChangelingZealot has ATTACK
+ChangelingZealot has SMART
+ChangelingMarine has STOP
+ChangelingMarine has MOVE
+ChangelingMarine has PATROL
+ChangelingMarine has HOLDPOSITION
+ChangelingMarine has ATTACK
+ChangelingMarine has SMART
+CommandCenter has RALLY_WORKERS
+CommandCenter has LOADALL
+CommandCenter has LIFT
+CommandCenter has TRAIN_SCV
+CommandCenter has MORPH_PLANETARYFORTRESS
+CommandCenter has MORPH_ORBITALCOMMAND
+CommandCenter has SMART
 Barracks has RALLY_UNITS
 Barracks has BUILD_TECHLAB
 Barracks has BUILD_REACTOR
@@ -61,20 +1914,29 @@ Barracks has TRAIN_REAPER
 Barracks has TRAIN_GHOST
 Barracks has TRAIN_MARAUDER
 Barracks has SMART
-Bunker has EFFECT_SALVAGE
-Bunker has RALLY_UNITS
-Bunker has LOAD
-Bunker has SMART
+EngineeringBay has RESEARCH_TERRANSTRUCTUREARMORUPGRADE
+EngineeringBay has RESEARCH_TERRANINFANTRYWEAPONS
+EngineeringBay has RESEARCH_TERRANINFANTRYARMOR
+MissileTurret has STOP
+MissileTurret has ATTACK
+MissileTurret has SMART
 GhostAcademy has BUILD_NUKE
 GhostAcademy has RESEARCH_PERSONALCLOAKING
+Factory has RALLY_UNITS
+Factory has BUILD_TECHLAB
+Factory has BUILD_REACTOR
+Factory has LIFT
+Factory has TRAIN_SIEGETANK
+Factory has TRAIN_THOR
+Factory has TRAIN_HELLION
+Factory has TRAIN_HELLBAT
+Factory has TRAIN_CYCLONE
+Factory has TRAIN_WIDOWMINE
+Factory has SMART
 FusionCore has RESEARCH_BATTLECRUISERWEAPONREFIT
-SiegeTank has STOP
-SiegeTank has MOVE
-SiegeTank has PATROL
-SiegeTank has HOLDPOSITION
-SiegeTank has ATTACK
-SiegeTank has MORPH_SIEGEMODE
-SiegeTank has SMART
+AutoTurret has STOP
+AutoTurret has ATTACK
+AutoTurret has SMART
 VikingAssault has STOP
 VikingAssault has MOVE
 VikingAssault has PATROL
@@ -82,6 +1944,20 @@ VikingAssault has HOLDPOSITION
 VikingAssault has ATTACK
 VikingAssault has MORPH_VIKINGFIGHTERMODE
 VikingAssault has SMART
+VikingFighter has STOP
+VikingFighter has MOVE
+VikingFighter has PATROL
+VikingFighter has HOLDPOSITION
+VikingFighter has ATTACK
+VikingFighter has MORPH_VIKINGASSAULTMODE
+VikingFighter has SMART
+CommandCenterFlying has STOP
+CommandCenterFlying has MOVE
+CommandCenterFlying has PATROL
+CommandCenterFlying has HOLDPOSITION
+CommandCenterFlying has LOADALL
+CommandCenterFlying has LAND
+CommandCenterFlying has SMART
 FactoryFlying has STOP
 FactoryFlying has MOVE
 FactoryFlying has PATROL
@@ -90,28 +1966,20 @@ FactoryFlying has BUILD_TECHLAB
 FactoryFlying has BUILD_REACTOR
 FactoryFlying has LAND
 FactoryFlying has SMART
-SCV has STOP
-SCV has MOVE
-SCV has PATROL
-SCV has HOLDPOSITION
-SCV has ATTACK
-SCV has EFFECT_SPRAY
-SCV has HARVEST_GATHER
-SCV has EFFECT_REPAIR
-SCV has BUILD_COMMANDCENTER
-SCV has BUILD_SUPPLYDEPOT
-SCV has BUILD_REFINERY
-SCV has BUILD_BARRACKS
-SCV has BUILD_ENGINEERINGBAY
-SCV has BUILD_MISSILETURRET
-SCV has BUILD_BUNKER
-SCV has BUILD_SENSORTOWER
-SCV has BUILD_GHOSTACADEMY
-SCV has BUILD_FACTORY
-SCV has BUILD_STARPORT
-SCV has BUILD_ARMORY
-SCV has BUILD_FUSIONCORE
-SCV has SMART
+Marine has STOP
+Marine has MOVE
+Marine has PATROL
+Marine has HOLDPOSITION
+Marine has ATTACK
+Marine has EFFECT_STIM
+Marine has SMART
+Reaper has STOP
+Reaper has MOVE
+Reaper has PATROL
+Reaper has HOLDPOSITION
+Reaper has ATTACK
+Reaper has EFFECT_KD8CHARGE
+Reaper has SMART
 Ghost has STOP
 Ghost has MOVE
 Ghost has PATROL
@@ -123,6 +1991,13 @@ Ghost has EFFECT_NUKECALLDOWN
 Ghost has EFFECT_EMP
 Ghost has EFFECT_GHOSTSNIPE
 Ghost has SMART
+Marauder has STOP
+Marauder has MOVE
+Marauder has PATROL
+Marauder has HOLDPOSITION
+Marauder has ATTACK
+Marauder has EFFECT_STIM
+Marauder has SMART
 Medivac has STOP
 Medivac has MOVE
 Medivac has PATROL
@@ -139,11 +2014,37 @@ Banshee has HOLDPOSITION
 Banshee has ATTACK
 Banshee has BEHAVIOR_CLOAKON
 Banshee has SMART
-Gateway has RALLY_UNITS
-Gateway has SMART
-Stargate has RALLY_UNITS
-Stargate has SMART
+Raven has STOP
+Raven has MOVE
+Raven has PATROL
+Raven has HOLDPOSITION
+Raven has ATTACK
+Raven has EFFECT_AUTOTURRET
+Raven has UNKNOWN
+Raven has UNKNOWN
+Raven has SMART
+Battlecruiser has EFFECT_YAMATOGUN
+Battlecruiser has EFFECT_TACTICALJUMP
+Battlecruiser has UNKNOWN
+Battlecruiser has UNKNOWN
+Battlecruiser has UNKNOWN
+Battlecruiser has UNKNOWN
+Battlecruiser has STOP
+Battlecruiser has SMART
+Nexus has RALLY_WORKERS
+Nexus has TRAIN_PROBE
+Nexus has UNKNOWN
+Nexus has EFFECT_MASSRECALL
+Nexus has SMART
+TwilightCouncil has RESEARCH_BLINK
+TwilightCouncil has RESEARCH_ADEPTRESONATINGGLAIVES
+TemplarArchive has RESEARCH_PSISTORM
 RoboticsFacility has RALLY_UNITS
+RoboticsFacility has TRAIN_WARPPRISM
+RoboticsFacility has TRAIN_OBSERVER
+RoboticsFacility has TRAIN_COLOSSUS
+RoboticsFacility has TRAIN_IMMORTAL
+RoboticsFacility has TRAIN_DISRUPTOR
 RoboticsFacility has SMART
 Zealot has STOP
 Zealot has MOVE
@@ -159,13 +2060,22 @@ Stalker has HOLDPOSITION
 Stalker has ATTACK
 Stalker has EFFECT_BLINK
 Stalker has SMART
-DarkTemplar has STOP
-DarkTemplar has MOVE
-DarkTemplar has PATROL
-DarkTemplar has HOLDPOSITION
-DarkTemplar has ATTACK
-DarkTemplar has EFFECT_BLINK
-DarkTemplar has SMART
+HighTemplar has STOP
+HighTemplar has MOVE
+HighTemplar has PATROL
+HighTemplar has HOLDPOSITION
+HighTemplar has ATTACK
+HighTemplar has ATTACK
+HighTemplar has EFFECT_FEEDBACK
+HighTemplar has EFFECT_PSISTORM
+HighTemplar has SMART
+Phoenix has STOP
+Phoenix has MOVE
+Phoenix has PATROL
+Phoenix has HOLDPOSITION
+Phoenix has ATTACK
+Phoenix has EFFECT_GRAVITONBEAM
+Phoenix has SMART
 Carrier has STOP
 Carrier has MOVE
 Carrier has PATROL
@@ -187,12 +2097,49 @@ Immortal has PATROL
 Immortal has HOLDPOSITION
 Immortal has ATTACK
 Immortal has SMART
-Hatchery has RALLY_UNITS
-Hatchery has RALLY_WORKERS
-Hatchery has MORPH_LAIR
-Hatchery has RESEARCH_BURROW
-Hatchery has TRAIN_QUEEN
-Hatchery has SMART
+Probe has STOP
+Probe has MOVE
+Probe has PATROL
+Probe has HOLDPOSITION
+Probe has ATTACK
+Probe has EFFECT_SPRAY
+Probe has HARVEST_GATHER
+Probe has BUILD_NEXUS
+Probe has BUILD_PYLON
+Probe has BUILD_ASSIMILATOR
+Probe has BUILD_GATEWAY
+Probe has BUILD_FORGE
+Probe has BUILD_FLEETBEACON
+Probe has BUILD_TWILIGHTCOUNCIL
+Probe has BUILD_PHOTONCANNON
+Probe has BUILD_STARGATE
+Probe has BUILD_TEMPLARARCHIVE
+Probe has BUILD_DARKSHRINE
+Probe has BUILD_ROBOTICSBAY
+Probe has BUILD_ROBOTICSFACILITY
+Probe has BUILD_CYBERNETICSCORE
+Probe has BUILD_SHIELDBATTERY
+Probe has SMART
+Larva has TRAIN_DRONE
+Larva has TRAIN_ZERGLING
+Larva has TRAIN_OVERLORD
+Larva has TRAIN_HYDRALISK
+Larva has TRAIN_MUTALISK
+Larva has TRAIN_ULTRALISK
+Larva has TRAIN_ROACH
+Larva has TRAIN_INFESTOR
+Larva has TRAIN_CORRUPTOR
+Larva has TRAIN_VIPER
+Larva has TRAIN_SWARMHOST
+EvolutionChamber has RESEARCH_ZERGMELEEWEAPONS
+EvolutionChamber has RESEARCH_ZERGGROUNDARMOR
+EvolutionChamber has RESEARCH_ZERGMISSILEWEAPONS
+InfestationPit has RESEARCH_NEURALPARASITE
+NydusNetwork has STOP
+NydusNetwork has RALLY_UNITS
+NydusNetwork has LOAD
+NydusNetwork has BUILD_NYDUSWORM
+NydusNetwork has SMART
 Larva has TRAIN_DRONE
 Larva has TRAIN_ZERGLING
 Larva has TRAIN_OVERLORD
@@ -215,16 +2162,6 @@ Larva has TRAIN_INFESTOR
 Larva has TRAIN_CORRUPTOR
 Larva has TRAIN_VIPER
 Larva has TRAIN_SWARMHOST
-SporeCrawler has STOP
-SporeCrawler has ATTACK
-SporeCrawler has MORPH_UPROOT
-SporeCrawler has SMART
-Lair has RALLY_UNITS
-Lair has RALLY_WORKERS
-Lair has MORPH_HIVE
-Lair has RESEARCH_BURROW
-Lair has TRAIN_QUEEN
-Lair has SMART
 Larva has TRAIN_DRONE
 Larva has TRAIN_ZERGLING
 Larva has TRAIN_OVERLORD
@@ -263,10 +2200,6 @@ Larva has TRAIN_INFESTOR
 Larva has TRAIN_CORRUPTOR
 Larva has TRAIN_VIPER
 Larva has TRAIN_SWARMHOST
-GreaterSpire has RESEARCH_ZERGFLYERATTACK
-GreaterSpire has RESEARCH_ZERGFLYERARMOR
-Egg has RALLY_UNITS
-Egg has SMART
 Drone has STOP
 Drone has MOVE
 Drone has PATROL
@@ -289,24 +2222,35 @@ Drone has BUILD_SPINECRAWLER
 Drone has BUILD_SPORECRAWLER
 Drone has HARVEST_GATHER
 Drone has BURROWDOWN
+Drone has BURROWDOWN
+Drone has BURROWDOWN
+Drone has BURROWDOWN
+Drone has BURROWDOWN
+Drone has BURROWDOWN
+Drone has BURROWDOWN
+Drone has BURROWDOWN
+Drone has BURROWDOWN
+Drone has BURROWDOWN
+Drone has BURROWDOWN
 Drone has SMART
-Overlord has STOP
-Overlord has MOVE
-Overlord has PATROL
-Overlord has HOLDPOSITION
-Overlord has ATTACK
-Overlord has MORPH_OVERSEER
-Overlord has BEHAVIOR_GENERATECREEPON
-Overlord has MORPH_OVERLORDTRANSPORT
-Overlord has SMART
-Hydralisk has STOP
-Hydralisk has MOVE
-Hydralisk has PATROL
-Hydralisk has HOLDPOSITION
-Hydralisk has ATTACK
-Hydralisk has BURROWDOWN
-Hydralisk has MORPH_LURKER
-Hydralisk has SMART
+Zergling has STOP
+Zergling has MOVE
+Zergling has PATROL
+Zergling has HOLDPOSITION
+Zergling has ATTACK
+Zergling has TRAIN_BANELING
+Zergling has BURROWDOWN
+Zergling has BURROWDOWN
+Zergling has BURROWDOWN
+Zergling has BURROWDOWN
+Zergling has BURROWDOWN
+Zergling has BURROWDOWN
+Zergling has BURROWDOWN
+Zergling has BURROWDOWN
+Zergling has BURROWDOWN
+Zergling has BURROWDOWN
+Zergling has BURROWDOWN
+Zergling has SMART
 Mutalisk has STOP
 Mutalisk has MOVE
 Mutalisk has PATROL
@@ -319,15 +2263,17 @@ Ultralisk has PATROL
 Ultralisk has HOLDPOSITION
 Ultralisk has ATTACK
 Ultralisk has BURROWDOWN
+Ultralisk has BURROWDOWN
+Ultralisk has BURROWDOWN
+Ultralisk has BURROWDOWN
+Ultralisk has BURROWDOWN
+Ultralisk has BURROWDOWN
+Ultralisk has BURROWDOWN
+Ultralisk has BURROWDOWN
+Ultralisk has BURROWDOWN
+Ultralisk has BURROWDOWN
+Ultralisk has BURROWDOWN
 Ultralisk has SMART
-Roach has STOP
-Roach has MOVE
-Roach has PATROL
-Roach has HOLDPOSITION
-Roach has ATTACK
-Roach has BURROWDOWN
-Roach has MORPH_RAVAGER
-Roach has SMART
 Infestor has STOP
 Infestor has MOVE
 Infestor has PATROL
@@ -337,15 +2283,103 @@ Infestor has EFFECT_FUNGALGROWTH
 Infestor has EFFECT_INFESTEDTERRANS
 Infestor has EFFECT_NEURALPARASITE
 Infestor has BURROWDOWN
+Infestor has BURROWDOWN
+Infestor has BURROWDOWN
+Infestor has BURROWDOWN
+Infestor has BURROWDOWN
+Infestor has BURROWDOWN
+Infestor has BURROWDOWN
+Infestor has BURROWDOWN
+Infestor has BURROWDOWN
+Infestor has BURROWDOWN
+Infestor has BURROWDOWN
 Infestor has SMART
+BroodLord has STOP
+BroodLord has MOVE
+BroodLord has PATROL
+BroodLord has HOLDPOSITION
+BroodLord has ATTACK
+BroodLord has SMART
+BanelingBurrowed has EFFECT_EXPLODE
+BanelingBurrowed has BURROWUP
+BanelingBurrowed has BURROWUP
+BanelingBurrowed has BURROWUP
+BanelingBurrowed has BURROWUP
+BanelingBurrowed has BURROWUP
+BanelingBurrowed has BURROWUP
+BanelingBurrowed has BURROWUP
+BanelingBurrowed has BURROWUP
+BanelingBurrowed has BURROWUP
+BanelingBurrowed has BURROWUP
+BanelingBurrowed has BURROWUP
 DroneBurrowed has BURROWUP
+DroneBurrowed has BURROWUP
+DroneBurrowed has BURROWUP
+DroneBurrowed has BURROWUP
+DroneBurrowed has BURROWUP
+DroneBurrowed has BURROWUP
+DroneBurrowed has BURROWUP
+DroneBurrowed has BURROWUP
+DroneBurrowed has BURROWUP
+DroneBurrowed has BURROWUP
+DroneBurrowed has BURROWUP
+HydraliskBurrowed has BURROWUP
+HydraliskBurrowed has BURROWUP
+HydraliskBurrowed has BURROWUP
+HydraliskBurrowed has BURROWUP
+HydraliskBurrowed has BURROWUP
+HydraliskBurrowed has BURROWUP
+HydraliskBurrowed has BURROWUP
+HydraliskBurrowed has BURROWUP
+HydraliskBurrowed has BURROWUP
+HydraliskBurrowed has BURROWUP
+HydraliskBurrowed has BURROWUP
+RoachBurrowed has STOP
+RoachBurrowed has MOVE
+RoachBurrowed has PATROL
+RoachBurrowed has HOLDPOSITION
+RoachBurrowed has ATTACK
+RoachBurrowed has BURROWUP
+RoachBurrowed has BURROWUP
+RoachBurrowed has BURROWUP
+RoachBurrowed has BURROWUP
+RoachBurrowed has BURROWUP
+RoachBurrowed has BURROWUP
+RoachBurrowed has BURROWUP
+RoachBurrowed has BURROWUP
+RoachBurrowed has BURROWUP
+RoachBurrowed has BURROWUP
+RoachBurrowed has SMART
+ZerglingBurrowed has BURROWUP
+ZerglingBurrowed has BURROWUP
+ZerglingBurrowed has BURROWUP
+ZerglingBurrowed has BURROWUP
+ZerglingBurrowed has BURROWUP
+ZerglingBurrowed has BURROWUP
+ZerglingBurrowed has BURROWUP
+ZerglingBurrowed has BURROWUP
+ZerglingBurrowed has BURROWUP
+ZerglingBurrowed has BURROWUP
+ZerglingBurrowed has BURROWUP
 InfestorTerranBurrowed has BURROWUP
-RedstoneLavaCritter has STOP
-RedstoneLavaCritter has MOVE
-RedstoneLavaCritter has PATROL
-RedstoneLavaCritter has HOLDPOSITION
-RedstoneLavaCritter has BURROWDOWN
-RedstoneLavaCritter has SMART
+InfestorTerranBurrowed has BURROWUP
+InfestorTerranBurrowed has BURROWUP
+InfestorTerranBurrowed has BURROWUP
+InfestorTerranBurrowed has BURROWUP
+InfestorTerranBurrowed has BURROWUP
+InfestorTerranBurrowed has BURROWUP
+InfestorTerranBurrowed has BURROWUP
+InfestorTerranBurrowed has BURROWUP
+InfestorTerranBurrowed has BURROWUP
+InfestorTerranBurrowed has BURROWUP
+RedstoneLavaCritterBurrowed has STOP
+RedstoneLavaCritterBurrowed has BURROWUP
+RedstoneLavaCritterInjured has STOP
+RedstoneLavaCritterInjured has MOVE
+RedstoneLavaCritterInjured has PATROL
+RedstoneLavaCritterInjured has HOLDPOSITION
+RedstoneLavaCritterInjured has BURROWDOWN
+RedstoneLavaCritterInjured has SMART
 InfestorBurrowed has STOP
 InfestorBurrowed has MOVE
 InfestorBurrowed has PATROL
@@ -354,17 +2388,17 @@ InfestorBurrowed has ATTACK
 InfestorBurrowed has EFFECT_INFESTEDTERRANS
 InfestorBurrowed has EFFECT_NEURALPARASITE
 InfestorBurrowed has BURROWUP
+InfestorBurrowed has BURROWUP
+InfestorBurrowed has BURROWUP
+InfestorBurrowed has BURROWUP
+InfestorBurrowed has BURROWUP
+InfestorBurrowed has BURROWUP
+InfestorBurrowed has BURROWUP
+InfestorBurrowed has BURROWUP
+InfestorBurrowed has BURROWUP
+InfestorBurrowed has BURROWUP
+InfestorBurrowed has BURROWUP
 InfestorBurrowed has SMART
-Overseer has STOP
-Overseer has MOVE
-Overseer has PATROL
-Overseer has HOLDPOSITION
-Overseer has ATTACK
-Overseer has EFFECT_SPAWNCHANGELING
-Overseer has EFFECT_CONTAMINATE
-Overseer has UNKNOWN
-Overseer has SMART
-UltraliskBurrowed has BURROWUP
 OrbitalCommand has EFFECT_CALLDOWNMULE
 OrbitalCommand has RALLY_WORKERS
 OrbitalCommand has EFFECT_SUPPLYDROP
@@ -372,6 +2406,26 @@ OrbitalCommand has EFFECT_SCAN
 OrbitalCommand has TRAIN_SCV
 OrbitalCommand has LIFT
 OrbitalCommand has SMART
+WarpGate has TRAINWARP_ZEALOT
+WarpGate has TRAINWARP_STALKER
+WarpGate has TRAINWARP_HIGHTEMPLAR
+WarpGate has TRAINWARP_DARKTEMPLAR
+WarpGate has TRAINWARP_SENTRY
+WarpGate has TRAINWARP_ADEPT
+WarpGate has MORPH_GATEWAY
+WarpGate has SMART
+OrbitalCommandFlying has STOP
+OrbitalCommandFlying has MOVE
+OrbitalCommandFlying has PATROL
+OrbitalCommandFlying has HOLDPOSITION
+OrbitalCommandFlying has LAND
+OrbitalCommandFlying has SMART
+ForceField has UNKNOWN
+ForceField has SMART
+WarpPrismPhasing has STOP
+WarpPrismPhasing has LOAD
+WarpPrismPhasing has MORPH_WARPPRISMTRANSPORTMODE
+WarpPrismPhasing has SMART
 SpineCrawlerUprooted has STOP
 SpineCrawlerUprooted has MOVE
 SpineCrawlerUprooted has PATROL
@@ -392,37 +2446,87 @@ Archon has PATROL
 Archon has HOLDPOSITION
 Archon has ATTACK
 Archon has SMART
-Broodling has STOP
-Broodling has MOVE
-Broodling has PATROL
-Broodling has HOLDPOSITION
-Broodling has ATTACK
-Broodling has SMART
-UrsadakMale has STOP
-UrsadakMale has MOVE
-UrsadakMale has PATROL
-UrsadakMale has HOLDPOSITION
-UrsadakMale has SMART
+NydusCanal has STOP
+NydusCanal has RALLY_UNITS
+NydusCanal has LOAD
+NydusCanal has SMART
+GhostAlternate has STOP
+GhostAlternate has MOVE
+GhostAlternate has PATROL
+GhostAlternate has HOLDPOSITION
+GhostAlternate has ATTACK
+GhostAlternate has BEHAVIOR_HOLDFIREON
+GhostAlternate has BEHAVIOR_CLOAKON
+GhostAlternate has EFFECT_NUKECALLDOWN
+GhostAlternate has EFFECT_EMP
+GhostAlternate has EFFECT_GHOSTSNIPE
+GhostAlternate has SMART
+GhostNova has STOP
+GhostNova has MOVE
+GhostNova has PATROL
+GhostNova has HOLDPOSITION
+GhostNova has ATTACK
+GhostNova has BEHAVIOR_HOLDFIREON
+GhostNova has BEHAVIOR_CLOAKON
+GhostNova has EFFECT_NUKECALLDOWN
+GhostNova has EFFECT_EMP
+GhostNova has EFFECT_GHOSTSNIPE
+GhostNova has SMART
+MULE has STOP
+MULE has MOVE
+MULE has PATROL
+MULE has HOLDPOSITION
+MULE has ATTACK
+MULE has EFFECT_REPAIR
+MULE has HARVEST_GATHER
+MULE has SMART
+Adept has STOP
+Adept has MOVE
+Adept has PATROL
+Adept has HOLDPOSITION
+Adept has ATTACK
+Adept has EFFECT_ADEPTPHASESHIFT
+Adept has SMART
+CarrionBird has STOP
+CarrionBird has MOVE
+CarrionBird has PATROL
+CarrionBird has HOLDPOSITION
+CarrionBird has SMART
+KarakMale has STOP
+KarakMale has MOVE
+KarakMale has PATROL
+KarakMale has HOLDPOSITION
+KarakMale has SMART
+KarakFemale has STOP
+KarakFemale has MOVE
+KarakFemale has PATROL
+KarakFemale has HOLDPOSITION
+KarakFemale has SMART
 UrsadakFemale has STOP
 UrsadakFemale has MOVE
 UrsadakFemale has PATROL
 UrsadakFemale has HOLDPOSITION
 UrsadakFemale has SMART
-UrsadakCalf has STOP
-UrsadakCalf has MOVE
-UrsadakCalf has PATROL
-UrsadakCalf has HOLDPOSITION
-UrsadakCalf has SMART
-UrsadakMaleExotic has STOP
-UrsadakMaleExotic has MOVE
-UrsadakMaleExotic has PATROL
-UrsadakMaleExotic has HOLDPOSITION
-UrsadakMaleExotic has SMART
+UtilityBot has STOP
+UtilityBot has MOVE
+UtilityBot has PATROL
+UtilityBot has HOLDPOSITION
+UtilityBot has SMART
+CommentatorBot1 has STOP
+CommentatorBot1 has MOVE
+CommentatorBot1 has PATROL
+CommentatorBot1 has HOLDPOSITION
+CommentatorBot1 has SMART
 CommentatorBot2 has STOP
 CommentatorBot2 has MOVE
 CommentatorBot2 has PATROL
 CommentatorBot2 has HOLDPOSITION
 CommentatorBot2 has SMART
+CommentatorBot3 has STOP
+CommentatorBot3 has MOVE
+CommentatorBot3 has PATROL
+CommentatorBot3 has HOLDPOSITION
+CommentatorBot3 has SMART
 CommentatorBot4 has STOP
 CommentatorBot4 has MOVE
 CommentatorBot4 has PATROL
@@ -433,40 +2537,76 @@ Scantipede has MOVE
 Scantipede has PATROL
 Scantipede has HOLDPOSITION
 Scantipede has SMART
-ScopeTest has STOP
-ScopeTest has MOVE
-ScopeTest has PATROL
-ScopeTest has HOLDPOSITION
-ScopeTest has ATTACK
-ScopeTest has SMART
-HellionTank has STOP
-HellionTank has MOVE
-HellionTank has PATROL
-HellionTank has HOLDPOSITION
-HellionTank has ATTACK
-HellionTank has MORPH_HELLION
-HellionTank has SMART
-MothershipCore has STOP
-MothershipCore has MOVE
-MothershipCore has PATROL
-MothershipCore has HOLDPOSITION
-MothershipCore has ATTACK
-MothershipCore has EFFECT_MASSRECALL
-MothershipCore has EFFECT_PHOTONOVERCHARGE
-MothershipCore has EFFECT_TIMEWARP
-MothershipCore has SMART
-LocustMP has STOP
-LocustMP has MOVE
-LocustMP has PATROL
-LocustMP has HOLDPOSITION
-LocustMP has ATTACK
-LocustMP has SMART
+Dog has STOP
+Dog has MOVE
+Dog has PATROL
+Dog has HOLDPOSITION
+Dog has SMART
+Cow has STOP
+Cow has MOVE
+Cow has PATROL
+Cow has HOLDPOSITION
+Cow has SMART
+AutoTestAttackTargetGround has STOP
+AutoTestAttackTargetGround has MOVE
+AutoTestAttackTargetGround has PATROL
+AutoTestAttackTargetGround has HOLDPOSITION
+AutoTestAttackTargetGround has SMART
+AutoTestAttackTargetAir has STOP
+AutoTestAttackTargetAir has MOVE
+AutoTestAttackTargetAir has PATROL
+AutoTestAttackTargetAir has HOLDPOSITION
+AutoTestAttackTargetAir has SMART
+AutoTestAttacker has STOP
+AutoTestAttacker has MOVE
+AutoTestAttacker has PATROL
+AutoTestAttacker has HOLDPOSITION
+AutoTestAttacker has ATTACK
+AutoTestAttacker has SMART
 NydusCanalAttacker has STOP
 NydusCanalAttacker has ATTACK
 NydusCanalAttacker has SMART
 SwarmHostBurrowedMP has BURROWUP
+SwarmHostBurrowedMP has BURROWUP
+SwarmHostBurrowedMP has BURROWUP
+SwarmHostBurrowedMP has BURROWUP
+SwarmHostBurrowedMP has BURROWUP
+SwarmHostBurrowedMP has BURROWUP
+SwarmHostBurrowedMP has BURROWUP
+SwarmHostBurrowedMP has BURROWUP
+SwarmHostBurrowedMP has BURROWUP
+SwarmHostBurrowedMP has BURROWUP
+SwarmHostBurrowedMP has BURROWUP
 SwarmHostBurrowedMP has EFFECT_SPAWNLOCUSTS
 SwarmHostBurrowedMP has SMART
+SwarmHostMP has STOP
+SwarmHostMP has MOVE
+SwarmHostMP has PATROL
+SwarmHostMP has HOLDPOSITION
+SwarmHostMP has ATTACK
+SwarmHostMP has BURROWDOWN
+SwarmHostMP has BURROWDOWN
+SwarmHostMP has BURROWDOWN
+SwarmHostMP has BURROWDOWN
+SwarmHostMP has BURROWDOWN
+SwarmHostMP has BURROWDOWN
+SwarmHostMP has BURROWDOWN
+SwarmHostMP has BURROWDOWN
+SwarmHostMP has BURROWDOWN
+SwarmHostMP has BURROWDOWN
+SwarmHostMP has BURROWDOWN
+SwarmHostMP has EFFECT_SPAWNLOCUSTS
+SwarmHostMP has SMART
+Oracle has STOP
+Oracle has MOVE
+Oracle has PATROL
+Oracle has HOLDPOSITION
+Oracle has ATTACK
+Oracle has ATTACK
+Oracle has EFFECT_ORACLEREVELATION
+Oracle has BEHAVIOR_PULSARBEAMON
+Oracle has BUILD_STASISTRAP
+Oracle has SMART
 Tempest has STOP
 Tempest has MOVE
 Tempest has PATROL
@@ -496,30 +2636,39 @@ LurkerMPBurrowed has ATTACK
 LurkerMPBurrowed has BURROWUP
 LurkerMPBurrowed has BEHAVIOR_HOLDFIREON
 LurkerMPBurrowed has SMART
-ExtendingBridgeNEWide8Out has UNKNOWN
-ExtendingBridgeNWWide8 has UNKNOWN
+ExtendingBridgeNEWide8 has UNKNOWN
+ExtendingBridgeNWWide8Out has UNKNOWN
 ExtendingBridgeNEWide10 has UNKNOWN
-ExtendingBridgeNEWide12 has UNKNOWN
-XelNaga_Caverns_DoorEOpened has UNKNOWN
+ExtendingBridgeNWWide10Out has UNKNOWN
+ExtendingBridgeNWWide10 has UNKNOWN
+ExtendingBridgeNEWide12Out has UNKNOWN
 XelNaga_Caverns_DoorNE has UNKNOWN
-XelNaga_Caverns_DoorNEOpened has UNKNOWN
-XelNaga_Caverns_DoorNOpened has UNKNOWN
+XelNaga_Caverns_DoorNWOpened has UNKNOWN
+XelNaga_Caverns_DoorSE has UNKNOWN
 XelNaga_Caverns_DoorSOpened has UNKNOWN
-XelNaga_Caverns_DoorSW has UNKNOWN
 XelNaga_Caverns_DoorSWOpened has UNKNOWN
-XelNaga_Caverns_Floating_BridgeNE8Out has UNKNOWN
+XelNaga_Caverns_DoorWOpened has UNKNOWN
 XelNaga_Caverns_Floating_BridgeNE8 has UNKNOWN
 XelNaga_Caverns_Floating_BridgeNW8Out has UNKNOWN
 XelNaga_Caverns_Floating_BridgeNW8 has UNKNOWN
 XelNaga_Caverns_Floating_BridgeNE10 has UNKNOWN
 XelNaga_Caverns_Floating_BridgeNW10Out has UNKNOWN
 XelNaga_Caverns_Floating_BridgeNW10 has UNKNOWN
+XelNaga_Caverns_Floating_BridgeNE12Out has UNKNOWN
+XelNaga_Caverns_Floating_BridgeNE12 has UNKNOWN
 XelNaga_Caverns_Floating_BridgeH8 has UNKNOWN
 XelNaga_Caverns_Floating_BridgeV8Out has UNKNOWN
+XelNaga_Caverns_Floating_BridgeH10Out has UNKNOWN
 XelNaga_Caverns_Floating_BridgeH10 has UNKNOWN
-XelNaga_Caverns_Floating_BridgeV10Out has UNKNOWN
-XelNaga_Caverns_Floating_BridgeH12Out has UNKNOWN
+XelNaga_Caverns_Floating_BridgeV10 has UNKNOWN
 XelNaga_Caverns_Floating_BridgeH12 has UNKNOWN
+XelNaga_Caverns_Floating_BridgeV12 has UNKNOWN
+XelNagaHealingShrine has UNKNOWN
+ThornLizard has STOP
+ThornLizard has MOVE
+ThornLizard has PATROL
+ThornLizard has HOLDPOSITION
+ThornLizard has SMART
 ProtossSnakeSegmentDemo has STOP
 ProtossSnakeSegmentDemo has MOVE
 ProtossSnakeSegmentDemo has PATROL
@@ -532,24 +2681,47 @@ Artosilope has PATROL
 Artosilope has HOLDPOSITION
 Artosilope has UNKNOWN
 Artosilope has SMART
+Anteplott has STOP
+Anteplott has MOVE
+Anteplott has PATROL
+Anteplott has HOLDPOSITION
+Anteplott has UNKNOWN
+Anteplott has SMART
+LabBot has STOP
+LabBot has MOVE
+LabBot has PATROL
+LabBot has HOLDPOSITION
+LabBot has SMART
+Crabeetle has STOP
+Crabeetle has MOVE
+Crabeetle has PATROL
+Crabeetle has HOLDPOSITION
+Crabeetle has UNKNOWN
+Crabeetle has SMART
 SnowRefinery_Terran_ExtendingBridgeNEShort8Out has UNKNOWN
 SnowRefinery_Terran_ExtendingBridgeNEShort8 has UNKNOWN
-SnowRefinery_Terran_ExtendingBridgeNWShort8 has UNKNOWN
-Tarsonis_DoorN has UNKNOWN
-Tarsonis_DoorNE has UNKNOWN
+SnowRefinery_Terran_ExtendingBridgeNWShort8Out has UNKNOWN
 Tarsonis_DoorELowered has UNKNOWN
-CompoundMansion_DoorN has UNKNOWN
+Tarsonis_DoorNW has UNKNOWN
 CompoundMansion_DoorNLowered has UNKNOWN
 CompoundMansion_DoorNE has UNKNOWN
 CompoundMansion_DoorNELowered has UNKNOWN
-CompoundMansion_DoorNWLowered has UNKNOWN
-Liberator has STOP
-Liberator has MOVE
-Liberator has PATROL
-Liberator has HOLDPOSITION
-Liberator has ATTACK
-Liberator has MORPH_LIBERATORAGMODE
-Liberator has SMART
+CompoundMansion_DoorE has UNKNOWN
+CompoundMansion_DoorELowered has UNKNOWN
+CompoundMansion_DoorNW has UNKNOWN
+RavagerCocoon has RALLY_UNITS
+RavagerCocoon has SMART
+RavagerBurrowed has BURROWUP
+RavagerBurrowed has BURROWUP
+RavagerBurrowed has BURROWUP
+RavagerBurrowed has BURROWUP
+RavagerBurrowed has BURROWUP
+RavagerBurrowed has BURROWUP
+RavagerBurrowed has BURROWUP
+RavagerBurrowed has BURROWUP
+RavagerBurrowed has BURROWUP
+RavagerBurrowed has BURROWUP
+RavagerBurrowed has BURROWUP
 ThorAP has STOP
 ThorAP has MOVE
 ThorAP has PATROL
@@ -557,20 +2729,6 @@ ThorAP has HOLDPOSITION
 ThorAP has ATTACK
 ThorAP has MORPH_THOREXPLOSIVEMODE
 ThorAP has SMART
-Cyclone has STOP
-Cyclone has MOVE
-Cyclone has PATROL
-Cyclone has HOLDPOSITION
-Cyclone has ATTACK
-Cyclone has EFFECT_LOCKON
-Cyclone has SMART
-LocustMPFlying has STOP
-LocustMPFlying has MOVE
-LocustMPFlying has PATROL
-LocustMPFlying has HOLDPOSITION
-LocustMPFlying has ATTACK
-LocustMPFlying has EFFECT_LOCUSTSWOOP
-LocustMPFlying has SMART
 Disruptor has STOP
 Disruptor has MOVE
 Disruptor has PATROL
@@ -578,23 +2736,16 @@ Disruptor has HOLDPOSITION
 Disruptor has ATTACK
 Disruptor has EFFECT_PURIFICATIONNOVA
 Disruptor has SMART
-AiurLightBridgeNE8 has UNKNOWN
+AiurLightBridgeNE8Out has UNKNOWN
 AiurLightBridgeNE10Out has UNKNOWN
 AiurLightBridgeNE10 has UNKNOWN
 AiurLightBridgeNW8 has UNKNOWN
-AiurLightBridgeNW10 has UNKNOWN
 ShakurasLightBridgeNE8 has UNKNOWN
-ShakurasLightBridgeNE10 has UNKNOWN
-ShakurasLightBridgeNE12Out has UNKNOWN
-ShakurasLightBridgeNW10Out has UNKNOWN
-ShakurasLightBridgeNW10 has UNKNOWN
-ShakurasLightBridgeNW12Out has UNKNOWN
-GuardianMP has STOP
-GuardianMP has MOVE
-GuardianMP has PATROL
-GuardianMP has HOLDPOSITION
-GuardianMP has ATTACK
-GuardianMP has SMART
+ShakurasLightBridgeNW12 has UNKNOWN
+VoidMPImmortalReviveCorpse has RALLY_UNITS
+VoidMPImmortalReviveCorpse has UNKNOWN
+VoidMPImmortalReviveCorpse has SMART
+DefilerMPBurrowed has BURROWUP
 DefilerMP has STOP
 DefilerMP has MOVE
 DefilerMP has PATROL
@@ -605,39 +2756,28 @@ DefilerMP has UNKNOWN
 DefilerMP has UNKNOWN
 DefilerMP has BURROWDOWN
 DefilerMP has SMART
-LiberatorAG has STOP
-LiberatorAG has ATTACK
-LiberatorAG has MORPH_LIBERATORAAMODE
-LiberatorAG has SMART
-AiurLightBridgeAbandonedNE8Out has UNKNOWN
+AiurLightBridgeAbandonedNE8 has UNKNOWN
+AiurLightBridgeAbandonedNE12Out has UNKNOWN
 AiurLightBridgeAbandonedNE12 has UNKNOWN
-AiurLightBridgeAbandonedNW8 has UNKNOWN
-AiurLightBridgeAbandonedNW10Out has UNKNOWN
-AiurLightBridgeAbandonedNW12 has UNKNOWN
-PortCity_Bridge_UnitSE8 has UNKNOWN
-PortCity_Bridge_UnitNW8Out has UNKNOWN
+AiurLightBridgeAbandonedNW8Out has UNKNOWN
+AiurLightBridgeAbandonedNW12Out has UNKNOWN
+PortCity_Bridge_UnitNE8 has UNKNOWN
 PortCity_Bridge_UnitNW8 has UNKNOWN
 PortCity_Bridge_UnitSW8Out has UNKNOWN
-PortCity_Bridge_UnitSW8 has UNKNOWN
 PortCity_Bridge_UnitNE10Out has UNKNOWN
-PortCity_Bridge_UnitSE10Out has UNKNOWN
+PortCity_Bridge_UnitSE10 has UNKNOWN
+PortCity_Bridge_UnitNW10Out has UNKNOWN
 PortCity_Bridge_UnitSW10Out has UNKNOWN
-PortCity_Bridge_UnitNE12 has UNKNOWN
 PortCity_Bridge_UnitNW12Out has UNKNOWN
 PortCity_Bridge_UnitSW12Out has UNKNOWN
-PortCity_Bridge_UnitSW12 has UNKNOWN
-PortCity_Bridge_UnitN8Out has UNKNOWN
-PortCity_Bridge_UnitN8 has UNKNOWN
-PortCity_Bridge_UnitS8 has UNKNOWN
+PortCity_Bridge_UnitE8Out has UNKNOWN
 PortCity_Bridge_UnitW8Out has UNKNOWN
 PortCity_Bridge_UnitW8 has UNKNOWN
+PortCity_Bridge_UnitN10Out has UNKNOWN
 PortCity_Bridge_UnitN10 has UNKNOWN
-PortCity_Bridge_UnitS10 has UNKNOWN
-PortCity_Bridge_UnitE10 has UNKNOWN
-PortCity_Bridge_UnitW10 has UNKNOWN
-PortCity_Bridge_UnitN12Out has UNKNOWN
-PortCity_Bridge_UnitS12 has UNKNOWN
-PortCity_Bridge_UnitW12Out has UNKNOWN
+PortCity_Bridge_UnitE10Out has UNKNOWN
+PortCity_Bridge_UnitS12Out has UNKNOWN
+PortCity_Bridge_UnitE12Out has UNKNOWN
 PortCity_Bridge_UnitW12 has UNKNOWN
 AdeptPhaseShift has STOP
 AdeptPhaseShift has MOVE
@@ -647,145 +2787,154 @@ AdeptPhaseShift has ATTACK
 AdeptPhaseShift has ATTACK
 AdeptPhaseShift has CANCEL
 AdeptPhaseShift has SMART
-CorsairMP has STOP
-CorsairMP has MOVE
-CorsairMP has PATROL
-CorsairMP has HOLDPOSITION
-CorsairMP has ATTACK
-CorsairMP has UNKNOWN
-CorsairMP has SMART
-QueenMP has STOP
-QueenMP has MOVE
-QueenMP has PATROL
-QueenMP has HOLDPOSITION
-QueenMP has ATTACK
-QueenMP has UNKNOWN
-QueenMP has UNKNOWN
-QueenMP has UNKNOWN
-QueenMP has SMART
+ShieldBattery has STOP
+ShieldBattery has EFFECT_RESTORE
+ShieldBattery has SMART
+ObserverSiegeMode has STOP
+ObserverSiegeMode has UNKNOWN
+OverlordTransport has STOP
+OverlordTransport has MOVE
+OverlordTransport has PATROL
+OverlordTransport has HOLDPOSITION
+OverlordTransport has ATTACK
+OverlordTransport has LOAD
+OverlordTransport has MORPH_OVERSEER
+OverlordTransport has BEHAVIOR_GENERATECREEPON
+OverlordTransport has SMART
+DarkTemplar has STOP
+DarkTemplar has MOVE
+DarkTemplar has PATROL
+DarkTemplar has HOLDPOSITION
+DarkTemplar has ATTACK
+DarkTemplar has EFFECT_BLINK
+DarkTemplar has SMART
 SlaynSwarmHostSpawnFlyer has STOP
 SlaynSwarmHostSpawnFlyer has MOVE
 SlaynSwarmHostSpawnFlyer has PATROL
 SlaynSwarmHostSpawnFlyer has HOLDPOSITION
 SlaynSwarmHostSpawnFlyer has SMART
-SlaynElemental has STOP
-SlaynElemental has MOVE
-SlaynElemental has PATROL
-SlaynElemental has HOLDPOSITION
-SlaynElemental has ATTACK
-SlaynElemental has UNKNOWN
-SlaynElemental has SMART
-RavenRepairDrone has STOP
-RavenRepairDrone has EFFECT_REPAIR
-RavenRepairDrone has SMART
-RenegadeMissileTurret has STOP
-RenegadeMissileTurret has ATTACK
-RenegadeMissileTurret has SMART
-Marauder has STOP
-Marauder has MOVE
-Marauder has PATROL
-Marauder has HOLDPOSITION
-Marauder has ATTACK
-Marauder has EFFECT_STIM
-Marauder has SMART
-Moopy has STOP
-Moopy has MOVE
-Moopy has PATROL
-Moopy has HOLDPOSITION
-Moopy has ATTACK
-Moopy has SMART
-PortCity_Bridge_UnitS12Out has UNKNOWN
+Replicant has STOP
+Replicant has MOVE
+Replicant has PATROL
+Replicant has HOLDPOSITION
+Replicant has ATTACK
+Replicant has SMART
+HERCPlacement has STOP
+HERCPlacement has MOVE
+HERCPlacement has PATROL
+HERCPlacement has HOLDPOSITION
+HERCPlacement has ATTACK
+HERCPlacement has SMART
+SupplyDepot has MORPH_SUPPLYDEPOT_LOWER
+ChangelingZergling has STOP
+ChangelingZergling has MOVE
+ChangelingZergling has PATROL
+ChangelingZergling has HOLDPOSITION
+ChangelingZergling has ATTACK
+ChangelingZergling has SMART
+Mothership has STOP
+Mothership has MOVE
+Mothership has PATROL
+Mothership has HOLDPOSITION
+Mothership has ATTACK
+Mothership has UNKNOWN
+Mothership has EFFECT_TIMEWARP
+Mothership has SMART
 PortCity_Bridge_UnitN12 has UNKNOWN
-PortCity_Bridge_UnitW10Out has UNKNOWN
-PortCity_Bridge_UnitE10Out has UNKNOWN
-PortCity_Bridge_UnitE8Out has UNKNOWN
-PortCity_Bridge_UnitS8Out has UNKNOWN
+PortCity_Bridge_UnitS8 has UNKNOWN
+PortCity_Bridge_UnitN8Out has UNKNOWN
 PortCity_Bridge_UnitSE12 has UNKNOWN
-PortCity_Bridge_UnitNW10Out has UNKNOWN
-PortCity_Bridge_UnitSE10 has UNKNOWN
+PortCity_Bridge_UnitSE12Out has UNKNOWN
+PortCity_Bridge_UnitNE12 has UNKNOWN
 PortCity_Bridge_UnitNE10 has UNKNOWN
+PortCity_Bridge_UnitNW8Out has UNKNOWN
+PortCity_Bridge_UnitSE8 has UNKNOWN
 PortCity_Bridge_UnitSE8Out has UNKNOWN
-PortCity_Bridge_UnitNE8 has UNKNOWN
-AiurLightBridgeAbandonedNW8Out has UNKNOWN
+AiurLightBridgeAbandonedNW10Out has UNKNOWN
 AiurLightBridgeAbandonedNE10 has UNKNOWN
+AiurLightBridgeAbandonedNE10Out has UNKNOWN
+AiurLightBridgeAbandonedNE8Out has UNKNOWN
+LiberatorAG has STOP
+LiberatorAG has ATTACK
+LiberatorAG has MORPH_LIBERATORAAMODE
+LiberatorAG has SMART
 DisruptorPhased has STOP
 DisruptorPhased has MOVE
 DisruptorPhased has PATROL
 DisruptorPhased has HOLDPOSITION
 DisruptorPhased has ATTACK
 DisruptorPhased has SMART
-ShakurasLightBridgeNW12 has UNKNOWN
+ShakurasLightBridgeNW12Out has UNKNOWN
+ShakurasLightBridgeNW10Out has UNKNOWN
 ShakurasLightBridgeNW8Out has UNKNOWN
+ShakurasLightBridgeNE12Out has UNKNOWN
 ShakurasLightBridgeNE8Out has UNKNOWN
+AiurLightBridgeNW12Out has UNKNOWN
+AiurLightBridgeNW10 has UNKNOWN
 AiurLightBridgeNW8Out has UNKNOWN
-AiurLightBridgeNE8Out has UNKNOWN
-RavagerBurrowed has BURROWUP
+AiurLightBridgeNE8 has UNKNOWN
+LocustMPFlying has STOP
+LocustMPFlying has MOVE
+LocustMPFlying has PATROL
+LocustMPFlying has HOLDPOSITION
+LocustMPFlying has ATTACK
+LocustMPFlying has EFFECT_LOCUSTSWOOP
+LocustMPFlying has SMART
+Cyclone has STOP
+Cyclone has MOVE
+Cyclone has PATROL
+Cyclone has HOLDPOSITION
+Cyclone has ATTACK
+Cyclone has EFFECT_LOCKON
+Cyclone has SMART
+Liberator has STOP
+Liberator has MOVE
+Liberator has PATROL
+Liberator has HOLDPOSITION
+Liberator has ATTACK
+Liberator has MORPH_LIBERATORAGMODE
+Liberator has SMART
 Ravager has STOP
 Ravager has MOVE
 Ravager has PATROL
 Ravager has HOLDPOSITION
 Ravager has ATTACK
+Ravager has BURROWDOWN
+Ravager has BURROWDOWN
+Ravager has BURROWDOWN
+Ravager has BURROWDOWN
+Ravager has BURROWDOWN
+Ravager has BURROWDOWN
+Ravager has BURROWDOWN
+Ravager has BURROWDOWN
+Ravager has BURROWDOWN
 Ravager has EFFECT_CORROSIVEBILE
 Ravager has BURROWDOWN
 Ravager has SMART
-RavagerCocoon has RALLY_UNITS
-RavagerCocoon has SMART
-CompoundMansion_DoorNW has UNKNOWN
-CompoundMansion_DoorELowered has UNKNOWN
-CompoundMansion_DoorE has UNKNOWN
+CompoundMansion_DoorNWLowered has UNKNOWN
+CompoundMansion_DoorN has UNKNOWN
 Tarsonis_DoorNWLowered has UNKNOWN
-Tarsonis_DoorNW has UNKNOWN
-Tarsonis_DoorNELowered has UNKNOWN
+Tarsonis_DoorNE has UNKNOWN
 Tarsonis_DoorNLowered has UNKNOWN
-Crabeetle has STOP
-Crabeetle has MOVE
-Crabeetle has PATROL
-Crabeetle has HOLDPOSITION
-Crabeetle has UNKNOWN
-Crabeetle has SMART
-Anteplott has STOP
-Anteplott has MOVE
-Anteplott has PATROL
-Anteplott has HOLDPOSITION
-Anteplott has UNKNOWN
-Anteplott has SMART
-TestZerg has STOP
-TestZerg has MOVE
-TestZerg has PATROL
-TestZerg has HOLDPOSITION
-TestZerg has ATTACK
-TestZerg has UNKNOWN
-TestZerg has SMART
-CleaningBot has STOP
-CleaningBot has MOVE
-CleaningBot has PATROL
-CleaningBot has HOLDPOSITION
-CleaningBot has SMART
-ThornLizard has STOP
-ThornLizard has MOVE
-ThornLizard has PATROL
-ThornLizard has HOLDPOSITION
-ThornLizard has SMART
+Tarsonis_DoorN has UNKNOWN
+SnowRefinery_Terran_ExtendingBridgeNWShort8 has UNKNOWN
 XelNaga_Caverns_Floating_BridgeV12Out has UNKNOWN
-XelNaga_Caverns_Floating_BridgeH10Out has UNKNOWN
+XelNaga_Caverns_Floating_BridgeH12Out has UNKNOWN
 XelNaga_Caverns_Floating_BridgeV8 has UNKNOWN
-XelNaga_Caverns_Floating_BridgeNE12Out has UNKNOWN
-XelNaga_Caverns_DoorSE has UNKNOWN
-XelNaga_Caverns_DoorS has UNKNOWN
-XelNaga_Caverns_DoorNWOpened has UNKNOWN
+XelNaga_Caverns_Floating_BridgeH8Out has UNKNOWN
+XelNaga_Caverns_Floating_BridgeNW12 has UNKNOWN
+XelNaga_Caverns_Floating_BridgeNW12Out has UNKNOWN
+XelNaga_Caverns_Floating_BridgeNE8Out has UNKNOWN
+XelNaga_Caverns_DoorW has UNKNOWN
+XelNaga_Caverns_DoorSW has UNKNOWN
+XelNaga_Caverns_DoorSEOpened has UNKNOWN
+XelNaga_Caverns_DoorNEOpened has UNKNOWN
+XelNaga_Caverns_DoorEOpened has UNKNOWN
+ExtendingBridgeNWWide12 has UNKNOWN
+ExtendingBridgeNWWide12Out has UNKNOWN
+ExtendingBridgeNEWide12 has UNKNOWN
 ExtendingBridgeNEWide10Out has UNKNOWN
-ExtendingBridgeNWWide8Out has UNKNOWN
-ExtendingBridgeNEWide8 has UNKNOWN
-LurkerMP has STOP
-LurkerMP has MOVE
-LurkerMP has PATROL
-LurkerMP has HOLDPOSITION
-LurkerMP has ATTACK
-LurkerMP has ATTACK
-LurkerMP has BURROWDOWN
-LurkerMP has SMART
-LurkerMPEgg has RALLY_UNITS
-LurkerMPEgg has SMART
+ExtendingBridgeNWWide8 has UNKNOWN
 Viper has STOP
 Viper has MOVE
 Viper has PATROL
@@ -796,21 +2945,22 @@ Viper has EFFECT_ABDUCT
 Viper has EFFECT_VIPERCONSUME
 Viper has EFFECT_PARASITICBOMB
 Viper has SMART
-SwarmHostMP has STOP
-SwarmHostMP has MOVE
-SwarmHostMP has PATROL
-SwarmHostMP has HOLDPOSITION
-SwarmHostMP has ATTACK
-SwarmHostMP has BURROWDOWN
-SwarmHostMP has EFFECT_SPAWNLOCUSTS
-SwarmHostMP has SMART
 NydusCanalCreeper has STOP
 NydusCanalCreeper has ATTACK
 NydusCanalCreeper has UNKNOWN
 NydusCanalCreeper has SMART
-Elsecaro_Colonist_Hut has RALLY_UNITS
-Elsecaro_Colonist_Hut has SMART
-SupplyDepotLowered has MORPH_SUPPLYDEPOT_RAISE
+HellionTank has STOP
+HellionTank has MOVE
+HellionTank has PATROL
+HellionTank has HOLDPOSITION
+HellionTank has ATTACK
+HellionTank has MORPH_HELLION
+HellionTank has SMART
+ReptileCrate has STOP
+ReptileCrate has MOVE
+ReptileCrate has PATROL
+ReptileCrate has HOLDPOSITION
+ReptileCrate has SMART
 ArbiterMP has STOP
 ArbiterMP has MOVE
 ArbiterMP has PATROL
@@ -819,86 +2969,148 @@ ArbiterMP has ATTACK
 ArbiterMP has UNKNOWN
 ArbiterMP has UNKNOWN
 ArbiterMP has SMART
-AutoTestAttacker has STOP
-AutoTestAttacker has MOVE
-AutoTestAttacker has PATROL
-AutoTestAttacker has HOLDPOSITION
-AutoTestAttacker has ATTACK
-AutoTestAttacker has SMART
-AutoTestAttackTargetGround has STOP
-AutoTestAttackTargetGround has MOVE
-AutoTestAttackTargetGround has PATROL
-AutoTestAttackTargetGround has HOLDPOSITION
-AutoTestAttackTargetGround has SMART
-PortCity_Bridge_UnitSE12Out has UNKNOWN
+Gateway has RALLY_UNITS
+Gateway has TRAIN_ZEALOT
+Gateway has TRAIN_STALKER
+Gateway has TRAIN_HIGHTEMPLAR
+Gateway has TRAIN_DARKTEMPLAR
+Gateway has TRAIN_SENTRY
+Gateway has TRAIN_ADEPT
+Gateway has MORPH_WARPGATE
+Gateway has SMART
+FlyoverUnit has STOP
+FlyoverUnit has MOVE
+FlyoverUnit has PATROL
+FlyoverUnit has HOLDPOSITION
+FlyoverUnit has ATTACK
+FlyoverUnit has SMART
+SupplyDepotLowered has MORPH_SUPPLYDEPOT_RAISE
+SiegeTankSieged has STOP
+SiegeTankSieged has ATTACK
+SiegeTankSieged has MORPH_UNSIEGE
+SiegeTankSieged has SMART
+PortCity_Bridge_UnitS12 has UNKNOWN
+PortCity_Bridge_UnitW10 has UNKNOWN
+BanelingCocoon has RALLY_UNITS
+BanelingCocoon has SMART
+PortCity_Bridge_UnitN8 has UNKNOWN
+PortCity_Bridge_UnitSE10Out has UNKNOWN
+PortCity_Bridge_UnitSW8 has UNKNOWN
 PortCity_Bridge_UnitNE8Out has UNKNOWN
-AiurLightBridgeAbandonedNW12Out has UNKNOWN
-Cow has STOP
-Cow has MOVE
-Cow has PATROL
-Cow has HOLDPOSITION
-Cow has SMART
+AiurLightBridgeAbandonedNW12 has UNKNOWN
+AiurLightBridgeAbandonedNW8 has UNKNOWN
 Sheep has STOP
 Sheep has MOVE
 Sheep has PATROL
 Sheep has HOLDPOSITION
 Sheep has ATTACK
 Sheep has SMART
-Dog has STOP
-Dog has MOVE
-Dog has PATROL
-Dog has HOLDPOSITION
-Dog has SMART
-AiurLightBridgeAbandonedNE8 has UNKNOWN
-UtilityBot has STOP
-UtilityBot has MOVE
-UtilityBot has PATROL
-UtilityBot has HOLDPOSITION
-UtilityBot has SMART
-DefilerMPBurrowed has BURROWUP
-UrsadakFemaleExotic has STOP
-UrsadakFemaleExotic has MOVE
-UrsadakFemaleExotic has PATROL
-UrsadakFemaleExotic has HOLDPOSITION
-UrsadakFemaleExotic has SMART
+UrsadakMaleExotic has STOP
+UrsadakMaleExotic has MOVE
+UrsadakMaleExotic has PATROL
+UrsadakMaleExotic has HOLDPOSITION
+UrsadakMaleExotic has SMART
+DevourerMP has STOP
+DevourerMP has MOVE
+DevourerMP has PATROL
+DevourerMP has HOLDPOSITION
+DevourerMP has ATTACK
+DevourerMP has SMART
+UrsadakCalf has STOP
+UrsadakCalf has MOVE
+UrsadakCalf has PATROL
+UrsadakCalf has HOLDPOSITION
+UrsadakCalf has SMART
+ShakurasLightBridgeNW8 has UNKNOWN
+ShakurasLightBridgeNE10 has UNKNOWN
+AiurLightBridgeNW10Out has UNKNOWN
+TestZerg has STOP
+TestZerg has MOVE
+TestZerg has PATROL
+TestZerg has HOLDPOSITION
+TestZerg has ATTACK
+TestZerg has UNKNOWN
+TestZerg has SMART
+Bunker has EFFECT_SALVAGE
+Bunker has RALLY_UNITS
+Bunker has LOAD
+Bunker has SMART
+Baneling has STOP
+Baneling has MOVE
+Baneling has PATROL
+Baneling has HOLDPOSITION
+Baneling has ATTACK
+Baneling has EFFECT_EXPLODE
+Baneling has BURROWDOWN
+Baneling has BURROWDOWN
+Baneling has BURROWDOWN
+Baneling has BURROWDOWN
+Baneling has BURROWDOWN
+Baneling has BURROWDOWN
+Baneling has BURROWDOWN
+Baneling has BURROWDOWN
+Baneling has BURROWDOWN
+Baneling has BURROWDOWN
+Baneling has BEHAVIOR_BUILDINGATTACKON
+Baneling has BURROWDOWN
+Baneling has SMART
+PortCity_Bridge_UnitN12Out has UNKNOWN
+PortCity_Bridge_UnitSW12 has UNKNOWN
+OverseerSiegeMode has STOP
+OverseerSiegeMode has EFFECT_SPAWNCHANGELING
+OverseerSiegeMode has EFFECT_CONTAMINATE
+OverseerSiegeMode has UNKNOWN
+OverseerSiegeMode has SMART
+Ursadon has STOP
+Ursadon has MOVE
+Ursadon has PATROL
+Ursadon has HOLDPOSITION
+Ursadon has SMART
+XelNaga_Caverns_DoorNW has UNKNOWN
+Overseer has STOP
+Overseer has MOVE
+Overseer has PATROL
+Overseer has HOLDPOSITION
+Overseer has ATTACK
+Overseer has EFFECT_SPAWNCHANGELING
+Overseer has EFFECT_CONTAMINATE
+Overseer has UNKNOWN
+Overseer has SMART
+XelNaga_Caverns_DoorNOpened has UNKNOWN
+ShakurasLightBridgeNW10 has UNKNOWN
 Lyote has STOP
 Lyote has MOVE
 Lyote has PATROL
 Lyote has HOLDPOSITION
 Lyote has SMART
-AiurLightBridgeNW12Out has UNKNOWN
-AiurLightBridgeNW10Out has UNKNOWN
-SnowRefinery_Terran_ExtendingBridgeNWShort8Out has UNKNOWN
-MULE has STOP
-MULE has MOVE
-MULE has PATROL
-MULE has HOLDPOSITION
-MULE has ATTACK
-MULE has EFFECT_REPAIR
-MULE has HARVEST_GATHER
-MULE has SMART
-PortCity_Bridge_UnitE12Out has UNKNOWN
-PortCity_Bridge_UnitN10Out has UNKNOWN
-XelNaga_Caverns_Floating_BridgeV12 has UNKNOWN
-XelNaga_Caverns_Floating_BridgeV10 has UNKNOWN
-ObserverSiegeMode has STOP
-ObserverSiegeMode has UNKNOWN
-WarpPrismPhasing has STOP
-WarpPrismPhasing has LOAD
-WarpPrismPhasing has MORPH_WARPPRISMTRANSPORTMODE
-WarpPrismPhasing has SMART
-CarrionBird has STOP
-CarrionBird has MOVE
-CarrionBird has PATROL
-CarrionBird has HOLDPOSITION
-CarrionBird has SMART
-RedstoneLavaCritterInjured has STOP
-RedstoneLavaCritterInjured has MOVE
-RedstoneLavaCritterInjured has PATROL
-RedstoneLavaCritterInjured has HOLDPOSITION
-RedstoneLavaCritterInjured has BURROWDOWN
-RedstoneLavaCritterInjured has SMART
-ZerglingBurrowed has BURROWUP
+Queen has STOP
+Queen has MOVE
+Queen has PATROL
+Queen has HOLDPOSITION
+Queen has ATTACK
+Queen has EFFECT_INJECTLARVA
+Queen has BURROWDOWN
+Queen has BURROWDOWN
+Queen has BURROWDOWN
+Queen has BURROWDOWN
+Queen has BURROWDOWN
+Queen has BURROWDOWN
+Queen has BURROWDOWN
+Queen has BURROWDOWN
+Queen has BURROWDOWN
+Queen has EFFECT_TRANSFUSION
+Queen has BUILD_CREEPTUMOR
+Queen has BURROWDOWN
+Queen has BURROWDOWN
+Queen has SMART
+RedstoneLavaCritter has STOP
+RedstoneLavaCritter has MOVE
+RedstoneLavaCritter has PATROL
+RedstoneLavaCritter has HOLDPOSITION
+RedstoneLavaCritter has BURROWDOWN
+RedstoneLavaCritter has SMART
+RedstoneLavaCritterInjuredBurrowed has STOP
+RedstoneLavaCritterInjuredBurrowed has BURROWUP
 Corruptor has STOP
 Corruptor has MOVE
 Corruptor has PATROL
@@ -907,42 +3119,303 @@ Corruptor has ATTACK
 Corruptor has MORPH_BROODLORD
 Corruptor has EFFECT_CAUSTICSPRAY
 Corruptor has SMART
+ExtendingBridgeNEWide8Out has UNKNOWN
+Roach has STOP
+Roach has MOVE
+Roach has PATROL
+Roach has HOLDPOSITION
+Roach has ATTACK
+Roach has BURROWDOWN
+Roach has BURROWDOWN
+Roach has BURROWDOWN
+Roach has BURROWDOWN
+Roach has BURROWDOWN
+Roach has BURROWDOWN
+Roach has BURROWDOWN
+Roach has BURROWDOWN
+Roach has BURROWDOWN
+Roach has BURROWDOWN
+Roach has MORPH_RAVAGER
+Roach has SMART
+LurkerMP has STOP
+LurkerMP has MOVE
+LurkerMP has PATROL
+LurkerMP has HOLDPOSITION
+LurkerMP has ATTACK
+LurkerMP has ATTACK
+LurkerMP has BURROWDOWN
+LurkerMP has SMART
+Hydralisk has STOP
+Hydralisk has MOVE
+Hydralisk has PATROL
+Hydralisk has HOLDPOSITION
+Hydralisk has ATTACK
+Hydralisk has BURROWDOWN
+Hydralisk has BURROWDOWN
+Hydralisk has BURROWDOWN
+Hydralisk has BURROWDOWN
+Hydralisk has BURROWDOWN
+Hydralisk has BURROWDOWN
+Hydralisk has BURROWDOWN
+Hydralisk has BURROWDOWN
+Hydralisk has BURROWDOWN
+Hydralisk has BURROWDOWN
+Hydralisk has MORPH_LURKER
+Hydralisk has BURROWDOWN
+Hydralisk has SMART
+LurkerMPEgg has RALLY_UNITS
+LurkerMPEgg has SMART
+Overlord has STOP
+Overlord has MOVE
+Overlord has PATROL
+Overlord has HOLDPOSITION
+Overlord has ATTACK
+Overlord has MORPH_OVERSEER
+Overlord has BEHAVIOR_GENERATECREEPON
+Overlord has MORPH_OVERLORDTRANSPORT
+Overlord has SMART
+Egg has RALLY_UNITS
+Egg has SMART
+GreaterSpire has RESEARCH_ZERGFLYERATTACK
+GreaterSpire has RESEARCH_ZERGFLYERARMOR
+Broodling has STOP
+Broodling has MOVE
+Broodling has PATROL
+Broodling has HOLDPOSITION
+Broodling has ATTACK
+Broodling has SMART
+LocustMP has STOP
+LocustMP has MOVE
+LocustMP has PATROL
+LocustMP has HOLDPOSITION
+LocustMP has ATTACK
+LocustMP has SMART
+Lair has RALLY_UNITS
+Lair has RALLY_WORKERS
+Lair has MORPH_HIVE
+Lair has RESEARCH_BURROW
+Lair has TRAIN_QUEEN
+Lair has SMART
+MothershipCore has STOP
+MothershipCore has MOVE
+MothershipCore has PATROL
+MothershipCore has HOLDPOSITION
+MothershipCore has ATTACK
+MothershipCore has EFFECT_MASSRECALL
+MothershipCore has EFFECT_PHOTONOVERCHARGE
+MothershipCore has EFFECT_TIMEWARP
+MothershipCore has SMART
+SporeCrawler has STOP
+SporeCrawler has ATTACK
+SporeCrawler has MORPH_UPROOT
+SporeCrawler has SMART
 SpineCrawler has STOP
 SpineCrawler has ATTACK
 SpineCrawler has MORPH_UPROOT
 SpineCrawler has SMART
-NydusNetwork has STOP
-NydusNetwork has RALLY_UNITS
-NydusNetwork has LOAD
-NydusNetwork has BUILD_NYDUSWORM
-NydusNetwork has SMART
-InfestationPit has RESEARCH_NEURALPARASITE
-EvolutionChamber has RESEARCH_ZERGMELEEWEAPONS
-EvolutionChamber has RESEARCH_ZERGGROUNDARMOR
-EvolutionChamber has RESEARCH_ZERGMISSILEWEAPONS
-Probe has STOP
-Probe has MOVE
-Probe has PATROL
-Probe has HOLDPOSITION
-Probe has ATTACK
-Probe has EFFECT_SPRAY
-Probe has HARVEST_GATHER
-Probe has BUILD_NEXUS
-Probe has BUILD_PYLON
-Probe has BUILD_ASSIMILATOR
-Probe has BUILD_GATEWAY
-Probe has BUILD_FORGE
-Probe has BUILD_FLEETBEACON
-Probe has BUILD_TWILIGHTCOUNCIL
-Probe has BUILD_PHOTONCANNON
-Probe has BUILD_STARGATE
-Probe has BUILD_TEMPLARARCHIVE
-Probe has BUILD_DARKSHRINE
-Probe has BUILD_ROBOTICSBAY
-Probe has BUILD_ROBOTICSFACILITY
-Probe has BUILD_CYBERNETICSCORE
-Probe has BUILD_SHIELDBATTERY
-Probe has SMART
+ScopeTest has STOP
+ScopeTest has MOVE
+ScopeTest has PATROL
+ScopeTest has HOLDPOSITION
+ScopeTest has ATTACK
+ScopeTest has SMART
+Spire has MORPH_GREATERSPIRE
+Spire has RESEARCH_ZERGFLYERATTACK
+Spire has RESEARCH_ZERGFLYERARMOR
+Tarsonis_DoorNELowered has UNKNOWN
+PortCity_Bridge_UnitS8Out has UNKNOWN
+Hatchery has RALLY_UNITS
+Hatchery has RALLY_WORKERS
+Hatchery has MORPH_LAIR
+Hatchery has RESEARCH_BURROW
+Hatchery has TRAIN_QUEEN
+Hatchery has SMART
+Elsecaro_Colonist_Hut has RALLY_UNITS
+Elsecaro_Colonist_Hut has SMART
+Observer has STOP
+Observer has MOVE
+Observer has PATROL
+Observer has HOLDPOSITION
+Observer has ATTACK
+Observer has UNKNOWN
+Observer has SMART
+Ursula has STOP
+Ursula has MOVE
+Ursula has PATROL
+Ursula has HOLDPOSITION
+Ursula has SMART
+WarpPrism has STOP
+WarpPrism has MOVE
+WarpPrism has PATROL
+WarpPrism has HOLDPOSITION
+WarpPrism has ATTACK
+WarpPrism has LOAD
+WarpPrism has MORPH_WARPPRISMPHASINGMODE
+WarpPrism has SMART
+SlaynElemental has STOP
+SlaynElemental has MOVE
+SlaynElemental has PATROL
+SlaynElemental has HOLDPOSITION
+SlaynElemental has ATTACK
+SlaynElemental has UNKNOWN
+SlaynElemental has SMART
+CyberneticsCore has RESEARCH_PROTOSSAIRWEAPONS
+CyberneticsCore has RESEARCH_PROTOSSAIRARMOR
+CyberneticsCore has RESEARCH_WARPGATE
+DarkShrine has RESEARCH_SHADOWSTRIKE
+Stargate has RALLY_UNITS
+Stargate has TRAIN_PHOENIX
+Stargate has TRAIN_CARRIER
+Stargate has TRAIN_VOIDRAY
+Stargate has TRAIN_ORACLE
+Stargate has TRAIN_TEMPEST
+Stargate has SMART
+FleetBeacon has RESEARCH_PHOENIXANIONPULSECRYSTALS
+ScourgeMP has STOP
+ScourgeMP has MOVE
+ScourgeMP has PATROL
+ScourgeMP has HOLDPOSITION
+ScourgeMP has ATTACK
+ScourgeMP has SMART
+CreepTumorBurrowed has BUILD_CREEPTUMOR
+CreepTumorBurrowed has SMART
+ScoutMP has STOP
+ScoutMP has MOVE
+ScoutMP has PATROL
+ScoutMP has HOLDPOSITION
+ScoutMP has ATTACK
+ScoutMP has SMART
+Forge has RESEARCH_PROTOSSGROUNDWEAPONS
+Forge has RESEARCH_PROTOSSGROUNDARMOR
+Forge has RESEARCH_PROTOSSSHIELDS
+CreepTumorBurrowed has BUILD_CREEPTUMOR
+CreepTumorBurrowed has SMART
+CorsairMP has STOP
+CorsairMP has MOVE
+CorsairMP has PATROL
+CorsairMP has HOLDPOSITION
+CorsairMP has ATTACK
+CorsairMP has UNKNOWN
+CorsairMP has SMART
+GuardianMP has STOP
+GuardianMP has MOVE
+GuardianMP has PATROL
+GuardianMP has HOLDPOSITION
+GuardianMP has ATTACK
+GuardianMP has SMART
+UrsadakMale has STOP
+UrsadakMale has MOVE
+UrsadakMale has PATROL
+UrsadakMale has HOLDPOSITION
+UrsadakMale has SMART
+XelNaga_Caverns_DoorS has UNKNOWN
+UltraliskBurrowed has BURROWUP
+UltraliskBurrowed has BURROWUP
+UltraliskBurrowed has BURROWUP
+UltraliskBurrowed has BURROWUP
+UltraliskBurrowed has BURROWUP
+UltraliskBurrowed has BURROWUP
+UltraliskBurrowed has BURROWUP
+UltraliskBurrowed has BURROWUP
+UltraliskBurrowed has BURROWUP
+UltraliskBurrowed has BURROWUP
+UltraliskBurrowed has BURROWUP
+UrsadakFemaleExotic has STOP
+UrsadakFemaleExotic has MOVE
+UrsadakFemaleExotic has PATROL
+UrsadakFemaleExotic has HOLDPOSITION
+UrsadakFemaleExotic has SMART
+PlanetaryFortress has STOP
+PlanetaryFortress has ATTACK
+PlanetaryFortress has RALLY_WORKERS
+PlanetaryFortress has LOADALL
+PlanetaryFortress has TRAIN_SCV
+PlanetaryFortress has SMART
+Thor has STOP
+Thor has MOVE
+Thor has PATROL
+Thor has HOLDPOSITION
+Thor has ATTACK
+Thor has MORPH_THORHIGHIMPACTMODE
+Thor has SMART
+HERC has STOP
+HERC has MOVE
+HERC has PATROL
+HERC has HOLDPOSITION
+HERC has ATTACK
+HERC has SMART
+SeekerMissile has MOVE
+SeekerMissile has UNKNOWN
+SeekerMissile has SMART
+BarracksFlying has STOP
+BarracksFlying has MOVE
+BarracksFlying has PATROL
+BarracksFlying has HOLDPOSITION
+BarracksFlying has BUILD_TECHLAB
+BarracksFlying has BUILD_REACTOR
+BarracksFlying has LAND
+BarracksFlying has SMART
+StarportFlying has STOP
+StarportFlying has MOVE
+StarportFlying has PATROL
+StarportFlying has HOLDPOSITION
+StarportFlying has BUILD_TECHLAB
+StarportFlying has BUILD_REACTOR
+StarportFlying has LAND
+StarportFlying has SMART
+XelNaga_Caverns_Floating_BridgeV10Out has UNKNOWN
+RavenRepairDrone has STOP
+RavenRepairDrone has EFFECT_REPAIR
+RavenRepairDrone has SMART
+SiegeTank has STOP
+SiegeTank has MOVE
+SiegeTank has PATROL
+SiegeTank has HOLDPOSITION
+SiegeTank has ATTACK
+SiegeTank has MORPH_SIEGEMODE
+SiegeTank has SMART
+ChangelingZerglingWings has STOP
+ChangelingZerglingWings has MOVE
+ChangelingZerglingWings has PATROL
+ChangelingZerglingWings has HOLDPOSITION
+ChangelingZerglingWings has ATTACK
+ChangelingZerglingWings has SMART
+ChangelingMarineShield has STOP
+ChangelingMarineShield has MOVE
+ChangelingMarineShield has PATROL
+ChangelingMarineShield has HOLDPOSITION
+ChangelingMarineShield has ATTACK
+ChangelingMarineShield has SMART
+PortCity_Bridge_UnitW12Out has UNKNOWN
+UltraliskCavern has UNKNOWN
+Armory has RESEARCH_TERRANVEHICLEWEAPONS
+Armory has RESEARCH_TERRANSHIPWEAPONS
+Armory has RESEARCH_TERRANVEHICLEANDSHIPPLATING
+Colossus has STOP
+Colossus has MOVE
+Colossus has PATROL
+Colossus has HOLDPOSITION
+Colossus has ATTACK
+Colossus has SMART
+PortCity_Bridge_UnitS10 has UNKNOWN
+PortCity_Bridge_UnitW10Out has UNKNOWN
+InfestorTerran has STOP
+InfestorTerran has MOVE
+InfestorTerran has PATROL
+InfestorTerran has HOLDPOSITION
+InfestorTerran has ATTACK
+InfestorTerran has BURROWDOWN
+InfestorTerran has BURROWDOWN
+InfestorTerran has BURROWDOWN
+InfestorTerran has BURROWDOWN
+InfestorTerran has BURROWDOWN
+InfestorTerran has BURROWDOWN
+InfestorTerran has BURROWDOWN
+InfestorTerran has BURROWDOWN
+InfestorTerran has BURROWDOWN
+InfestorTerran has BURROWDOWN
+InfestorTerran has BURROWDOWN
+InfestorTerran has SMART
 Larva has TRAIN_DRONE
 Larva has TRAIN_ZERGLING
 Larva has TRAIN_OVERLORD
@@ -954,38 +3427,90 @@ Larva has TRAIN_INFESTOR
 Larva has TRAIN_CORRUPTOR
 Larva has TRAIN_VIPER
 Larva has TRAIN_SWARMHOST
-Observer has STOP
-Observer has MOVE
-Observer has PATROL
-Observer has HOLDPOSITION
-Observer has ATTACK
-Observer has UNKNOWN
-Observer has SMART
+QueenMP has STOP
+QueenMP has MOVE
+QueenMP has PATROL
+QueenMP has HOLDPOSITION
+QueenMP has ATTACK
+QueenMP has UNKNOWN
+QueenMP has UNKNOWN
+QueenMP has UNKNOWN
+QueenMP has SMART
+XelNaga_Caverns_DoorN has UNKNOWN
+QueenBurrowed has BURROWUP
+QueenBurrowed has BURROWUP
+QueenBurrowed has BURROWUP
+QueenBurrowed has BURROWUP
+QueenBurrowed has BURROWUP
+QueenBurrowed has BURROWUP
+QueenBurrowed has BURROWUP
+QueenBurrowed has BURROWUP
+QueenBurrowed has BURROWUP
+QueenBurrowed has BURROWUP
+QueenBurrowed has BURROWUP
+Moopy has STOP
+Moopy has MOVE
+Moopy has PATROL
+Moopy has HOLDPOSITION
+Moopy has ATTACK
+Moopy has SMART
+Hellion has STOP
+Hellion has MOVE
+Hellion has PATROL
+Hellion has HOLDPOSITION
+Hellion has ATTACK
+Hellion has MORPH_HELLBAT
+Hellion has SMART
+RenegadeMissileTurret has STOP
+RenegadeMissileTurret has ATTACK
+RenegadeMissileTurret has SMART
+PhotonCannon has STOP
+PhotonCannon has ATTACK
+PhotonCannon has SMART
+Larva has TRAIN_DRONE
+Larva has TRAIN_ZERGLING
+Larva has TRAIN_OVERLORD
+Larva has TRAIN_HYDRALISK
+Larva has TRAIN_MUTALISK
+Larva has TRAIN_ULTRALISK
+Larva has TRAIN_ROACH
+Larva has TRAIN_INFESTOR
+Larva has TRAIN_CORRUPTOR
+Larva has TRAIN_VIPER
+Larva has TRAIN_SWARMHOST
+Starport has RALLY_UNITS
+Starport has BUILD_TECHLAB
+Starport has BUILD_REACTOR
+Starport has LIFT
+Starport has TRAIN_MEDIVAC
+Starport has TRAIN_BANSHEE
+Starport has TRAIN_RAVEN
+Starport has TRAIN_BATTLECRUISER
+Starport has TRAIN_VIKINGFIGHTER
+Starport has TRAIN_LIBERATOR
+Starport has SMART
+BypassArmorDrone has STOP
+BypassArmorDrone has MOVE
+BypassArmorDrone has ATTACK
+BypassArmorDrone has SMART
+Larva has TRAIN_DRONE
+Larva has TRAIN_ZERGLING
+Larva has TRAIN_OVERLORD
+Larva has TRAIN_HYDRALISK
+Larva has TRAIN_MUTALISK
+Larva has TRAIN_ULTRALISK
+Larva has TRAIN_ROACH
+Larva has TRAIN_INFESTOR
+Larva has TRAIN_CORRUPTOR
+Larva has TRAIN_VIPER
+Larva has TRAIN_SWARMHOST
+PortCity_Bridge_UnitE10 has UNKNOWN
 Interceptor has STOP
 Interceptor has MOVE
 Interceptor has PATROL
 Interceptor has HOLDPOSITION
 Interceptor has ATTACK
 Interceptor has SMART
-WarpPrism has STOP
-WarpPrism has MOVE
-WarpPrism has PATROL
-WarpPrism has HOLDPOSITION
-WarpPrism has ATTACK
-WarpPrism has LOAD
-WarpPrism has MORPH_WARPPRISMPHASINGMODE
-WarpPrism has SMART
-Phoenix has STOP
-Phoenix has MOVE
-Phoenix has PATROL
-Phoenix has HOLDPOSITION
-Phoenix has ATTACK
-Phoenix has EFFECT_GRAVITONBEAM
-Phoenix has SMART
-BypassArmorDrone has STOP
-BypassArmorDrone has MOVE
-BypassArmorDrone has ATTACK
-BypassArmorDrone has SMART
 Sentry has STOP
 Sentry has MOVE
 Sentry has PATROL
@@ -1007,423 +3532,30 @@ Sentry has HALLUCINATION_ORACLE
 Sentry has HALLUCINATION_DISRUPTOR
 Sentry has HALLUCINATION_ADEPT
 Sentry has SMART
-LabBot has STOP
-LabBot has MOVE
-LabBot has PATROL
-LabBot has HOLDPOSITION
-LabBot has SMART
-Ursula has STOP
-Ursula has MOVE
-Ursula has PATROL
-Ursula has HOLDPOSITION
-Ursula has SMART
-Ursadon has STOP
-Ursadon has MOVE
-Ursadon has PATROL
-Ursadon has HOLDPOSITION
-Ursadon has SMART
-ReptileCrate has STOP
-ReptileCrate has MOVE
-ReptileCrate has PATROL
-ReptileCrate has HOLDPOSITION
-ReptileCrate has SMART
-XelNaga_Caverns_Floating_BridgeNW12 has UNKNOWN
-Hellion has STOP
-Hellion has MOVE
-Hellion has PATROL
-Hellion has HOLDPOSITION
-Hellion has ATTACK
-Hellion has MORPH_HELLBAT
-Hellion has SMART
-OverseerSiegeMode has STOP
-OverseerSiegeMode has EFFECT_SPAWNCHANGELING
-OverseerSiegeMode has EFFECT_CONTAMINATE
-OverseerSiegeMode has UNKNOWN
-OverseerSiegeMode has SMART
-CreepTumorBurrowed has BUILD_CREEPTUMOR
-CreepTumorBurrowed has SMART
-AiurLightBridgeAbandonedNE12Out has UNKNOWN
-CommentatorBot3 has STOP
-CommentatorBot3 has MOVE
-CommentatorBot3 has PATROL
-CommentatorBot3 has HOLDPOSITION
-CommentatorBot3 has SMART
-XelNaga_Caverns_DoorWOpened has UNKNOWN
-ForceField has UNKNOWN
-ForceField has SMART
-Reaper has STOP
-Reaper has MOVE
-Reaper has PATROL
-Reaper has HOLDPOSITION
-Reaper has ATTACK
-Reaper has EFFECT_KD8CHARGE
-Reaper has SMART
-XelNaga_Caverns_DoorW has UNKNOWN
-OrbitalCommandFlying has STOP
-OrbitalCommandFlying has MOVE
-OrbitalCommandFlying has PATROL
-OrbitalCommandFlying has HOLDPOSITION
-OrbitalCommandFlying has LAND
-OrbitalCommandFlying has SMART
-ScourgeMP has STOP
-ScourgeMP has MOVE
-ScourgeMP has PATROL
-ScourgeMP has HOLDPOSITION
-ScourgeMP has ATTACK
-ScourgeMP has SMART
-Marine has STOP
-Marine has MOVE
-Marine has PATROL
-Marine has HOLDPOSITION
-Marine has ATTACK
-Marine has EFFECT_STIM
-Marine has SMART
-ScoutMP has STOP
-ScoutMP has MOVE
-ScoutMP has PATROL
-ScoutMP has HOLDPOSITION
-ScoutMP has ATTACK
-ScoutMP has SMART
-BarracksFlying has STOP
-BarracksFlying has MOVE
-BarracksFlying has PATROL
-BarracksFlying has HOLDPOSITION
-BarracksFlying has BUILD_TECHLAB
-BarracksFlying has BUILD_REACTOR
-BarracksFlying has LAND
-BarracksFlying has SMART
-XelNaga_Caverns_DoorSEOpened has UNKNOWN
-PlanetaryFortress has STOP
-PlanetaryFortress has ATTACK
-PlanetaryFortress has RALLY_WORKERS
-PlanetaryFortress has LOADALL
-PlanetaryFortress has TRAIN_SCV
-PlanetaryFortress has SMART
-FlyoverUnit has STOP
-FlyoverUnit has MOVE
-FlyoverUnit has PATROL
-FlyoverUnit has HOLDPOSITION
-FlyoverUnit has ATTACK
-FlyoverUnit has SMART
-StarportFlying has STOP
-StarportFlying has MOVE
-StarportFlying has PATROL
-StarportFlying has HOLDPOSITION
-StarportFlying has BUILD_TECHLAB
-StarportFlying has BUILD_REACTOR
-StarportFlying has LAND
-StarportFlying has SMART
-DevourerMP has STOP
-DevourerMP has MOVE
-DevourerMP has PATROL
-DevourerMP has HOLDPOSITION
-DevourerMP has ATTACK
-DevourerMP has SMART
-KarakFemale has STOP
-KarakFemale has MOVE
-KarakFemale has PATROL
-KarakFemale has HOLDPOSITION
-KarakFemale has SMART
-XelNaga_Caverns_DoorNW has UNKNOWN
-Queen has STOP
-Queen has MOVE
-Queen has PATROL
-Queen has HOLDPOSITION
-Queen has ATTACK
-Queen has EFFECT_INJECTLARVA
-Queen has BURROWDOWN
-Queen has EFFECT_TRANSFUSION
-Queen has BUILD_CREEPTUMOR
-Queen has SMART
-KarakMale has STOP
-KarakMale has MOVE
-KarakMale has PATROL
-KarakMale has HOLDPOSITION
-KarakMale has SMART
-QueenBurrowed has BURROWUP
-VoidMPImmortalReviveCorpse has RALLY_UNITS
-VoidMPImmortalReviveCorpse has UNKNOWN
-VoidMPImmortalReviveCorpse has SMART
-XelNaga_Caverns_DoorN has UNKNOWN
-RedstoneLavaCritterInjuredBurrowed has STOP
-RedstoneLavaCritterInjuredBurrowed has BURROWUP
-CommandCenterFlying has STOP
-CommandCenterFlying has MOVE
-CommandCenterFlying has PATROL
-CommandCenterFlying has HOLDPOSITION
-CommandCenterFlying has LOADALL
-CommandCenterFlying has LAND
-CommandCenterFlying has SMART
-ShakurasLightBridgeNW8 has UNKNOWN
-ExtendingBridgeNWWide12Out has UNKNOWN
-HydraliskBurrowed has BURROWUP
-Replicant has STOP
-Replicant has MOVE
-Replicant has PATROL
-Replicant has HOLDPOSITION
-Replicant has ATTACK
-Replicant has SMART
-AutoTurret has STOP
-AutoTurret has ATTACK
-AutoTurret has SMART
-OverlordTransport has STOP
-OverlordTransport has MOVE
-OverlordTransport has PATROL
-OverlordTransport has HOLDPOSITION
-OverlordTransport has ATTACK
-OverlordTransport has MORPH_OVERSEER
-OverlordTransport has BEHAVIOR_GENERATECREEPON
-OverlordTransport has LOAD
-OverlordTransport has SMART
-HighTemplar has STOP
-HighTemplar has MOVE
-HighTemplar has PATROL
-HighTemplar has HOLDPOSITION
-HighTemplar has ATTACK
-HighTemplar has ATTACK
-HighTemplar has EFFECT_FEEDBACK
-HighTemplar has EFFECT_PSISTORM
-HighTemplar has SMART
-ExtendingBridgeNEWide12Out has UNKNOWN
-BanelingBurrowed has EFFECT_EXPLODE
-BanelingBurrowed has BURROWUP
-HERC has STOP
-HERC has MOVE
-HERC has PATROL
-HERC has HOLDPOSITION
-HERC has ATTACK
-HERC has SMART
-Armory has RESEARCH_TERRANVEHICLEWEAPONS
-Armory has RESEARCH_TERRANSHIPWEAPONS
-Armory has RESEARCH_TERRANVEHICLEANDSHIPPLATING
-Adept has STOP
-Adept has MOVE
-Adept has PATROL
-Adept has HOLDPOSITION
-Adept has ATTACK
-Adept has EFFECT_ADEPTPHASESHIFT
-Adept has SMART
-ExtendingBridgeNWWide10Out has UNKNOWN
-Factory has RALLY_UNITS
-Factory has BUILD_TECHLAB
-Factory has BUILD_REACTOR
-Factory has LIFT
-Factory has TRAIN_SIEGETANK
-Factory has TRAIN_THOR
-Factory has TRAIN_HELLION
-Factory has TRAIN_HELLBAT
-Factory has TRAIN_CYCLONE
-Factory has TRAIN_WIDOWMINE
-Factory has SMART
-Zergling has STOP
-Zergling has MOVE
-Zergling has PATROL
-Zergling has HOLDPOSITION
-Zergling has ATTACK
-Zergling has TRAIN_BANELING
-Zergling has BURROWDOWN
-Zergling has SMART
-XelNagaHealingShrine has UNKNOWN
-SupplyDepot has MORPH_SUPPLYDEPOT_LOWER
-CommandCenter has RALLY_WORKERS
-CommandCenter has LOADALL
-CommandCenter has LIFT
-CommandCenter has TRAIN_SCV
-CommandCenter has MORPH_PLANETARYFORTRESS
-CommandCenter has MORPH_ORBITALCOMMAND
-CommandCenter has SMART
-RedstoneLavaCritterBurrowed has STOP
-RedstoneLavaCritterBurrowed has BURROWUP
-SiegeTankSieged has STOP
-SiegeTankSieged has ATTACK
-SiegeTankSieged has MORPH_UNSIEGE
-SiegeTankSieged has SMART
-SeekerMissile has MOVE
-SeekerMissile has UNKNOWN
-SeekerMissile has SMART
-VikingFighter has STOP
-VikingFighter has MOVE
-VikingFighter has PATROL
-VikingFighter has HOLDPOSITION
-VikingFighter has ATTACK
-VikingFighter has MORPH_VIKINGASSAULTMODE
-VikingFighter has SMART
-XelNaga_Caverns_Floating_BridgeNW12Out has UNKNOWN
-GhostNova has STOP
-GhostNova has MOVE
-GhostNova has PATROL
-GhostNova has HOLDPOSITION
-GhostNova has ATTACK
-GhostNova has BEHAVIOR_HOLDFIREON
-GhostNova has BEHAVIOR_CLOAKON
-GhostNova has EFFECT_NUKECALLDOWN
-GhostNova has EFFECT_EMP
-GhostNova has EFFECT_GHOSTSNIPE
-GhostNova has SMART
-Nexus has RALLY_WORKERS
-Nexus has TRAIN_PROBE
-Nexus has UNKNOWN
-Nexus has EFFECT_MASSRECALL
-Nexus has SMART
-ChangelingZealot has STOP
-ChangelingZealot has MOVE
-ChangelingZealot has PATROL
-ChangelingZealot has HOLDPOSITION
-ChangelingZealot has ATTACK
-ChangelingZealot has SMART
-Battlecruiser has STOP
-Battlecruiser has MOVE
-Battlecruiser has PATROL
-Battlecruiser has HOLDPOSITION
-Battlecruiser has ATTACK
-Battlecruiser has EFFECT_YAMATOGUN
-Battlecruiser has EFFECT_TACTICALJUMP
-Battlecruiser has SMART
-ExtendingBridgeNWWide12 has UNKNOWN
-RoachBurrowed has STOP
-RoachBurrowed has MOVE
-RoachBurrowed has PATROL
-RoachBurrowed has HOLDPOSITION
-RoachBurrowed has ATTACK
-RoachBurrowed has BURROWUP
-RoachBurrowed has SMART
-NydusCanal has STOP
-NydusCanal has RALLY_UNITS
-NydusCanal has LOAD
-NydusCanal has SMART
-Raven has STOP
-Raven has MOVE
-Raven has PATROL
-Raven has HOLDPOSITION
-Raven has ATTACK
-Raven has EFFECT_AUTOTURRET
-Raven has UNKNOWN
-Raven has UNKNOWN
-Raven has SMART
-Oracle has STOP
-Oracle has MOVE
-Oracle has PATROL
-Oracle has HOLDPOSITION
-Oracle has ATTACK
-Oracle has ATTACK
-Oracle has EFFECT_ORACLEREVELATION
-Oracle has BEHAVIOR_PULSARBEAMON
-Oracle has BUILD_STASISTRAP
-Oracle has SMART
-Larva has TRAIN_DRONE
-Larva has TRAIN_ZERGLING
-Larva has TRAIN_OVERLORD
-Larva has TRAIN_HYDRALISK
-Larva has TRAIN_MUTALISK
-Larva has TRAIN_ULTRALISK
-Larva has TRAIN_ROACH
-Larva has TRAIN_INFESTOR
-Larva has TRAIN_CORRUPTOR
-Larva has TRAIN_VIPER
-Larva has TRAIN_SWARMHOST
-Larva has TRAIN_DRONE
-Larva has TRAIN_ZERGLING
-Larva has TRAIN_OVERLORD
-Larva has TRAIN_HYDRALISK
-Larva has TRAIN_MUTALISK
-Larva has TRAIN_ULTRALISK
-Larva has TRAIN_ROACH
-Larva has TRAIN_INFESTOR
-Larva has TRAIN_CORRUPTOR
-Larva has TRAIN_VIPER
-Larva has TRAIN_SWARMHOST
-Mothership has STOP
-Mothership has MOVE
-Mothership has PATROL
-Mothership has HOLDPOSITION
-Mothership has ATTACK
-Mothership has UNKNOWN
-Mothership has EFFECT_TIMEWARP
-Mothership has SMART
-ExtendingBridgeNWWide10 has UNKNOWN
-BroodLord has STOP
-BroodLord has MOVE
-BroodLord has PATROL
-BroodLord has HOLDPOSITION
-BroodLord has ATTACK
-BroodLord has SMART
-Starport has RALLY_UNITS
-Starport has BUILD_TECHLAB
-Starport has BUILD_REACTOR
-Starport has LIFT
-Starport has TRAIN_MEDIVAC
-Starport has TRAIN_BANSHEE
-Starport has TRAIN_RAVEN
-Starport has TRAIN_BATTLECRUISER
-Starport has TRAIN_VIKINGFIGHTER
-Starport has TRAIN_LIBERATOR
-Starport has SMART
-Thor has STOP
-Thor has MOVE
-Thor has PATROL
-Thor has HOLDPOSITION
-Thor has ATTACK
-Thor has MORPH_THORHIGHIMPACTMODE
-Thor has SMART
-AutoTestAttackTargetAir has STOP
-AutoTestAttackTargetAir has MOVE
-AutoTestAttackTargetAir has PATROL
-AutoTestAttackTargetAir has HOLDPOSITION
-AutoTestAttackTargetAir has SMART
-XelNaga_Caverns_Floating_BridgeNE12 has UNKNOWN
-GhostAlternate has STOP
-GhostAlternate has MOVE
-GhostAlternate has PATROL
-GhostAlternate has HOLDPOSITION
-GhostAlternate has ATTACK
-GhostAlternate has BEHAVIOR_HOLDFIREON
-GhostAlternate has BEHAVIOR_CLOAKON
-GhostAlternate has EFFECT_NUKECALLDOWN
-GhostAlternate has EFFECT_EMP
-GhostAlternate has EFFECT_GHOSTSNIPE
-GhostAlternate has SMART
-Changeling has STOP
-Changeling has MOVE
-Changeling has PATROL
-Changeling has HOLDPOSITION
-Changeling has ATTACK
-Changeling has SMART
-MissileTurret has STOP
-MissileTurret has ATTACK
-MissileTurret has SMART
-AiurLightBridgeAbandonedNE10Out has UNKNOWN
-CommentatorBot1 has STOP
-CommentatorBot1 has MOVE
-CommentatorBot1 has PATROL
-CommentatorBot1 has HOLDPOSITION
-CommentatorBot1 has SMART
-Spire has MORPH_GREATERSPIRE
-Spire has RESEARCH_ZERGFLYERATTACK
-Spire has RESEARCH_ZERGFLYERARMOR
-XelNaga_Caverns_Floating_BridgeH8Out has UNKNOWN
-Larva has TRAIN_DRONE
-Larva has TRAIN_ZERGLING
-Larva has TRAIN_OVERLORD
-Larva has TRAIN_HYDRALISK
-Larva has TRAIN_MUTALISK
-Larva has TRAIN_ULTRALISK
-Larva has TRAIN_ROACH
-Larva has TRAIN_INFESTOR
-Larva has TRAIN_CORRUPTOR
-Larva has TRAIN_VIPER
-Larva has TRAIN_SWARMHOST
-HERCPlacement has STOP
-HERCPlacement has MOVE
-HERCPlacement has PATROL
-HERCPlacement has HOLDPOSITION
-HERCPlacement has ATTACK
-HERCPlacement has SMART
-ChangelingMarine has STOP
-ChangelingMarine has MOVE
-ChangelingMarine has PATROL
-ChangelingMarine has HOLDPOSITION
-ChangelingMarine has ATTACK
-ChangelingMarine has SMART
-EngineeringBay has RESEARCH_TERRANSTRUCTUREARMORUPGRADE
-EngineeringBay has RESEARCH_TERRANINFANTRYWEAPONS
-EngineeringBay has RESEARCH_TERRANINFANTRYARMOR
+CleaningBot has STOP
+CleaningBot has MOVE
+CleaningBot has PATROL
+CleaningBot has HOLDPOSITION
+CleaningBot has SMART
+SCV has STOP
+SCV has MOVE
+SCV has PATROL
+SCV has HOLDPOSITION
+SCV has ATTACK
+SCV has EFFECT_SPRAY
+SCV has HARVEST_GATHER
+SCV has EFFECT_REPAIR
+SCV has BUILD_COMMANDCENTER
+SCV has BUILD_SUPPLYDEPOT
+SCV has BUILD_REFINERY
+SCV has BUILD_BARRACKS
+SCV has BUILD_ENGINEERINGBAY
+SCV has BUILD_MISSILETURRET
+SCV has BUILD_BUNKER
+SCV has BUILD_SENSORTOWER
+SCV has BUILD_GHOSTACADEMY
+SCV has BUILD_FACTORY
+SCV has BUILD_STARPORT
+SCV has BUILD_ARMORY
+SCV has BUILD_FUSIONCORE
+SCV has SMART
