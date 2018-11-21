@@ -1,8 +1,8 @@
 #include "TacticalNodes.h"
-#include "Pathfinding.h"
-#include "Predicates.h"
+#include "../Pathfinding.h"
+#include "../Predicates.h"
 #include "StrategicNodes.h"
-#include "bot.h"
+#include "../bot.h"
 
 using namespace BOT;
 using namespace sc2;

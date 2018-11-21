@@ -1,7 +1,7 @@
 #pragma once
 #include "BehaviorTree.h"
 #include "sc2api/sc2_api.h"
-#include "Group.h"
+#include "../Group.h"
 #include "StrategicNodes.h"
 
 class GroupActionNode : public BOT::ContextAwareActionNode {

@@ -1,5 +1,5 @@
 #include "bot.h"
-#include "StrategicNodes.h"
+#include "behaviortree/StrategicNodes.h"
 #include "sc2lib/sc2_lib.h"
 // #include "sc2renderer/sc2_renderer.h"
 #include <chrono>
@@ -8,13 +8,13 @@
 #include <limits>
 #include <map>
 #include <random>
-#include "MicroNodes.h"
+#include "behaviortree/MicroNodes.h"
 #include "Pathfinding.h"
 #include "Predicates.h"
 #include "Renderer.h"
 #include "SDL.h"
 #include "ScoutingManager.h"
-#include "TacticalNodes.h"
+#include "behaviortree/TacticalNodes.h"
 #include "buildingPlacement.h"
 
 #include <cereal/archives/json.hpp>

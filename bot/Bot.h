@@ -1,5 +1,5 @@
 #pragma once
-#include "BehaviorTree.h"
+#include "behaviortree/BehaviorTree.h"
 #include "ScoutingManager.h"
 #include "sc2api/sc2_agent.h"
 #include "sc2api/sc2_interfaces.h"

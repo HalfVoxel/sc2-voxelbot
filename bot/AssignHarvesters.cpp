@@ -1,5 +1,5 @@
 #include "Predicates.h"
-#include "StrategicNodes.h"
+#include "behaviortree/StrategicNodes.h"
 #include "bot.h"
 
 using namespace BOT;

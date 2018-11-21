@@ -1,7 +1,7 @@
 #include "Group.h"
 #include <numeric>
-#include "ScoutingNodes.h"
-#include "TacticalNodes.h"
+#include "behaviortree/ScoutingNodes.h"
+#include "behaviortree/TacticalNodes.h"
 
 using namespace sc2;
 using namespace std;
