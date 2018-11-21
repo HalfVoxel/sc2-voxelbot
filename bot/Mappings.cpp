@@ -37,7 +37,8 @@ const vector<UNIT_TYPEID>& canBecome(sc2::UNIT_TYPEID type) {
 }
 
 void initMappings(const ObservationInterface* observation) {
-    if (mappingInitialized) return;
+    if (mappingInitialized)
+        return;
     mappingInitialized = true;
 
     cout << "A" << endl;
@@ -45,7 +46,7 @@ void initMappings(const ObservationInterface* observation) {
     for (auto pair : unit_type_has_ability) {
         maxAbilityID = max(maxAbilityID, pair.second);
     }
-    mAbilityToCasterUnit = vector<vector<UNIT_TYPEID>>(maxAbilityID+1);
+    mAbilityToCasterUnit = vector<vector<UNIT_TYPEID>>(maxAbilityID + 1);
     for (auto pair : unit_type_has_ability) {
         mAbilityToCasterUnit[pair.second].push_back((UNIT_TYPEID)pair.first);
     }

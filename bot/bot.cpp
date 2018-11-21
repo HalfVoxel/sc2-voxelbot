@@ -2,6 +2,7 @@
 #include "StrategicNodes.h"
 #include "sc2lib/sc2_lib.h"
 // #include "sc2renderer/sc2_renderer.h"
+#include <chrono>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -15,14 +16,13 @@
 #include "ScoutingManager.h"
 #include "TacticalNodes.h"
 #include "buildingPlacement.h"
-#include <chrono>
 
-#include "cereal/cereal.hpp"
 #include <cereal/archives/json.hpp>
 #include <cereal/types/string.hpp>
 #include <fstream>
+#include "cereal/cereal.hpp"
 
-using Clock=std::chrono::high_resolution_clock;
+using Clock = std::chrono::high_resolution_clock;
 
 using namespace BOT;
 using namespace std;
@@ -50,35 +50,8 @@ bool IsAbilityReadyExcludingCosts(const Unit* unit, ABILITY_ID ability) {
     return false;
 }
 
-struct MyClass
-{
-  string meh;
-  int x, y, z;
-
-  // This method lets cereal know which data members to serialize
-  template<class Archive>
-  void serialize(Archive & archive) {
-    archive( meh, x, y, z );
-  }
-};
-
-
 // clang-format off
 void Bot::OnGameStart() {
-    for (int i = 0; i < 10; i++) {
-        auto t0 = Clock::now();
-        {
-            ofstream os("data.xml");
-            cereal::JSONOutputArchive archive(os);
-            archive(string("hello"), CEREAL_NVP(string("blah")), cereal::make_nvp("whatevs", 423), MyClass { "asdf", 1, 2, 3 });
-            vector<int> blah = { 0, 1, 2, 3, 4, 5 };
-            archive.saveBinaryValue((int*)&blah[0], sizeof(int) * blah.size(), "thisisbinary");
-        }
-        auto t2 = Clock::now();
-        cout << "Time: " << chrono::duration_cast<chrono::nanoseconds>(t2 - t0).count() << " ns" << endl;
-    }
-    exit(0);
-
     // Debug()->DebugEnemyControl();
     // Debug()->DebugShowMap();
     // Debug()->DebugGiveAllTech();

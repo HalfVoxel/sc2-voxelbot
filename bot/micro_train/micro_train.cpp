@@ -1,27 +1,27 @@
-#include "../Bot.h"
 #include <fstream>
 #include <iostream>
 #include <queue>
+#include "../Bot.h"
 #include "../DependencyAnalyzer.h"
 #include "../Mappings.h"
 #include "../generated/abilities.h"
 #include "sc2api/sc2_api.h"
 #include "sc2utils/sc2_manage_process.h"
 
-#include "cereal/cereal.hpp"
+#include <pybind11/embed.h>
+#include <pybind11/stl.h>
 #include <cereal/archives/json.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
 #include <fstream>
-#include <pybind11/embed.h> 
-#include <pybind11/stl.h>
+#include "cereal/cereal.hpp"
 
 #include <thread>
 
 const char* kReplayFolder = "/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/replays";
 const char* kReplayListProtoss = "/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/replays_protoss.txt";
 
-using Clock=std::chrono::high_resolution_clock;
+using Clock = std::chrono::high_resolution_clock;
 
 namespace py = pybind11;
 using namespace sc2;
@@ -40,13 +40,12 @@ static const char* EmptyMap = "Test/Empty.SC2Map";
 //         auto t2 = Clock::now();
 //         cout << "Time: " << chrono::duration_cast<chrono::nanoseconds>(t2 - t0).count() << " ns" << endl;
 
-
 struct SerializedPos {
     float x;
     float y;
 
-    template<class Archive>
-    void serialize(Archive & archive) {
+    template <class Archive>
+    void serialize(Archive& archive) {
         archive(CEREAL_NVP(x), CEREAL_NVP(y));
     }
 };
@@ -70,18 +69,18 @@ vector<string> actionName = {
 };
 
 vector<Point2D> action2dir = {
-    Point2D(  0, 1),  // N
-    Point2D(- 1, 1),  // NW
-    Point2D(- 1, 0),  // W
-    Point2D(- 1, -1), // SW
-    Point2D(  0, -1), // S
-    Point2D(  1, -1), // SE
-    Point2D(  1, 0),  // E
-    Point2D(  1, 1),  // NE
-    Point2D(  0, 1),  // Attack N
-    Point2D(  -1, 0), // Attack W
-    Point2D(  0, -1), // Attack S
-    Point2D(  1, 0),  // Attack E
+    Point2D(0, 1),    // N
+    Point2D(-1, 1),   // NW
+    Point2D(-1, 0),   // W
+    Point2D(-1, -1),  // SW
+    Point2D(0, -1),   // S
+    Point2D(1, -1),   // SE
+    Point2D(1, 0),    // E
+    Point2D(1, 1),    // NE
+    Point2D(0, 1),    // Attack N
+    Point2D(-1, 0),   // Attack W
+    Point2D(0, -1),   // Attack S
+    Point2D(1, 0),    // Attack E
 };
 
 struct SerializedUnit {
@@ -109,11 +108,11 @@ struct SerializedUnit {
     float health_max;
     Tag engaged_target_tag;
 
-    SerializedUnit (const Unit* unit) {
+    SerializedUnit(const Unit* unit) {
         tag = unit->tag;
-        position = SerializedPos { unit->pos.x, unit->pos.y };
+        position = SerializedPos{ unit->pos.x, unit->pos.y };
         unit_type = unit->unit_type;
-        canonical_unit_type = unit_type; // canonicalize(unit_type);
+        canonical_unit_type = unit_type;  // canonicalize(unit_type);
         display_type = unit->display_type;
         cloak = unit->cloak;
         owner = unit->owner;
@@ -134,8 +133,8 @@ struct SerializedUnit {
         engaged_target_tag = unit->engaged_target_tag;
     }
 
-    template<class Archive>
-    void serialize(Archive & archive) {
+    template <class Archive>
+    void serialize(Archive& archive) {
         archive(
             CEREAL_NVP(position),
             CEREAL_NVP(tag),
@@ -158,8 +157,7 @@ struct SerializedUnit {
             CEREAL_NVP(health_max),
             CEREAL_NVP(shield_max),
             CEREAL_NVP(engaged_target_tag),
-            CEREAL_NVP(action)
-        );
+            CEREAL_NVP(action));
     }
 };
 
@@ -169,8 +167,8 @@ struct State {
     vector<SerializedUnit> units;
     vector<bool> walkableMap;
 
-    template<class Archive>
-    void serialize(Archive & archive) {
+    template <class Archive>
+    void serialize(Archive& archive) {
         archive(CEREAL_NVP(tick), CEREAL_NVP(playerID), CEREAL_NVP(units), CEREAL_NVP(walkableMap));
     }
 };
@@ -179,8 +177,8 @@ struct Session {
     vector<State> states;
     int ticks = 0;
 
-    template<class Archive>
-    void serialize(Archive & archive) {
+    template <class Archive>
+    void serialize(Archive& archive) {
         archive(CEREAL_NVP(states));
     }
 };
@@ -267,7 +265,8 @@ class MicroTrainer : public sc2::Agent {
     }
 
     void Reset() {
-        cout << "Reset " << "(" << resets << ")" << endl;
+        cout << "Reset "
+             << "(" << resets << ")" << endl;
         CompleteSession();
 
         resets++;
@@ -293,13 +292,13 @@ class MicroTrainer : public sc2::Agent {
             float x = mn.x + ((rand() % 1000) / 1000.0f) * (mx.x - mn.x);
             float y = mn.y + ((rand() % 1000) / 1000.0f) * (mx.y - mn.y);
 
-            int num = 1; // (rand() % 2) + 1;
+            int num = 1;  // (rand() % 2) + 1;
             for (int j = 0; j < num; j++) {
                 Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_MARINE, Point2D(x, y), opponentPlayerID);
             }
         }
 
-        Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_REAPER, Point2D((mn.x + mx.x)*0.5f, (mn.y + mx.y)*0.5f), Observation()->GetPlayerID());
+        Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_REAPER, Point2D((mn.x + mx.x) * 0.5f, (mn.y + mx.y) * 0.5f), Observation()->GetPlayerID());
         // Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_REAPER, Point2D((mn.x + mx.x)*0.5f, (mn.y + mx.y)*0.5f), Observation()->GetPlayerID());
         // Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_REAPER, Point2D((mn.x + mx.x)*0.5f, (mn.y + mx.y)*0.5f), Observation()->GetPlayerID());
         // Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_REAPER, Point2D((mn.x + mx.x)*0.5f, (mn.y + mx.y)*0.5f), Observation()->GetPlayerID());
@@ -328,10 +327,10 @@ class MicroTrainer : public sc2::Agent {
                 closestUnit = enemy;
             }
 
-            float w = max(0.0f, 1.0f - sqrt(d)/10.0f);
+            float w = max(0.0f, 1.0f - sqrt(d) / 10.0f);
             if (w > 0) {
                 totalWeight += w;
-                avgEnemyPos += w*enemy->pos;
+                avgEnemyPos += w * enemy->pos;
             }
         }
 
@@ -347,10 +346,10 @@ class MicroTrainer : public sc2::Agent {
             if (u != unit) {
                 auto d = Distance2D(unit->pos, u->pos);
 
-                double w = exp(-d/5.0);
+                double w = exp(-d / 5.0);
                 if (w > 0.0000001) {
                     totalAllyWeight += w;
-                    avgAllyPos += w*u->pos;
+                    avgAllyPos += w * u->pos;
                 }
             }
         }
@@ -379,7 +378,7 @@ class MicroTrainer : public sc2::Agent {
             action = Action::MoveRandom;
         }
 
-        switch(action) {
+        switch (action) {
             case Action::Attack_Closest: {
                 if (closestUnit != nullptr) {
                     Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, closestUnit->pos);
@@ -390,9 +389,9 @@ class MicroTrainer : public sc2::Agent {
             }
             case Action::MoveRandom: {
                 float x = tick / 250.0f;
-                float dx = -0.143*sin(1.75*(x+1.73))-0.18*sin(2.96*(x+4.98))-0.012*sin(6.23*(x+3.17))+0.088*sin(8.07*(x+4.63));
+                float dx = -0.143 * sin(1.75 * (x + 1.73)) - 0.18 * sin(2.96 * (x + 4.98)) - 0.012 * sin(6.23 * (x + 3.17)) + 0.088 * sin(8.07 * (x + 4.63));
                 float y = (tick + 512357) / 250.0f;
-                float dy = -0.143*sin(1.75*(y+1.73))-0.18*sin(2.96*(y+4.98))-0.012*sin(6.23*(y+3.17))+0.088*sin(8.07*(y+4.63));
+                float dy = -0.143 * sin(1.75 * (y + 1.73)) - 0.18 * sin(2.96 * (y + 4.98)) - 0.012 * sin(6.23 * (y + 3.17)) + 0.088 * sin(8.07 * (y + 4.63));
 
                 // float dx = ((rand() % 10000) / 5000.0f) - 1.0f;
                 // float dy = ((rand() % 10000) / 5000.0f) - 1.0f;
@@ -402,7 +401,7 @@ class MicroTrainer : public sc2::Agent {
             case Action::Flee: {
                 if (closestUnit != nullptr) {
                     float dist = sqrt(closestDist);
-                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE, unit->pos + ((unit->pos - avgEnemyPos)/(dist+0.001))*10);
+                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE, unit->pos + ((unit->pos - avgEnemyPos) / (dist + 0.001)) * 10);
                 } else {
                     Actions()->UnitCommand(unit, ABILITY_ID::MOVE, unit->pos);
                 }
@@ -410,7 +409,7 @@ class MicroTrainer : public sc2::Agent {
             }
             case Action::MoveAwayFromAlly: {
                 float dist = Distance2D(unit->pos, avgAllyPos);
-                Actions()->UnitCommand(unit, ABILITY_ID::MOVE, unit->pos + ((unit->pos - avgAllyPos)/(dist+0.001))*10);
+                Actions()->UnitCommand(unit, ABILITY_ID::MOVE, unit->pos + ((unit->pos - avgAllyPos) / (dist + 0.001)) * 10);
                 break;
             }
             case Action::MoveToAlly: {
@@ -465,7 +464,7 @@ class MicroTrainer : public sc2::Agent {
         session.ticks++;
 
         if (ourUnits.size() > 0) {
-            Point2D avgPos = Point2D(0,0);
+            Point2D avgPos = Point2D(0, 0);
             float totalWeight = 0;
             for (auto unit : ourUnits) {
                 avgPos += unit->pos;
@@ -477,14 +476,15 @@ class MicroTrainer : public sc2::Agent {
         }
 
         if (interactive) {
-
         } else if ((tick % 10) == 0) {
             State state;
             state.playerID = Observation()->GetPlayerID();
             state.tick = Observation()->GetGameLoop();
             auto enemyUnits = Observation()->GetUnits(Unit::Alliance::Enemy);
-            for (auto u : ourUnits) state.units.push_back(SerializedUnit(u));
-            for (auto u : enemyUnits) state.units.push_back(SerializedUnit(u));
+            for (auto u : ourUnits)
+                state.units.push_back(SerializedUnit(u));
+            for (auto u : enemyUnits)
+                state.units.push_back(SerializedUnit(u));
             stringstream os;
             {
                 cereal::JSONOutputArchive archive(os);
@@ -511,7 +511,7 @@ class MicroTrainer : public sc2::Agent {
             cout << "Gathering state" << endl;
             session.states.push_back(state);
 
-            if (ourUnits.size() == 0 || session.ticks > 25*60*5) {
+            if (ourUnits.size() == 0 || session.ticks > 25 * 60 * 5) {
                 Reset();
             }
         }
@@ -538,7 +538,6 @@ int main(int argc, char* argv[]) {
         import micro_train
         print('Hello World!!!')
     )");*/
-
 
     Coordinator coordinator;
     if (!coordinator.LoadSettings(argc, argv)) {

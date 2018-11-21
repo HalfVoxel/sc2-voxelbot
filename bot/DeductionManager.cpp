@@ -30,18 +30,18 @@ void DeductionManager::OnGameStart() {
                     ExpectObservation(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
                     ExpectObservation(UNIT_TYPEID::TERRAN_SCV, 12);
                     // Set the resources that are ignored due to free starting units
-                    freeResources = Spending(400 + 12*50, 0);
+                    freeResources = Spending(400 + 12 * 50, 0);
                     break;
                 case Race::Protoss:
                     ExpectObservation(UNIT_TYPEID::PROTOSS_NEXUS, 1);
                     ExpectObservation(UNIT_TYPEID::PROTOSS_PROBE, 12);
-                    freeResources = Spending(400 + 12*50, 0);
+                    freeResources = Spending(400 + 12 * 50, 0);
                     break;
                 case Race::Zerg:
                     ExpectObservation(UNIT_TYPEID::ZERG_HATCHERY, 1);
                     ExpectObservation(UNIT_TYPEID::ZERG_DRONE, 12);
                     ExpectObservation(UNIT_TYPEID::ZERG_OVERLORD, 1);
-                    freeResources = Spending(300 + 12*50 + 100, 0);
+                    freeResources = Spending(300 + 12 * 50 + 100, 0);
                     break;
                 case Race::Random:
                     cout << "Opponent has random race, not sure what starting units they have" << endl;
@@ -54,7 +54,6 @@ void DeductionManager::OnGameStart() {
 void DeductionManager::Observe(vector<const Unit*>& units) {
     const auto& unitTypes = bot.Observation()->GetUnitTypeData();
 
-    
     for (const Unit* unit : units) {
         Observe(unit);
     }
@@ -86,7 +85,7 @@ void DeductionManager::Observe(vector<const Unit*>& units) {
 
     // The enemy must have a way to get the remaining food, it must be using supply depots/corresponding or new bases, but don't assume that right now.
     UNIT_TYPEID supplyType;
-    switch(enemyRace) {
+    switch (enemyRace) {
         case Race::Terran:
             supplyType = UNIT_TYPEID::TERRAN_SUPPLYDEPOT;
             break;
@@ -103,7 +102,7 @@ void DeductionManager::Observe(vector<const Unit*>& units) {
     const int foodPerSupplyUnit = 8;
     // Round up expected number of supply depots.
     // Note that we *set* this value every time, so this may become lower if we for example discover a new enemy base (as a command center also provides some food).
-    expectedObservations[(int)supplyType] = (requiredFood+(foodPerSupplyUnit-1)) / foodPerSupplyUnit;
+    expectedObservations[(int)supplyType] = (requiredFood + (foodPerSupplyUnit - 1)) / foodPerSupplyUnit;
 }
 
 vector<UnitTypeInfo> DeductionManager::Summary() {
@@ -154,7 +153,8 @@ vector<UnitTypeInfo> DeductionManager::Summary() {
 
     for (int maxUpgradeDistance = 0; maxUpgradeDistance <= 3; maxUpgradeDistance++) {
         for (int i = 0; i < observedUnitInstances.size(); i++) {
-            if (processedUnits[i]) continue;
+            if (processedUnits[i])
+                continue;
 
             const Unit* u = observedUnitInstances[i];
 
@@ -184,7 +184,7 @@ vector<UnitTypeInfo> DeductionManager::Summary() {
                         assert(depth < upgradePath.size());
                         assert(depth <= 3);
 
-                        if  (depth > maxUpgradeDistance) {
+                        if (depth > maxUpgradeDistance) {
                             // Too high depth, try again in the next iteration
                             skip = true;
                             break;

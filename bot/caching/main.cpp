@@ -1,7 +1,7 @@
-#include "../Bot.h"
 #include <fstream>
 #include <iostream>
 #include <queue>
+#include "../Bot.h"
 #include "../DependencyAnalyzer.h"
 #include "../Mappings.h"
 #include "../generated/abilities.h"
