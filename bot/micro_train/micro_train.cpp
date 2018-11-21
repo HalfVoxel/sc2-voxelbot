@@ -1,4 +1,5 @@
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <queue>
 #include "../Bot.h"
@@ -14,6 +15,7 @@
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
 #include <fstream>
+#include "../stdutils.h"
 #include "cereal/cereal.hpp"
 
 #include <thread>
@@ -107,8 +109,9 @@ struct SerializedUnit {
     float health;
     float health_max;
     Tag engaged_target_tag;
+    int last_attacked_tick;
 
-    SerializedUnit(const Unit* unit) {
+    SerializedUnit(const SerializedUnit* lastUnit, const Unit* unit, int tick) {
         tag = unit->tag;
         position = SerializedPos{ unit->pos.x, unit->pos.y };
         unit_type = unit->unit_type;
@@ -131,6 +134,16 @@ struct SerializedUnit {
         health = unit->health;
         health_max = unit->health_max;
         engaged_target_tag = unit->engaged_target_tag;
+
+        if (lastUnit != nullptr) {
+            if (health + shield < lastUnit->health + lastUnit->shield) {
+                last_attacked_tick = tick;
+            } else {
+                last_attacked_tick = lastUnit->last_attacked_tick;
+            }
+        } else {
+            last_attacked_tick = -1000;
+        }
     }
 
     template <class Archive>
@@ -157,7 +170,8 @@ struct SerializedUnit {
             CEREAL_NVP(health_max),
             CEREAL_NVP(shield_max),
             CEREAL_NVP(engaged_target_tag),
-            CEREAL_NVP(action));
+            CEREAL_NVP(action),
+            CEREAL_NVP(last_attacked_tick));
     }
 };
 
@@ -183,9 +197,18 @@ struct Session {
     }
 };
 
+const SerializedUnit* try_get(std::map<Tag, const SerializedUnit*>& m, Tag key) {
+    return m.find(key) != m.end() ? m[key] : nullptr;
+}
+
 py::object predictFunction;
+py::object rewardFunction;
 py::object addSession;
 py::object optimizeFunction;
+
+struct UnitDebug {
+    vector<string> messages;
+};
 
 class MicroTrainer : public sc2::Agent {
     int tick = 0;
@@ -196,6 +219,12 @@ class MicroTrainer : public sc2::Agent {
     bool paused = false;
     bool enableExploration = true;
     bool interactive = false;
+    State state;
+    map<Tag, UnitDebug*> unitDebug;
+    vector<float> lastActionQValues;
+    vector<float> selfTensor;
+    vector<vector<float>> allyTensor;
+    vector<vector<float>> enemyTensor;
 
    public:
     int resets = 1;
@@ -210,6 +239,8 @@ class MicroTrainer : public sc2::Agent {
     void OnGameStart() override {
         cout << "Starting..." << endl;
         session = Session();
+        state = State();
+
         Debug()->DebugEnemyControl();
         Debug()->DebugShowMap();
         Debug()->DebugIgnoreFood();
@@ -259,6 +290,7 @@ class MicroTrainer : public sc2::Agent {
         addSession(json.str());
         optimizeFunction(session.states.size());
         session = Session();
+        state = State();
 
         auto t2 = Clock::now();
         cout << "Time: " << chrono::duration_cast<chrono::nanoseconds>(t2 - t0).count() << " ns" << endl;
@@ -288,7 +320,7 @@ class MicroTrainer : public sc2::Agent {
         //     Debug()->DebugCreateUnit(UNIT_TYPEID::PROTOSS_ZEALOT, Point2D(x, y), opponentPlayerID);
         // }
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 40; i++) {
             float x = mn.x + ((rand() % 1000) / 1000.0f) * (mx.x - mn.x);
             float y = mn.y + ((rand() % 1000) / 1000.0f) * (mx.y - mn.y);
 
@@ -299,8 +331,8 @@ class MicroTrainer : public sc2::Agent {
         }
 
         Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_REAPER, Point2D((mn.x + mx.x) * 0.5f, (mn.y + mx.y) * 0.5f), Observation()->GetPlayerID());
-        // Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_REAPER, Point2D((mn.x + mx.x)*0.5f, (mn.y + mx.y)*0.5f), Observation()->GetPlayerID());
-        // Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_REAPER, Point2D((mn.x + mx.x)*0.5f, (mn.y + mx.y)*0.5f), Observation()->GetPlayerID());
+        Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_REAPER, Point2D((mn.x + mx.x) * 0.5f, (mn.y + mx.y) * 0.5f), Observation()->GetPlayerID());
+        Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_REAPER, Point2D((mn.x + mx.x) * 0.5f, (mn.y + mx.y) * 0.5f), Observation()->GetPlayerID());
         // Debug()->DebugCreateUnit(UNIT_TYPEID::TERRAN_REAPER, Point2D((mn.x + mx.x)*0.5f, (mn.y + mx.y)*0.5f), Observation()->GetPlayerID());
     }
 
@@ -388,9 +420,9 @@ class MicroTrainer : public sc2::Agent {
                 break;
             }
             case Action::MoveRandom: {
-                float x = tick / 250.0f;
+                float x = tick / 250.0f + unit->pos.x / 100;
                 float dx = -0.143 * sin(1.75 * (x + 1.73)) - 0.18 * sin(2.96 * (x + 4.98)) - 0.012 * sin(6.23 * (x + 3.17)) + 0.088 * sin(8.07 * (x + 4.63));
-                float y = (tick + 512357) / 250.0f;
+                float y = (tick + 512357) / 250.0f + unit->pos.y / 100;
                 float dy = -0.143 * sin(1.75 * (y + 1.73)) - 0.18 * sin(2.96 * (y + 4.98)) - 0.012 * sin(6.23 * (y + 3.17)) + 0.088 * sin(8.07 * (y + 4.63));
 
                 // float dx = ((rand() % 10000) / 5000.0f) - 1.0f;
@@ -475,16 +507,22 @@ class MicroTrainer : public sc2::Agent {
             Debug()->DebugMoveCamera(avgPos);
         }
 
+        State newState;
+        newState.playerID = Observation()->GetPlayerID();
+        newState.tick = tick;
+        auto enemyUnits = Observation()->GetUnits(Unit::Alliance::Enemy);
+        map<Tag, const SerializedUnit*> lastUnitsMap;
+        for (const SerializedUnit& u : state.units)
+            lastUnitsMap[u.tag] = &u;
+
+        for (auto u : ourUnits)
+            newState.units.push_back(SerializedUnit(try_get(lastUnitsMap, u->tag), u, tick));
+        for (auto u : enemyUnits)
+            newState.units.push_back(SerializedUnit(try_get(lastUnitsMap, u->tag), u, tick));
+        state = move(newState);
+
         if (interactive) {
         } else if ((tick % 10) == 0) {
-            State state;
-            state.playerID = Observation()->GetPlayerID();
-            state.tick = Observation()->GetGameLoop();
-            auto enemyUnits = Observation()->GetUnits(Unit::Alliance::Enemy);
-            for (auto u : ourUnits)
-                state.units.push_back(SerializedUnit(u));
-            for (auto u : enemyUnits)
-                state.units.push_back(SerializedUnit(u));
             stringstream os;
             {
                 cereal::JSONOutputArchive archive(os);
@@ -496,16 +534,37 @@ class MicroTrainer : public sc2::Agent {
                 unitTags.push_back(unit->tag);
             }
 
-            vector<int> actions = predictFunction(os.str(), unitTags, enableExploration).cast<vector<int>>();
+            vector<tuple<int, vector<float>, vector<float>, vector<vector<float>>, vector<vector<float>>>> actions = predictFunction(os.str(), unitTags, enableExploration).cast<vector<tuple<int, vector<float>, vector<float>, vector<vector<float>>, vector<vector<float>>>>>();
+            vector<float> rewards = rewardFunction(os.str(), unitTags).cast<vector<float>>();
             for (int i = 0; i < ourUnits.size(); i++) {
-                Action action = (Action)actions[i];
+                UnitDebug*& debug = unitDebug[ourUnits[i]->tag];
+                if (debug == nullptr)
+                    debug = new UnitDebug();
+
+                Action action = (Action)get<0>(actions[i]);
+                lastActionQValues = get<1>(actions[i]);
+                selfTensor = get<2>(actions[i]);
+                allyTensor = get<3>(actions[i]);
+                enemyTensor = get<4>(actions[i]);
+
                 DoAction(ourUnits[i], action);
                 // Note: they come in exactly the same order in the state
                 state.units[i].action = action;
 
                 stringstream ss;
                 ss << "Took action " << actionName[action];
-                Actions()->SendChat(ss.str());
+                // Actions()->SendChat(ss.str());
+
+                stringstream ss2;
+                ss2 << "Reward: " << rewards[i] << " " << actionName[action] << " ";
+                debug->messages.push_back(ss2.str());
+
+                stringstream ss3;
+                for (int j = max(0, (int)debug->messages.size() - 5); j < debug->messages.size(); j++) {
+                    ss3 << debug->messages[j] << endl;
+                }
+                //Debug()->DebugTextOut(ss3.str(), ourUnits[i]->pos);
+                Debug()->DebugTextOut(ss3.str(), Point2D(0.6, 0.6), Colors::White, 8);
             }
 
             cout << "Gathering state" << endl;
@@ -514,6 +573,34 @@ class MicroTrainer : public sc2::Agent {
             if (ourUnits.size() == 0 || session.ticks > 25 * 60 * 5) {
                 Reset();
             }
+
+            stringstream ss4;
+            for (int i = 0; i < lastActionQValues.size(); i++) {
+                ss4 << actionName[i] << ": ";
+                for (int j = actionName[i].size(); j <= 20; j++)
+                    ss4 << " ";
+                ss4 << (int)lastActionQValues[i] << endl;
+            }
+            ss4 << endl
+                << "Self Tensor" << endl;
+            for (auto v : selfTensor)
+                ss4 << setprecision(2) << v << endl;
+            ss4 << endl
+                << "Ally Tensor" << endl;
+            for (auto ally : allyTensor) {
+                for (auto v : ally)
+                    ss4 << setprecision(2) << v << endl;
+                ss4 << endl;
+            }
+            ss4 << endl
+                << "Enemy Tensor" << endl;
+            for (auto enemy : enemyTensor) {
+                for (auto v : enemy)
+                    ss4 << setprecision(2) << v << endl;
+                ss4 << endl;
+            }
+
+            Debug()->DebugTextOut(ss4.str(), Point2D(0.6, 0.2), Colors::White, 8);
         }
 
         Actions()->SendActions();
@@ -530,6 +617,7 @@ int main(int argc, char* argv[]) {
     )");
     py::module trainer = py::module::import("micro_train");
     predictFunction = trainer.attr("predict");
+    rewardFunction = trainer.attr("get_reward");
     addSession = trainer.attr("addSession");
     optimizeFunction = trainer.attr("optimize");
 
