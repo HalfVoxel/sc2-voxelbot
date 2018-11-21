@@ -1,5 +1,7 @@
 #include <algorithm>
 #include <vector>
+#include <map>
+#include <functional>
 
 // -------------------------------------------------------------------
 // --- Reversed iterable
@@ -19,4 +21,18 @@ reversion_wrapper<T> reverse (T&& iterable) { return { iterable }; }
 template<class T>
 bool contains(const std::vector<T>& arr, const T& item) {
 	return find(arr.begin(), arr.end(), item) != arr.end();
+}
+
+template <class T, class V>
+void sortByValueAscending (std::vector<T>& arr, std::function<V(const T&)> value) {
+	std::sort(arr.begin(), arr.end(), [&](const T& a, const T& b) -> bool {
+		return value(a) < value(b);
+	});
+}
+
+template <class T, class V>
+void sortByValueDescending (std::vector<T>& arr, std::function<V(const T&)> value) {
+	std::sort(arr.begin(), arr.end(), [&](const T& a, const T& b) -> bool {
+		return value(a) > value(b);
+	});
 }
