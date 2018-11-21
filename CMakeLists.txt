@@ -35,7 +35,7 @@ add_subdirectory("s2client-api")
 # Add include directories for the SC2 API (the examples one should be removed eventually when our bot doesn't depend on it)
 include_directories("s2client-api/include")
 include_directories("s2client-api/examples/common")
-include_directories("cereal-1.2.2/include")
+include_directories("cereal/include")
 
 # Setup MSVC parallelized builds
 add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
