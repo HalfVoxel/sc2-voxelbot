@@ -12,11 +12,6 @@
 #include "DeductionManager.h"
 #include "DependencyAnalyzer.h"
 
-const float kCameraWidth = 24.0f;
-const int kFeatureLayerSize = 80;
-const int kPixelDrawSize = 3;
-const int kDrawSize = kFeatureLayerSize * kPixelDrawSize;
-
 extern int ticks;
 
 bool IsAbilityReady (const sc2::Unit* unit, sc2::ABILITY_ID ability);

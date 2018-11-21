@@ -1,7 +1,8 @@
 ifeq ($(OS),Windows_NT)
 	BUILD = cmake ../ -G "Visual Studio 15 2017 Win64"
 else
-	BUILD = cmake -DCMAKE_BUILD_TYPE=Debug -DPYTHON_EXECUTABLE:FILEPATH="/Users/arong/anaconda3/bin/python" .. && make -j8
+	# BUILD = cmake -DCMAKE_BUILD_TYPE=Debug -DPYTHON_EXECUTABLE:FILEPATH="/Users/arong/anaconda3/bin/python" .. && make -j8
+	BUILD = cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE:FILEPATH="/Users/arong/anaconda3/bin/python" .. && make -j8
 endif
 
 all:

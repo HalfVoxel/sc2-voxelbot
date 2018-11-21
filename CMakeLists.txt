@@ -52,7 +52,7 @@ include_directories(SYSTEM "${PROJECT_BINARY_DIR}/s2client-api/generated")
 # include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/s2client-api/contrib/SDL-mirror/include")
 
 # Function to generate an example project with extra libraries
-function (example_project_extra project_name source_code mainfile extra_libs)
+function (create_executable project_name source_code mainfile extra_libs)
 	# TODO: The .h files don't seem to be necessary (think only .cpp files should be included here anyway)
     file (GLOB example_project_sources ${source_code} "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc" "bot/*.h" "bot/generated/*.cpp" ${mainfile})
     add_executable(${project_name} ${example_project_sources})
@@ -68,12 +68,29 @@ function (example_project_extra project_name source_code mainfile extra_libs)
 		target_link_libraries(${project_name} legacy_stdio_definitions)
 	endif ()
 
+    target_link_libraries(${project_name} sc2api sc2lib sc2utils pybind11::embed botlib ${extra_libs})
+endfunction ()
+
+function (create_library project_name source_code extra_libs)
+	# TODO: The .h files don't seem to be necessary (think only .cpp files should be included here anyway)
+    file (GLOB example_project_sources ${source_code} "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc" "bot/*.h" "bot/generated/*.cpp" ${mainfile})
+    add_library(${project_name} ${example_project_sources})
+
+    if (MSCV AND (NOT (MSVC_VERSION LESS 1910)))
+		target_link_libraries(${project_name} legacy_stdio_definitions)
+	endif ()
+
+    # Sets the grouping in IDEs like visual studio (last parameter is the group name)
+    set_target_properties(${project_name} PROPERTIES FOLDER target)
     target_link_libraries(${project_name} sc2api sc2lib sc2utils pybind11::embed ${extra_libs})
 endfunction ()
 
-example_project_extra(our_bot "bot/*.cpp" "bot/bot/main.cpp" "SDL2-static")
-example_project_extra(replay_analyzer "bot/*.cpp" "bot/replay_analyzer/main.cpp" "SDL2-static")
-example_project_extra(caching "bot/*.cpp" "bot/caching/main.cpp" "SDL2-static")
-example_project_extra(micro_train "bot/*.cpp" "bot/micro_train/micro_train.cpp" "SDL2-static")
+create_library(botlib "bot/*.cpp" "SDL2-static")
+create_executable(our_bot "" "bot/bot/main.cpp" "SDL2-static")
+create_executable(replay_analyzer "" "bot/replay_analyzer/main.cpp" "SDL2-static")
+create_executable(caching "" "bot/caching/main.cpp" "SDL2-static")
+create_executable(micro_train "" "bot/micro_train/micro_train.cpp" "SDL2-static")
+create_executable(composition_analyzer "" "bot/composition_analyzer/main.cpp" "SDL2-static")
+create_executable(composition_analyzer2 "" "bot/composition_analyzer2/main.cpp" "SDL2-static")
 
 include_directories("s2client-api/contrib/SDL-mirror/include")
