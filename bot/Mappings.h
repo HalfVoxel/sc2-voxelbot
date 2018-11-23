@@ -12,3 +12,4 @@ float maxHealth(sc2::UNIT_TYPEID type);
 float maxShield(sc2::UNIT_TYPEID type);
 bool isFlying(sc2::UNIT_TYPEID type);
 float unitRadius(sc2::UNIT_TYPEID type);
+const std::vector<sc2::ABILITY_ID>& unitAbilities(sc2::UNIT_TYPEID type);

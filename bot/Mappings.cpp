@@ -15,6 +15,7 @@ vector<vector<UNIT_TYPEID>> mAbilityToCasterUnit;
 vector<UNIT_TYPEID> mAbilityToCreatedUnit;
 vector<vector<UNIT_TYPEID>> mCanBecome;
 vector<vector<UNIT_TYPEID>> mHasBeen;
+vector<vector<ABILITY_ID>> mUnitTypeHasAbilities;
 bool mappingInitialized = false;
 
 UNIT_TYPEID canonicalize(UNIT_TYPEID unitType) {
@@ -36,6 +37,10 @@ const vector<UNIT_TYPEID>& canBecome(sc2::UNIT_TYPEID type) {
     return mCanBecome[(int)type];
 }
 
+const vector<ABILITY_ID>& unitAbilities(UNIT_TYPEID type) {
+    return mUnitTypeHasAbilities[(int)type];
+}
+
 void initMappings(const ObservationInterface* observation) {
     if (mappingInitialized)
         return;
@@ -55,6 +60,11 @@ void initMappings(const ObservationInterface* observation) {
 
     const sc2::UnitTypes& unitTypes = observation->GetUnitTypeData();
     const auto abilities = observation->GetAbilityData();
+
+    mUnitTypeHasAbilities = vector<vector<ABILITY_ID>>(unitTypes.size());
+    for (auto pair : unit_type_has_ability) {
+        mUnitTypeHasAbilities[pair.first].push_back((ABILITY_ID)pair.second);
+    }
 
     mAbilityToCreatedUnit = vector<UNIT_TYPEID>(abilities.size(), UNIT_TYPEID::INVALID);
     for (auto type : unitTypes) {
