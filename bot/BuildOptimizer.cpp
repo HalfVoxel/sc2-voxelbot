@@ -12,7 +12,7 @@ using namespace sc2;
 void BuildOptimizer::init(const ObservationInterface* observation) {
 }
 
-bool isHarvester(UNIT_TYPEID type) {
+bool isBasicHarvester(UNIT_TYPEID type) {
     switch(type) {
         case UNIT_TYPEID::TERRAN_SCV: return true;
         case UNIT_TYPEID::ZERG_DRONE: return true;
@@ -73,7 +73,38 @@ struct BuildEvent {
     float time;
 
     bool impactsEconomy() const {
+        UNIT_TYPEID unit = abilityToUnit(ability);
+        return isBasicHarvester(unit) || isStructure(unit) || supply(unit) > 0;
+    }
 
+    void apply(BuildState& state) {
+        switch(type) {
+            case FinishedUnit: {
+                UNIT_TYPEID unit = abilityToUnit(ability);
+                UNIT_TYPEID caster = abilityToCasterUnit(ability);
+                state.makeUnitsBusy(caster, -1);
+                state.addUnits(unit, 1);
+                
+                // First element is the unit itself
+                // second element is the one it was created from
+                // third element is the one that one was created from etc.
+                // E.g. hasBeen[hatchery][1] = drone
+                //      hasBeen[lair][1] = hatchery
+                auto& hasBeenUnits = hasBeen(unit);
+                if (hasBeenUnits.size() > 1) {
+                    state.addUnits(hasBeenUnits[1], -1);
+                }
+                break;
+            }
+            case SpawnLarva: {
+                state.addUnits(UNIT_TYPEID::ZERG_LARVA, 3);
+                break;
+            }
+            case MuleTimeout: {
+                state.addUnits(UNIT_TYPEID::TERRAN_MULE, -1);
+                break;
+            }
+        }
     }
 };
 
@@ -101,8 +132,47 @@ struct BuildAction {
 struct BuildResources {
     float minerals;
     float vespene;
+
+    void simulateMining(pair<float, float> miningSpeed, float dt) {
+        minerals += miningSpeed.first * dt;
+        vespene += miningSpeed.second * dt;
+    }
 };
 
+struct BuildOptimizerSearch {
+    priority_queue<shared_ptr<BuildState>> que;
+
+    void addState(shared_ptr<BuildState> state) {
+        que.insert(make_pair(upperBound(state), state));
+    }
+
+    void search () {
+        float lowestUpperBound = 1000000;
+        shared_ptr<BuildState> bestResult = nullptr;
+
+        while(!que.empty()) {
+            auto state = que.front();
+            que.pop();
+
+            if (lowerBound(state) > lowestUpperBound) {
+                // This state cannot possibly be optimal, so skip it
+                continue;
+            }
+
+            float ub = upperBound(state);
+            if (ub < lowestUpperBound) {
+                lowestUpperBound = ub;
+                bestResult = state;
+            }
+
+            // If it's not done, add more actions
+            if (state.time < ub) {
+                state.doActions(*this);
+            }
+        }
+    }
+}
+ 
 struct BuildState {
     float time;
     BuildAction parentAction;
@@ -112,6 +182,44 @@ struct BuildState {
     vector<BuildEvent> events;
     BuildResources resources;
 
+    void makeUnitsBusy(UNIT_TYPEID type, int delta) {
+        for (auto& u : state.units) {
+            if (u.type == type) {
+                u.busyUnits += delta;
+                assert(u.busyUnits <= u.units);
+                return;
+            }
+        }
+        assert(false);
+    }
+
+    void addUnits(UNIT_TYPEID type, int delta) {
+        if (delta < 0) {
+            for (auto& u : state.units) {
+                if (u.type == type) {
+                    assert(u.units > 0);
+                    u.units -= delta;
+                    assert(u.busyUnits <= u.units);
+                    return;
+                }
+            }
+            assert(false);
+        } else if (delta > 0) {
+            for (auto& u : state.units) {
+                if (u.type == type) {
+                    u.units += delta;
+                    return;
+                }
+            }
+
+            BuildUnitInfo info;
+            info.units = delta;
+            info.busyUnits = 0;
+            info.type = type;
+            state.units.push_back(info);
+        }
+    }
+
     pair<float, float> miningSpeed() const {
         int harvesters = 0;
         int mules = 0;
@@ -119,7 +227,7 @@ struct BuildState {
         int geysers = 0;
         for (auto& unit : units) {
             // TODO: Normalize type?
-            if (isHarvester(unit.type)) {
+            if (isBasicHarvester(unit.type)) {
                 harvesters += unit.availableUnits();
             }
 
@@ -172,7 +280,28 @@ struct BuildState {
         return time;
     }
 
-    void doActions() const {
+    // All actions up to and including the end time will have been completed
+    void simulate(float endTime) {
+        auto currentMiningSpeed = miningSpeed();
+        for (auto& ev : events) {
+            if (ev.time > endTime) {
+                events.remove(...);
+                return;
+            }
+            float dt = ev.time - time;
+            resources.simulateMining(currentMiningSpeed, dt);
+            time = ev.time;
+
+            ev.apply(*this);
+
+            // TODO:
+            //if (ev.impactsEconomy()) {
+            currentMiningSpeed = miningSpeed();
+        }
+        events.clear();
+    }
+
+    void doActions(BuildOptimizerSearch& search) const {
         const auto& abilities = agent.Observation()->GetAbilityData();
         const auto& unitTypes = agent.Observation()->GetUnitTypeData();
 
@@ -191,8 +320,18 @@ struct BuildState {
                     auto& unitData = unitTypes[(int)createdUnit];
 
                     // TODO: Needs to be supply edge triggered as well
+                    // Edge = can do in this state, but couldn't in the parent state (excluding minerals/gas)
                     if (unitData.mineral_cost >= resources.minerals || unitData.vespene_cost >= resources.vespene) {
                         float eventTime = time + timeToGetResources(currentMiningSpeed, unitData.mineral_cost, unitData.vespene_cost);
+                        if (eventTime < nextSignificantEvent) {
+                            // Simulate up to this point
+                            BuildState newState = *this;
+                            newState.simulate(eventTime);
+                            newState.resources.minerals -= unitData.mineral_cost;
+                            newState.resources.vespene -= unitData.vespene_cost;
+                            newState.addEvent(BuildEvent(BuildEventType::FinishedUnit, newState.time + unitData.build_time, ability));
+                            search.addState(newState);
+                        }
                     }
                 }
             }
@@ -200,8 +339,57 @@ struct BuildState {
     }
 };
 
-float lowerBound();
-float upperBound();
+// The lower time this state can possibly lead to reaching the target
+float lowerBound(const BuildState& state, const BuildTarget& target) {
+    const auto& unitTypes = agent.Observation()->GetUnitTypeData();
+
+    // Build all units in parallel
+    // don't account for economy (yet)
+    vector<pair<UNIT_TYPEID, int>> remainingUnits = target.units;
+    for (auto& u : state.units) {
+        for (auto& u2 : remainingUnits) {
+            if (u2.first == u.type) {
+                u2 = make_pair(u2.first, max(0, u2.second - u.units));
+            }
+        }
+    }
+
+    float maxRelevantEventTime = 0;
+    for (auto& ev : state.events) {
+        if (ev.type == FinishedUnit) {
+            UNIT_TYPEID unit = abilityToUnit(ev.ability);
+            for (auto& u2 : remainingUnits) {
+                if (u2.first == unit && u2.second > 0) {
+                    maxRelevantEventTime = max(maxRelevantEventTime, ev.time);
+                    u2 = make_pair(u2.first, u2.second - 1);
+                }
+            }
+        }
+    }
+
+    float requiredMinerals = 0;
+    float requiredVespene = 0;
+    float maxBuildTime = 0;
+    for (auto& u : remainingUnits) {
+        auto& unitData = unitTypes[(int)u.first];
+        maxBuildTime = max(maxBuildTime, unitData.build_time);
+    }
+    return max(state.time + maxBuildTime, maxRelevantEventTime);
+}
+
+// It is guaranteed that the target can be reached at least at this time from this state
+float upperBound(const BuildState& state, const BuildTarget& target) {
+    // 3. Get the required minerals/vespene
+    // 1. Get the required buildings
+    // 2. Get the required supply
+    // 3. Get the required units
+    // Maybe formulate as simulating a specific build order
+    // [buildings, supply, units], might be too slow though
+    
+    // Go through unit dependencies, find time to get at least one of that building
+    // Build all units sequentially (or using the available buildings)
+    // TODO: Supply
+}
 
 void BuildOptimizer::calculate_build_order(vector<pair<UNIT_TYPEID, int>> start, vector<pair<UNIT_TYPEID, int>> target) {
 }
