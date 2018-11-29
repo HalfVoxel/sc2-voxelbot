@@ -27,7 +27,7 @@ class Replay : public sc2::ReplayObserver {
 
     void OnGameStart() final {
         DependencyAnalyzer deps;
-        deps.analyze(Observation());
+        deps.analyze();
         exit(0);
 
         cout << "Started game..." << endl;

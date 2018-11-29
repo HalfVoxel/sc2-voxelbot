@@ -92,5 +92,6 @@ create_executable(caching "" "bot/caching/main.cpp" "SDL2-static")
 create_executable(micro_train "" "bot/micro_train/micro_train.cpp" "SDL2-static")
 create_executable(composition_analyzer "" "bot/composition_analyzer/main.cpp" "SDL2-static")
 create_executable(composition_analyzer2 "" "bot/composition_analyzer2/main.cpp" "SDL2-static")
+create_executable(build_optimizer "" "bot/build_optimizer/main.cpp" "SDL2-static")
 
 include_directories("s2client-api/contrib/SDL-mirror/include")

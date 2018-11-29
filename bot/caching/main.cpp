@@ -38,6 +38,16 @@ vector<string> weaponTypeNames = {
     "Invalid",
 };
 
+int hashFile(string path) {
+    ifstream stream(path);
+    int hash = 0;
+    char c;
+    while(stream >> c) {
+        hash = (hash * 31) ^ c;
+    }
+    return hash;
+}
+
 // Model
 // Σ Pi + Σ PiSij
 class CachingBot : public sc2::Agent {
@@ -74,7 +84,8 @@ class CachingBot : public sc2::Agent {
         Point2D mx = Observation()->GetGameInfo().playable_max;
 
         DependencyAnalyzer deps;
-        deps.analyze(Observation());
+        // TODO: Use Observation here
+        deps.analyze();
 
         // Note: this depends on output from this program, so it really has to be run twice to get the correct output.
         ofstream unit_lookup = ofstream("bot/generated/units.txt");
@@ -94,6 +105,11 @@ class CachingBot : public sc2::Agent {
                 unit_lookup << "\tTech Alias: " << UnitTypeToName(t) << endl;
             }
             unit_lookup << "\tUnit Alias: " << UnitTypeToName(type.unit_alias) << endl;
+            unit_lookup << "\tTech Aliases: ";
+            for (auto t : type.tech_alias) unit_lookup << UnitTypeToName(t) << " ";
+            unit_lookup << endl;
+            unit_lookup << "\tTech Requirement: " << UnitTypeToName(type.tech_requirement) << endl;
+
             unit_lookup << "\tAbility: " << AbilityTypeToName(type.ability_id) << endl;
             unit_lookup << "\tAttributes:";
             for (auto a : type.attributes) {
@@ -150,58 +166,19 @@ class CachingBot : public sc2::Agent {
 
         Debug()->SendDebug();
 
-        auto stream = ofstream("bot/generated/units.data");
-        for (const UnitTypeData& type : unit_types) {
-            stream << type.unit_type_id << "\n";
-            stream << type.name << "\n";
-            stream << type.available << "\n";
-            stream << type.cargo_size << "\n";
-            stream << type.mineral_cost << "\n";
-            stream << type.vespene_cost << "\n";
-            stream << type.attributes.size() << "\n";
-            for (auto a : type.attributes) {
-                stream << (int)a << endl;
-            }
-            stream << type.movement_speed << "\n";
-            stream << type.armor << "\n";
+        save_unit_data(unit_types);
 
-            stream << type.weapons.size();
-            for (auto w : type.weapons) {
-                stream << w.damage_ << endl;
-                stream << w.damage_bonus.size() << endl;
-                for (auto b : w.damage_bonus) {
-                    stream << (int)b.attribute << " " << b.bonus;
-                }
-                stream << endl;
-                stream << w.attacks << " ";
-                stream << w.range << " ";
-                stream << w.speed << " ";
-            }
-            stream << endl;
-
-            stream << type.food_required << " ";
-            stream << type.food_provided << " ";
-            stream << type.ability_id << " ";
-            stream << type.race << " ";
-            stream << type.build_time << " ";
-            stream << type.has_minerals << " ";
-            stream << type.has_vespene << " ";
-            stream << type.sight_range << " ";
-
-            stream << type.tech_alias.size();
-            for (auto a : type.tech_alias) {
-                stream << a << " ";
-            }
-            stream << endl;
-
-            stream << type.unit_alias << " ";
-            stream << type.tech_requirement << " ";
-            stream << type.require_attached << " ";
-            stream << endl;
-            stream << endl;
+        // Try loading and re-saving the data to make sure that everything is loaded correctly
+        int hash = hashFile(UNIT_DATA_CACHE_PATH);
+        auto unit_types2 = load_unit_data();
+        save_unit_data(unit_types2, "/tmp/unit_data.data");
+        int hash2 = hashFile("/tmp/unit_data.data");
+        if (hash != hash2) {
+            cerr << "Error in unit type data serialization code" << endl;
+            exit(1);
         }
-        stream << endl;
-        stream.close();
+
+        save_ability_data(Observation()->GetAbilityData());
     }
 
     void OnStep() override {

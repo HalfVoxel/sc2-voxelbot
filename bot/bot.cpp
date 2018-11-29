@@ -64,7 +64,7 @@ void Bot::OnGameStart() {
     expansions_ = search::CalculateExpansionLocations(Observation(), Query());
     startLocation_ = Observation()->GetStartLocation();
     staging_location_ = startLocation_;
-    dependencyAnalyzer.analyze(Observation());
+    dependencyAnalyzer.analyze();
     deductionManager.OnGameStart();
     ourDeductionManager.OnGameStart();
     buildingPlacement.OnGameStart();

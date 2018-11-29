@@ -2,6 +2,8 @@
 #include "sc2api/sc2_interfaces.h"
 
 struct BuildOptimizer {
-    void init(const sc2::ObservationInterface* observation);
-    void calculate_build_order(std::vector<std::pair<sc2::UNIT_TYPEID, int>> start, std::vector<std::pair<sc2::UNIT_TYPEID, int>> target);
+    void init();
+    std::vector<sc2::UNIT_TYPEID> calculate_build_order(sc2::Race race, const std::vector<std::pair<sc2::UNIT_TYPEID, int>>& start, const std::vector<std::pair<sc2::UNIT_TYPEID, int>>& target);
 };
+
+void unitTestBuildOptimizer(BuildOptimizer& optimizer);
