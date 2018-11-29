@@ -4,7 +4,7 @@
 #include <queue>
 #include "../Bot.h"
 #include "../DependencyAnalyzer.h"
-#include "../Mappings.h"
+#include "../utilities/mappings.h"
 #include "../generated/abilities.h"
 #include "sc2api/sc2_api.h"
 #include "sc2utils/sc2_manage_process.h"
@@ -15,7 +15,7 @@
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
 #include <fstream>
-#include "../stdutils.h"
+#include "../utilities/stdutils.h"
 #include "cereal/cereal.hpp"
 
 #include <thread>

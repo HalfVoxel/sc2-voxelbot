@@ -1,5 +1,5 @@
 #pragma once
-#include "Influence.h"
+#include "utilities/influence.h"
 
 struct InfluenceManager {
 	InfluenceMap pathing_grid;

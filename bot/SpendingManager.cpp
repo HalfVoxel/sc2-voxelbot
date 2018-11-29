@@ -4,7 +4,7 @@
 #include <iostream>
 #include <map>
 #include <sstream>
-#include "Mappings.h"
+#include "utilities/mappings.h"
 #include "bot.h"
 
 using namespace std;

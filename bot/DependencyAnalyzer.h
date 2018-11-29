@@ -4,5 +4,5 @@
 
 struct DependencyAnalyzer {
 	std::vector<std::vector<sc2::UNIT_TYPEID>> allUnitDependencies;
-	void analyze(const sc2::ObservationInterface* obs);
+	void analyze();
 };

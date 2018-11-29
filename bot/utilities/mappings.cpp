@@ -1,12 +1,13 @@
-#include "Mappings.h"
+#include "mappings.h"
 #include <iostream>
-#include "Predicates.h"
-#include "generated/abilities.h"
+#include "../generated/abilities.h"
+#include "predicates.h"
 #include "sc2api/sc2_agent.h"
 #include "sc2api/sc2_api.h"
 #include "sc2api/sc2_interfaces.h"
 #include "sc2api/sc2_map_info.h"
 #include "stdutils.h"
+#include "unit_data_caching.h"
 
 using namespace std;
 using namespace sc2;
@@ -16,6 +17,9 @@ vector<UNIT_TYPEID> mAbilityToCreatedUnit;
 vector<vector<UNIT_TYPEID>> mCanBecome;
 vector<vector<UNIT_TYPEID>> mHasBeen;
 vector<vector<ABILITY_ID>> mUnitTypeHasAbilities;
+vector<UnitTypeData> mUnitTypes;
+vector<AbilityData> mAbilities;
+
 bool mappingInitialized = false;
 
 UNIT_TYPEID canonicalize(UNIT_TYPEID unitType) {
@@ -27,6 +31,17 @@ UNIT_TYPEID canonicalize(UNIT_TYPEID unitType) {
         return unitTypeData.unit_alias;
     }
     return unitType;
+}
+
+UNIT_TYPEID upgradedFrom(sc2::UNIT_TYPEID type) {
+    auto& h = hasBeen(type);
+    // First element is the unit itself
+    // second element is the one it was created from
+    // third element is the one that one was created from etc.
+    // E.g. hasBeen[hatchery][1] = drone
+    //      hasBeen[lair][1] = hatchery
+    if (h.size() > 1) return h[1];
+    return UNIT_TYPEID::INVALID;
 }
 
 const vector<UNIT_TYPEID>& hasBeen(sc2::UNIT_TYPEID type) {
@@ -41,37 +56,54 @@ const vector<ABILITY_ID>& unitAbilities(UNIT_TYPEID type) {
     return mUnitTypeHasAbilities[(int)type];
 }
 
-void initMappings(const ObservationInterface* observation) {
+const sc2::UnitTypeData& getUnitData(sc2::UNIT_TYPEID type) {
+    return mUnitTypes[(int)type];
+}
+
+const vector<UnitTypeData>& getUnitTypes() {
+    return mUnitTypes;
+}
+
+const sc2::AbilityData& getAbilityData(sc2::ABILITY_ID ability) {
+    return mAbilities[(int)ability];
+}
+
+void init() {
     if (mappingInitialized)
         return;
     mappingInitialized = true;
 
-    cout << "A" << endl;
     int maxAbilityID = 0;
     for (auto pair : unit_type_has_ability) {
         maxAbilityID = max(maxAbilityID, pair.second);
     }
-    mAbilityToCasterUnit = vector<vector<UNIT_TYPEID>>(maxAbilityID + 1);
-    for (auto pair : unit_type_has_ability) {
-        mAbilityToCasterUnit[pair.second].push_back((UNIT_TYPEID)pair.first);
-    }
 
-    cout << "B" << endl;
-
-    const sc2::UnitTypes& unitTypes = observation->GetUnitTypeData();
-    const auto abilities = observation->GetAbilityData();
-
-    mUnitTypeHasAbilities = vector<vector<ABILITY_ID>>(unitTypes.size());
-    for (auto pair : unit_type_has_ability) {
-        mUnitTypeHasAbilities[pair.first].push_back((ABILITY_ID)pair.second);
-    }
+    const vector<UnitTypeData>& unitTypes = mUnitTypes;
+    const auto& abilities = mAbilities;
 
     mAbilityToCreatedUnit = vector<UNIT_TYPEID>(abilities.size(), UNIT_TYPEID::INVALID);
     for (auto type : unitTypes) {
         mAbilityToCreatedUnit[type.ability_id] = (UNIT_TYPEID)type.unit_type_id;
     }
 
-    cout << "C" << endl;
+    mUnitTypeHasAbilities = vector<vector<ABILITY_ID>>(unitTypes.size());
+    mAbilityToCasterUnit = vector<vector<UNIT_TYPEID>>(maxAbilityID + 1);
+
+    for (auto pair : unit_type_has_ability) {
+        auto unit = (UNIT_TYPEID)pair.first;
+        mUnitTypeHasAbilities[(int)unit].push_back((ABILITY_ID)pair.second);
+        mAbilityToCasterUnit[pair.second].push_back(unit);
+    }
+
+    // Addons are not really inferred correctly, so we need to correct the definitions here.
+    mAbilityToCasterUnit[(int)ABILITY_ID::BUILD_TECHLAB] = { UNIT_TYPEID::INVALID };
+    mAbilityToCasterUnit[(int)ABILITY_ID::BUILD_TECHLAB_BARRACKS] = { UNIT_TYPEID::TERRAN_BARRACKS };
+    mAbilityToCasterUnit[(int)ABILITY_ID::BUILD_TECHLAB_FACTORY] = { UNIT_TYPEID::TERRAN_FACTORY };
+    mAbilityToCasterUnit[(int)ABILITY_ID::BUILD_TECHLAB_STARPORT] = { UNIT_TYPEID::TERRAN_STARPORT };
+    mAbilityToCasterUnit[(int)ABILITY_ID::BUILD_REACTOR] = { UNIT_TYPEID::INVALID };
+    mAbilityToCasterUnit[(int)ABILITY_ID::BUILD_REACTOR_BARRACKS] = { UNIT_TYPEID::TERRAN_BARRACKS };
+    mAbilityToCasterUnit[(int)ABILITY_ID::BUILD_REACTOR_FACTORY] = { UNIT_TYPEID::TERRAN_FACTORY };
+    mAbilityToCasterUnit[(int)ABILITY_ID::BUILD_REACTOR_STARPORT] = { UNIT_TYPEID::TERRAN_STARPORT };
 
     mCanBecome = vector<vector<UNIT_TYPEID>>(unitTypes.size());
     mHasBeen = vector<vector<UNIT_TYPEID>>(unitTypes.size());
@@ -88,7 +120,7 @@ void initMappings(const ObservationInterface* observation) {
             while (true) {
                 auto createdByAlternatives = abilityToCasterUnit(currentTypeData.ability_id);
                 if (createdByAlternatives.size() == 0 || createdByAlternatives[0] == UNIT_TYPEID::INVALID) {
-                    cout << "Cannot determine how " << currentTypeData.name << " was created (ability: " << AbilityTypeToName(currentTypeData.ability_id) << endl;
+                    // cout << "Cannot determine how " << currentTypeData.name << " was created (ability: " << AbilityTypeToName(currentTypeData.ability_id) << endl;
                     break;
                 }
                 UNIT_TYPEID createdBy = createdByAlternatives[0];
@@ -96,7 +128,7 @@ void initMappings(const ObservationInterface* observation) {
                 currentTypeData = unitTypes[(int)createdBy];
                 if (isStructure(currentTypeData) || createdBy == UNIT_TYPEID::ZERG_DRONE) {
                     if (contains(mHasBeen[i], createdBy)) {
-                        cout << "Loop in dependency tree for " << currentTypeData.name << endl;
+                        // cout << "Loop in dependency tree for " << currentTypeData.name << endl;
                         break;
                     }
                     mHasBeen[i].push_back(createdBy);
@@ -140,8 +172,6 @@ void initMappings(const ObservationInterface* observation) {
         }
     }
 
-    cout << "D" << endl;
-
     for (int i = 0; i < unitTypes.size(); i++) {
         if (mCanBecome[i].size() == 0)
             continue;
@@ -150,42 +180,29 @@ void initMappings(const ObservationInterface* observation) {
         sort(mCanBecome[i].begin(), mCanBecome[i].end(), [&](UNIT_TYPEID a, UNIT_TYPEID b) {
             return unitTypes[(int)a].mineral_cost + unitTypes[(int)a].vespene_cost < unitTypes[(int)b].mineral_cost + unitTypes[(int)b].vespene_cost;
         });
-        for (auto p : mCanBecome[i])
-            cout << UnitTypeToName(p) << " (" << unitTypes[(int)p].mineral_cost << ", " << unitTypes[(int)p].vespene_cost << "), ";
-        cout << endl;
+        // for (auto p : mCanBecome[i])
+        // cout << UnitTypeToName(p) << " (" << unitTypes[(int)p].mineral_cost << ", " << unitTypes[(int)p].vespene_cost << "), ";
+        // cout << endl;
     }
+}
 
-    cout << "E" << endl;
+void initMappings(const ObservationInterface* observation) {
+    mUnitTypes = observation->GetUnitTypeData();
+    mAbilities = observation->GetAbilityData();
+    init();
+}
+
+void initMappings() {
+    mUnitTypes = load_unit_data();
+    mAbilities = load_ability_data();
+    init();
 }
 
 /** Maps an ability to the unit that primarily uses it.
  * In particular this is defined for BUILD_* and TRAIN_* abilities.
  */
-std::vector<UNIT_TYPEID> abilityToCasterUnit(ABILITY_ID ability) {
-    switch (ability) {
-        case ABILITY_ID::BUILD_TECHLAB:
-            return { UNIT_TYPEID::INVALID };
-        case ABILITY_ID::BUILD_TECHLAB_BARRACKS:
-            return { UNIT_TYPEID::TERRAN_BARRACKS };
-        case ABILITY_ID::BUILD_TECHLAB_FACTORY:
-            return { UNIT_TYPEID::TERRAN_FACTORY };
-        case ABILITY_ID::BUILD_TECHLAB_STARPORT:
-            return { UNIT_TYPEID::TERRAN_STARPORT };
-        case ABILITY_ID::BUILD_REACTOR:
-            return { UNIT_TYPEID::INVALID };
-        case ABILITY_ID::BUILD_REACTOR_BARRACKS:
-            return { UNIT_TYPEID::TERRAN_BARRACKS };
-        case ABILITY_ID::BUILD_REACTOR_FACTORY:
-            return { UNIT_TYPEID::TERRAN_FACTORY };
-        case ABILITY_ID::BUILD_REACTOR_STARPORT:
-            return { UNIT_TYPEID::TERRAN_STARPORT };
-        default:
-            break;
-    }
-
-    if ((int)ability >= mAbilityToCasterUnit.size()) {
-        return { UNIT_TYPEID::INVALID };
-    }
+const std::vector<UNIT_TYPEID>& abilityToCasterUnit(ABILITY_ID ability) {
+    assert((int)ability < mAbilityToCasterUnit.size());
     return mAbilityToCasterUnit[(int)ability];
     /*
     switch (ability) {
@@ -599,16 +616,10 @@ UNIT_TYPEID simplifyUnitType(UNIT_TYPEID type) {
         case UNIT_TYPEID::TERRAN_SUPPLYDEPOTLOWERED:
             return UNIT_TYPEID::TERRAN_SUPPLYDEPOT;
         case UNIT_TYPEID::TERRAN_BARRACKSFLYING:
-        case UNIT_TYPEID::TERRAN_BARRACKSREACTOR:
-        case UNIT_TYPEID::TERRAN_BARRACKSTECHLAB:
             return UNIT_TYPEID::TERRAN_BARRACKS;
         case UNIT_TYPEID::TERRAN_FACTORYFLYING:
-        case UNIT_TYPEID::TERRAN_FACTORYREACTOR:
-        case UNIT_TYPEID::TERRAN_FACTORYTECHLAB:
             return UNIT_TYPEID::TERRAN_FACTORY;
         case UNIT_TYPEID::TERRAN_STARPORTFLYING:
-        case UNIT_TYPEID::TERRAN_STARPORTREACTOR:
-        case UNIT_TYPEID::TERRAN_STARPORTTECHLAB:
             return UNIT_TYPEID::TERRAN_STARPORT;
         case UNIT_TYPEID::TERRAN_COMMANDCENTER:
         case UNIT_TYPEID::TERRAN_COMMANDCENTERFLYING:
@@ -618,6 +629,14 @@ UNIT_TYPEID simplifyUnitType(UNIT_TYPEID type) {
             return UNIT_TYPEID::TERRAN_COMMANDCENTER;
         case UNIT_TYPEID::TERRAN_LIBERATORAG:
             return UNIT_TYPEID::TERRAN_LIBERATOR;
+        case UNIT_TYPEID::TERRAN_BARRACKSREACTOR:
+        case UNIT_TYPEID::TERRAN_FACTORYREACTOR:
+        case UNIT_TYPEID::TERRAN_STARPORTREACTOR:
+            return UNIT_TYPEID::TERRAN_REACTOR;
+        case UNIT_TYPEID::TERRAN_BARRACKSTECHLAB:
+        case UNIT_TYPEID::TERRAN_FACTORYTECHLAB:
+        case UNIT_TYPEID::TERRAN_STARPORTTECHLAB:
+            return UNIT_TYPEID::TERRAN_TECHLAB;
         default:
             return type;
     }

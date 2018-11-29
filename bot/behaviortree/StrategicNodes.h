@@ -2,7 +2,7 @@
 #include "BehaviorTree.h"
 #include "sc2api/sc2_api.h"
 #include <functional>
-#include "../Mappings.h"
+#include "../utilities/mappings.h"
 #include "../bot.h"
 
 class Build : public BOT::ActionNode {

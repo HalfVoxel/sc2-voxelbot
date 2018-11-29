@@ -23,6 +23,13 @@ bool contains(const std::vector<T>& arr, const T& item) {
 	return find(arr.begin(), arr.end(), item) != arr.end();
 }
 
+template<class T>
+int indexOf(const std::vector<T>& arr, const T& item) {
+	auto c = find(arr.begin(), arr.end(), item);
+	assert(c != arr.end());
+	return (int)(c - arr.begin());
+}
+
 template <class T, class V>
 void sortByValueAscending (std::vector<T>& arr, std::function<V(const T&)> value) {
 	std::sort(arr.begin(), arr.end(), [&](const T& a, const T& b) -> bool {

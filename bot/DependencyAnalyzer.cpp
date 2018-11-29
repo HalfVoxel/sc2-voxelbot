@@ -1,8 +1,8 @@
 #include "DependencyAnalyzer.h"
 #include <map>
 #include <stack>
-#include "Mappings.h"
-#include "Predicates.h"
+#include "utilities/mappings.h"
+#include "utilities/predicates.h"
 #include "bot.h"
 
 using namespace std;
@@ -51,10 +51,8 @@ map<Race, UNIT_TYPEID> supplyUnit = {
 
 Race RaceNeutral = (Race)3;
 
-void DependencyAnalyzer::analyze(const ObservationInterface* obs) {
-    auto unitTypes = obs->GetUnitTypeData();
-    auto upgrades = obs->GetUpgradeData();
-    auto buffs = obs->GetBuffData();
+void DependencyAnalyzer::analyze() {
+    auto unitTypes = getUnitTypes();
 
     map<UnitTypeID, set<UnitTypeID>> requirements;
     for (UnitTypeData& unitType : unitTypes) {

@@ -1,6 +1,6 @@
 #include "TacticalNodes.h"
-#include "../Pathfinding.h"
-#include "../Predicates.h"
+#include "../utilities/pathfinding.h"
+#include "../utilities/predicates.h"
 #include "StrategicNodes.h"
 #include "../bot.h"
 

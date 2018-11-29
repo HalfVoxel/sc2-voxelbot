@@ -2,8 +2,8 @@
 #include <ctime>
 #include <iostream>
 #include <map>
-#include "../Mappings.h"
-#include "../Predicates.h"
+#include "../utilities/mappings.h"
+#include "../utilities/predicates.h"
 #include "../bot.h"
 
 using namespace std;

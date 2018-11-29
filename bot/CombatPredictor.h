@@ -13,7 +13,7 @@ struct CombatUnit {
 	void modifyHealth(float delta);
 
 	CombatUnit() {}
-	CombatUnit (int owner, sc2::UNIT_TYPEID type, int health, bool flying) : type(type), owner(owner), health(health), health_max(health), shield(0), shield_max(0), energy(50), is_flying(flying) {}
+	CombatUnit (int owner, sc2::UNIT_TYPEID type, int health, bool flying) : owner(owner), type(type), health(health), health_max(health), shield(0), shield_max(0), energy(50), is_flying(flying) {}
 };
 
 struct CombatState {

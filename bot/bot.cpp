@@ -9,9 +9,9 @@
 #include <map>
 #include <random>
 #include "behaviortree/MicroNodes.h"
-#include "Pathfinding.h"
-#include "Predicates.h"
-#include "Renderer.h"
+#include "utilities/pathfinding.h"
+#include "utilities/predicates.h"
+#include "utilities/renderer.h"
 #include "SDL.h"
 #include "ScoutingManager.h"
 #include "behaviortree/TacticalNodes.h"

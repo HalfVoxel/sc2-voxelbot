@@ -1,7 +1,7 @@
-#include "Influence.h"
-#include "Pathfinding.h"
-#include "Predicates.h"
-#include "Renderer.h"
+#include "utilities/influence.h"
+#include "utilities/pathfinding.h"
+#include "utilities/predicates.h"
+#include "utilities/renderer.h"
 #include "bot.h"
 
 using namespace std;

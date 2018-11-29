@@ -1,4 +1,4 @@
-#include "Predicates.h"
+#include "predicates.h"
 
 using namespace sc2;
 

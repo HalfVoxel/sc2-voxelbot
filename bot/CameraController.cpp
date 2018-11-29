@@ -2,8 +2,8 @@
 #include <iostream>
 #include <tuple>
 #include <vector>
-#include "Mappings.h"
-#include "Predicates.h"
+#include "utilities/mappings.h"
+#include "utilities/predicates.h"
 #include "bot.h"
 #include "sc2api/sc2_api.h"
 

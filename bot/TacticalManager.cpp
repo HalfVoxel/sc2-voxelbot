@@ -1,5 +1,5 @@
 #include "TacticalManager.h"
-#include "Predicates.h"
+#include "utilities/predicates.h"
 #include "bot.h"
 
 using namespace std;

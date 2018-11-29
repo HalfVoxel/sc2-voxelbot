@@ -1,5 +1,5 @@
 #pragma once
-#include "Influence.h"
+#include "influence.h"
 #include "sc2api/sc2_api.h"
 #include <vector>
 

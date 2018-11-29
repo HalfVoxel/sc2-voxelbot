@@ -1,4 +1,4 @@
-#include "Pathfinding.h"
+#include "pathfinding.h"
 #include <cmath>
 #include <iostream>
 #include <queue>

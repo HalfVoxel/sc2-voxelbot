@@ -1,10 +1,10 @@
 #include "DeductionManager.h"
 #include <sstream>
 #include "DependencyAnalyzer.h"
-#include "Mappings.h"
-#include "Predicates.h"
+#include "utilities/mappings.h"
+#include "utilities/predicates.h"
 #include "bot.h"
-#include "stdutils.h"
+#include "utilities/stdutils.h"
 
 using namespace std;
 using namespace sc2;

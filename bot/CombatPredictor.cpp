@@ -4,9 +4,9 @@
 #include <functional>
 #include <random>
 #include "Bot.h"
-#include "Mappings.h"
-#include "profiler.h"
-#include "stdutils.h"
+#include "utilities/mappings.h"
+#include "utilities/profiler.h"
+#include "utilities/stdutils.h"
 
 using namespace std;
 using namespace sc2;
@@ -65,7 +65,7 @@ struct WeaponInfo {
     }
 
     WeaponInfo()
-        : available(false), splash(0), weapon(nullptr), baseDPS(0) {
+        : baseDPS(0), available(false), splash(0), weapon(nullptr) {
     }
 
     WeaponInfo(const Weapon& weapon) {
@@ -801,7 +801,7 @@ void findBestComposition(const CombatPredictor& predictor, const CombatState& op
 
     for (int i = 0; i < 1000; i++) {
         CombatState newState = state;
-        int action = rand() % 3;
+        // int action = rand() % 3;
         int ourUnitCount = newState.units.size() - ourUnitsStartIndex;
         int toRemove = ourUnitCount > 0 ? min(ourUnitCount, rand() % ourUnitCount) : 0;
         int toAdd = rand() % max(5, ourUnitCount);
@@ -860,7 +860,7 @@ void findBestComposition(const CombatPredictor& predictor, const CombatState& op
 				newState.units.push_back(CombatUnit(2, unitType, maxHealth(unitType), isFlying(unitType)));
 			}
 
-			/*CombatState newState2 = newState;
+			/CombatState newState2 = newState;
 			for (int i = 0; i < 20; i++) {
 				auto unitType = availableUnitTypes[rand() % availableUnitTypes.size()];
 				newState2.units.push_back(CombatUnit(2, unitType, maxHealth(unitType), isFlying(unitType)));
@@ -1339,6 +1339,8 @@ void CombatPredictor::unitTest() const {
     // TODO: For ground units, add time offsets due to the army size because every unit cannot be at the frontlines
     // TODO: Long range units can take down static defenses without taking any damage (e.g. tempest vs missile turret)
     // TODO: Shield armor != armor
+    // TODO: Kiting approximation?
+
     for (int i = 0; i < 1; i++) {
         // Problematic
         // findBestCompositionGenetic(*this, availableUnitTypesProtoss, {{
@@ -1401,62 +1403,15 @@ void CombatPredictor::unitTest() const {
         // }});
 
 		findBestCompositionGenetic(*this, availableUnitTypesZerg, { {
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
-			makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
+			makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
+			makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
+			makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
 		} });
 	}
 

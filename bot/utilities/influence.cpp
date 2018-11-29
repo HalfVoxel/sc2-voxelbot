@@ -1,11 +1,11 @@
-#include "Influence.h"
+#include "influence.h"
 #include <cmath>
 #include <ctime>
 #include <iomanip>
 #include <iostream>
 #include <random>
 
-#include "Renderer.h"
+#include "renderer.h"
 
 using namespace std;
 using namespace sc2;
@@ -341,7 +341,7 @@ void InfluenceMap::propagateSum(double decay, double speed, const InfluenceMap& 
     double factor = 1 - decay;
     // cout << "Estimated decay at " << ((5*(1-decay) + 4*pow(1-decay,1.41))/9) << endl;
     // Diagonal decay
-    double factor2 = pow(factor, 1.41);
+    // double factor2 = pow(factor, 1.41);
 
     double gaussianFactor0 = 1;     //0.195346;
     double gaussianFactor1 = 1;     //0.123317;

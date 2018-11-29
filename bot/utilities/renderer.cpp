@@ -1,4 +1,4 @@
-#include "Renderer.h"
+#include "renderer.h"
 
 #include <algorithm>
 #include <cassert>

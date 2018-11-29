@@ -1,7 +1,7 @@
 #include "StrategicNodes.h"
 #include <iostream>
-#include "../Mappings.h"
-#include "../Predicates.h"
+#include "../utilities/mappings.h"
+#include "../utilities/predicates.h"
 #include "../bot.h"
 
 using namespace BOT;

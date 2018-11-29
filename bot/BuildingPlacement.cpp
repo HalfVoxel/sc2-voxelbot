@@ -1,6 +1,6 @@
 #include "BuildingPlacement.h"
 #include <vector>
-#include "Predicates.h"
+#include "utilities/predicates.h"
 
 using namespace std;
 using namespace sc2;

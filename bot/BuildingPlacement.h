@@ -2,7 +2,7 @@
 #include "sc2api/sc2_agent.h"
 #include "sc2api/sc2_interfaces.h"
 #include "sc2api/sc2_map_info.h"
-#include "Influence.h"
+#include "utilities/influence.h"
 
 // Where it is safe to build buildings
 extern InfluenceMap safeBuildingMap;
