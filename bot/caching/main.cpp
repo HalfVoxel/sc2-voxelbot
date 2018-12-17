@@ -48,6 +48,70 @@ int hashFile(string path) {
     return hash;
 }
 
+void writeUnitTypeOverview (ofstream& result, const vector<UnitTypeData>& unit_types, const DependencyAnalyzer& deps) {
+    for (const UnitTypeData& type : unit_types) {
+        if (!type.available)
+            continue;
+        result << type.name << " " << UnitTypeToName(type.unit_type_id) << endl;
+        result << "\tID: " << (int)type.unit_type_id << endl;
+        result << "\tMinerals: " << type.mineral_cost << endl;
+        result << "\tVespene: " << type.vespene_cost << endl;
+        result << "\tSupply Required: " << type.food_required << endl;
+        result << "\tSupply Provided: " << type.food_provided << endl;
+        result << "\tBuild time: " << type.build_time << endl;
+        result << "\tArmor: " << type.armor << endl;
+        result << "\tMovement speed: " << type.movement_speed << endl;
+        for (auto t : type.tech_alias) {
+            result << "\tTech Alias: " << UnitTypeToName(t) << endl;
+        }
+        result << "\tUnit Alias: " << UnitTypeToName(type.unit_alias) << endl;
+        result << "\tTech Aliases: ";
+        for (auto t : type.tech_alias) result << UnitTypeToName(t) << " ";
+        result << endl;
+        result << "\tTech Requirement: " << UnitTypeToName(type.tech_requirement) << endl;
+
+        result << "\tAbility: " << AbilityTypeToName(type.ability_id) << endl;
+        result << "\tAttributes:";
+        for (auto a : type.attributes) {
+            result << " " << attributeNames[(int)a];
+        }
+        result << endl;
+        result << "\tWeapons:" << endl;
+        for (auto w : type.weapons) {
+            result << "\t\tDamage: " << w.damage_ << endl;
+            result << "\t\tTarget: " << weaponTypeNames[(int)w.type] << endl;
+            result << "\t\tBonuses: ";
+            for (auto b : w.damage_bonus) {
+                result << attributeNames[(int)b.attribute] << "=+" << b.bonus << " ";
+            }
+            result << endl;
+            result << "\t\tAttacks: " << w.attacks << endl;
+            result << "\t\tRange: " << w.range << endl;
+            result << "\t\tCooldown: " << w.speed << endl;
+            result << "\t\tDPS: " << (w.attacks * w.damage_ / w.speed) << endl;
+            result << endl;
+        }
+
+        result << "\tHas been: ";
+        for (auto u : hasBeen(type.unit_type_id)) {
+            result << UnitTypeToName(u) << ", ";
+        }
+        result << endl;
+        result << "\tCan become: ";
+        for (auto u : canBecome(type.unit_type_id)) {
+            result << UnitTypeToName(u) << ", ";
+        }
+        result << endl;
+        result << "\tDependencies: ";
+        for (auto u : deps.allUnitDependencies[(int)type.unit_type_id]) {
+            result << UnitTypeToName(u) << ", ";
+        }
+        result << endl;
+
+        result << endl;
+    }
+}
+
 // Model
 // Σ Pi + Σ PiSij
 class CachingBot : public sc2::Agent {
@@ -75,10 +139,8 @@ class CachingBot : public sc2::Agent {
         Debug()->DebugShowMap();
         Debug()->DebugIgnoreFood();
         Debug()->DebugIgnoreResourceCost();
-        Debug()->DebugGiveAllTech();
+        Debug()->SendDebug();
         initMappings(Observation());
-
-        const sc2::UnitTypes& unit_types = Observation()->GetUnitTypeData();
 
         Point2D mn = Observation()->GetGameInfo().playable_min;
         Point2D mx = Observation()->GetGameInfo().playable_max;
@@ -87,69 +149,21 @@ class CachingBot : public sc2::Agent {
         // TODO: Use Observation here
         deps.analyze();
 
+        const sc2::UnitTypes& unit_types = Observation()->GetUnitTypeData(true);
+
         // Note: this depends on output from this program, so it really has to be run twice to get the correct output.
         ofstream unit_lookup = ofstream("bot/generated/units.txt");
-        for (const UnitTypeData& type : unit_types) {
-            if (!type.available)
-                continue;
-            unit_lookup << type.name << " " << UnitTypeToName(type.unit_type_id) << endl;
-            unit_lookup << "\tID: " << (int)type.unit_type_id << endl;
-            unit_lookup << "\tMinerals: " << type.mineral_cost << endl;
-            unit_lookup << "\tVespene: " << type.vespene_cost << endl;
-            unit_lookup << "\tSupply Required: " << type.food_required << endl;
-            unit_lookup << "\tSupply Provided: " << type.food_provided << endl;
-            unit_lookup << "\tBuild time: " << type.build_time << endl;
-            unit_lookup << "\tArmor: " << type.armor << endl;
-            unit_lookup << "\tMovement speed: " << type.movement_speed << endl;
-            for (auto t : type.tech_alias) {
-                unit_lookup << "\tTech Alias: " << UnitTypeToName(t) << endl;
-            }
-            unit_lookup << "\tUnit Alias: " << UnitTypeToName(type.unit_alias) << endl;
-            unit_lookup << "\tTech Aliases: ";
-            for (auto t : type.tech_alias) unit_lookup << UnitTypeToName(t) << " ";
-            unit_lookup << endl;
-            unit_lookup << "\tTech Requirement: " << UnitTypeToName(type.tech_requirement) << endl;
+        writeUnitTypeOverview(unit_lookup, unit_types, deps);
+        unit_lookup.close();
 
-            unit_lookup << "\tAbility: " << AbilityTypeToName(type.ability_id) << endl;
-            unit_lookup << "\tAttributes:";
-            for (auto a : type.attributes) {
-                unit_lookup << " " << attributeNames[(int)a];
-            }
-            unit_lookup << endl;
-            unit_lookup << "\tWeapons:" << endl;
-            for (auto w : type.weapons) {
-                unit_lookup << "\t\tDamage: " << w.damage_ << endl;
-                unit_lookup << "\t\tTarget: " << weaponTypeNames[(int)w.type] << endl;
-                unit_lookup << "\t\tBonuses: ";
-                for (auto b : w.damage_bonus) {
-                    unit_lookup << attributeNames[(int)b.attribute] << "=+" << b.bonus << " ";
-                }
-                unit_lookup << endl;
-                unit_lookup << "\t\tAttacks: " << w.attacks << endl;
-                unit_lookup << "\t\tRange: " << w.range << endl;
-                unit_lookup << "\t\tCooldown: " << w.speed << endl;
-                unit_lookup << "\t\tDPS: " << (w.attacks * w.damage_ / w.speed) << endl;
-                unit_lookup << endl;
-            }
+        Debug()->DebugGiveAllTech();
+        Debug()->SendDebug();
+        const sc2::UnitTypes& unit_types3 = Observation()->GetUnitTypeData(true);
 
-            unit_lookup << "\tHas been: ";
-            for (auto u : hasBeen(type.unit_type_id)) {
-                unit_lookup << UnitTypeToName(u) << ", ";
-            }
-            unit_lookup << endl;
-            unit_lookup << "\tCan become: ";
-            for (auto u : canBecome(type.unit_type_id)) {
-                unit_lookup << UnitTypeToName(u) << ", ";
-            }
-            unit_lookup << endl;
-            unit_lookup << "\tDependencies: ";
-            for (auto u : deps.allUnitDependencies[(int)type.unit_type_id]) {
-                unit_lookup << UnitTypeToName(u) << ", ";
-            }
-            unit_lookup << endl;
-
-            unit_lookup << endl;
-        }
+        // Note: this depends on output from this program, so it really has to be run twice to get the correct output.
+        unit_lookup = ofstream("bot/generated/units_with_tech.txt");
+        writeUnitTypeOverview(unit_lookup, unit_types3, deps);
+        unit_lookup.close();
 
         int i = 0;
         for (const UnitTypeData& type : unit_types) {
@@ -177,6 +191,10 @@ class CachingBot : public sc2::Agent {
             cerr << "Error in unit type data serialization code" << endl;
             exit(1);
         }
+
+        ofstream unit_lookup2 = ofstream("bot/generated/units_verify.txt");
+        writeUnitTypeOverview(unit_lookup2, unit_types2, deps);
+        unit_lookup2.close();
 
         save_ability_data(Observation()->GetAbilityData());
     }
