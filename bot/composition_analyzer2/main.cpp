@@ -1,6 +1,8 @@
 #include <fstream>
 #include <iostream>
 #include <queue>
+#include <pybind11/embed.h>
+#include <pybind11/stl.h>
 #include "../Bot.h"
 #include "../CombatPredictor.h"
 #include "../CompositionAnalyzer.h"
@@ -30,8 +32,10 @@ class CompositionAnalyzer2 : public sc2::Agent {
     }
 
     void OnGameStart() override {
-        predictor.init(Observation());
-        predictor.unitTest();
+        BuildOptimizerNN buildTimePredictor;
+        initMappings();
+        predictor.init();
+        predictor.unitTest(buildTimePredictor);
         Debug()->DebugEnemyControl();
         Debug()->DebugShowMap();
         return;
@@ -120,6 +124,8 @@ class CompositionAnalyzer2 : public sc2::Agent {
 };
 
 int main(int argc, char* argv[]) {
+    pybind11::scoped_interpreter guard{};
+
     Coordinator coordinator;
     if (!coordinator.LoadSettings(argc, argv)) {
         return 1;
