@@ -73,6 +73,7 @@ class SelectorNode : public ControlFlowNode {
 
 class SequenceNode : public ControlFlowNode {
    public:
+    SequenceNode() : ControlFlowNode({}) {}
     SequenceNode(std::initializer_list<TreeNode*> ls) : ControlFlowNode(ls) {}
     BOT::Status OnTick() override;
 };
