@@ -8,6 +8,9 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(PYTHON_EXECUTABLE:FILEPATH "/Users/arong/anaconda3/bin/python")
 
+set(CMAKE_CONFIGURATION_TYPES, ${CMAKE_CONFIGURATION_TYPES} RelWithDebug)
+set(CMAKE_CXX_FLAGS_RELWITHDEBUG "-O2 -g")
+
 # Windows builds subdirectories Debug/Release.
 # These variables will overwrite that and put binaries in bin.
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${PROJECT_BINARY_DIR}/bin)
@@ -41,8 +44,12 @@ include_directories("cereal/include")
 add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 
 if(!MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=address -fsdfsdfe")
 endif()
+
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -D_GLIBCXX_DEBUG -fsanitize=address")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -O0 -fsanitize=address")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized")
 
 find_package(pybind11 REQUIRED)
 
@@ -93,5 +100,7 @@ create_executable(micro_train "" "bot/micro_train/micro_train.cpp" "SDL2-static"
 create_executable(composition_analyzer "" "bot/composition_analyzer/main.cpp" "SDL2-static")
 create_executable(composition_analyzer2 "" "bot/composition_analyzer2/main.cpp" "SDL2-static")
 create_executable(build_optimizer "" "bot/build_optimizer/main.cpp" "SDL2-static")
+create_executable(optimizer_train "" "bot/optimizer_Train/main.cpp" "SDL2-static")
+create_executable(combat_predictor_train "" "bot/combat_predictor_train/main.cpp" "SDL2-static")
 
 include_directories("s2client-api/contrib/SDL-mirror/include")
