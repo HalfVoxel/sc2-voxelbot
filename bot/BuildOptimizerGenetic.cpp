@@ -2,10 +2,8 @@
 #include <algorithm>
 #include <limits>
 #include <map>
-#include <queue>
 #include <random>
 #include <stack>
-#include <vector>
 #include "utilities/mappings.h"
 #include "utilities/predicates.h"
 #include "utilities/profiler.h"
