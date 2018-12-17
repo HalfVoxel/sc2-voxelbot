@@ -18,6 +18,14 @@ float maxShield(sc2::UNIT_TYPEID type);
 bool isFlying(sc2::UNIT_TYPEID type);
 float unitRadius(sc2::UNIT_TYPEID type);
 const std::vector<sc2::ABILITY_ID>& unitAbilities(sc2::UNIT_TYPEID type);
+sc2::UNIT_TYPEID getSpecificAddonType(sc2::UNIT_TYPEID caster, sc2::UNIT_TYPEID addon);
+
+/** Times in the SC2 API are often defined in ticks, instead of seconds.
+ * This method assumes the 'Faster' game speed.
+ */
+inline float ticksToSeconds(float ticks) {
+    return ticks / 22.4f;
+}
 
 inline bool isBasicHarvester(sc2::UNIT_TYPEID type) {
     switch (type) {

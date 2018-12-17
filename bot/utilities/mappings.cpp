@@ -23,8 +23,7 @@ vector<AbilityData> mAbilities;
 bool mappingInitialized = false;
 
 UNIT_TYPEID canonicalize(UNIT_TYPEID unitType) {
-    const auto& unitTypes = bot.Observation()->GetUnitTypeData();
-    const UnitTypeData& unitTypeData = unitTypes[(int)unitType];
+    const UnitTypeData& unitTypeData = getUnitData(unitType);
 
     // Use canonical representation (e.g SUPPLY_DEPOT instead of SUPPLY_DEPOT_LOWERED)
     if (unitTypeData.unit_alias != UNIT_TYPEID::INVALID) {
@@ -42,6 +41,21 @@ UNIT_TYPEID upgradedFrom(sc2::UNIT_TYPEID type) {
     //      hasBeen[lair][1] = hatchery
     if (h.size() > 1) return h[1];
     return UNIT_TYPEID::INVALID;
+}
+
+UNIT_TYPEID getSpecificAddonType(UNIT_TYPEID caster, UNIT_TYPEID addon) {
+    assert(addon == UNIT_TYPEID::TERRAN_REACTOR || addon == UNIT_TYPEID::TERRAN_TECHLAB);
+    switch (caster) {
+        case UNIT_TYPEID::TERRAN_BARRACKS:
+            return addon == UNIT_TYPEID::TERRAN_TECHLAB ? UNIT_TYPEID::TERRAN_BARRACKSTECHLAB : UNIT_TYPEID::TERRAN_BARRACKSREACTOR;
+        case UNIT_TYPEID::TERRAN_FACTORY:
+            return addon == UNIT_TYPEID::TERRAN_TECHLAB ? UNIT_TYPEID::TERRAN_FACTORYTECHLAB : UNIT_TYPEID::TERRAN_FACTORYREACTOR;
+        case UNIT_TYPEID::TERRAN_STARPORT:
+            return addon == UNIT_TYPEID::TERRAN_TECHLAB ? UNIT_TYPEID::TERRAN_STARPORTTECHLAB : UNIT_TYPEID::TERRAN_STARPORTREACTOR;
+        default:
+            assert(false);
+            return UNIT_TYPEID::INVALID;
+    }
 }
 
 const vector<UNIT_TYPEID>& hasBeen(sc2::UNIT_TYPEID type) {
@@ -184,6 +198,35 @@ void init() {
         // cout << UnitTypeToName(p) << " (" << unitTypes[(int)p].mineral_cost << ", " << unitTypes[(int)p].vespene_cost << "), ";
         // cout << endl;
     }
+
+    Weapon bc1;
+    bc1.type = Weapon::TargetType::Ground;
+    bc1.damage_ = 8;
+    bc1.damage_bonus = {};
+    bc1.attacks = 1;
+    bc1.range = 6;
+    bc1.speed = 0.16 * 1.4; // Note: this is in normal game speed
+
+    Weapon bc2;
+    bc2.type = Weapon::TargetType::Air;
+    bc2.damage_ = 5;
+    bc2.damage_bonus = {};
+    bc2.attacks = 1;
+    bc2.range = 6;
+    bc2.speed = 0.16 * 1.4; // Note: this is in normal game speed
+
+    Weapon carrier1;
+    carrier1.type = Weapon::TargetType::Any;
+    carrier1.damage_ = 5;
+    carrier1.damage_bonus = {};
+    carrier1.attacks = 8 * 2; // 8 interceptors with 2 attacks each
+    carrier1.range = 9; // Start range is 8, but after the interceptors are launched the carrier can move up to 14 units away
+    carrier1.speed = 2.14 * 1.4; // Note: this is in normal game speed
+
+    // Battlecruiser's attacks don't seem to be included...
+    mUnitTypes[(int)UNIT_TYPEID::TERRAN_BATTLECRUISER].weapons = { bc1, bc2 };
+
+    mUnitTypes[(int)UNIT_TYPEID::PROTOSS_CARRIER].weapons = { carrier1 };
 }
 
 void initMappings(const ObservationInterface* observation) {
