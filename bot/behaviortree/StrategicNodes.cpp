@@ -33,6 +33,8 @@ Status Build::OnTick() {
 
     Units units = observation->GetUnits(Unit::Alliance::Self, IsStructure(observation));
 
+    bool unitIsAddon = isAddon(unitType);
+
     for (auto unit : units) {
         if (std::find(builderUnitType.begin(), builderUnitType.end(), unit->unit_type) == builderUnitType.end()) {
             continue;
@@ -40,6 +42,9 @@ Status Build::OnTick() {
 
         bool hasReactor = false;
         if (observation->GetUnit(unit->add_on_tag) != nullptr) {
+            // Cannot build multiple addons on a building
+            if (unitIsAddon) continue;
+
             UNIT_TYPEID addonType = observation->GetUnit(unit->add_on_tag)->unit_type.ToType();
             hasReactor = (addonType == UNIT_TYPEID::TERRAN_BARRACKSREACTOR ||
                           addonType == UNIT_TYPEID::TERRAN_STARPORTREACTOR ||
