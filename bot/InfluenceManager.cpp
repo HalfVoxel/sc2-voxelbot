@@ -109,7 +109,7 @@ void InfluenceManager::OnStep() {
             // Find the best spot to defend
             // TODO: Send different squads to different positions
             auto best = defensivePotential.argmax();
-            bot.tacticalManager->preferredArmyPosition = Point2D(best.x, best.y);
+            if (bot.tacticalManager != nullptr) bot.tacticalManager->preferredArmyPosition = Point2D(best.x, best.y);
 
             // Make it good to build buildings as far away from the enemy as possible
             // preferably behind other buildings and defences.
