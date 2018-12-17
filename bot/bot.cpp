@@ -3,11 +3,16 @@
 #include "sc2lib/sc2_lib.h"
 // #include "sc2renderer/sc2_renderer.h"
 #include <chrono>
+#include <future>
+#include <thread>
 #include <cmath>
 #include <iostream>
+#include <pybind11/embed.h>
+#include <pybind11/stl.h>
 #include <limits>
 #include <map>
 #include <random>
+#include "utilities/profiler.h"
 #include "behaviortree/MicroNodes.h"
 #include "utilities/pathfinding.h"
 #include "utilities/predicates.h"
@@ -16,7 +21,6 @@
 #include "ScoutingManager.h"
 #include "behaviortree/TacticalNodes.h"
 #include "buildingPlacement.h"
-
 #include <cereal/archives/json.hpp>
 #include <cereal/types/string.hpp>
 #include <fstream>
@@ -57,6 +61,7 @@ void Bot::OnGameStart() {
     // Debug()->DebugGiveAllTech();
     // Debug()->DebugGiveAllUpgrades();
 
+    buildTimePredictor.init();
     initMappings(Observation());
     deductionManager = DeductionManager();
 
@@ -68,103 +73,31 @@ void Bot::OnGameStart() {
     deductionManager.OnGameStart();
     ourDeductionManager.OnGameStart();
     buildingPlacement.OnGameStart();
-    tree = unique_ptr<TreeNode>(new ParallelNode{
-        new SequenceNode{
-            new ShouldExpand(UNIT_TYPEID::TERRAN_REFINERY),
-            new Expand(UNIT_TYPEID::TERRAN_COMMANDCENTER, [](auto) { return 5; })
-        },
-        new SelectorNode{
-            new HasUnit(UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 2),
-            new Build(UNIT_TYPEID::TERRAN_ORBITALCOMMAND, [](auto) { return 11; }),
-        },
-        new SelectorNode{
-            new HasUnit(UNIT_TYPEID::TERRAN_SCV, bot.max_worker_count_),
-            new Build(UNIT_TYPEID::TERRAN_SCV, SCVScore),
-        },
-        new SelectorNode{
-            new Not(new ShouldBuildSupply()),
-            new Construct(UNIT_TYPEID::TERRAN_SUPPLYDEPOT, [](auto) { return 9; })
-        },
-        new SequenceNode{
-            new SelectorNode{
-                new HasUnit(UNIT_TYPEID::TERRAN_BARRACKS),
-                new Construct(UNIT_TYPEID::TERRAN_BARRACKS, [](auto) { return 2; })
-            },
-            new SelectorNode{
-                new HasUnit(UNIT_TYPEID::TERRAN_REFINERY, 1),
-                new Not(new HasUnit(UNIT_TYPEID::TERRAN_BARRACKS, 1)),
-                new BuildGas(UNIT_TYPEID::TERRAN_REFINERY, [](auto) { return 2; }),
-            },
-            new HasUnit(UNIT_TYPEID::TERRAN_COMMANDCENTER, 2),
-            new ParallelNode{
-                    new SelectorNode{
-                            new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB, 1),
-                            new Addon(ABILITY_ID::BUILD_TECHLAB_BARRACKS, bot.barrack_types, [](auto) { return 6; })
-                    },
-                    new SelectorNode{
-                            new HasUnit(UNIT_TYPEID::TERRAN_FACTORY),
-                            new Construct(UNIT_TYPEID::TERRAN_FACTORY, [](auto) { return 2; })
-                    },
-                    new SelectorNode{
-                            new HasUnit(UNIT_TYPEID::TERRAN_STARPORT, 1),
-                            new Construct(UNIT_TYPEID::TERRAN_STARPORT, [](auto) { return 2; })
-                    }
-            },
-            new SelectorNode{
-                new HasUnit(UNIT_TYPEID::TERRAN_REFINERY, 2),
-                new BuildGas(UNIT_TYPEID::TERRAN_REFINERY, [](auto) { return 2; })
-            },
-            new SelectorNode{
-                new HasUnit(UNIT_TYPEID::TERRAN_BARRACKS, 5),
-                new Construct(UNIT_TYPEID::TERRAN_BARRACKS, [](auto) { return 0.5; }),
-            },
-            new ParallelNode{
-                    new SelectorNode{
-                            new HasUnit(UNIT_TYPEID::TERRAN_FACTORYTECHLAB, 1),
-                            new Addon(ABILITY_ID::BUILD_TECHLAB_FACTORY, bot.factory_types, [](auto) { return 2; })
-                    },
-                    new SelectorNode{
-                            new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSREACTOR, 4),
-                            new Addon(ABILITY_ID::BUILD_REACTOR_BARRACKS, bot.barrack_types, [](auto) { return 2; })
-                    },
-                    new SelectorNode{
-                            new HasUnit(UNIT_TYPEID::TERRAN_STARPORTREACTOR, 1),
-                            new Addon(ABILITY_ID::BUILD_REACTOR_STARPORT, bot.starport_types, [](auto) { return 2; })
-                    },
-            },
-        },
-        new AssignHarvesters(UNIT_TYPEID::TERRAN_SCV, ABILITY_ID::HARVEST_GATHER,
-                             UNIT_TYPEID::TERRAN_REFINERY),
-        new ParallelNode{
-            new Build(UNIT_TYPEID::TERRAN_MARAUDER, DefaultScore),
-            new Build(UNIT_TYPEID::TERRAN_MEDIVAC, DefaultScore),
-            new Build(UNIT_TYPEID::TERRAN_SIEGETANK, DefaultScore),
-            new Build(UNIT_TYPEID::TERRAN_MARINE, DefaultScore),
-            new Build(UNIT_TYPEID::TERRAN_CYCLONE, DefaultScore),
-            new Build(UNIT_TYPEID::TERRAN_LIBERATOR, DefaultScore),
-            new Build(UNIT_TYPEID::TERRAN_VIKINGFIGHTER, DefaultScore),
-            new Build(UNIT_TYPEID::TERRAN_BANSHEE, DefaultScore),
-        }
-    });
-   
-    armyTree = unique_ptr<ControlFlowNode>(new ParallelNode{
-        new ControlSupplyDepots()
-    });
 
-    researchTree = shared_ptr<ControlFlowNode>(new ParallelNode{
-        new SequenceNode{new HasUnit(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB),
-                         new Research(UPGRADE_ID::STIMPACK, [](auto) { return 9; })
-        }
-    });
-
-    tacticalManager = new TacticalManager(armyTree ,buildingPlacement.wallPlacement);
     scoutingManager = new ScoutingManager();
 
     influenceManager.Init();
+
+    combatPredictor.init();
+
+    armyTree = shared_ptr<ControlFlowNode>(new ParallelNode{
+        new ControlSupplyDepots(),
+        new AssignHarvesters(UNIT_TYPEID::TERRAN_SCV, ABILITY_ID::HARVEST_GATHER, UNIT_TYPEID::TERRAN_REFINERY),
+    });
+    tacticalManager = new TacticalManager(armyTree, buildingPlacement.wallPlacement);
 }
 // clang-format on
 
 time_t t0;
+
+void DebugBuildOrder(vector<UNIT_TYPEID> buildOrder, float buildOrderTime) {
+    stringstream ss;
+    ss << "Time: " << (int)round(buildOrderTime) << endl;
+    for (auto b : buildOrder) {
+        ss << getUnitData(b).name << endl;
+    }
+    bot.Debug()->DebugTextOut(ss.str(), Point2D(0.05, 0.05), Colors::Purple);
+}
 
 void DebugUnitPositions() {
     Units units = bot.Observation()->GetUnits(Unit::Alliance::Self);
@@ -182,6 +115,12 @@ int ticks = 0;
 bool test = false;
 set<BuffID> seenBuffs;
 uint32_t lastEffectID;
+std::future<tuple<vector<UNIT_TYPEID>, BuildState, float, vector<pair<UNIT_TYPEID,int>>>> currentBuildOrderFuture;
+vector<UNIT_TYPEID> currentBuildOrder;
+vector<pair<UNIT_TYPEID,int>> lastCounter;
+float currentBuildOrderTime;
+BuildState lastStartingState;
+float enemyScaling = 1;
 
 void Bot::OnStep() {
     auto ourUnits = agent.Observation()->GetUnits(Unit::Alliance::Self);
@@ -231,20 +170,255 @@ void Bot::OnStep() {
     if ((ticks % 100) == 0) {
         //cout << "FPS: " << (int)(ticks/(double)(time(0) - t0)) << endl;
     }
-    tree->Tick();
+
+    if ((ticks % 200) == 1) {
+        if (currentBuildOrderFuture.valid()) {
+            currentBuildOrderFuture.wait();
+            float buildOrderTime;
+            tie(currentBuildOrder, lastStartingState, buildOrderTime, lastCounter) = currentBuildOrderFuture.get();
+            currentBuildOrderTime = buildOrderTime;
+
+            if (buildOrderTime < 120) {
+                enemyScaling = min(10.0f, enemyScaling * 1.2f);
+            } else if (buildOrderTime > 400) {
+                enemyScaling = max(1.0f, enemyScaling * 0.9f);
+            }
+
+            if (currentBuildOrder.size() < 5) {
+                enemyScaling = min(10.0f, enemyScaling * 1.2f);
+            } else if (currentBuildOrder.size() > 20) {
+                enemyScaling = max(1.0f, enemyScaling * 0.9f);
+            }
+            cout << "Enemy scaling " << enemyScaling << endl;
+        }
+
+        CombatState startingState;
+        for (auto u : deductionManager.ApproximateArmy(1.5f)) {
+            cout << "Expected enemy unit: " << UnitTypeToName(u.first) << " " << u.second << endl;
+            for (int i = 0; i < u.second; i++) startingState.units.push_back(makeUnit(1, u.first));
+        }
+
+        /*auto knownEnemyUnits = deductionManager.GetKnownUnits();
+        for (auto u : knownEnemyUnits) {
+            for (int i = 0; i < u.second; i++) {
+                startingState.units.push_back(makeUnit(1, u.first));
+            }
+        }
+        
+        for (int i = 0; i < 10; i++) {
+            startingState.units.push_back(makeUnit(1, UNIT_TYPEID::ZERG_ROACH));
+        }
+        for (int i = 0; i < 10; i++) {
+            startingState.units.push_back(makeUnit(1, UNIT_TYPEID::ZERG_ZERGLING));
+        }
+        for (int i = 0; i < 3; i++) {
+            startingState.units.push_back(makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK));
+        }*/
+
+        auto isArmyP = IsArmy(Observation());
+        for (int i = 0; i < ourUnits.size(); i++) {
+            if (isArmyP(*ourUnits[i])) {
+                startingState.units.push_back(makeUnit(2, ourUnits[i]->unit_type));
+            }
+        }
+        
+        BuildState buildOrderStartingState;
+        buildOrderStartingState.race = Race::Terran;
+        map<UNIT_TYPEID, int> startingUnitsCount;
+        map<UNIT_TYPEID, int> targetUnitsCount;
+        for (int i = 0; i < ourUnits.size(); i++) {
+            auto unitType = ourUnits[i]->unit_type;
+
+            // Addons are handled when the unit they are attached to are handled
+            if (isAddon(unitType)) continue;
+
+            if (ourUnits[i]->build_progress < 1) {
+                // Ignore
+            } else {
+                if (ourUnits[i]->add_on_tag != NullTag) {
+                    auto* addon = Observation()->GetUnit(ourUnits[i]->add_on_tag);
+                    assert(getUnitData(addon->unit_type).tech_alias.size() == 1);
+                    auto addonType = getUnitData(addon->unit_type).tech_alias[0];
+                    assert(addonType != UNIT_TYPEID::INVALID);
+                    buildOrderStartingState.addUnits(canonicalize(unitType), addonType, 1);
+                    targetUnitsCount[canonicalize(unitType)]++;
+                    cout << "Added addon " << UnitTypeToName(canonicalize(unitType)) << "+" << UnitTypeToName(addonType) << endl;
+                } else {
+                    buildOrderStartingState.addUnits(canonicalize(unitType), 1);
+                    targetUnitsCount[canonicalize(unitType)]++;
+                }
+            }
+
+            for (auto order : ourUnits[i]->orders) {
+                auto createdUnit = abilityToUnit(order.ability_id);
+                if (createdUnit != UNIT_TYPEID::INVALID) {
+                    if (canonicalize(createdUnit) == canonicalize(unitType)) {
+                        // This is just a morph ability (e.g. lower a supply depot)
+                        break;
+                    }
+
+                    float buildProgress = 0;
+                    if (order.target_unit_tag != NullTag) {
+                        auto* targetUnit = Observation()->GetUnit(order.target_unit_tag);
+                        if (targetUnit == nullptr) {
+                            cerr << "Target for order does not seem to exist!??" << endl;
+                            break;
+                        }
+
+                        assert(targetUnit != nullptr);
+
+                        // In some cases the target unit can be something else, for example when constructing a refinery the target unit is the vespene geyser for a while
+                        if (targetUnit->owner == ourUnits[i]->owner) {
+                            buildProgress = targetUnit->build_progress;
+                            assert(targetUnit->build_progress >= 0 && targetUnit->build_progress < 1);
+                        }
+                    }
+                    float buildTime = ticksToSeconds(getUnitData(createdUnit).build_time);
+                    // TODO: Is this linear?
+                    float remainingTime = (1 - buildProgress) * buildTime;
+                    auto event = BuildEvent(BuildEventType::FinishedUnit, buildOrderStartingState.time + remainingTime, canonicalize(unitType), order.ability_id);
+                    if (ourUnits[i]->add_on_tag != NullTag) {
+                        auto* addon = Observation()->GetUnit(ourUnits[i]->add_on_tag);
+                        assert(addon != nullptr);
+                        // Normalize from e.g. TERRAN_BARRACKSTECHLAB to TERRAN_TECHLAB
+                        event.casterAddon = simplifyUnitType(addon->unit_type);
+                    }
+
+                    // Make the caster busy first
+                    buildOrderStartingState.makeUnitsBusy(event.caster, event.casterAddon, 1);
+                    buildOrderStartingState.addEvent(event);
+                    // if (isAddon(createdUnit)) continue;
+
+                    // createdUnit = canonicalize(createdUnit);
+                    // buildOrderStartingState.addUnits(createdUnit, 1);
+
+                    if (!isAddon(createdUnit)) {
+                        targetUnitsCount[createdUnit]++;
+                    }
+                }
+
+                // Only process the first order (this bot should never have more than one anyway)
+                break;
+            }
+        }
+
+        buildOrderStartingState.resources.minerals = Observation()->GetMinerals();
+        buildOrderStartingState.resources.vespene = Observation()->GetVespene();
+
+        currentBuildOrderFuture = std::async(std::launch::async, [=]{
+            // Make sure most buildings are built even though they are currently under construction.
+            // The buildTimePredictor cannot take buildings under construction into account.
+            auto futureState = buildOrderStartingState;
+            futureState.simulate(futureState.time + 40);
+            futureState.resources = buildOrderStartingState.resources;
+
+            Stopwatch watch;
+            map<UNIT_TYPEID, int> targetUnitsCount2;
+            for (auto u : targetUnitsCount) {
+                if (isArmy(u.first)) targetUnitsCount2[u.first] = u.second * 2;
+                else targetUnitsCount2[u.first] = u.second;
+            }
+
+            auto bestCounter = findBestCompositionGenetic(combatPredictor, availableUnitTypesTerran, startingState, &buildTimePredictor, &futureState, &lastCounter);
+            /*vector<pair<UNIT_TYPEID, int>> bestCounter = {
+                { UNIT_TYPEID::TERRAN_MARINE, 30 },
+                { UNIT_TYPEID::TERRAN_SIEGETANK, 10 },
+            };*/
+
+            cout << "Best counter" << endl;
+            for (auto c : bestCounter) {
+                cout << "\t" << UnitTypeToName(c.first) << " " << c.second << endl;
+            }
+
+            for (auto c : bestCounter) {
+                targetUnitsCount2[c.first] += c.second * 2;
+            }
+
+            vector<pair<UNIT_TYPEID, int>> targetUnits;
+            for (auto p : targetUnitsCount2) targetUnits.push_back(p);
+
+            auto buildOrder = findBestBuildOrderGenetic(buildOrderStartingState, targetUnits, &currentBuildOrder);
+            auto state2 = buildOrderStartingState;
+            state2.simulateBuildOrder(buildOrder);
+            watch.stop();
+            cout << "Time " << watch.millis() << endl;
+            return make_tuple(buildOrder, buildOrderStartingState, state2.time, bestCounter);
+        });        
+    }
+
+    {
+        // Keep track of how many units have been created/started to be created since the build order was last updated.
+        // This will allow us to ensure that we don't do actions multiple times
+        map<UNIT_TYPEID, int> startingUnitsDelta;
+        for (int i = 0; i < ourUnits.size(); i++) {
+            // TODO: What about partially constructed buildings which have no worker assigned to it?
+            if (ourUnits[i]->build_progress < 1) continue;
+
+            startingUnitsDelta[canonicalize(ourUnits[i]->unit_type)]++;
+            for (auto order : ourUnits[i]->orders) {
+                auto createdUnit = abilityToUnit(order.ability_id);
+                if (createdUnit != UNIT_TYPEID::INVALID) {
+                    startingUnitsDelta[canonicalize(createdUnit)]++;
+                }
+            }
+        }
+
+        for (auto s : lastStartingState.units) startingUnitsDelta[s.type] -= s.units;
+        for (auto s : startingUnitsDelta) {
+            // if (s.second > 0) cout << "Delta for " << UnitTypeToName(s.first) << " " << s.second << endl;
+        }
+
+        int s = 0;
+
+        int index = 0;
+        for (auto b : currentBuildOrder) {
+            // Skip the action if it is likely that we have already done it
+            if (startingUnitsDelta[b] > 0) {
+                startingUnitsDelta[b]--;
+                continue;
+            }
+
+            index++;
+            if (index > 10) break;
+
+            s -= 1;
+            shared_ptr<TreeNode> node = nullptr;
+            if (b == UNIT_TYPEID::TERRAN_REFINERY) {
+                node = make_shared<BuildGas>(b, [=](auto) { return s; });
+            } else if (isAddon(b)) {
+                auto ability = getUnitData(b).ability_id;
+                node = make_shared<Addon>(ability, abilityToCasterUnit(ability), [=](auto) { return s; });
+            } else if (isTownHall(b)) {
+                node = make_shared<Expand>(b, [=](auto) { return s; });
+            } else if (isStructure(getUnitData(b))) {
+                node = make_shared<Construct>(b, [=](auto) { return s; });
+            } else {
+                node = make_shared<Build>(b, [=](auto) { return s; });
+            }
+
+            // If the action failed, ensure that we reserve the cost for it anyway
+            if (node->Tick() == Status::Failure) {
+                spendingManager.AddAction(s, CostOfUnit(b), []() {}, true);
+            }
+        }
+    }
+
+    // tree->Tick();
     armyTree->Tick();
-    researchTree->Tick();
+    // researchTree->Tick();
     if ((ticks % 10) == 0) {
         TickMicro();
     }
 
     spendingManager.OnStep();
+    DebugBuildOrder(currentBuildOrder, currentBuildOrderTime);
     influenceManager.OnStep();
     scoutingManager->OnStep();
     tacticalManager->OnStep();
     // cameraController.OnStep();
     // DebugUnitPositions();
     Debug()->SendDebug();
+    Actions()->SendActions();
 }
 
 void Bot::OnGameEnd() {

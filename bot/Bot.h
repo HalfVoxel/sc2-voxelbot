@@ -11,6 +11,9 @@
 #include "SpendingManager.h"
 #include "DeductionManager.h"
 #include "DependencyAnalyzer.h"
+#include "BuildOptimizerGenetic.h"
+#include "build_optimizer_nn.h"
+#include "CombatPredictor.h"
 
 extern int ticks;
 
@@ -56,6 +59,10 @@ public:
     CameraController cameraController;
     TacticalManager* tacticalManager;
     InfluenceManager influenceManager;
+
+    CombatPredictor combatPredictor;
+    BuildOptimizerNN buildTimePredictor;
+
     int max_worker_count_ = 73;
     sc2::GameInfo game_info_;
     std::vector<sc2::Point3D> expansions_;

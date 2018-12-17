@@ -1,3 +1,5 @@
+#include <pybind11/embed.h>
+#include <pybind11/stl.h>
 #include <iostream>
 #include <string>
 #include "../CompositionAnalyzer.h"
@@ -22,6 +24,7 @@ int main(int argc, char* argv[]) { /*
         return 0;
     }*/
 
+    pybind11::scoped_interpreter guard{};
     Coordinator coordinator;
     if (!coordinator.LoadSettings(argc, argv)) {
         return 1;
