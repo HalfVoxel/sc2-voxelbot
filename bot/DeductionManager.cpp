@@ -51,6 +51,31 @@ void DeductionManager::OnGameStart() {
     }
 }
 
+vector<pair<UNIT_TYPEID, int>> DeductionManager::GetKnownUnits() {
+    vector<pair<UNIT_TYPEID, int>> units;
+    auto infos = Summary();
+    for (int i = 0; i < infos.size(); i++) {
+        auto info = infos[i];
+        if (info.alive > 0) {
+            units.emplace_back((UNIT_TYPEID)i, info.alive);
+        }
+    }
+    return units;
+}
+
+void log () {
+    /*cout << endl;
+    cout << "Enemy has spent at least " << spending.spentMinerals << " + " << spending.spentGas << endl;
+    auto infos = Summary();
+    for (int i = 0; i < infos.size(); i++) {
+        auto info = infos[i];
+        if (info.total > 0) {
+            cout << "Has at least " << info.total << " " << unitTypes[i].name << " (" << info.alive << " alive)"
+                 << " alias: " << unitTypes[(int)unitTypes[i].unit_alias].name << endl;
+        }
+    }*/
+}
+
 void DeductionManager::Observe(vector<const Unit*>& units) {
     const auto& unitTypes = bot.Observation()->GetUnitTypeData();
 
@@ -60,15 +85,9 @@ void DeductionManager::Observe(vector<const Unit*>& units) {
 
     int requiredFood = 0;
 
-    cout << endl;
-    cout << "Enemy has spent at least " << spending.spentMinerals << " + " << spending.spentGas << endl;
     auto infos = Summary();
     for (int i = 0; i < infos.size(); i++) {
         auto info = infos[i];
-        if (info.total > 0) {
-            cout << "Has at least " << info.total << " " << unitTypes[i].name << " (" << info.alive << " alive)"
-                 << " alias: " << unitTypes[(int)unitTypes[i].unit_alias].name << endl;
-        }
 
         if (info.alive > 0) {
             const UnitTypeData& unitTypeData = unitTypes[i];
@@ -96,13 +115,56 @@ void DeductionManager::Observe(vector<const Unit*>& units) {
             supplyType = UNIT_TYPEID::ZERG_OVERLORD;
             break;
         default:
-            assert(false);
-            break;
+            throw std::invalid_argument("enemyRace");
     }
     const int foodPerSupplyUnit = 8;
     // Round up expected number of supply depots.
     // Note that we *set* this value every time, so this may become lower if we for example discover a new enemy base (as a command center also provides some food).
     expectedObservations[(int)supplyType] = (requiredFood + (foodPerSupplyUnit - 1)) / foodPerSupplyUnit;
+}
+
+vector<pair<UNIT_TYPEID, int>> DeductionManager::ApproximateArmy(float scale) {
+    vector<UnitTypeInfo> summary = Summary();
+
+    // TODO: Use unspent minerals to get strength
+    vector<pair<UNIT_TYPEID, int>> result;
+    auto& unitTypes = getUnitTypes();
+    int totalCount = 0;
+    for (int i = 0; i < unitTypes.size(); i++) {
+        if (summary[i].total > 0) {
+            if (isArmy((UNIT_TYPEID)i)) {
+                int expectedCount = (int)ceil((summary[i].alive+ summary[i].dead * 0.5f));
+                result.emplace_back((UNIT_TYPEID)i, expectedCount);
+                totalCount += expectedCount;
+            }
+        }
+    }
+
+    // Prior
+    int k = 0;
+    while(totalCount < 25) {
+        result.emplace_back(UNIT_TYPEID::ZERG_ROACH, 1);
+        totalCount += 1;
+
+
+        result.emplace_back(UNIT_TYPEID::ZERG_ZERGLING, 1);
+        totalCount += 1;
+
+
+        if ((k % 4) == 0) {
+            result.emplace_back(UNIT_TYPEID::ZERG_HYDRALISK, 1);
+            totalCount += 1;
+        }
+        k++;
+    }
+
+    if(totalCount < 25 * scale) {
+        for (auto& p : result) {
+            p = make_pair(p.first, (int)round(p.second*scale));
+        }
+    }
+
+    return result;
 }
 
 vector<UnitTypeInfo> DeductionManager::Summary() {
@@ -160,7 +222,6 @@ vector<UnitTypeInfo> DeductionManager::Summary() {
 
             auto unitType = canonicalize(u->unit_type);
             observedUnitTypes[i] = unitType;
-            const UnitTypeData& unitTypeData = unitTypes[(int)unitType];
             bool isVisible = u->last_seen_game_loop == gameLoop;
 
             bool skip = false;
@@ -191,7 +252,7 @@ vector<UnitTypeInfo> DeductionManager::Summary() {
                         }
 
                         // Ok, assume this unit has been upgraded to #future
-                        cout << "Assuming " << UnitTypeToName(unitType) << " has been upgraded to " << UnitTypeToName(future) << endl;
+                        // cout << "Assuming " << UnitTypeToName(unitType) << " has been upgraded to " << UnitTypeToName(future) << endl;
 
                         unitType = future;
 
@@ -272,7 +333,6 @@ void DeductionManager::Observe(const Unit* unit) {
 
     auto canonicalUnitType = canonicalize(unit->unit_type);
     const auto& unitTypes = bot.Observation()->GetUnitTypeData();
-    const UnitTypeData& unitTypeData = unitTypes[(int)canonicalUnitType];
 
     auto alreadyObservedType = observedUnits.find(unit->tag);
 
@@ -297,7 +357,6 @@ void DeductionManager::Observe(UNIT_TYPEID unitType) {
     unitType = canonicalize(unitType);
 
     const auto& unitTypes = bot.Observation()->GetUnitTypeData();
-    const UnitTypeData& unitTypeData = unitTypes[(int)unitType];
 
     if (observedUnitTypes.find(unitType) != observedUnitTypes.end()) {
         // Already seen this one

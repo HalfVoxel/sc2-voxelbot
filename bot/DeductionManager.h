@@ -32,6 +32,8 @@ public:
 	/** Note that the player has some units, but has received them without paying in any way (e.g. starting units) */
 	void ExpectObservation(sc2::UNIT_TYPEID unitType, int count);
 	void Observe(std::vector<const sc2::Unit*>& units);
+	std::vector<std::pair<sc2::UNIT_TYPEID, int>> GetKnownUnits();
+	std::vector<std::pair<sc2::UNIT_TYPEID, int>> ApproximateArmy(float scale);
 private:
 	std::vector<UnitTypeInfo> Summary();
 	void Observe(const sc2::Unit* unit);
