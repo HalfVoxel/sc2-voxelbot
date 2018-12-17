@@ -797,16 +797,16 @@ Gene locallyOptimizeGene(const BuildState& startState, const vector<int>& starti
     float fitness = startFitness;
     Gene newGene = gene;
     for (int i = 0; i < 2; i++) {
-        for (int j = 0; j + 1 < newGene.buildOrder.size(); j++) {
+        for (int j = 0; j < newGene.buildOrder.size(); j++) {
 
-            if (newGene.buildOrder[j] != newGene.buildOrder[j + 1]) {
+            if (j == newGene.buildOrder.size() - 1 || newGene.buildOrder[j] != newGene.buildOrder[j + 1]) {
+                // Check if the item is non-essential
                 if (currentActionRequirements[newGene.buildOrder[j]] < 0) {
                     // Try removing
                     auto orig = newGene.buildOrder[j];
                     newGene.buildOrder.erase(newGene.buildOrder.begin() + j);
                     float newFitness = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, newGene);
                     if (newFitness > fitness) {
-                        // cout << "Successfully removed a " << UnitTypeToName(availableUnitTypes[orig]) << " " << fitness << " -> " << newFitness << endl;
                         currentActionRequirements[orig] += 1;
                         fitness = newFitness;
                         j--;
