@@ -158,10 +158,11 @@ void BuildState::simulate(float endTime) {
 
 bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<void(int)> callback) {
     float lastEventInBuildOrder = 0;
+
+    // Loop through the build order
     int buildIndex = -1;
     for (auto unitType : buildOrder) {
         buildIndex++;
-        // cout << "Build step " << UnitTypeToName(unitType) << " at " << time << " " << resources.minerals << "+" << resources.vespene << endl;
         while (true) {
             float nextSignificantEvent = numeric_limits<float>::infinity();
             for (auto& ev : events) {
@@ -190,9 +191,7 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
                     return false;
                 }
 
-                // cout << UnitTypeToName(unitType) << " Waiting for tech" << endl;
                 simulate(events[0].time);
-                // cout << "No tech, simulating to " << time << endl;
                 continue;
             }
 
@@ -209,25 +208,26 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
             }
 
             auto currentMiningSpeed = miningSpeed();
+            // When do we have enough resources for this item
             float eventTime = time + timeToGetResources(currentMiningSpeed, mineralCost, vespeneCost);
+
+            // If it would be after the next economically significant event then the time estimate is likely not accurate (the mining speed might change in the middle)
             if (eventTime > nextSignificantEvent) {
-                // cout << UnitTypeToName(unitType) << " Waiting for significant event" << endl;
                 simulate(nextSignificantEvent);
-                // cout << "Too late " << eventTime << " " << nextSignificantEvent << endl;
                 continue;
             }
 
-            // TODO: Need to handle multiple casters case (e.g. need to be able to make SCVs from planetary fortress)
+
             ABILITY_ID ability = unitData.ability_id;
+            // Make sure that some unit can cast this ability
             assert(abilityToCasterUnit(ability).size() > 0);
 
+            // Find an appropriate caster for this ability
             BuildUnitInfo* casterUnit = nullptr;
             UNIT_TYPEID casterUnitType = UNIT_TYPEID::INVALID;
             UNIT_TYPEID casterAddonType = UNIT_TYPEID::INVALID;
             for (UNIT_TYPEID caster : abilityToCasterUnit(ability)) {
-                // cout << "Caster: " << UnitTypeToName(caster) << " " << UnitTypeToName(unitData.tech_requirement) << endl;
                 for (auto& casterCandidate : units) {
-                    // cout << UnitTypeToName(casterCandidate.type) << " " << UnitTypeToName(casterCandidate.addon) << " " << casterCandidate.availableUnits() << " " << unitData.require_attached << endl;
                     if (casterCandidate.type == caster && casterCandidate.availableUnits() > 0 && (!unitData.require_attached || casterCandidate.addon == unitData.tech_requirement)) {
                         // Addons can only be added to units that do not yet have any other addons
                         if (isUnitAddon && casterCandidate.addon != UNIT_TYPEID::INVALID)
@@ -243,6 +243,7 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
                 }
             }
 
+            // If we don't have a caster yet, then we might have to simulate a bit (the caster might be training right now, or currently busy)
             if (casterUnit == nullptr) {
                 if (casterUnitType == UNIT_TYPEID::ZERG_LARVA) {
                     addUnits(UNIT_TYPEID::ZERG_LARVA, 1);
@@ -258,31 +259,20 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
                     return false;
                 }
 
-                // cout << UnitTypeToName(unitType) << " Waiting for caster" << endl;
                 simulate(events[0].time);
-                // cout << "No caster, simulating to " << time << endl;
                 continue;
             }
 
             if (isinf(eventTime)) {
                 // This can happen in some cases.
                 // Most common is when the unit requires vespene gas, but the player only has 1 scv and that one will be allocated to minerals.
-
-                /*cout << "Inf time" << endl;
-                cout << foodAvailable() << " " << unitData.food_required << endl;
-                cout << UnitTypeToName(unitType) << endl;
-                printBuildOrder(buildOrder);
-                cout << "Current unit counts:" << endl;
-                for (auto u : units) {
-                    cout << UnitTypeToName(u.type) << " " << UnitTypeToName(u.addon) << " " << u.units << endl;
-                }
-                __builtin_trap();*/
                 return false;
             }
 
+            // Fast forward until we can pay for the item
             simulate(eventTime);
 
-            // simulation may invalidate pointers
+            // The simulation may invalidate pointers, so find the caster again
             for (auto& casterCandidate : units) {
                 if (casterCandidate.type == casterUnitType && casterCandidate.addon == casterAddonType && casterCandidate.availableUnits() > 0) {
                     casterUnit = &casterCandidate;
@@ -291,10 +281,15 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
             assert(casterUnit != nullptr);
 
             if (callback != nullptr) callback(buildIndex);
+
+            // Pay for the item
             resources.minerals -= mineralCost;
             resources.vespene -= vespeneCost;
+
+            // Mark the caster as being busy
             casterUnit->busyUnits++;
             assert(casterUnit->availableUnits() >= 0);
+
             float buildTime = ticksToSeconds(unitData.build_time);
 
             // Compensate for workers having to move to the building location
@@ -302,15 +297,10 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
                 buildTime += 4;
             }
 
+            // Create a new event for when the item is complete
             auto newEvent = BuildEvent(BuildEventType::FinishedUnit, time + buildTime, casterUnit->type, ability);
             newEvent.casterAddon = casterUnit->addon;
             lastEventInBuildOrder = max(lastEventInBuildOrder, newEvent.time);
-            // cout << "Event time " << newEvent.time << endl;
-            // cout << "Caster " << UnitTypeToName(casterUnit->type) << " " << UnitTypeToName(casterUnit->addon) << " " << casterUnit->availableUnits() << " " << casterUnit->units << endl;
-            // cout << "Current unit counts:" << endl;
-            // for (auto u : units) {
-            //     cout << UnitTypeToName(u.type) << " " << UnitTypeToName(u.addon) << " " << u.units << endl;
-            // }
             addEvent(newEvent);
             break;
         }
@@ -390,10 +380,19 @@ void BuildEvent::apply(BuildState& state) {
     }
 }
 
+/** A gene represents a build order.
+ * The build order may contain many implicit steps which will be added when the build order is finalized.
+ * For example if any build item has any preconditions (e.g. training a marine requires a barracks which requires a supply depot, etc.) then when the build order is finalized any
+ * implicit steps are added such that the build order can always be performed almost no matter what the build order is.
+ * That is, the simulation will not return an error because for example it tried to train a marine even though the player has no baracks.
+ * 
+ * The build order is represented as a vector of integers which are indices into a provided availableUnitTypes list (for example all relevant unit types for a terran player).
+ */
 struct Gene {
     // Indices are into the availableUnitTypes list
     vector<GeneUnitType> buildOrder;
 
+    /** Validates that the build order will train/build the given units and panics otherwise */
     void validate(const vector<int>& actionRequirements) const {
 #if DEBUG
         vector<int> remainingRequirements = actionRequirements;
@@ -404,6 +403,11 @@ struct Gene {
 #endif
     }
 
+    /** Mutates the build order by moving items around randomly.
+     * Ensures that the build order will still create the units given by the action requirements.
+     * 
+     * The action requirements is a list as long as availableUnitTypes that specifies for each unit type how many that the build order should train/build.
+     */
     void mutateMove(float amount, const vector<int>& actionRequirements, default_random_engine& seed) {
         validate(actionRequirements);
 
@@ -445,6 +449,11 @@ struct Gene {
         validate(actionRequirements);
     }
 
+    /** Mutates the build order by adding or removing items.
+     * Ensures that the build order will still create the units given by the action requirements.
+     * 
+     * The action requirements is a list as long as availableUnitTypes that specifies for each unit type how many that the build order should train/build.
+     */
     void mutateAddRemove(float amount, default_random_engine& seed, const vector<int>& actionRequirements, const vector<int>& addableUnits) {
         vector<int> remainingRequirements = actionRequirements;
         for (int i = 0; i < buildOrder.size(); i++) {
@@ -515,7 +524,11 @@ struct Gene {
 
     Gene()
         : buildOrder() {}
-
+    
+    /** Creates a random build order that will train/build the given units.
+     * 
+     * The action requirements is a list as long as availableUnitTypes that specifies for each unit type how many that the build order should train/build.
+     */
     Gene(default_random_engine& seed, const vector<int>& actionRequirements) {
         for (GeneUnitType i = 0; i < actionRequirements.size(); i++) {
             for (int j = actionRequirements[i] - 1; j >= 0; j--)
@@ -524,6 +537,7 @@ struct Gene {
         shuffle(buildOrder.begin(), buildOrder.end(), seed);
     }
 
+    /** Creates a gene from a given build order */
     Gene(const vector<UNIT_TYPEID>& seedBuildOrder, const vector<UNIT_TYPEID>& availableUnitTypes, const vector<int>& actionRequirements) {
         vector<int> remainingRequirements = actionRequirements;
         for (auto u : seedBuildOrder) {
@@ -539,6 +553,11 @@ struct Gene {
         }
     }
 
+    /** Adds all dependencies of the required type to the requirements stack in the order that they need to be performed in order to fulfill all preconditions for building/training the required type
+     * 
+     * For example if the player only has some SCVs and a command center and the required type is a marine, then both a barracks and a supply depot will be added to the stack.
+     * Only takes care of direct tech dependencies, not indirect ones like supply or resource requirements.
+     */
     static void traceDependencies(const vector<int>& unitCounts, const vector<UNIT_TYPEID>& availableUnitTypes, stack<UNIT_TYPEID>& requirements, UNIT_TYPEID requiredType) {
         // Need to break here to avoid an infinite loop of SCV requires command center requires SCV ...
         if (isBasicHarvester(requiredType))
@@ -588,6 +607,7 @@ struct Gene {
         }
     }
 
+    /** Finalizes the gene's build order by adding in all implicit steps */
     vector<UNIT_TYPEID> constructBuildOrder(Race race, float startingFood, const vector<int>& startingUnitCounts, const vector<int>& startingAddonCountPerUnitType, const vector<UNIT_TYPEID>& availableUnitTypes) const {
 
         vector<int> unitCounts = startingUnitCounts;
@@ -737,58 +757,40 @@ void printBuildOrder(vector<UNIT_TYPEID> buildOrder) {
     }
 }
 
+/** Calculates the fitness of a given build order gene, a higher value is better */
 float calculateFitness(const BuildState& startState, const vector<int>& startingUnitCounts, const vector<int>& startingAddonCountPerUnitType, const vector<UNIT_TYPEID>& availableUnitTypes, const Gene& gene) {
     BuildState state = startState;
-    // auto order = gene.constructBuildOrder(startState.foodAvailable(), uniqueStartingUnits, availableUnitTypes);
-    // cout << "Build order size " << order.size() << endl;
-    // for (int i = 0; i < order.size(); i++) {
-    // cout << "Step " << i << " " << UnitTypeToName(order[i]) << endl;
-    // }
-    // printBuildOrder(gene.constructBuildOrder(startState.foodAvailable(), uniqueStartingUnits, availableUnitTypes));
     vector<float> finishedTimes;
     auto buildOrder = gene.constructBuildOrder(startState.race, startState.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes);
     if (!state.simulateBuildOrder(buildOrder, [&] (int index) {
         finishedTimes.push_back(state.time);
     })) {
-        // cout << "Failed" << endl;
+        // Build order could not be executed, that is bad.
         return -100000;
     }
 
-    // Score between 0 and 1 where
-    // 0 => all units are built right at the end
-    // 1 => all units are built right at the start
-    float ginoScore = 0;
-    float avgTime = 0;
-    float totalWeight = 0;
+    // Find the average completion time of the army units in the build order (they are usually the important parts, though non army units also contribute a little bit)
+    float avgTime = state.time * 0.00001f;
+    float totalWeight = 0.00001f;
     for (int i = 0; i < finishedTimes.size(); i++) {
         float t = finishedTimes[i];
-        ginoScore += (state.time - t)*(state.time - t)*0.5f;
         float w = isArmy(buildOrder[i]) ? 1.0f : 0.1f;
         totalWeight += w;
         avgTime += w*(t + 20); // +20 to take into account that we want the finished time of the unit, but we only have the start time
     }
-    ginoScore /= state.time * state.time * finishedTimes.size();
-
-    // A gino score of 0 multiplies the time by 2 essentially
-    float ginoMultiplier = 2.0f / (1.0f + ginoScore);
-    if (finishedTimes.size() == 0) {
-        avgTime = state.time;
-    } else {
-        avgTime /= totalWeight;
-    }
-
-
-    // cout << "Time " << state.time << endl;
-    // return -state.time;
+    
+    avgTime /= totalWeight;
 
     // Simulate until at least the 2 minutes mark, this ensures that the agent will do some economic stuff if nothing else
     state.simulate(60*2);
 
     auto miningSpeed = state.miningSpeed();
-    // return -state.time * ginoMultiplier + (state.resources.minerals + 2 * state.resources.vespene) * 0.001 + (miningSpeed.first + 2 * miningSpeed.second) * 60 * 0.005;
     return -max(avgTime*2, 2*60.0f) + (state.resources.minerals + 2 * state.resources.vespene) * 0.001 + (miningSpeed.first + 2 * miningSpeed.second) * 60 * 0.005;
 }
 
+/** Try really hard to do optimize the gene.
+ * This will try to swap adjacent items in the build order as well as trying to remove all non-essential items.
+ */
 Gene locallyOptimizeGene(const BuildState& startState, const vector<int>& startingUnitCounts, const vector<int>& startingAddonCountPerUnitType, const vector<UNIT_TYPEID>& availableUnitTypes, const vector<int>& actionRequirements, const Gene& gene) {
     vector<int> currentActionRequirements = actionRequirements;
     for (auto b : gene.buildOrder) currentActionRequirements[b]--;
@@ -818,7 +820,7 @@ Gene locallyOptimizeGene(const BuildState& startState, const vector<int>& starti
                 }
 
                 // Try swapping
-                {
+                if (j + 1 < newGene.buildOrder.size()) {
                     swap(newGene.buildOrder[j], newGene.buildOrder[j + 1]);
                     float newFitness = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, newGene);
 
@@ -831,8 +833,6 @@ Gene locallyOptimizeGene(const BuildState& startState, const vector<int>& starti
                 }
             }
         }
-
-        // cout << "[" << i << "] " << "Optimized from " << startFitness << " to " << fitness << endl;
     }
 
     return newGene;
@@ -1045,6 +1045,7 @@ std::vector<sc2::UNIT_TYPEID> findBestBuildOrderGenetic(const std::vector<std::p
     return findBestBuildOrderGenetic(BuildState(startingUnits), target, nullptr);
 }
 
+/** Finds the best build order using an evolutionary algorithm */
 vector<UNIT_TYPEID> findBestBuildOrderGenetic(const BuildState& startState, const vector<pair<UNIT_TYPEID, int>>& target, const vector<UNIT_TYPEID>* seed) {
     const vector<UNIT_TYPEID>& availableUnitTypes = startState.race == Race::Terran ? unitTypesTerran : (startState.race == Race::Protoss ? unitTypesProtoss : unitTypesZerg);
     const auto& allEconomicUnits = startState.race == Race::Terran ? unitTypesTerranEconomic : (startState.race == Race::Protoss ? unitTypesProtossEconomic : unitTypesZergEconomic);
@@ -1090,8 +1091,8 @@ vector<UNIT_TYPEID> findBestBuildOrderGenetic(const BuildState& startState, cons
     Stopwatch watch;
 
     const int POOL_SIZE = 25;
-    const float mutationRateAddRemove = 0.05f * 0.5f;
-    const float mutationRateMove = 0.05f * 0.5f;
+    const float mutationRateAddRemove = 0.025f;
+    const float mutationRateMove = 0.025f;
     vector<Gene> generation(POOL_SIZE);
     default_random_engine rnd(time(0));
     for (int i = 0; i < POOL_SIZE; i++) {
