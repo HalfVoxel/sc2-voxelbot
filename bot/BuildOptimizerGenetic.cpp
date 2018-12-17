@@ -342,20 +342,23 @@ float BuildState::foodAvailable() const {
 bool BuildState::hasEquivalentTech(UNIT_TYPEID type) const {
     for (auto& unit : units) {
         auto& unitData = getUnitData(unit.type);
-        if (unit.type == type) {
-            return true;
-        }
-        for (auto t : unitData.tech_alias)
-            if (t == type)
+        if (unit.units > 0) {
+            if (unit.type == type) {
                 return true;
+            }
+            for (auto t : unitData.tech_alias)
+                if (t == type)
+                    return true;
+        }
     }
     return false;
 }
 
 bool BuildEvent::impactsEconomy() const {
     // TODO: Optimize?
+    // TODO: isStructure is very aggressive, isTownHall is more appropriate?
     UNIT_TYPEID unit = abilityToUnit(ability);
-    return isBasicHarvester(unit) || isStructure(unit) || getUnitData(unit).food_provided > 0;
+    return isBasicHarvester(unit) || isBasicHarvester(caster) || isStructure(unit) || getUnitData(unit).food_provided > 0;
 }
 
 void BuildEvent::apply(BuildState& state) {
