@@ -8,7 +8,7 @@ struct BuildResources {
 
     BuildResources(float minerals, float vespene)
         : minerals(minerals), vespene(vespene) {}
-    
+
     /** Simulate mining with the given speed for the given amount of time */
     inline void simulateMining(std::pair<float, float> miningSpeed, float dt) {
         minerals += miningSpeed.first * dt;
@@ -21,13 +21,13 @@ struct BuildState;
 struct BuildUnitInfo {
     /** Type of the unit */
     sc2::UNIT_TYPEID type;
-    
+
     /** Optional addon attached to the unit (or UNIT_TYPEID::INVALID otherwise) */
     sc2::UNIT_TYPEID addon;
-    
+
     /** Total number of units */
     int units;
-    
+
     /** How many units out of the total that are busy right now.
      * E.g. with constructing a building, training a unit, etc.
      * Technically this is the number of casting slots for abilities rather than the number of units,
@@ -39,7 +39,7 @@ struct BuildUnitInfo {
         : type(sc2::UNIT_TYPEID::INVALID), addon(sc2::UNIT_TYPEID::INVALID), units(0), busyUnits(0) {}
     BuildUnitInfo(sc2::UNIT_TYPEID type, sc2::UNIT_TYPEID addon, int units)
         : type(type), addon(addon), units(units), busyUnits(0) {}
-    
+
     /** Number of units that are available for casting abilities */
     inline int availableUnits() const {
         if (addon == sc2::UNIT_TYPEID::TERRAN_REACTOR) {

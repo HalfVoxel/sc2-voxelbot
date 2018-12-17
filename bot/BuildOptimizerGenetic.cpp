@@ -6,7 +6,6 @@
 #include <random>
 #include <stack>
 #include <vector>
-#include "Bot.h"
 #include "utilities/mappings.h"
 #include "utilities/predicates.h"
 #include "utilities/profiler.h"
@@ -20,7 +19,8 @@ using GeneUnitType = int;
 void printBuildOrder(vector<UNIT_TYPEID> buildOrder);
 
 void BuildState::makeUnitsBusy(UNIT_TYPEID type, UNIT_TYPEID addon, int delta) {
-    if (delta == 0) return;
+    if (delta == 0)
+        return;
 
     for (auto& u : units) {
         if (u.type == type && u.addon == addon) {
@@ -38,7 +38,8 @@ void BuildState::addUnits(UNIT_TYPEID type, int delta) {
 }
 
 void BuildState::addUnits(UNIT_TYPEID type, UNIT_TYPEID addon, int delta) {
-    if (delta == 0) return;
+    if (delta == 0)
+        return;
 
     for (auto& u : units) {
         if (u.type == type && u.addon == addon) {
@@ -176,8 +177,7 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
 
             if ((unitData.tech_requirement != UNIT_TYPEID::INVALID && !unitData.require_attached && !hasEquivalentTech(unitData.tech_requirement)) || (unitData.food_required > 0 && foodAvailable() < unitData.food_required)) {
                 if (events.empty()) {
-                    cout << "No tech"
-                            << " at index " << buildIndex << endl;
+                    cout << "No tech at index " << buildIndex << endl;
                     cout << "Requires " << UnitTypeToName(unitData.tech_requirement) << endl;
                     cout << foodAvailable() << " " << unitData.food_required << endl;
                     cout << UnitTypeToName(unitType) << endl;
@@ -216,7 +216,6 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
                 simulate(nextSignificantEvent);
                 continue;
             }
-
 
             ABILITY_ID ability = unitData.ability_id;
             // Make sure that some unit can cast this ability
@@ -280,7 +279,8 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
             }
             assert(casterUnit != nullptr);
 
-            if (callback != nullptr) callback(buildIndex);
+            if (callback != nullptr)
+                callback(buildIndex);
 
             // Pay for the item
             resources.minerals -= mineralCost;
@@ -516,7 +516,6 @@ struct Gene {
             gene.buildOrder.push_back(parent2.buildOrder[i]);
         }
 
-
         gene.validate(actionRequirements);
 
         return gene;
@@ -524,7 +523,7 @@ struct Gene {
 
     Gene()
         : buildOrder() {}
-    
+
     /** Creates a random build order that will train/build the given units.
      * 
      * The action requirements is a list as long as availableUnitTypes that specifies for each unit type how many that the build order should train/build.
@@ -609,7 +608,6 @@ struct Gene {
 
     /** Finalizes the gene's build order by adding in all implicit steps */
     vector<UNIT_TYPEID> constructBuildOrder(Race race, float startingFood, const vector<int>& startingUnitCounts, const vector<int>& startingAddonCountPerUnitType, const vector<UNIT_TYPEID>& availableUnitTypes) const {
-
         vector<int> unitCounts = startingUnitCounts;
         vector<int> addonCountPerUnitType = startingAddonCountPerUnitType;
         assert(unitCounts.size() == availableUnitTypes.size());
@@ -636,17 +634,18 @@ struct Gene {
             if (false && (unitType == UNIT_TYPEID::TERRAN_STARPORT || unitType == UNIT_TYPEID::TERRAN_FACTORY || true)) {
                 auto& unitData = getUnitData(unitType);
                 cout << "A " << unitData.require_attached << " " << UnitTypeToName(unitData.tech_requirement) << endl;
-                if (!isAddon(unitData.tech_requirement) && unitData.tech_requirement != UNIT_TYPEID::INVALID) cout << "Count: " << unitCounts[indexOf(availableUnitTypes, (UNIT_TYPEID)unitData.tech_requirement)] << endl;
+                if (!isAddon(unitData.tech_requirement) && unitData.tech_requirement != UNIT_TYPEID::INVALID)
+                    cout << "Count: " << unitCounts[indexOf(availableUnitTypes, (UNIT_TYPEID)unitData.tech_requirement)] << endl;
 
                 cout << "Build order!" << endl;
                 for (int i = 0; i < startingUnitCounts.size(); i++) {
                     assert(startingUnitCounts[i] >= 0);
-                    if (startingUnitCounts[i] > 0) cout << "Starting unit " << UnitTypeToName(availableUnitTypes[i]) << " " << startingUnitCounts[i] << endl;
+                    if (startingUnitCounts[i] > 0)
+                        cout << "Starting unit " << UnitTypeToName(availableUnitTypes[i]) << " " << startingUnitCounts[i] << endl;
                 }
                 for (auto b : buildOrder) {
                     cout << "B " << UnitTypeToName(availableUnitTypes[b]) << endl;
                 }
-
 
                 for (int i = 0; i < unitCounts.size(); i++) {
                     assert(unitCounts[i] >= 0);
@@ -738,16 +737,18 @@ void printBuildOrderDetailed(const BuildState& startState, vector<UNIT_TYPEID> b
     BuildState state = startState;
     cout << "Starting units" << endl;
     for (auto u : startState.units) {
-        cout << "\t" << u.units << "x" << " " << UnitTypeToName(u.type);
-        if (u.addon != UNIT_TYPEID::INVALID) cout << " + " << UnitTypeToName(u.addon);
+        cout << "\t" << u.units << "x " << UnitTypeToName(u.type);
+        if (u.addon != UNIT_TYPEID::INVALID)
+            cout << " + " << UnitTypeToName(u.addon);
         cout << endl;
     }
     cout << "Build order size " << buildOrder.size() << endl;
     state.simulateBuildOrder(buildOrder, [&](int i) {
-        cout << "Step " << i << "\t" << (int)(state.time/60.0f) << ":" << (int)(fmod(state.time, 60.0f)) << "\t" << UnitTypeToName(buildOrder[i]) << " " << "food: " << state.foodAvailable() << " " << (int)state.resources.minerals << "+" << (int)state.resources.vespene << endl;
+        cout << "Step " << i << "\t" << (int)(state.time / 60.0f) << ":" << (int)(fmod(state.time, 60.0f)) << "\t" << UnitTypeToName(buildOrder[i]) << " "
+             << "food: " << state.foodAvailable() << " " << (int)state.resources.minerals << "+" << (int)state.resources.vespene << endl;
     });
 
-    cout << "Finished at " << (int)(state.time/60.0f) << ":" << (int)(fmod(state.time, 60.0f)) << endl;
+    cout << "Finished at " << (int)(state.time / 60.0f) << ":" << (int)(fmod(state.time, 60.0f)) << endl;
 }
 
 void printBuildOrder(vector<UNIT_TYPEID> buildOrder) {
@@ -762,9 +763,9 @@ float calculateFitness(const BuildState& startState, const vector<int>& starting
     BuildState state = startState;
     vector<float> finishedTimes;
     auto buildOrder = gene.constructBuildOrder(startState.race, startState.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes);
-    if (!state.simulateBuildOrder(buildOrder, [&] (int index) {
-        finishedTimes.push_back(state.time);
-    })) {
+    if (!state.simulateBuildOrder(buildOrder, [&](int index) {
+            finishedTimes.push_back(state.time);
+        })) {
         // Build order could not be executed, that is bad.
         return -100000;
     }
@@ -776,16 +777,16 @@ float calculateFitness(const BuildState& startState, const vector<int>& starting
         float t = finishedTimes[i];
         float w = isArmy(buildOrder[i]) ? 1.0f : 0.1f;
         totalWeight += w;
-        avgTime += w*(t + 20); // +20 to take into account that we want the finished time of the unit, but we only have the start time
+        avgTime += w * (t + 20);  // +20 to take into account that we want the finished time of the unit, but we only have the start time
     }
-    
+
     avgTime /= totalWeight;
 
     // Simulate until at least the 2 minutes mark, this ensures that the agent will do some economic stuff if nothing else
-    state.simulate(60*2);
+    state.simulate(60 * 2);
 
     auto miningSpeed = state.miningSpeed();
-    return -max(avgTime*2, 2*60.0f) + (state.resources.minerals + 2 * state.resources.vespene) * 0.001 + (miningSpeed.first + 2 * miningSpeed.second) * 60 * 0.005;
+    return -max(avgTime * 2, 2 * 60.0f) + (state.resources.minerals + 2 * state.resources.vespene) * 0.001 + (miningSpeed.first + 2 * miningSpeed.second) * 60 * 0.005;
 }
 
 /** Try really hard to do optimize the gene.
@@ -793,14 +794,14 @@ float calculateFitness(const BuildState& startState, const vector<int>& starting
  */
 Gene locallyOptimizeGene(const BuildState& startState, const vector<int>& startingUnitCounts, const vector<int>& startingAddonCountPerUnitType, const vector<UNIT_TYPEID>& availableUnitTypes, const vector<int>& actionRequirements, const Gene& gene) {
     vector<int> currentActionRequirements = actionRequirements;
-    for (auto b : gene.buildOrder) currentActionRequirements[b]--;
+    for (auto b : gene.buildOrder)
+        currentActionRequirements[b]--;
 
     float startFitness = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, gene);
     float fitness = startFitness;
     Gene newGene = gene;
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < newGene.buildOrder.size(); j++) {
-
             if (j == newGene.buildOrder.size() - 1 || newGene.buildOrder[j] != newGene.buildOrder[j + 1]) {
                 // Check if the item is non-essential
                 if (currentActionRequirements[newGene.buildOrder[j]] < 0) {
@@ -1067,7 +1068,6 @@ vector<UNIT_TYPEID> findBestBuildOrderGenetic(const BuildState& startState, cons
         }
     }
 
-
     vector<int> actionRequirements(availableUnitTypes.size());
     for (int i = 0; i < actionRequirements.size(); i++) {
         UNIT_TYPEID type = availableUnitTypes[i];
@@ -1102,8 +1102,8 @@ vector<UNIT_TYPEID> findBestBuildOrderGenetic(const BuildState& startState, cons
     for (int i = 0; i < 350; i++) {
         if (i == 150 && seed != nullptr) {
             // Add in the seed here
-            generation[generation.size()-1] = Gene(*seed, availableUnitTypes, actionRequirements);
-            generation[generation.size()-1].validate(actionRequirements);
+            generation[generation.size() - 1] = Gene(*seed, availableUnitTypes, actionRequirements);
+            generation[generation.size() - 1].validate(actionRequirements);
         }
 
         vector<float> fitness(generation.size());
@@ -1135,7 +1135,8 @@ vector<UNIT_TYPEID> findBestBuildOrderGenetic(const BuildState& startState, cons
                     // float f1 = calculateFitness(startState, uniqueStartingUnits, availableUnitTypes, g);
                     auto order = g.constructBuildOrder(startState.race, startState.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes);
                     g.buildOrder.clear();
-                    for (auto t : order) g.buildOrder.push_back(indexOf(availableUnitTypes, t));
+                    for (auto t : order)
+                        g.buildOrder.push_back(indexOf(availableUnitTypes, t));
                     // float f2 = calculateFitness(startState, uniqueStartingUnits, availableUnitTypes, g);
                     // if (f1 != f2) {
                     //     cout << "Fitness don't match " << f1 << " " << f2 << endl;
@@ -1285,12 +1286,12 @@ vector<UNIT_TYPEID> buildOrderProBO2 = {
     UNIT_TYPEID::PROTOSS_ADEPT,
     // UNIT_TYPEID::PROTOSS_CHRONOBOOST ,
     // UNIT_TYPEID::PROTOSS_CHRONOBOOST ,
-    UNIT_TYPEID::PROTOSS_ADEPT ,
-    UNIT_TYPEID::PROTOSS_ADEPT ,
+    UNIT_TYPEID::PROTOSS_ADEPT,
+    UNIT_TYPEID::PROTOSS_ADEPT,
     UNIT_TYPEID::PROTOSS_PYLON,
-    UNIT_TYPEID::PROTOSS_ADEPT ,
-    UNIT_TYPEID::PROTOSS_ADEPT ,
-    UNIT_TYPEID::PROTOSS_ADEPT ,
+    UNIT_TYPEID::PROTOSS_ADEPT,
+    UNIT_TYPEID::PROTOSS_ADEPT,
+    UNIT_TYPEID::PROTOSS_ADEPT,
     // UNIT_TYPEID::PROTOSS_CHRONOBOOST ,
     // UNIT_TYPEID::PROTOSS_CHRONOBOOST ,
     // UNIT_TYPEID::PROTOSS_CHRONOBOOST ,
@@ -1308,10 +1309,10 @@ void unitTestBuildOptimizer() {
             UNIT_TYPEID::TERRAN_STARPORTTECHLAB,
             UNIT_TYPEID::TERRAN_RAVEN,
         };
-        vector<pair<UNIT_TYPEID,int>> startingUnits {
-            { UNIT_TYPEID::TERRAN_COMMANDCENTER, 1},
-            { UNIT_TYPEID::TERRAN_SCV, 75},
-            { UNIT_TYPEID::TERRAN_STARPORT, 1},
+        vector<pair<UNIT_TYPEID, int>> startingUnits{
+            { UNIT_TYPEID::TERRAN_COMMANDCENTER, 1 },
+            { UNIT_TYPEID::TERRAN_SCV, 75 },
+            { UNIT_TYPEID::TERRAN_STARPORT, 1 },
         };
         BuildState startState(startingUnits);
         startState.resources.minerals = 50;
@@ -1336,7 +1337,6 @@ void unitTestBuildOptimizer() {
         printBuildOrderDetailed(startState, gene.constructBuildOrder(startState.race, startState.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, unitTypesTerran));
     }
 
-
     // assert(BuildState({{ UNIT_TYPEID::ZERG_HATCHERY, 1 }, { UNIT_TYPEID::ZERG_DRONE, 12 }}).simulateBuildOrder({ UNIT_TYPEID::ZERG_SPAWNINGPOOL, UNIT_TYPEID::ZERG_ZERGLING }));
 
     // findBestBuildOrderGenetic({ { UNIT_TYPEID::ZERG_HATCHERY, 1 }, { UNIT_TYPEID::ZERG_DRONE, 12 } }, { { UNIT_TYPEID::ZERG_HATCHERY, 1 }, { UNIT_TYPEID::ZERG_ZERGLING, 12 }, { UNIT_TYPEID::ZERG_MUTALISK, 20 }, { UNIT_TYPEID::ZERG_INFESTOR, 1 } });
@@ -1348,7 +1348,7 @@ void unitTestBuildOptimizer() {
         findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::TERRAN_VIKINGFIGHTER, 2 }, { UNIT_TYPEID::TERRAN_MEDIVAC, 3 }, { UNIT_TYPEID::TERRAN_BANSHEE, 3 }, { UNIT_TYPEID::TERRAN_MARINE, 20 }, { UNIT_TYPEID::TERRAN_BUNKER, 1 } });
         // findBestBuildOrderGenetic({ { UNIT_TYPEID::TERRAN_COMMANDCENTER, 1 }, { UNIT_TYPEID::TERRAN_SCV, 12 } }, { { UNIT_TYPEID::TERRAN_BARRACKSREACTOR, 0 }, { UNIT_TYPEID::TERRAN_MARINE, 30 }, { UNIT_TYPEID::TERRAN_MARAUDER, 0 } });
 
-        if(false) {
+        if (false) {
             BuildState startState({ { UNIT_TYPEID::PROTOSS_NEXUS, 1 }, { UNIT_TYPEID::PROTOSS_PROBE, 12 } });
             startState.resources.minerals = 50;
             startState.race = Race::Protoss;
@@ -1359,7 +1359,6 @@ void unitTestBuildOptimizer() {
         }
     }
 
-    
     // optimizer.calculate_build_order(Race::Terran, { { UNIT_TYPEID::TERRAN_COMMANDCENTER, 1 }, { UNIT_TYPEID::TERRAN_SCV, 1 } }, { { UNIT_TYPEID::TERRAN_SCV, 1 } });
     // optimizer.calculate_build_order(Race::Terran, { { UNIT_TYPEID::TERRAN_COMMANDCENTER, 1 }, { UNIT_TYPEID::TERRAN_SCV, 1 } }, { { UNIT_TYPEID::TERRAN_SCV, 2 } });
     // optimizer.calculate_build_order(Race::Terran, { { UNIT_TYPEID::TERRAN_COMMANDCENTER, 1 }, { UNIT_TYPEID::TERRAN_SCV, 1 } }, { { UNIT_TYPEID::TERRAN_SCV, 5 } });
