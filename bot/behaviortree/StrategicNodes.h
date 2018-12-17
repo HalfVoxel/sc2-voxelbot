@@ -33,8 +33,8 @@ protected:
 public:
     BOT::Status PlaceBuilding(sc2::UnitTypeID unit, sc2::Point2D location, bool isExpansion); // Should be better, we should aim to use this instead of the method, I think
     BOT::Status PlaceBuilding(sc2::UnitTypeID unit, sc2::Tag loc);
-	Construct(sc2::UNIT_TYPEID unit, std::function<double(sc2::UNIT_TYPEID)> score) : unitType(unit), location(sc2::NullTag), score(score) {}
-	Construct(sc2::UNIT_TYPEID unit, sc2::Tag location, std::function<double(sc2::UNIT_TYPEID)> score) : unitType(unit), location(location), score(score) {}
+	Construct(sc2::UNIT_TYPEID unit, std::function<double(sc2::UNIT_TYPEID)> score) : location(sc2::NullTag), score(score), unitType(unit) {}
+	Construct(sc2::UNIT_TYPEID unit, sc2::Tag location, std::function<double(sc2::UNIT_TYPEID)> score) : location(location), score(score), unitType(unit) {}
 	BOT::Status OnTick() override;
 };
 
