@@ -65,7 +65,7 @@ void DependencyAnalyzer::analyze() {
             try {
                 auto requiredUnitOptions = abilityToCasterUnit(unitType.ability_id);
                 if (requiredUnitOptions.size() == 0) {
-                    cout << UnitTypeToName(unitType.unit_type_id) << " requires ability " << AbilityTypeToName(unitType.ability_id) << " but that ability is not cast by any known unit" << endl;
+                    // cout << UnitTypeToName(unitType.unit_type_id) << " requires ability " << AbilityTypeToName(unitType.ability_id) << " but that ability is not cast by any known unit" << endl;
                 } else {
                     auto requiredUnit = UNIT_TYPEID::INVALID;
                     int minCost = 1000000;
@@ -86,7 +86,6 @@ void DependencyAnalyzer::analyze() {
 
                         if (unitTypes[(int)requiredUnit].race != unitType.race) {
                             cerr << "Error in definitions" << endl;
-                            ;
                             cerr << unitType.name << " requires unit (via ability): " << UnitTypeToName(requiredUnit) << " via " << AbilityTypeToName(unitType.ability_id) << endl;
                         }
                     }
@@ -123,7 +122,7 @@ void DependencyAnalyzer::analyze() {
         if (!unitType.available || unitType.race == RaceNeutral)
             continue;
         // if (unitType.unit_type_id != UNIT_TYPEID::ZERG_GREATERSPIRE) continue;
-        cout << "Unit: " << unitType.name << endl;
+        // cout << "Unit: " << unitType.name << endl;
         vector<UNIT_TYPEID> reqs;
         stack<UNIT_TYPEID> st;
         st.push(unitType.unit_type_id);
@@ -140,7 +139,7 @@ void DependencyAnalyzer::analyze() {
 
         allUnitDependencies[i] = reqs;
         for (auto u : reqs) {
-            cout << unitType.name << " requires " << unitTypes[(int)u].name << endl;
+            // cout << unitType.name << " requires " << unitTypes[(int)u].name << endl;
         }
     }
 }
