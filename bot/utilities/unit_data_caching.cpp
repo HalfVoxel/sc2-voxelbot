@@ -72,6 +72,7 @@ void save_unit_data(const vector<UnitTypeData>& unit_types, string path) {
 
         stream << type.weapons.size() << endl;
         for (auto w : type.weapons) {
+            stream << (int)w.type << " ";
             stream << w.damage_ << endl;
             stream << w.damage_bonus.size() << endl;
             for (auto b : w.damage_bonus) {
@@ -80,7 +81,7 @@ void save_unit_data(const vector<UnitTypeData>& unit_types, string path) {
             stream << endl;
             stream << w.attacks << " ";
             stream << w.range << " ";
-            stream << w.speed << " ";
+            stream << w.speed << endl;
         }
         stream << endl;
 
@@ -139,6 +140,9 @@ std::vector<sc2::UnitTypeData> load_unit_data() {
         stream >> nWeapons;
         type.weapons = vector<Weapon>(nWeapons);
         for (auto& w : type.weapons) {
+            int typeI;
+            stream >> typeI;
+            w.type = (Weapon::TargetType)typeI;
             stream >> w.damage_;
             int nBonus;
             stream >> nBonus;
