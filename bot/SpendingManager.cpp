@@ -142,8 +142,8 @@ bool HasTechFor(UnitTypeID unitType) {
     return false;
 }
 
-void SpendingManager::AddAction(double score, Cost cost, std::function<void()> action) {
-    actions.push_back(make_tuple(score, cost, action));
+void SpendingManager::AddAction(double score, Cost cost, std::function<void()> action, bool reserveResourcesOnly) {
+    actions.push_back(make_tuple(score, cost, action, reserveResourcesOnly));
 }
 
 vector<string> latestActions;
@@ -164,24 +164,31 @@ void SpendingManager::OnStep() {
         double score;
         Cost cost;
         function<void()> callback;
-        tie(score, cost, callback) = action;
+        bool reserveResourcesOnly;
+        tie(score, cost, callback, reserveResourcesOnly) = action;
 
-        ss << setw(4) << setprecision(2) << score << setw(22) << UnitTypeToName(cost.unit_type) << " min: " << setw(3) << cost.minerals << " gas: " << setw(3) << cost.gas << " food: " << cost.supply;
+        // ss << setw(4) << setprecision(2) << score << setw(22) << getUnitData(cost.unit_type).name << " min: " << setw(3) << cost.minerals << " gas: " << setw(3) << cost.gas << " food: " << cost.supply;
+        ss << setw(4) << setprecision(2) << score << setw(22) << getUnitData(cost.unit_type).name;
         // Ignore any actions for which we don't have the required tech for yet
         if (!HasTechFor(cost.unit_type)) {
-            ss << " (ignored due to tech)" << endl;
+            ss << " (no tech)" << endl;
             continue;
-        } else {
-            ss << endl;
         }
 
         totalMinerals -= cost.minerals;
         totalGas -= cost.gas;
         supply -= cost.supply;
 
+        if (reserveResourcesOnly) {
+            ss << " (reserved)" << endl;
+            continue;
+        }
+
+        ss << endl;
+
         if ((cost.minerals == 0 || totalMinerals >= 0) && (cost.gas == 0 || totalGas >= 0) && (cost.supply == 0 || supply >= 0)) {
             stringstream ss2;
-            ss2 << setw(4) << setprecision(2) << score << setw(22) << UnitTypeToName(cost.unit_type) << " min: " << setw(3) << cost.minerals << " gas: " << setw(3) << cost.gas << " food: " << cost.supply;
+            ss2 << setw(4) << setprecision(2) << score << setw(22) << getUnitData(cost.unit_type).name << " min: " << setw(3) << cost.minerals << " gas: " << setw(3) << cost.gas << " food: " << cost.supply;
             latestActions.push_back(ss2.str());
             if (latestActions.size() > 10)
                 latestActions.erase(latestActions.begin());

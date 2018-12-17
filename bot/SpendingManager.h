@@ -16,9 +16,9 @@ Cost CostOfUpgrade(sc2::UpgradeID upgrade);
 
 struct SpendingManager {
 private:
-    std::vector<std::tuple<double, Cost, std::function<void()>>> actions;
+    std::vector<std::tuple<double, Cost, std::function<void()>, bool>> actions;
 public:
     static double GetUnitProportion(sc2::UNIT_TYPEID unitType);
-    void AddAction (double score, Cost cost, std::function<void()> action);
+    void AddAction (double score, Cost cost, std::function<void()> action, bool reserveResourcesOnly = false);
     void OnStep();
 };
