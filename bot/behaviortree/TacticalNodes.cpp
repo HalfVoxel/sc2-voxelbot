@@ -66,7 +66,7 @@ BOT::Status TacticalMove::OnTick() {
         }
         auto game_info = bot.Observation()->GetGameInfo();
         if (!currentPath.empty()) {
-            for (int i = 0; i < std::min(40, (int)currentPath.size()); i++) {
+            for (int i = 0; i < std::min(40, (int)currentPath.size() - 1); i++) {
                 bot.Debug()->DebugLineOut(Point3D(currentPath[i].x, currentPath[i].y, from.z), Point3D(currentPath[i + 1].x, currentPath[i + 1].y, from.z), Colors::White);
             }
             // bot.Debug()->DebugLineOut(from, Point3D(currentPath[0].x, currentPath[0].y, from.z), Colors::White);
