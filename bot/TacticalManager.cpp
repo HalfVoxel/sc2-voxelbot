@@ -6,13 +6,19 @@ using namespace std;
 using namespace sc2;
 
 TacticalManager::TacticalManager(std::shared_ptr<BOT::ControlFlowNode> armyTree, sc2::Point2D wallPlacement)
-    : armyTree(armyTree), wallPlacement(wallPlacement) {
+    : wallPlacement(wallPlacement), armyTree(armyTree) {
     main = CreateGroup(GroupType::Main);
 }
 
 void TacticalManager::OnStep() {
     //if(main->units.size() > 40) {
-    if (bot.Observation()->GetFoodArmy() > 90 && main->units.size() > 25) {
+    int foodInMain = 0;
+    for (auto u : main->units) {
+        if (isArmy(u->unit_type)) foodInMain += getUnitData(u->unit_type).food_required;
+    }
+
+    if (foodInMain > 60) {
+        cout << "Army food " << bot.Observation()->GetFoodArmy() << " Main food: " << foodInMain << " Army size: " << main->units.size() << endl;
         groupAssignments[CreateGroup(Strike)] = bot.influenceManager.enemyDensity.argmax();
     }
 }
@@ -100,6 +106,8 @@ UnitGroup* TacticalManager::CreateGroup(GroupType type) {
     } else if (type == GroupType::Strike) {
         group = new StrikeGroup();
         main->TransferUnits(group);
+    } else {
+        throw std::invalid_argument("type");
     }
 
     armyTree->Add(group->behavior);
