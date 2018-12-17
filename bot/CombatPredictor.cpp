@@ -219,8 +219,9 @@ void CombatRecorder::finalize() {
 
 static vector<UnitCombatInfo> combatInfo;
 
-void CombatPredictor::init(const ObservationInterface* observation) {
-    unitTypes = observation->GetUnitTypeData();
+void CombatPredictor::init() {
+    
+    unitTypes = getUnitTypes();
     for (int i = 0; i < unitTypes.size(); i++) {
         combatInfo.push_back(UnitCombatInfo((UNIT_TYPEID)i));
     }
@@ -356,6 +357,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool
     result.state = inputState;
     CombatState& state = result.state;
 
+    vector<shared_ptr<CombatUnit>> temporaryUnits;
     // TODO: Is it 1 and 2?
     auto units1 = filterByOwner(state.units, 1);
     auto units2 = filterByOwner(state.units, 2);
@@ -508,6 +510,31 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool
                     continue;
                 }
 
+                if (unit.type == UNIT_TYPEID::ZERG_INFESTOR) {
+                    if (unit.energy > 25) {
+                        // Spawn an infested terran
+                        unit.energy -= 25;
+                        auto u = makeUnit(unit.owner, UNIT_TYPEID::ZERG_INFESTORTERRAN);
+                        // Uses energy as timeout in seconds
+                        u.energy = 21 * 1.4f;
+                        auto up = make_shared<CombatUnit>();
+                        *up = u;
+                        temporaryUnits.push_back(up);
+                        // Note: a bit ugly, extracting a raw pointer from a shared one
+                        g1.push_back(&**temporaryUnits.rbegin());
+                    }
+                    continue;
+                }
+                
+                // Uses energy as timeout
+                if (unit.type == UNIT_TYPEID::ZERG_INFESTORTERRAN) {
+                    unit.energy -= dt;
+                    if (unit.energy <= 0) {
+                        unit.modifyHealth(-100000);
+                        continue;
+                    }
+                }
+
                 if (airDPS == 0 && groundDPS == 0)
                     continue;
 
@@ -640,6 +667,9 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool
         time += dt;
     }
 
+    // Remove all temporary units
+    assert(state.units.size() == inputState.units.size());
+
     return result;
 }
 
@@ -663,7 +693,7 @@ int testCombat(const CombatPredictor& predictor, const CombatState& state) {
     return predictor.predict_engage(state).state.owner_with_best_outcome();
 }
 
-vector<UNIT_TYPEID> availableUnitTypes = {
+vector<UNIT_TYPEID> availableUnitTypesTerran = {
     UNIT_TYPEID::TERRAN_LIBERATOR,
     // UNIT_TYPEID::TERRAN_BATTLECRUISER,
     UNIT_TYPEID::TERRAN_BANSHEE,
@@ -735,9 +765,14 @@ vector<UNIT_TYPEID> availableUnitTypesZerg = {
     UNIT_TYPEID::ZERG_ZERGLING,
 };
 
-float mineralScore(const CombatState& initialState, const CombatResult& combatResult, int player) {
-    assert(initialState.units.size() == combatResult.state.units.size());
+float mineralScore(const CombatState& initialState, const CombatResult& combatResult, int player, float timeToProduceUnits) {
+    // The combat result may contain more units due to temporary units spawning (e.g. infested terran, etc.) however never fewer.
+    // The first N units correspond to all the N units in the initial state.
+    assert(combatResult.state.units.size() >= initialState.units.size());
     float totalScore = 0;
+    float ourScore = 0;
+    float enemyScore = 0;
+    float lossScore = 0;
     for (int i = 0; i < initialState.units.size(); i++) {
         auto& unit1 = initialState.units[i];
         auto& unit2 = combatResult.state.units[i];
@@ -746,10 +781,47 @@ float mineralScore(const CombatState& initialState, const CombatResult& combatRe
         float healthDiff = (unit2.health - unit1.health) + (unit2.shield - unit1.shield);
         float damageTakenFraction = -healthDiff / (unit1.health_max + unit1.shield_max);
         auto& unitTypeData = unitTypes[(int)unit1.type];
-        float score = (unitTypeData.mineral_cost + 2 * unitTypeData.vespene_cost) * (unit1.owner == player ? -(1 + damageTakenFraction) : (-100 * (1 - damageTakenFraction) + 1 + damageTakenFraction));
-        totalScore += score;
+
+        float cost = unitTypeData.mineral_cost + 2 * unitTypeData.vespene_cost;
+        if (unit1.owner == player) {
+            ourScore = cost * -(1 + damageTakenFraction);
+        } else {
+            lossScore += cost * (-100 * (1 - damageTakenFraction));
+            enemyScore += cost * (1 + damageTakenFraction);
+        }
+        // totalScore += score;
     }
 
+    // Handle added units (usually temporary units)
+    for (int i = initialState.units.size(); i < combatResult.state.units.size(); i++) {
+        auto& unit2 = combatResult.state.units[i];
+
+        float healthDiff = unit2.health + unit2.shield;
+        float damageTakenFraction = -healthDiff / (unit2.health_max + unit2.shield_max);
+        auto& unitTypeData = unitTypes[(int)unit2.type];
+
+        // Unit is likely temporary, use a small cost
+        float cost = 5;
+        if (unit2.owner == player) {
+            lossScore += cost * (-100 * (1 - damageTakenFraction));
+            enemyScore += cost * (1 + damageTakenFraction);
+        }
+    }
+
+    // float timeScore = -100 * (pow(timeToProduceUnits/(1*60), 2));
+    // float timeMult = 2 * 30/(30 + timeToProduceUnits);
+    float timeMult = min(1.0f, 2 * 30/(30 + timeToProduceUnits));
+    totalScore = ourScore + enemyScore*timeMult + lossScore;
+
+    // f(a,ta) < f(b,tb) => f(a,ta - x) < f(b, tb - x)
+    // g(t-x) > g(t) : x > 0
+    // Ka + Ea*g(ta) < Kb + Eb*g(tb)
+    // Ka + Ea*g(ta-x) < Kb + Eb*g(tb-x)
+
+    // Ka + Ea*g(ta-x) < Kb + Eb*g(tb-x)
+
+    // Ea*g(ta) + Ea*g(ta-x) < Eb*g(tb) + Eb*g(tb-x)
+    // Ea*g(ta) + Ea*g(ta-x) < Eb*g(tb) + Eb*g(tb-x)
     return totalScore;
 }
 
@@ -777,7 +849,7 @@ void createState(const CombatState& state) {
     }
 }
 
-void findBestComposition(const CombatPredictor& predictor, const CombatState& opponent) {
+void findBestComposition(const CombatPredictor& predictor, const CombatState& startingState) {
     // Find composition which has
     // 1. lowest cost
     // 2. takes the least amount of damage
@@ -787,7 +859,7 @@ void findBestComposition(const CombatPredictor& predictor, const CombatState& op
     // minimize sum_allies unit.cost*(1 + unit.damage_taken_fraction) - sum_enemies unit.cost*unit.damage_taken_fraction = expected delta in mineral cost
 
     Stopwatch watch;
-    CombatState state = opponent;
+    CombatState state = startingState;
     int ourUnitsStartIndex = state.units.size();
     float bestScore = -100000000;
 
@@ -818,7 +890,7 @@ void findBestComposition(const CombatPredictor& predictor, const CombatState& op
 
         // Add unit
         for (int j = 0; j < toAdd; j++) {
-            auto unitType = availableUnitTypes[rand() % availableUnitTypes.size()];
+            auto unitType = availableUnitTypesTerran[rand() % availableUnitTypesTerran.size()];
             newState.units.push_back(makeUnit(2, unitType));
         }
 
@@ -875,9 +947,9 @@ void findBestComposition(const CombatPredictor& predictor, const CombatState& op
         CombatResult newResult1 = predictor.predict_engage(newState);
         CombatResult newResult2 = predictor.predict_engage(newState);
         CombatResult newResult3 = predictor.predict_engage(newState);
-        float score1 = mineralScore(newState, newResult1, 2);
-        float score2 = mineralScore(newState, newResult2, 2);
-        float score3 = mineralScore(newState, newResult3, 2);
+        float score1 = mineralScore(newState, newResult1, 2, 0);
+        float score2 = mineralScore(newState, newResult2, 2, 0);
+        float score3 = mineralScore(newState, newResult3, 2, 0);
 
         float newScore = (score1 + score2 + score3) / 3.0f;
         cout << (int)score1 << " " << (int)score2 << " " << (int)score3 << endl;
@@ -909,7 +981,7 @@ void findBestComposition(const CombatPredictor& predictor, const CombatState& op
     }
 
     watch.stop();
-    cout << "Duration " << watch.millis() << " ms" << endl;
+    /*cout << "Duration " << watch.millis() << " ms" << endl;
     vector<int> mineralCosts(3);
     vector<int> vespeneCosts(3);
     for (auto u : state.units) {
@@ -919,9 +991,9 @@ void findBestComposition(const CombatPredictor& predictor, const CombatState& op
 
     cout << "Team 1 costs: " << mineralCosts[1] << "+" << vespeneCosts[1] << endl;
     cout << "Team 2 costs: " << mineralCosts[2] << "+" << vespeneCosts[2] << endl;
-    createState(state);
+    createState(state);*/
 
-    CombatResult newResult = predictor.predict_engage(state, true);
+    CombatResult newResult = predictor.predict_engage(state, false);
 }
 
 struct Gene {
@@ -930,6 +1002,24 @@ struct Gene {
     vector<int> unitCounts;
 
    public:
+    vector<pair<UNIT_TYPEID, int>> getUnits(const vector<UNIT_TYPEID>& availableUnitTypes) const {
+        assert(unitCounts.size() == availableUnitTypes.size());
+        vector<pair<UNIT_TYPEID, int>> result;
+        for (int i = 0; i < unitCounts.size(); i++) {
+            if (unitCounts[i] > 0) result.emplace_back(availableUnitTypes[i], unitCounts[i]);
+        }
+        return result;
+    }
+
+    vector<pair<int, int>> getUnitsUntyped(const vector<UNIT_TYPEID>& availableUnitTypes) const {
+        assert(unitCounts.size() == availableUnitTypes.size());
+        vector<pair<int, int>> result;
+        for (int i = 0; i < unitCounts.size(); i++) {
+            if (unitCounts[i] > 0) result.emplace_back((int)availableUnitTypes[i], unitCounts[i]);
+        }
+        return result;
+    }
+
     void addToState(CombatState& state, const vector<UNIT_TYPEID>& availableUnitTypes, int owner) const {
         assert(unitCounts.size() == availableUnitTypes.size());
         for (int i = 0; i < unitCounts.size(); i++) {
@@ -988,24 +1078,32 @@ struct Gene {
             unitCounts[i] = (int)round(dist(seed));
         }
     }
+
+    Gene(const vector<UNIT_TYPEID>& availableUnitTypes, const vector<pair<UNIT_TYPEID, int>>& units)
+        : unitCounts(availableUnitTypes.size()) {
+        for (auto u : units) {
+            unitCounts[indexOf(availableUnitTypes, u.first)] += u.second;
+        }
+    }
 };
 
-float calculateFitness(const CombatPredictor& predictor, const CombatState& opponent, const vector<UNIT_TYPEID>& availableUnitTypes, Gene& gene) {
-    CombatState state = opponent;
-    gene.addToState(state, availableUnitTypes, 2);
-    int its = 0;
-    while (predictor.predict_engage(state, false, false).state.owner_with_best_outcome() == 1) {
-        its++;
-        if (its > 4)
-            break;
-        gene.scale(1.5f);
-        state = opponent;
+void scaleUntilWinning(const CombatPredictor& predictor, const CombatState& opponent, const vector<UNIT_TYPEID>& availableUnitTypes, Gene& gene) {
+    for (int its = 0; its < 5; its++) {
+        CombatState state = opponent;
         gene.addToState(state, availableUnitTypes, 2);
+        if (predictor.predict_engage(state, false, false).state.owner_with_best_outcome() == 2) break;
+
+        gene.scale(1.5f);
     }
-    return mineralScore(state, predictor.predict_engage(state, false, false), 2);  // + mineralScore(state, predictor.predict_engage(state, false, true), 2)) * 0.5f;
 }
 
-void findBestCompositionGenetic(const CombatPredictor& predictor, const vector<UNIT_TYPEID>& availableUnitTypes, const CombatState& opponent) {
+float calculateFitness(const CombatPredictor& predictor, const CombatState& opponent, const vector<UNIT_TYPEID>& availableUnitTypes, Gene& gene, float timeToProduceUnits) {
+    CombatState state = opponent;
+    gene.addToState(state, availableUnitTypes, 2);
+    return mineralScore(state, predictor.predict_engage(state, false, false), 2, timeToProduceUnits);  // + mineralScore(state, predictor.predict_engage(state, false, true), 2)) * 0.5f;
+}
+
+vector<pair<UNIT_TYPEID,int>> findBestCompositionGenetic(const CombatPredictor& predictor, const vector<UNIT_TYPEID>& availableUnitTypes, const CombatState& opponent, const BuildOptimizerNN* buildTimePredictor, const BuildState* startingBuildState, vector<pair<UNIT_TYPEID,int>>* seedComposition) {
     Stopwatch watch;
 
     const int POOL_SIZE = 20;
@@ -1015,19 +1113,36 @@ void findBestCompositionGenetic(const CombatPredictor& predictor, const vector<U
     for (int i = 0; i < POOL_SIZE; i++) {
         generation[i] = Gene(availableUnitTypes, 10, rnd);
     }
-    for (int i = 0; i < 100; i++) {
+
+    vector<pair<int,int>> startingUnitsNN;
+    if (startingBuildState != nullptr && buildTimePredictor != nullptr) for (auto u : startingBuildState->units) startingUnitsNN.push_back({(int)u.type, u.units});
+
+    for (int i = 0; i < 50; i++) {
+        if (i == 20 && seedComposition != nullptr) {
+            generation[generation.size()-1] = Gene(availableUnitTypes, *seedComposition);
+        }
+
         vector<float> fitness(generation.size());
         vector<int> indices(generation.size());
+
+        vector<vector<pair<int,int>>> targetUnitsNN(generation.size());
+        for (int j = 0; j < generation.size(); j++) {
+            scaleUntilWinning(predictor, opponent, availableUnitTypes, generation[j]);
+            targetUnitsNN[j] = generation[j].getUnitsUntyped(availableUnitTypes);
+        }
+
+        vector<float> timesToProduceUnits = startingBuildState != nullptr && buildTimePredictor != nullptr ? buildTimePredictor->predictTimeToBuild(startingUnitsNN, startingBuildState->resources, targetUnitsNN) : vector<float>(generation.size());
+
         for (int j = 0; j < generation.size(); j++) {
             indices[j] = j;
-            fitness[j] = calculateFitness(predictor, opponent, availableUnitTypes, generation[j]);
+            fitness[j] = calculateFitness(predictor, opponent, availableUnitTypes, generation[j], timesToProduceUnits[j]);
         }
 
         sortByValueDescending<int, float>(indices, [=](int index) { return fitness[index]; });
-        for (int j = 0; j < indices.size(); j++) {
-            cout << " " << fitness[indices[j]];
-        }
-        cout << endl;
+        // for (int j = 0; j < indices.size(); j++) {
+        //     cout << " " << fitness[indices[j]];
+        // }
+        // cout << endl;
         vector<Gene> nextGeneration;
         // Add the N best performing genes
         for (int j = 0; j < 5; j++) {
@@ -1048,13 +1163,19 @@ void findBestCompositionGenetic(const CombatPredictor& predictor, const vector<U
 
         swap(generation, nextGeneration);
 
-        cout << "Best fitness " << fitness[indices[0]] << endl;
+        /*if (i == 49) cout << "Best fitness " << fitness[indices[0]] << " time to produce: " << timesToProduceUnits[indices[0]] << endl;
+        if (i == 49) {
+            for (auto u : targetUnitsNN[indices[0]]) {
+                cout << "Target unit: " << UnitTypeToName((UNIT_TYPEID)u.first) << " " << u.second << endl;
+            }
+        }*/
     }
 
-    CombatState testState = opponent;
+    /*CombatState testState = opponent;
     generation[0].addToState(testState, availableUnitTypes, 2);
     watch.stop();
-    cout << "Duration " << watch.millis() << " ms" << endl;
+    createState(testState);
+    // cout << "Duration " << watch.millis() << " ms" << endl;
     vector<int> mineralCosts(3);
     vector<int> vespeneCosts(3);
     for (auto u : testState.units) {
@@ -1064,14 +1185,17 @@ void findBestCompositionGenetic(const CombatPredictor& predictor, const vector<U
 
     cout << "Team 1 costs: " << mineralCosts[1] << "+" << vespeneCosts[1] << endl;
     cout << "Team 2 costs: " << mineralCosts[2] << "+" << vespeneCosts[2] << endl;
-    createState(testState);
+    // createState(testState);
+    
     CombatRecording recording;
     CombatResult newResult = predictor.predict_engage(testState, true, false, &recording);
     recording.writeCSV("recording2.csv");
 
     CombatRecording recording2;
     CombatResult newResult2 = predictor.predict_engage(testState, false, true, &recording2);
-    recording2.writeCSV("recording3.csv");
+    recording2.writeCSV("recording3.csv");*/
+
+    return generation[0].getUnits(availableUnitTypes);
 }
 
 void unitTestSurround() {
@@ -1096,10 +1220,19 @@ void unitTestSurround() {
     assert(maxSurround(pow(unitRadius(UNIT_TYPEID::TERRAN_THOR), 2) * M_PI * 1, 1).maxMeleeAttackers == 10);
 }
 
-void CombatPredictor::unitTest() const {
+void CombatPredictor::unitTest(const BuildOptimizerNN& buildTimePredictor) const {
     unitTestSurround();
 
-    /*
+    auto u1 = makeUnit(1, UNIT_TYPEID::TERRAN_BATTLECRUISER);
+    auto u2 = makeUnit(1, UNIT_TYPEID::TERRAN_THOR);
+    cout << "DPS1 " << calculateDPS(u1, u2) << endl;
+    cout << "DPS2 " << calculateDPS(u2, u1) << endl;
+
+    assert(testCombat(*this, {{
+		makeUnit(1, UNIT_TYPEID::TERRAN_VIKINGFIGHTER),
+        makeUnit(2, UNIT_TYPEID::PROTOSS_COLOSSUS),
+	}}) == 1);
+
 	assert(testCombat(*this, {{
 		makeUnit(1, UNIT_TYPEID::PROTOSS_PYLON),
 		makeUnit(1, UNIT_TYPEID::PROTOSS_PHOTONCANNON),
@@ -1150,12 +1283,12 @@ void CombatPredictor::unitTest() const {
 	}}) == 2);
 
 	assert(testCombat(*this, {{
-		CombatUnit(1, UNIT_TYPEID::ZERG_SPORECRAWLER, 100, false),
-		CombatUnit(1, UNIT_TYPEID::ZERG_SPORECRAWLER, 100, false),
-		CombatUnit(1, UNIT_TYPEID::ZERG_SPORECRAWLER, 100, false),
-		CombatUnit(2, UNIT_TYPEID::TERRAN_REAPER, 65, false),
-		CombatUnit(2, UNIT_TYPEID::TERRAN_REAPER, 65, false),
-		CombatUnit(2, UNIT_TYPEID::TERRAN_REAPER, 65, false),
+		makeUnit(1, UNIT_TYPEID::ZERG_SPORECRAWLER),
+		makeUnit(1, UNIT_TYPEID::ZERG_SPORECRAWLER),
+        makeUnit(1, UNIT_TYPEID::ZERG_SPORECRAWLER),
+        makeUnit(2, UNIT_TYPEID::TERRAN_REAPER),
+        makeUnit(2, UNIT_TYPEID::TERRAN_REAPER),
+        makeUnit(2, UNIT_TYPEID::TERRAN_REAPER),
 	}}) == 2);
 
 	assert(testCombat(*this, {{
@@ -1167,26 +1300,27 @@ void CombatPredictor::unitTest() const {
 		CombatUnit(2, UNIT_TYPEID::ZERG_BROODLORD, 225, true),
 	}}) == 1);
 
-	assert(testCombat(*this, {{
-		CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
-		CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
-		CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
-		CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
-		CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
-		CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
-		CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
-		CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
-		CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
-		CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
-		CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
-		CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
-		CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
-		CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
-		CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
-		CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
-		CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
-		CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
-	}}) == 1);
+    // TODO: Splash?
+	// assert(testCombat(*this, {{
+	// 	CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
+	// 	CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
+	// 	CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
+	// 	CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
+	// 	CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
+	// 	CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
+	// 	CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
+	// 	CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
+	// 	CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
+	// 	CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
+	// 	CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
+	// 	CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
+	// 	CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
+	// 	CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
+	// 	CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
+	// 	CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
+	// 	CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
+	// 	CombatUnit(2, UNIT_TYPEID::ZERG_CORRUPTOR, 225, true),
+	// }}) == 1);
 
 	assert(testCombat(*this, {{
 		CombatUnit(1, UNIT_TYPEID::TERRAN_CYCLONE, 180, true),
@@ -1196,6 +1330,11 @@ void CombatPredictor::unitTest() const {
 	assert(testCombat(*this, {{
 		makeUnit(1, UNIT_TYPEID::TERRAN_BATTLECRUISER),
 		makeUnit(2, UNIT_TYPEID::TERRAN_THOR),
+	}}) == 1);
+
+    assert(testCombat(*this, {{
+		makeUnit(1, UNIT_TYPEID::ZERG_INFESTOR),
+		makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
 	}}) == 1);
 
 	// Wins due to splash damage
@@ -1245,7 +1384,7 @@ void CombatPredictor::unitTest() const {
 		makeUnit(1, UNIT_TYPEID::ZERG_ZERGLING),
 		makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
 		makeUnit(2, UNIT_TYPEID::TERRAN_THOR),
-	}}) == 1);*/
+	}}) == 1);
 
     CombatState state1 = { {
         makeUnit(1, UNIT_TYPEID::PROTOSS_PYLON),
@@ -1341,7 +1480,7 @@ void CombatPredictor::unitTest() const {
     // TODO: Shield armor != armor
     // TODO: Kiting approximation?
 
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 0; i++) {
         // Problematic
         // findBestCompositionGenetic(*this, availableUnitTypesProtoss, {{
         // 	makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
@@ -1402,17 +1541,58 @@ void CombatPredictor::unitTest() const {
         // 	makeUnit(1, UNIT_TYPEID::ZERG_ROACH),
         // }});
 
-		findBestCompositionGenetic(*this, availableUnitTypesZerg, { {
-			makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
-            makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
-            makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
-			makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
-            makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
-            makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
-			makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
-            makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
-            makeUnit(1, UNIT_TYPEID::PROTOSS_TEMPEST),
-		} });
+        BuildState startingBuildState({
+            { UNIT_TYPEID::TERRAN_COMMANDCENTER, 2},
+            { UNIT_TYPEID::TERRAN_SCV, 20 },
+            { UNIT_TYPEID::TERRAN_REFINERY, 2 },
+            { UNIT_TYPEID::TERRAN_SUPPLYDEPOT, 1 },
+            { UNIT_TYPEID::TERRAN_FACTORY, 4 },
+            { UNIT_TYPEID::TERRAN_STARPORT, 4 },
+            { UNIT_TYPEID::TERRAN_BARRACKS, 1 },
+            // { UNIT_TYPEID::TERRAN_STARPORT, 1 },
+        });
+        startingBuildState.resources.vespene = 200;
+        startingBuildState.race = Race::Terran;
+
+		auto res = findBestCompositionGenetic(*this, availableUnitTypesTerran, { {
+            makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
+            makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
+            makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
+            makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
+            makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
+            makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
+            makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
+            makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
+            makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
+            makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
+            makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
+            makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
+            makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
+            makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
+            makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
+            makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK),
+            makeUnit(1, UNIT_TYPEID::ZERG_ROACH),
+            makeUnit(1, UNIT_TYPEID::ZERG_ROACH),
+            makeUnit(1, UNIT_TYPEID::ZERG_ROACH),
+            makeUnit(1, UNIT_TYPEID::ZERG_ROACH),
+            makeUnit(1, UNIT_TYPEID::ZERG_ROACH),
+            makeUnit(1, UNIT_TYPEID::ZERG_ROACH),
+            makeUnit(1, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(1, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(1, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(1, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(1, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(1, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(1, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(1, UNIT_TYPEID::ZERG_ZERGLING),
+		} }, &buildTimePredictor, &startingBuildState);
+
+        cout << "Counter" << endl;
+        for (auto u : res) {
+            cout << UnitTypeToName(u.first) << " " << u.second << endl;
+        }
+
+        auto buildOrder = findBestBuildOrderGenetic(startingBuildState, res);
 	}
 
     /*CombatState state3 = {{

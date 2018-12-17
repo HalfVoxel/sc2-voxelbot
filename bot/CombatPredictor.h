@@ -1,5 +1,7 @@
 #pragma once
 #include "sc2api/sc2_interfaces.h"
+#include "build_optimizer_nn.h"
+#include "BuildOptimizer.h"
 
 struct CombatUnit {
 	int owner;
@@ -30,10 +32,16 @@ struct CombatResult {
 struct CombatRecording;
 
 struct CombatPredictor {
-	void init(const sc2::ObservationInterface* observation);
+	void init();
 	CombatResult predict_engage(const CombatState& state, bool debug=false, bool badMicro=false, CombatRecording* recording=nullptr) const;
-	void unitTest() const;
+	void unitTest(const BuildOptimizerNN& buildTimePredictor) const;
 };
+
+CombatUnit makeUnit(int owner, sc2::UNIT_TYPEID type);
+
+extern std::vector<sc2::UNIT_TYPEID> availableUnitTypesTerran;
+
+std::vector<std::pair<sc2::UNIT_TYPEID,int>> findBestCompositionGenetic(const CombatPredictor& predictor, const std::vector<sc2::UNIT_TYPEID>& availableUnitTypes, const CombatState& opponent, const BuildOptimizerNN* buildTimePredictor = nullptr, const BuildState* startingBuildState = nullptr, std::vector<std::pair<sc2::UNIT_TYPEID,int>>* seedComposition = nullptr);
 
 struct CombatRecorder {
 private:
