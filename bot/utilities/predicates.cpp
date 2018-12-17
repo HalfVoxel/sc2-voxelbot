@@ -1,4 +1,5 @@
 #include "predicates.h"
+#include "mappings.h"
 
 using namespace sc2;
 
@@ -27,6 +28,38 @@ bool IsArmy::operator()(const Unit& unit) {
         }
     }
     switch (unit.unit_type.ToType()) {
+        case UNIT_TYPEID::ZERG_OVERLORD:
+            return false;
+        case UNIT_TYPEID::PROTOSS_PROBE:
+            return false;
+        case UNIT_TYPEID::ZERG_DRONE:
+            return false;
+        case UNIT_TYPEID::TERRAN_SCV:
+            return false;
+        case UNIT_TYPEID::ZERG_QUEEN:
+            return false;
+        case UNIT_TYPEID::ZERG_LARVA:
+            return false;
+        case UNIT_TYPEID::ZERG_EGG:
+            return false;
+        case UNIT_TYPEID::TERRAN_MULE:
+            return false;
+        case UNIT_TYPEID::TERRAN_NUKE:
+            return false;
+        default:
+            return true;
+    }
+}
+
+bool isArmy(UNIT_TYPEID type) {
+    auto& unitData = getUnitData(type);
+    auto attributes = unitData.attributes;
+    for (const auto& attribute : attributes) {
+        if (attribute == Attribute::Structure) {
+            return false;
+        }
+    }
+    switch (type) {
         case UNIT_TYPEID::ZERG_OVERLORD:
             return false;
         case UNIT_TYPEID::PROTOSS_PROBE:
@@ -99,4 +132,9 @@ bool isStructure(const UnitTypeData& unitType) {
         }
     }
     return is_structure;
+}
+
+bool isStructure(UNIT_TYPEID type) {
+    // TODO: Cache in mappings?
+    return isStructure(getUnitData(type));
 }
