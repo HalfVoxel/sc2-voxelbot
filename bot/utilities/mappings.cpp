@@ -227,6 +227,9 @@ void init() {
     mUnitTypes[(int)UNIT_TYPEID::TERRAN_BATTLECRUISER].weapons = { bc1, bc2 };
 
     mUnitTypes[(int)UNIT_TYPEID::PROTOSS_CARRIER].weapons = { carrier1 };
+
+    // Hacky fix for build order optimizer not taking this into account
+    mUnitTypes[(int)UNIT_TYPEID::PROTOSS_GATEWAY].tech_requirement = UNIT_TYPEID::PROTOSS_PYLON;
 }
 
 void initMappings(const ObservationInterface* observation) {
