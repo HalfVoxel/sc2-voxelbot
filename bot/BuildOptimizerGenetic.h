@@ -2,21 +2,27 @@
 #include <vector>
 #include "sc2api/sc2_interfaces.h"
 
+struct BuildState;
+
 struct BuildResources {
     float minerals;
     float vespene;
 
     BuildResources(float minerals, float vespene)
         : minerals(minerals), vespene(vespene) {}
-
-    /** Simulate mining with the given speed for the given amount of time */
-    inline void simulateMining(std::pair<float, float> miningSpeed, float dt) {
-        minerals += miningSpeed.first * dt;
-        vespene += miningSpeed.second * dt;
-    }
 };
 
-struct BuildState;
+struct MiningSpeed {
+    float mineralsPerSecond;
+    float vespenePerSecond;
+
+    /** Simulate mining with the given speed for the given amount of time */
+    void simulateMining (BuildState& state, float dt) const;
+
+    inline bool operator== (const MiningSpeed& other) const {
+        return mineralsPerSecond == other.mineralsPerSecond && vespenePerSecond == other.vespenePerSecond;
+    }
+};
 
 struct BuildUnitInfo {
     /** Type of the unit */
@@ -54,6 +60,7 @@ enum BuildEventType {
     FinishedUnit,
     SpawnLarva,
     MuleTimeout,
+    MakeUnitAvailable,  // Un-busy unit
 };
 
 struct BuildEvent {
@@ -82,6 +89,28 @@ struct BuildEvent {
     }
 };
 
+struct BaseInfo {
+    float remainingMinerals;
+    float remainingVespene1;
+    float remainingVespene2;
+
+    BaseInfo (float minerals, float vespene1, float vespene2) : remainingMinerals(minerals), remainingVespene1(vespene1), remainingVespene2(vespene2) {}
+
+    inline void mineMinerals(float amount) {
+        remainingMinerals = fmax(0.0f, remainingMinerals - amount);
+    }
+
+    /** Returns (high yield, low yield) mineral slots on this expansion */
+    inline std::pair<int,int> mineralSlots () const {
+        // Max is 10800 for an expansion with 8 patches
+        if (remainingMinerals > 4800) return {16, 8};
+        if (remainingMinerals > 4000) return {12, 6};
+        if (remainingMinerals > 100) return {8, 4};
+        if (remainingMinerals > 0) return {2, 1};
+        return {0, 0};
+    }
+};
+
 /** Represents all units, buildings and current build/train actions that are in progress for a given player */
 struct BuildState {
     /** Time in game time seconds at normal speed */
@@ -95,6 +124,7 @@ struct BuildState {
     std::vector<BuildEvent> events;
     /** Current resources */
     BuildResources resources;
+    std::vector<BaseInfo> baseInfos;
 
     BuildState()
         : time(0), race(sc2::Race::Terran), units(), events(), resources(0, 0) {}
@@ -121,10 +151,10 @@ struct BuildState {
     void addUnits(sc2::UNIT_TYPEID type, sc2::UNIT_TYPEID addon, int delta);
 
     /** Returns the current mining speed of (minerals,vespene gas) per second (at normal game speed) */
-    std::pair<float, float> miningSpeed() const;
+    MiningSpeed miningSpeed() const;
 
     /** Returns the time it will take to get the specified resources using the given mining speed */
-    float timeToGetResources(std::pair<float, float> miningSpeed, float mineralCost, float vespeneCost) const;
+    float timeToGetResources(MiningSpeed miningSpeed, float mineralCost, float vespeneCost) const;
 
     /** Adds a new future event to the state */
     void addEvent(BuildEvent event);

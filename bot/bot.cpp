@@ -305,6 +305,30 @@ void Bot::OnStep() {
         buildOrderStartingState.resources.minerals = Observation()->GetMinerals();
         buildOrderStartingState.resources.vespene = Observation()->GetVespene();
 
+        vector<BaseInfo>& baseInfos = buildOrderStartingState.baseInfos;
+        vector<Point2D> basePositions;
+        for (auto u : ourUnits) {
+            if (isTownHall(u->unit_type)) {
+                basePositions.push_back(u->pos);
+                baseInfos.push_back(BaseInfo(0, 0, 0));
+            }
+        }
+        auto neutralUnits = Observation()->GetUnits(Unit::Alliance::Neutral);
+        for (auto u : neutralUnits) {
+            if (u->mineral_contents > 0) {
+                for (int i = 0; i < baseInfos.size(); i++) {
+                    if (DistanceSquared2D(u->pos, basePositions[i]) < 10*10) {
+                        baseInfos[i].remainingMinerals += u->mineral_contents;
+                        break;
+                    }
+                }
+            }
+        }
+
+        for (auto& b : baseInfos) {
+            cout << "Base minerals " << b.remainingMinerals << endl;
+        }
+
         currentBuildOrderFuture = std::async(std::launch::async, [=]{
             // Make sure most buildings are built even though they are currently under construction.
             // The buildTimePredictor cannot take buildings under construction into account.

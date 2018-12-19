@@ -53,7 +53,25 @@ void BuildState::addUnits(UNIT_TYPEID type, UNIT_TYPEID addon, int delta) {
         assert(false);
 }
 
-pair<float, float> BuildState::miningSpeed() const {
+void MiningSpeed::simulateMining (BuildState& state, float dt) const {
+    float totalWeight = 0;
+    for (auto& base : state.baseInfos) {
+        auto slots = base.mineralSlots();
+        float weight = slots.first * 1.5f + slots.second;
+        totalWeight += weight;
+    }
+    float normalizationFactor = 1.0f / (totalWeight + 0.0001f);
+    float deltaMineralsPerWeight = mineralsPerSecond * dt * normalizationFactor;
+    for (auto& base : state.baseInfos) {
+        auto slots = base.mineralSlots();
+        float weight = slots.first * 1.5f + slots.second;
+        base.mineMinerals(deltaMineralsPerWeight * weight);
+    }
+    state.resources.minerals += mineralsPerSecond * dt;
+    state.resources.vespene += vespenePerSecond * dt;
+}
+
+MiningSpeed BuildState::miningSpeed() const {
     int harvesters = 0;
     int mules = 0;
     int bases = 0;
@@ -77,15 +95,27 @@ pair<float, float> BuildState::miningSpeed() const {
         }
     }
 
+    int highYieldMineralHarvestingSlots = 0;
+    int lowYieldMineralHarvestingSlots = 0;
+    for (int i = 0; i < bases; i++) {
+        if (i < baseInfos.size()) {
+            auto t = baseInfos[i].mineralSlots();
+            highYieldMineralHarvestingSlots += t.first;
+            lowYieldMineralHarvestingSlots += t.second;
+        } else {
+            // Assume lots of minerals
+            highYieldMineralHarvestingSlots += 16;
+            lowYieldMineralHarvestingSlots += 8;
+        }
+    }
+
     int vespeneMining = min(harvesters / 2, geysers * 3);
     int mineralMining = harvesters - vespeneMining;
 
     // Maximum effective harvesters (todo: account for more things)
-    mineralMining = min(mineralMining, bases * 24);
-
     // First 2 harvesters per mineral field yield more minerals than the 3rd one.
-    int highYieldHarvesters = min(bases * 8 * 2, mineralMining);
-    int lowYieldHarvesters = mineralMining - highYieldHarvesters;
+    int highYieldHarvesters = min(highYieldMineralHarvestingSlots, mineralMining);
+    int lowYieldHarvesters = min(lowYieldHarvesters, mineralMining - highYieldHarvesters);
 
     // TODO: Check units here!
     const float FasterSpeedMultiplier = 1.4f;
@@ -93,24 +123,27 @@ pair<float, float> BuildState::miningSpeed() const {
     const float HighYieldMineralsPerMinute = 40 * FasterSpeedMultiplier;
     const float VespenePerMinute = 38 * FasterSpeedMultiplier;
     const float MinutesPerSecond = 1 / 60.0f;
-    float mineralsPerSecond = (lowYieldHarvesters * LowYieldMineralsPerMinute + highYieldHarvesters * HighYieldMineralsPerMinute) * MinutesPerSecond;
-    float vespenePerSecond = vespeneMining * VespenePerMinute * MinutesPerSecond;
-    return make_pair(mineralsPerSecond, vespenePerSecond);
+
+    MiningSpeed speed;
+    speed.mineralsPerSecond = (lowYieldHarvesters * LowYieldMineralsPerMinute + highYieldHarvesters * HighYieldMineralsPerMinute) * MinutesPerSecond;
+    speed.vespenePerSecond = vespeneMining * VespenePerMinute * MinutesPerSecond;
+
+    return speed;
 }
 
-float BuildState::timeToGetResources(pair<float, float> miningSpeed, float mineralCost, float vespeneCost) const {
+float BuildState::timeToGetResources(MiningSpeed miningSpeed, float mineralCost, float vespeneCost) const {
     mineralCost -= resources.minerals;
     vespeneCost -= resources.vespene;
     float time = 0;
     if (mineralCost > 0) {
-        if (miningSpeed.first == 0)
+        if (miningSpeed.mineralsPerSecond == 0)
             return numeric_limits<float>::infinity();
-        time = mineralCost / miningSpeed.first;
+        time = mineralCost / miningSpeed.mineralsPerSecond;
     }
     if (vespeneCost > 0) {
-        if (miningSpeed.second == 0)
+        if (miningSpeed.vespenePerSecond == 0)
             return numeric_limits<float>::infinity();
-        time = max(time, vespeneCost / miningSpeed.second);
+        time = max(time, vespeneCost / miningSpeed.vespenePerSecond);
     }
     return time;
 }
@@ -134,7 +167,7 @@ void BuildState::simulate(float endTime) {
             break;
         }
         float dt = ev.time - time;
-        resources.simulateMining(currentMiningSpeed, dt);
+        currentMiningSpeed.simulateMining(*this, dt);
         time = ev.time;
 
         ev.apply(*this);
@@ -142,7 +175,8 @@ void BuildState::simulate(float endTime) {
         if (ev.impactsEconomy()) {
             currentMiningSpeed = miningSpeed();
         } else {
-            assert(currentMiningSpeed == miningSpeed());
+            // Ideally this would always hold, but when we simulate actual bases with mineral patches the approximations used are not entirely accurate and the mining rate may change even when there is no economically significant event
+            assert(baseInfos.size() > 0 || currentMiningSpeed == miningSpeed());
         }
     }
 
@@ -150,7 +184,7 @@ void BuildState::simulate(float endTime) {
 
     {
         float dt = endTime - time;
-        resources.simulateMining(currentMiningSpeed, dt);
+        currentMiningSpeed.simulateMining(*this, dt);
         time = endTime;
     }
 }
@@ -192,6 +226,8 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
                 simulate(events[0].time);
                 continue;
             }
+
+            // TODO: Handles food?
 
             bool isUnitAddon = isAddon(unitType);
 
@@ -373,6 +409,10 @@ void BuildEvent::apply(BuildState& state) {
         }
         case MuleTimeout: {
             state.addUnits(UNIT_TYPEID::TERRAN_MULE, -1);
+            break;
+        }
+        case MakeUnitAvailable: {
+            state.makeUnitsBusy(caster, casterAddon, -1);
             break;
         }
     }
@@ -741,12 +781,13 @@ void printBuildOrderDetailed(const BuildState& startState, vector<UNIT_TYPEID> b
         cout << endl;
     }
     cout << "Build order size " << buildOrder.size() << endl;
-    state.simulateBuildOrder(buildOrder, [&](int i) {
+    bool success = state.simulateBuildOrder(buildOrder, [&](int i) {
         cout << "Step " << i << "\t" << (int)(state.time / 60.0f) << ":" << (int)(fmod(state.time, 60.0f)) << "\t" << UnitTypeToName(buildOrder[i]) << " "
-             << "food: " << state.foodAvailable() << " " << (int)state.resources.minerals << "+" << (int)state.resources.vespene << endl;
+             << "food: " << state.foodAvailable() << " resources: " << (int)state.resources.minerals << "+" << (int)state.resources.vespene << " " << (state.baseInfos.size() > 0 ? state.baseInfos[0].remainingMinerals : 0) << endl;
     });
 
-    cout << "Finished at " << (int)(state.time / 60.0f) << ":" << (int)(fmod(state.time, 60.0f)) << endl;
+    cout << (success ? "Finished at " : "Failed at ");
+    cout << (int)(state.time / 60.0f) << ":" << (int)(fmod(state.time, 60.0f)) << endl;
 }
 
 void printBuildOrder(vector<UNIT_TYPEID> buildOrder) {
@@ -784,12 +825,13 @@ float calculateFitness(const BuildState& startState, const vector<int>& starting
     state.simulate(60 * 2);
 
     auto miningSpeed = state.miningSpeed();
-    return -max(avgTime * 2, 2 * 60.0f) + (state.resources.minerals + 2 * state.resources.vespene) * 0.001 + (miningSpeed.first + 2 * miningSpeed.second) * 60 * 0.005;
+    return -max(avgTime * 2, 2 * 60.0f) + (state.resources.minerals + 2 * state.resources.vespene) * 0.001 + (miningSpeed.mineralsPerSecond + 2 * miningSpeed.vespenePerSecond) * 60 * 0.005;
 }
 
 /** Try really hard to do optimize the gene.
  * This will try to swap adjacent items in the build order as well as trying to remove all non-essential items.
  */
+// TODO: Add operation to remove all items that are implied anyway (i.e. if removing the item and then adding in implicit steps returns the same result as just adding in the implicit steps)
 Gene locallyOptimizeGene(const BuildState& startState, const vector<int>& startingUnitCounts, const vector<int>& startingAddonCountPerUnitType, const vector<UNIT_TYPEID>& availableUnitTypes, const vector<int>& actionRequirements, const Gene& gene) {
     vector<int> currentActionRequirements = actionRequirements;
     for (auto b : gene.buildOrder)
@@ -1338,22 +1380,41 @@ void unitTestBuildOptimizer() {
     // assert(BuildState({{ UNIT_TYPEID::ZERG_HATCHERY, 1 }, { UNIT_TYPEID::ZERG_DRONE, 12 }}).simulateBuildOrder({ UNIT_TYPEID::ZERG_SPAWNINGPOOL, UNIT_TYPEID::ZERG_ZERGLING }));
 
     // findBestBuildOrderGenetic({ { UNIT_TYPEID::ZERG_HATCHERY, 1 }, { UNIT_TYPEID::ZERG_DRONE, 12 } }, { { UNIT_TYPEID::ZERG_HATCHERY, 1 }, { UNIT_TYPEID::ZERG_ZERGLING, 12 }, { UNIT_TYPEID::ZERG_MUTALISK, 20 }, { UNIT_TYPEID::ZERG_INFESTOR, 1 } });
-    for (int i = 0; i < 0; i++) {
+    for (int i = 0; i < 1; i++) {
         BuildState startState({ { UNIT_TYPEID::TERRAN_COMMANDCENTER, 1 }, { UNIT_TYPEID::TERRAN_SCV, 12 } });
         startState.resources.minerals = 50;
         startState.race = Race::Terran;
 
-        findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::TERRAN_VIKINGFIGHTER, 2 }, { UNIT_TYPEID::TERRAN_MEDIVAC, 3 }, { UNIT_TYPEID::TERRAN_BANSHEE, 3 }, { UNIT_TYPEID::TERRAN_MARINE, 20 }, { UNIT_TYPEID::TERRAN_BUNKER, 1 } });
+        // findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::TERRAN_VIKINGFIGHTER, 2 }, { UNIT_TYPEID::TERRAN_MEDIVAC, 3 }, { UNIT_TYPEID::TERRAN_BANSHEE, 3 }, { UNIT_TYPEID::TERRAN_MARINE, 20 }, { UNIT_TYPEID::TERRAN_BUNKER, 1 } });
         // findBestBuildOrderGenetic({ { UNIT_TYPEID::TERRAN_COMMANDCENTER, 1 }, { UNIT_TYPEID::TERRAN_SCV, 12 } }, { { UNIT_TYPEID::TERRAN_BARRACKSREACTOR, 0 }, { UNIT_TYPEID::TERRAN_MARINE, 30 }, { UNIT_TYPEID::TERRAN_MARAUDER, 0 } });
 
-        if (false) {
+        if (true) {
             BuildState startState({ { UNIT_TYPEID::PROTOSS_NEXUS, 1 }, { UNIT_TYPEID::PROTOSS_PROBE, 12 } });
             startState.resources.minerals = 50;
             startState.race = Race::Protoss;
+            // Initial delay before harvesters start mining properly
+            startState.makeUnitsBusy(UNIT_TYPEID::PROTOSS_PROBE, UNIT_TYPEID::INVALID, 12);
+            for (int i = 0; i < 12; i++) startState.addEvent(BuildEvent(BuildEventType::MakeUnitAvailable, 4, UNIT_TYPEID::PROTOSS_PROBE, ABILITY_ID::INVALID));
+
+            startState.baseInfos = { BaseInfo(300, 1000, 1000) };
             // findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ADEPT, 23 } });
             // findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ZEALOT, 20 }, { UNIT_TYPEID::PROTOSS_STALKER, 30 }, { UNIT_TYPEID::PROTOSS_ADEPT, 12 }, { UNIT_TYPEID::PROTOSS_COLOSSUS, 2 } });
-            findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ZEALOT, 5 }, { UNIT_TYPEID::PROTOSS_STALKER, 3 }, { UNIT_TYPEID::PROTOSS_ADEPT, 12 }, { UNIT_TYPEID::PROTOSS_COLOSSUS, 2 } });
-            printBuildOrderDetailed(startState, buildOrderProBO);
+            // auto bo = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_PHOENIX, 3 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 15 }, { UNIT_TYPEID::PROTOSS_CARRIER, 1 }, { UNIT_TYPEID::PROTOSS_OBSERVER, 1 }, { UNIT_TYPEID::PROTOSS_IMMORTAL, 1 } });
+
+            vector<UNIT_TYPEID> bo = {
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+            };
+            printBuildOrderDetailed(startState, bo);
+            // printBuildOrderDetailed(startState, buildOrderProBO);
         }
     }
 
