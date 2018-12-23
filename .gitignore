@@ -19,8 +19,8 @@
 *.out
 *.app
 
-build/
-build_*/
+/build/
+/build_*/
 
 *.swp
 
