@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) { /*
     coordinator.SetMultithreaded(true);
 
     coordinator.SetParticipants({
-        CreateParticipant(Race::Terran, &bot),
+        CreateParticipant(Race::Protoss, &bot),
         CreateComputer(Race::Zerg, Difficulty::VeryHard),
     });
 

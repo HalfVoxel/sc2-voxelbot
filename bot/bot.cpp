@@ -83,6 +83,7 @@ void Bot::OnGameStart() {
     armyTree = shared_ptr<ControlFlowNode>(new ParallelNode{
         new ControlSupplyDepots(),
         new AssignHarvesters(UNIT_TYPEID::TERRAN_SCV, ABILITY_ID::HARVEST_GATHER, UNIT_TYPEID::TERRAN_REFINERY),
+        new AssignHarvesters(UNIT_TYPEID::PROTOSS_PROBE, ABILITY_ID::HARVEST_GATHER, UNIT_TYPEID::PROTOSS_ASSIMILATOR),
     });
     tacticalManager = new TacticalManager(armyTree, buildingPlacement.wallPlacement);
 }
@@ -123,6 +124,7 @@ BuildState lastStartingState;
 float enemyScaling = 1;
 
 void Bot::OnStep() {
+
     auto ourUnits = agent.Observation()->GetUnits(Unit::Alliance::Self);
     auto enemyUnits = agent.Observation()->GetUnits(Unit::Alliance::Enemy);
     auto abilities = agent.Query()->GetAbilitiesForUnits(ourUnits, false);
@@ -171,7 +173,8 @@ void Bot::OnStep() {
         //cout << "FPS: " << (int)(ticks/(double)(time(0) - t0)) << endl;
     }
 
-    if ((ticks % 200) == 1) {
+    // if ((ticks % 200) == 1 && (ticks == 1 || ticks == 2)) {
+    if ((ticks == 1 || ticks == 2)) {
         if (currentBuildOrderFuture.valid()) {
             currentBuildOrderFuture.wait();
             float buildOrderTime;
@@ -190,6 +193,56 @@ void Bot::OnStep() {
                 enemyScaling = max(1.0f, enemyScaling * 0.9f);
             }
             cout << "Enemy scaling " << enemyScaling << endl;
+
+            currentBuildOrder = {
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_CYBERNETICSCORE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_STARGATE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_FLEETBEACON,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_OBSERVER,
+                UNIT_TYPEID::PROTOSS_CARRIER,
+                UNIT_TYPEID::PROTOSS_IMMORTAL,
+            };
+
+            
         }
 
         CombatState startingState;
@@ -330,6 +383,7 @@ void Bot::OnStep() {
         }
 
         currentBuildOrderFuture = std::async(std::launch::async, [=]{
+            return make_tuple(vector<UNIT_TYPEID>(0), buildOrderStartingState, 0.0f, vector<pair<UNIT_TYPEID,int>>(0));
             // Make sure most buildings are built even though they are currently under construction.
             // The buildTimePredictor cannot take buildings under construction into account.
             auto futureState = buildOrderStartingState;
@@ -376,7 +430,8 @@ void Bot::OnStep() {
         map<UNIT_TYPEID, int> startingUnitsDelta;
         for (int i = 0; i < ourUnits.size(); i++) {
             // TODO: What about partially constructed buildings which have no worker assigned to it?
-            if (ourUnits[i]->build_progress < 1) continue;
+            // Terran workers stay with the building while it is being constructed while zerg/protoss workers do not
+            if (ourUnits[i]->build_progress < 1 && getUnitData(ourUnits[i]->unit_type).race == Race::Terran) continue;
 
             startingUnitsDelta[canonicalize(ourUnits[i]->unit_type)]++;
             for (auto order : ourUnits[i]->orders) {
@@ -407,7 +462,7 @@ void Bot::OnStep() {
 
             s -= 1;
             shared_ptr<TreeNode> node = nullptr;
-            if (b == UNIT_TYPEID::TERRAN_REFINERY) {
+            if (isVespeneHarvester(b)) {
                 node = make_shared<BuildGas>(b, [=](auto) { return s; });
             } else if (isAddon(b)) {
                 auto ability = getUnitData(b).ability_id;
