@@ -115,7 +115,7 @@ MiningSpeed BuildState::miningSpeed() const {
     // Maximum effective harvesters (todo: account for more things)
     // First 2 harvesters per mineral field yield more minerals than the 3rd one.
     int highYieldHarvesters = min(highYieldMineralHarvestingSlots, mineralMining);
-    int lowYieldHarvesters = min(lowYieldHarvesters, mineralMining - highYieldHarvesters);
+    int lowYieldHarvesters = min(lowYieldMineralHarvestingSlots, mineralMining - highYieldHarvesters);
 
     // TODO: Check units here!
     const float FasterSpeedMultiplier = 1.4f;
