@@ -10,8 +10,10 @@ void ScoutingManager::OnStep() {
 
     if (scoutCount > scoutAssignments.size()) {
         UnitGroup* unit_group = bot.tacticalManager->CreateGroup(Scout);
-        auto p = bot.influenceManager.scoutingMap.argmax();
-        scoutAssignments[unit_group] = Point2D(p.x, p.y);
+        if (unit_group != nullptr) {
+            auto p = bot.influenceManager.scoutingMap.argmax();
+            scoutAssignments[unit_group] = Point2D(p.x, p.y);
+        }
     }
 }
 

@@ -99,9 +99,11 @@ UnitGroup* TacticalManager::CreateGroup(GroupType type) {
             //TODO: Choose marines over other units
             group = new ScoutGroup(main->units[0]);
             main->RemoveUnit(main->units[0]);
-        } else {
+        } else if (availableWorkers.size() > 0) {
             group = new ScoutGroup(availableWorkers.back());
             availableWorkers.pop_back();
+        } else {
+            return nullptr;
         }
     } else if (type == GroupType::Strike) {
         group = new StrikeGroup();
