@@ -40,6 +40,6 @@ void sortByValueAscending (std::vector<T>& arr, std::function<V(const T&)> value
 template <class T, class V>
 void sortByValueDescending (std::vector<T>& arr, std::function<V(const T&)> value) {
 	std::sort(arr.begin(), arr.end(), [&](const T& a, const T& b) -> bool {
-		return value(a) > value(b);
+		return value(b) < value(a);
 	});
 }

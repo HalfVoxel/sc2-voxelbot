@@ -13,6 +13,7 @@ using namespace std;
 using namespace sc2;
 
 using GeneUnitType = int;
+const BuildOrderFitness BuildOrderFitness::ReallyBad = { 100000, BuildResources(0,0), { 0, 0 } };
 
 void printBuildOrder(vector<UNIT_TYPEID> buildOrder);
 
@@ -210,6 +211,7 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
             if ((unitData.tech_requirement != UNIT_TYPEID::INVALID && !unitData.require_attached && !hasEquivalentTech(unitData.tech_requirement)) || (unitData.food_required > 0 && foodAvailable() < unitData.food_required)) {
                 if (events.empty()) {
                     cout << "No tech at index " << buildIndex << endl;
+                    return false;
                     cout << "Requires " << UnitTypeToName(unitData.tech_requirement) << endl;
                     cout << foodAvailable() << " " << unitData.food_required << endl;
                     cout << UnitTypeToName(unitType) << endl;
@@ -336,6 +338,9 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
             newEvent.casterAddon = casterUnit->addon;
             lastEventInBuildOrder = max(lastEventInBuildOrder, newEvent.time);
             addEvent(newEvent);
+            if (casterUnit->type == UNIT_TYPEID::PROTOSS_PROBE) {
+                addEvent(BuildEvent(BuildEventType::MakeUnitAvailable, time + 4, UNIT_TYPEID::PROTOSS_PROBE, ABILITY_ID::INVALID));
+            }
             break;
         }
     }
@@ -385,11 +390,17 @@ bool BuildEvent::impactsEconomy() const {
     return isBasicHarvester(unit) || isBasicHarvester(caster) || isStructure(unit) || getUnitData(unit).food_provided > 0;
 }
 
-void BuildEvent::apply(BuildState& state) {
+void BuildEvent::apply(BuildState& state) const {
     switch (type) {
         case FinishedUnit: {
             UNIT_TYPEID unit = abilityToUnit(ability);
-            state.makeUnitsBusy(caster, casterAddon, -1);
+
+            // Probes are special because they don't actually have to stay while the building is being built
+            // Another event will make them available a few seconds after the order has been issued.
+            if (caster != UNIT_TYPEID::PROTOSS_PROBE) {
+                state.makeUnitsBusy(caster, casterAddon, -1);
+            }
+
             if (isAddon(unit)) {
                 // Normalize from e.g. TERRAN_BARRACKSTECHLAB to TERRAN_TECHLAB
                 state.addUnits(caster, simplifyUnitType(unit), 1);
@@ -787,7 +798,7 @@ void printBuildOrderDetailed(const BuildState& startState, vector<UNIT_TYPEID> b
     });
 
     cout << (success ? "Finished at " : "Failed at ");
-    cout << (int)(state.time / 60.0f) << ":" << (int)(fmod(state.time, 60.0f)) << endl;
+    cout << (int)(state.time / 60.0f) << ":" << (int)(fmod(state.time, 60.0f)) << " resources: " << state.resources.minerals << "+" << state.resources.vespene << " mining speed: " << (int)round(state.miningSpeed().mineralsPerSecond*60) << "/min + " << (int)round(state.miningSpeed().vespenePerSecond*60) << "/min" << endl;
 }
 
 void printBuildOrder(vector<UNIT_TYPEID> buildOrder) {
@@ -797,8 +808,15 @@ void printBuildOrder(vector<UNIT_TYPEID> buildOrder) {
     }
 }
 
+float BuildOrderFitness::score() const {
+    float s = -fmax(time, 2 * 60.0f);
+    s += ((resources.minerals + 2 * resources.vespene) + (miningSpeed.mineralsPerSecond + 2 * miningSpeed.vespenePerSecond) * 60) * 0.001f;
+    // s = log(s) - time/400.0f;
+    return s;
+}
+
 /** Calculates the fitness of a given build order gene, a higher value is better */
-float calculateFitness(const BuildState& startState, const vector<int>& startingUnitCounts, const vector<int>& startingAddonCountPerUnitType, const vector<UNIT_TYPEID>& availableUnitTypes, const Gene& gene) {
+BuildOrderFitness calculateFitness(const BuildState& startState, const vector<int>& startingUnitCounts, const vector<int>& startingAddonCountPerUnitType, const vector<UNIT_TYPEID>& availableUnitTypes, const Gene& gene) {
     BuildState state = startState;
     vector<float> finishedTimes;
     auto buildOrder = gene.constructBuildOrder(startState.race, startState.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes);
@@ -806,7 +824,7 @@ float calculateFitness(const BuildState& startState, const vector<int>& starting
             finishedTimes.push_back(state.time);
         })) {
         // Build order could not be executed, that is bad.
-        return -100000;
+        return BuildOrderFitness::ReallyBad;
     }
 
     // Find the average completion time of the army units in the build order (they are usually the important parts, though non army units also contribute a little bit)
@@ -825,7 +843,8 @@ float calculateFitness(const BuildState& startState, const vector<int>& starting
     state.simulate(60 * 2);
 
     auto miningSpeed = state.miningSpeed();
-    return -max(avgTime * 2, 2 * 60.0f) + (state.resources.minerals + 2 * state.resources.vespene) * 0.001 + (miningSpeed.mineralsPerSecond + 2 * miningSpeed.vespenePerSecond) * 60 * 0.005;
+    return BuildOrderFitness(avgTime * 2, state.resources, miningSpeed);
+    // return -max(avgTime * 2, 2 * 60.0f) + (state.resources.minerals + 2 * state.resources.vespene) * 0.001 + (miningSpeed.mineralsPerSecond + 2 * miningSpeed.vespenePerSecond) * 60 * 0.005;
 }
 
 /** Try really hard to do optimize the gene.
@@ -837,8 +856,8 @@ Gene locallyOptimizeGene(const BuildState& startState, const vector<int>& starti
     for (auto b : gene.buildOrder)
         currentActionRequirements[b]--;
 
-    float startFitness = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, gene);
-    float fitness = startFitness;
+    auto startFitness = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, gene);
+    auto fitness = startFitness;
     Gene newGene = gene;
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < newGene.buildOrder.size(); j++) {
@@ -848,8 +867,8 @@ Gene locallyOptimizeGene(const BuildState& startState, const vector<int>& starti
                     // Try removing
                     auto orig = newGene.buildOrder[j];
                     newGene.buildOrder.erase(newGene.buildOrder.begin() + j);
-                    float newFitness = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, newGene);
-                    if (newFitness > fitness) {
+                    auto newFitness = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, newGene);
+                    if (fitness < newFitness) {
                         currentActionRequirements[orig] += 1;
                         fitness = newFitness;
                         j--;
@@ -863,9 +882,9 @@ Gene locallyOptimizeGene(const BuildState& startState, const vector<int>& starti
                 // Try swapping
                 if (j + 1 < newGene.buildOrder.size()) {
                     swap(newGene.buildOrder[j], newGene.buildOrder[j + 1]);
-                    float newFitness = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, newGene);
+                    auto newFitness = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, newGene);
 
-                    if (newFitness > fitness) {
+                    if (fitness < newFitness) {
                         fitness = newFitness;
                     } else {
                         // Revert swap
@@ -1130,7 +1149,8 @@ vector<UNIT_TYPEID> findBestBuildOrderGenetic(const BuildState& startState, cons
 
     Stopwatch watch;
 
-    const int POOL_SIZE = 25;
+    // const int POOL_SIZE = 25;
+    const int POOL_SIZE = 75;
     const float mutationRateAddRemove = 0.025f;
     const float mutationRateMove = 0.025f;
     vector<Gene> generation(POOL_SIZE);
@@ -1139,21 +1159,21 @@ vector<UNIT_TYPEID> findBestBuildOrderGenetic(const BuildState& startState, cons
         generation[i] = Gene(rnd, actionRequirements);
         generation[i].validate(actionRequirements);
     }
-    for (int i = 0; i < 350; i++) {
+    for (int i = 0; i <= 350*2; i++) {
         if (i == 150 && seed != nullptr) {
             // Add in the seed here
             generation[generation.size() - 1] = Gene(*seed, availableUnitTypes, actionRequirements);
             generation[generation.size() - 1].validate(actionRequirements);
         }
 
-        vector<float> fitness(generation.size());
+        vector<BuildOrderFitness> fitness(generation.size());
         vector<int> indices(generation.size());
         for (int j = 0; j < generation.size(); j++) {
             indices[j] = j;
             fitness[j] = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, generation[j]);
         }
 
-        sortByValueDescending<int, float>(indices, [=](int index) { return fitness[index]; });
+        sortByValueDescending<int, BuildOrderFitness>(indices, [=](int index) { return fitness[index]; });
         vector<Gene> nextGeneration;
         // Add the N best performing genes
         for (int j = 0; j < 5; j++) {
@@ -1396,24 +1416,483 @@ void unitTestBuildOptimizer() {
             startState.makeUnitsBusy(UNIT_TYPEID::PROTOSS_PROBE, UNIT_TYPEID::INVALID, 12);
             for (int i = 0; i < 12; i++) startState.addEvent(BuildEvent(BuildEventType::MakeUnitAvailable, 4, UNIT_TYPEID::PROTOSS_PROBE, ABILITY_ID::INVALID));
 
-            startState.baseInfos = { BaseInfo(300, 1000, 1000) };
-            // findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ADEPT, 23 } });
-            // findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ZEALOT, 20 }, { UNIT_TYPEID::PROTOSS_STALKER, 30 }, { UNIT_TYPEID::PROTOSS_ADEPT, 12 }, { UNIT_TYPEID::PROTOSS_COLOSSUS, 2 } });
-            // auto bo = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_PHOENIX, 3 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 15 }, { UNIT_TYPEID::PROTOSS_CARRIER, 1 }, { UNIT_TYPEID::PROTOSS_OBSERVER, 1 }, { UNIT_TYPEID::PROTOSS_IMMORTAL, 1 } });
+            startState.baseInfos = { BaseInfo(10800, 1000, 1000) };
 
-            vector<UNIT_TYPEID> bo = {
+            vector<UNIT_TYPEID> bo5 = {
                 UNIT_TYPEID::PROTOSS_PROBE,
                 UNIT_TYPEID::PROTOSS_PYLON,
                 UNIT_TYPEID::PROTOSS_PROBE,
                 UNIT_TYPEID::PROTOSS_PROBE,
                 UNIT_TYPEID::PROTOSS_GATEWAY,
                 UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_CYBERNETICSCORE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_STARGATE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_FLEETBEACON,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_OBSERVER,
+                UNIT_TYPEID::PROTOSS_IMMORTAL,
+                UNIT_TYPEID::PROTOSS_CARRIER,
+            };
+
+            vector<UNIT_TYPEID> bo6 = {
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_CYBERNETICSCORE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_STARGATE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_FLEETBEACON,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_OBSERVER,
+                UNIT_TYPEID::PROTOSS_CARRIER,
+                UNIT_TYPEID::PROTOSS_IMMORTAL,
+            };
+
+            // findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ADEPT, 23 } });
+            // findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ZEALOT, 20 }, { UNIT_TYPEID::PROTOSS_STALKER, 30 }, { UNIT_TYPEID::PROTOSS_ADEPT, 12 }, { UNIT_TYPEID::PROTOSS_COLOSSUS, 2 } });
+            // auto bo = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_PHOENIX, 3 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 15 }, { UNIT_TYPEID::PROTOSS_CARRIER, 1 }, { UNIT_TYPEID::PROTOSS_OBSERVER, 1 }, { UNIT_TYPEID::PROTOSS_IMMORTAL, 1 } });
+            auto bo = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ZEALOT, 60 }, { UNIT_TYPEID::PROTOSS_PHOENIX, 5 }, { UNIT_TYPEID::PROTOSS_CARRIER, 1 }, { UNIT_TYPEID::PROTOSS_IMMORTAL, 1 } });
+
+            /*vector<UNIT_TYPEID> bo = {
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
                 UNIT_TYPEID::PROTOSS_ASSIMILATOR,
                 UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_CYBERNETICSCORE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_OBSERVER,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_STARGATE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_NEXUS,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_IMMORTAL,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_FLEETBEACON,
+                UNIT_TYPEID::PROTOSS_CARRIER,
+                UNIT_TYPEID::PROTOSS_FLEETBEACON,
+                UNIT_TYPEID::PROTOSS_FLEETBEACON,
+            };*/
+
+            vector<UNIT_TYPEID> bo2 = {
                 UNIT_TYPEID::PROTOSS_PROBE,
                 UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_CYBERNETICSCORE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_OBSERVER,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_STARGATE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_IMMORTAL,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_FLEETBEACON,
+                UNIT_TYPEID::PROTOSS_CARRIER,
+                UNIT_TYPEID::PROTOSS_FLEETBEACON,
+                UNIT_TYPEID::PROTOSS_FLEETBEACON,
             };
+
+            vector<UNIT_TYPEID> bo4 = {
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_CYBERNETICSCORE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_STARGATE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_FLEETBEACON,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_OBSERVER,
+                UNIT_TYPEID::PROTOSS_CARRIER,
+                UNIT_TYPEID::PROTOSS_IMMORTAL,
+            };
+
+            vector<UNIT_TYPEID> bo7 = {
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_CYBERNETICSCORE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_STARGATE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_FLEETBEACON,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_OBSERVER,
+                UNIT_TYPEID::PROTOSS_CARRIER,
+                UNIT_TYPEID::PROTOSS_IMMORTAL,
+            };
+
+            vector<UNIT_TYPEID> bo8 = {
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_NEXUS,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PROBE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_CYBERNETICSCORE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_STARGATE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_STARGATE,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PYLON,
+                UNIT_TYPEID::PROTOSS_FLEETBEACON,
+                UNIT_TYPEID::PROTOSS_ZEALOT,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_NEXUS,
+                UNIT_TYPEID::PROTOSS_CARRIER,
+                UNIT_TYPEID::PROTOSS_STARGATE,
+                UNIT_TYPEID::PROTOSS_GATEWAY,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+                UNIT_TYPEID::PROTOSS_IMMORTAL,
+                UNIT_TYPEID::PROTOSS_PHOENIX,
+            };
+
             printBuildOrderDetailed(startState, bo);
+            printBuildOrderDetailed(startState, bo4);
+            printBuildOrderDetailed(startState, bo5);
+            printBuildOrderDetailed(startState, bo6);
+            printBuildOrderDetailed(startState, bo7);
+            printBuildOrderDetailed(startState, bo8);
+
+            /*for (int i = 0; i < bo2.size(); i++) {
+                auto bo3 = bo2;
+                bo3.insert(bo3.begin() + i, UNIT_TYPEID::PROTOSS_PROBE);
+                auto state2 = startState;
+                bool s = state2.simulateBuildOrder(bo3);
+                if (!s) {
+                    bo3.insert(bo3.begin() + i, UNIT_TYPEID::PROTOSS_PYLON);
+                    state2 = startState;
+                    s = state2.simulateBuildOrder(bo3);
+                }
+                if (!s) continue;
+                BuildOrderFitness f = BuildOrderFitness(state2.time, state2.resources, state2.miningSpeed());
+                cout << "(" << i << ", " << state2.time << "," << f.score() << ")," << endl;
+            }
+            printBuildOrderDetailed(startState, bo);
+            printBuildOrderDetailed(startState, bo2);*/
             // printBuildOrderDetailed(startState, buildOrderProBO);
         }
     }

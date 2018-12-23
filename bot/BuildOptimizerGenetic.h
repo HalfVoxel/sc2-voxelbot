@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <cmath>
 #include "sc2api/sc2_interfaces.h"
 
 struct BuildState;
@@ -82,10 +83,27 @@ struct BuildEvent {
     bool impactsEconomy() const;
 
     /** Applies the effects of this event on the given state */
-    void apply(BuildState& state);
+    void apply(BuildState& state) const;
 
-    bool operator<(const BuildEvent& other) const {
+    inline bool operator<(const BuildEvent& other) const {
         return time < other.time;
+    }
+};
+
+struct BuildOrderFitness {
+    static const BuildOrderFitness ReallyBad;
+
+    float time;
+    BuildResources resources;
+    MiningSpeed miningSpeed;
+
+    BuildOrderFitness () : time(0), resources(0,0), miningSpeed({0,0}) {}
+    BuildOrderFitness (float time, BuildResources resources, MiningSpeed miningSpeed) : time(time), resources(resources), miningSpeed(miningSpeed) {}
+
+    float score() const;
+
+    bool operator<(const BuildOrderFitness& other) const {
+        return score() < other.score();
     }
 };
 
@@ -124,6 +142,7 @@ struct BuildState {
     std::vector<BuildEvent> events;
     /** Current resources */
     BuildResources resources;
+    /** Metadata (in particular resource info) about the bases that the player has */
     std::vector<BaseInfo> baseInfos;
 
     BuildState()
