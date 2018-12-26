@@ -12,12 +12,14 @@ import numpy as np
 import math
 import random
 import matplotlib
+# Fix crash bug on some macOS versions
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'next_action', 'reward'))
+Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'next_action', 'reward', 'deltaTime'))
 
 TERRAN_REAPER = 49
 
@@ -105,11 +107,12 @@ isUnitMilitary = {
 }
 
 NUM_UNITS = len(set(unitIndexMap.values()))
-TENSOR_INPUT_SIZE = NUM_UNITS * 3 + 6
+TENSOR_INPUT_SIZE = NUM_UNITS * 4 + 7
 NUM_ACTIONS = NUM_UNITS
 MILITARY_UNITS_MASK = np.zeros(NUM_UNITS)
+
 for k, v in unitIndexMap.items():
-    MILITARY_UNITS_MASK[v] = 1 if isUnitMilitary[k] else 0
+    MILITARY_UNITS_MASK[v] = 1 if k in isUnitMilitary and isUnitMilitary[k] else 0
 
 class ReplayMemory(object):
     def __init__(self, capacity):
@@ -120,8 +123,9 @@ class ReplayMemory(object):
         self.health_diffs = []
         self.total_rewards = []
         self.all_actions = []
-        self.max_error = 1000
-        self.prioritized_replay = True
+        self.max_error = 8
+        self.prioritized_replay = False
+        self.goalPool = []
 
         if self.prioritized_replay:
             self.error_buckets = []
@@ -193,87 +197,150 @@ class ReplayMemory(object):
             self.error_buckets[bucket_idx].append(samples[i])
             self.count += 1
 
-    def createState(self, state, goalTensor):
+    def createState(self, state):
         STRIDE = 3
-        inputTensor = torch.zeros(TENSOR_INPUT_SIZE, dtype=torch.float)
+        unitCounts = torch.zeros(NUM_UNITS, dtype=torch.float)
+        unitsAvailable = torch.zeros(NUM_UNITS, dtype=torch.float)
+        unitsInProgress = torch.zeros(NUM_UNITS, dtype=torch.float)
+        metaTensor = torch.zeros(7, dtype=torch.float)        
+
         for unit in state["units"]:
-            unitIndex = unitTypeNameToIndex[unit["type"]]
-            if unit["progress"] < 1:
-                # In progress
-                inputTensor[NUM_UNITS * 1 + unitIndex] += 1
-            else:
-                # Finished
-                inputTensor[NUM_UNITS * 0 + unitIndex] += 1
-        
-        inputTensor[NUM_UNITS*2:] = goalTensor
+            # Finished
+            # TODO: Addon
+            unitIndex = unitIndexMap[unit["type"]]
+            unitCounts[unitIndex] += unit["totalCount"]
+            unitsAvailable[unitIndex] += unit["availableCount"]
+
+        for unit in state["unitsInProgress"]:
+            # In progress
+            unitIndex = unitIndexMap[unit["type"]]
+            unitsInProgress[unitIndex] += 1
 
         # Some metadata, the data is normalized to approximately 1
-        inputTensor[NUM_UNITS*STRIDE + 0] = state["minerals"] / 100
-        inputTensor[NUM_UNITS*STRIDE + 1] = state["vespene"] / 100
-        inputTensor[NUM_UNITS*STRIDE + 2] = state["remainingFood"] / 10
-        inputTensor[NUM_UNITS*STRIDE + 3] = state["mineralsPerSecond"] / 10
-        inputTensor[NUM_UNITS*STRIDE + 4] = state["vespenePerSecond"] / 10
-        inputTensor[NUM_UNITS*STRIDE + 5] = state["mineralsInLowestBase"] / 1000
+        metaTensor[0] = state["minerals"] / 100
+        metaTensor[1] = state["vespene"] / 100
+        metaTensor[2] = state["foodAvailable"] / 10 if "foodAvailable" in state else 0
+        metaTensor[3] = state["mineralsPerSecond"] / 10
+        metaTensor[4] = state["vespenePerSecond"] / 10
+        metaTensor[5] = state["highYieldMineralSlots"] / 10 if "highYieldMineralSlots" in state else 0
+        metaTensor[6] = state["lowYieldMineralSlots"] / 10 if "lowYieldMineralSlots" in state else 0
 
+        stateTensor = torch.cat([unitCounts, unitsAvailable, unitsInProgress, metaTensor])
+        return stateTensor
+
+    def combineStateAndGoal(self, stateTensor, goalTensor):
+        assert(goalTensor.size() == (NUM_UNITS,))
+        inputTensor = torch.cat([stateTensor, goalTensor])
+        assert(inputTensor.size() == (TENSOR_INPUT_SIZE,))
         return inputTensor
     
     def createGoalTensor(self, goal):
         inputTensor = torch.zeros(NUM_UNITS, dtype=torch.float)
-        for unit in goal["units"]:
-            unitIndex = unitTypeNameToIndex[unit["type"]]
-            inputTensor[unitIndex] += unit["weight"]
+        for unit in goal:
+            unitIndex = unitIndexMap[unit["type"]]
+            inputTensor[unitIndex] += unit["count"]
+            assert(unit["count"] >= 0)
         
-        inputTensor /= inputTensor.sum()
+        s = inputTensor.sum()
+        if s > 0:
+            inputTensor /= s
         return inputTensor
 
-    def calculate_reward(self, s1, s2, goalTensor, deltaTime):
-        s1unitCounts = s1.numpy()[0:NUM_UNITS]
-        s2unitCounts = s2.numpy()[0:NUM_UNITS]
+    def calculate_reward(self, t1, t2, goalTensor, deltaTime):
+        s1unitCounts = t1.numpy()[0:NUM_UNITS]
+        s2unitCounts = t2.numpy()[0:NUM_UNITS]
         # How many units were added
-        deltaUnitCounts = np.max(0, s2unitCounts - s1unitCounts)
+        deltaUnitCounts = np.maximum(0, s2unitCounts - s1unitCounts)
         # Total number of military units
         numMilitaryUnits = (s1unitCounts * MILITARY_UNITS_MASK).sum()
         # Number of units that we do want
-        desiredUnitCounts = goalTensor * np.max(numMilitaryUnits, 1)
+        desiredUnitCounts = goalTensor.numpy() * np.maximum(numMilitaryUnits, 1)
 
         falloff = 0.2
-        scorePerUnit = np.min(1.0, np.exp((desiredUnitCounts - s1unitCounts)*falloff))
+        # TODO: multiply by resource cost
+        # scorePerUnit = np.minimum(1.0, np.exp((desiredUnitCounts - s1unitCounts)*falloff))
+        scorePerUnit = np.zeros(NUM_UNITS)
+        scorePerUnit[29] = 1
 
         # Get a score if we added a unit of that type
         reward = (deltaUnitCounts * scorePerUnit).sum()
+
+        assert(deltaTime >= 0)
 
         # Assume the reward happens right before s2.
         # If the build order involved satisfying some implicit constraints or maybe some waiting time
         # then the reward will be rewarded right at the end.
         # This makes it beneficial for the agent to learn to handle implicit dependencies by itself, but it can still fall back on them without too big of a loss.
         reward *= math.pow(GAMMA_PER_SECOND, deltaTime)
-        return reward, terminal_state
+        return reward
 
     def determine_action(self, s1, s2, unit):
         pass
 
     def loadSession(self, s):
         data = json.loads(s)
-        # print(s)
+        if "actions" not in data:
+            print("Missing actions")
+            return
+
         states = data["states"]
-        goalTensor = createGoalTensor(data["goal"])
-        total_reward = 0
+        actions = data["actions"]
+        assert(len(actions) == len(states) - 1)
 
-        tensor_states = [self.createState(s, goal) for s in states]
+        goalTensor = self.createGoalTensor(data["goal"])
+        self.goalPool.append(goalTensor)
 
-        for i in range(len(tensor_states)-1):
-            s1 = states[i]
-            s2 = states[i+1]
-            a1 = states[i]["action"]
-            a2 = states[i+1]["action"]
+        # Ensure the pool doesn't grow too large
+        if len(self.goalPool) > 10000:
+            self.goalPool[random.randint(0, len(self.goalPool)-1)] = self.goalPool[-1]
+            self.goalPool.pop()
 
-            reward, terminal_state = self.calculate_reward(s1, s2, goalTensor)
+        goals = random.choices(self.goalPool, k=min(len(self.goalPool), 4))
+        goals.append(goalTensor)
 
-            total_reward += reward
-            self.push(Transition(state=s1, action=a1, next_state=s2, reward=reward, next_action=a2))
+        tensor_states_pre = [self.createState(s) for s in states]
 
-        self.total_rewards.append(total_reward)
-        self.durations.append(len(states))
+        for goal in goals:
+            total_reward = 0
+            tensor_states = [self.combineStateAndGoal(t, goal) for t in tensor_states_pre]
+
+            for i in range(len(tensor_states)-1):
+                s1 = states[i]
+                s2 = states[i+1]
+                a1 = unitIndexMap[actions[i]]
+                t1 = tensor_states[i]
+                t2 = tensor_states[i+1]
+
+                if not data["failed"]:
+                    if np.all((t1.numpy() - t2.numpy()) == 0):
+                        print(t1)
+                        print(t2)
+                        print(s1)
+                        print(s2)
+                        exit(1)
+
+                a2 = unitIndexMap[actions[i+1]] if i+1 < len(actions) else None
+                deltaTime = s2["time"] - s1["time"]
+
+                reward = self.calculate_reward(t1, t2, goalTensor, deltaTime)
+                terminal_state = a2 is None
+
+                total_reward += reward
+                assert(deltaTime >= 0)
+
+                # Skip terminal states at the moment
+                if terminal_state:
+                    continue
+
+                transition = Transition(state=t1, action=a1, next_state=t2, reward=reward, next_action=a2, deltaTime=deltaTime)
+                if random.uniform(0,1) < 0.1:
+                    test_data.append(transition)
+                else:
+                    self.push(transition)
+
+            self.total_rewards.append(total_reward)
+            self.durations.append(len(states))
+
 
     def __len__(self):
         return self.count if self.prioritized_replay else len(self.memory)
@@ -287,17 +354,28 @@ class DQN(nn.Module):
         layers = []
         layers.append(nn.Linear(TENSOR_INPUT_SIZE, 100))
         layers.append(nn.LeakyReLU())
-        layers.append(nn.Linear(100, 40))
+        layers.append(nn.BatchNorm1d(100))
+        layers.append(nn.Linear(100, 100))
         layers.append(nn.LeakyReLU())
-        layers.append(nn.Linear(40, 40))
+        layers.append(nn.BatchNorm1d(100))
+        layers.append(nn.Linear(100, 100))
         layers.append(nn.LeakyReLU())
-        layers.append(nn.Linear(40, 40))
+        layers.append(nn.BatchNorm1d(100))
+        layers.append(nn.Linear(100, 100))
         layers.append(nn.LeakyReLU())
-        layers.append(nn.Linear(40, NUM_ACTIONS))
+        layers.append(nn.BatchNorm1d(100))
+        layers.append(nn.Linear(100, 100))
+        layers.append(nn.LeakyReLU())
+        # layers.append(nn.LeakyReLU())
+        # layers.append(nn.Linear(100, 100))
+        # layers.append(nn.Linear(100, 100))
+        layers.append(nn.LeakyReLU())
+        layers.append(nn.BatchNorm1d(100))
+        layers.append(nn.Linear(100, NUM_ACTIONS))
         self.seq = nn.Sequential(*layers)
 
     def forward(self, inputTensor):
-        c = self.seq(c)
+        x = self.seq(inputTensor)
         return x  # B x NUM_ACTIONS
 
 
@@ -368,40 +446,41 @@ def load_all(optimization_steps_per_load: int):
     print("Loading training data...")
     fs = os.listdir(data_path)
     fs = natural_sort(fs)
+    fs = fs[:100]
     # random.shuffle(fs)
-    for p in fs:
+    for i in range(len(fs)):
+        print(f"{i}/{len(fs)}")
+        p = fs[i]
         f = open(data_path + "/" + p)
         s = f.read()
         f.close()
         memory.loadSession(s)
-        optimize(optimization_steps_per_load)
+        if optimization_steps_per_load > 0:
+            optimize(optimization_steps_per_load)
     print("Done")
 
 
-data_path = "training_data/build_order/3"
-BATCH_SIZE = 32
-GAMMA_PER_SECOND = 0.96
-TICKS_PER_STATE = 10
-TICKS_PER_SECOND = 22.4
-GAMMA = math.pow(GAMMA_PER_SECOND, TICKS_PER_STATE / TICKS_PER_SECOND)
+data_path = "training_data/buildorders/1"
+BATCH_SIZE = 512
+# GAMMA_PER_SECOND = 0.995
+GAMMA_PER_SECOND = 0.9
 EPS_START = 0.9
 EPS_END = 0.05
 EPS_DECAY = 4000
 TEMPERATURE_START = 10
 TEMPERATURE_END = 1
 TEMPERATURE_DECAY = 8000
-TARGET_UPDATE = 1
-
-NEARBY_UNIT_DISTANCE_THRESHOLD = 10
-NEARBY_ALLY_UNIT_DISTANCE_THRESHOLD = 50
+TARGET_UPDATE = 200
 
 policy_net = DQN().to(device)
 target_net = DQN().to(device)
 target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
 
-optimizer = optim.Adam(policy_net.parameters(), lr=0.001)
-memory = ReplayMemory(5000)
+optimizer = optim.Adam(policy_net.parameters(), lr=0.00001)
+memory = ReplayMemory(100000)
+test_data = []
+qvalue_range = []
 
 
 steps_done = 0
@@ -447,7 +526,8 @@ def select_action(state, enableExploration):
 
 episode_durations = []
 losses = []
-
+test_losses = []
+episode_index = 0
 
 def plot_durations():
     plt.figure(2)
@@ -466,12 +546,7 @@ def plot_durations():
     plt.pause(0.001)  # pause a bit so that plots are updated
 
 
-def optimize_model():
-    if len(memory) < BATCH_SIZE:
-        return
-
-    policy_net.train()
-    transitions = memory.sample(BATCH_SIZE)
+def evaluate_batch(transitions):
     batch_size = len(transitions)
     # Transpose the batch (see http://stackoverflow.com/a/19343/3343043 for
     # detailed explanation).
@@ -483,10 +558,10 @@ def optimize_model():
     # No non-final states, will cause some torch errors
     any_non_final = len([s for s in batch.next_state if s is not None]) > 0
     if any_non_final > 0:
-        non_final_next_states = torch.cat([s[0].unsqueeze(0) for s in batch.next_state if s is not None])
+        non_final_next_states = torch.cat([s.unsqueeze(0) for s in batch.next_state if s is not None])
 
-    state_batch = torch.cat([s[0].unsqueeze(0) for s in batch.state])
-    # assert state_batch.size() == (batch_size,)
+    state_batch = torch.cat([s.unsqueeze(0) for s in batch.state])
+    assert state_batch.size() == (batch_size, TENSOR_INPUT_SIZE), (state_batch.size(), (batch_size, TENSOR_INPUT_SIZE))
 
     action_batch = torch.tensor(batch.action).unsqueeze(1)
     assert(action_batch.size() == (batch_size,1))
@@ -495,35 +570,60 @@ def optimize_model():
 
     # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
     # columns of actions taken
-    state_action_values = policy_net(state_batch0, state_batch1, state_batch2).gather(1, action_batch)
+    state_action_values = policy_net(state_batch).gather(1, action_batch)
     assert state_action_values.size() == (batch_size, 1)
 
     # Compute V(s_{t+1}) for all next states.
     next_state_values = torch.zeros(batch_size, device=device)
     if any_non_final:
-        next_state_values[non_final_mask] = policy_net(non_final_next_states).max(1)[0].detach()
+        next_state_values[non_final_mask] = target_net(non_final_next_states).max(1)[0].detach()
 
     assert next_state_values.size() == (batch_size,)
 
     # torch.set_printoptions(threshold=10000)
 
     # Compute the expected Q values
-    expected_state_action_values = (next_state_values * GAMMA) + reward_batch
+    gammas = np.power(GAMMA_PER_SECOND, batch.deltaTime)
+    expected_state_action_values = (next_state_values * torch.tensor(gammas, dtype=torch.float)) + reward_batch
     assert expected_state_action_values.size() == (batch_size,)
 
     # Compute Huber loss
+    mse = nn.MSELoss(reduction='none')
     transition_losses = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1), reduction='none')
+    # transition_losses = mse(state_action_values, expected_state_action_values.unsqueeze(1))
     loss = transition_losses.mean()
-    print(loss.item())
-    losses.append(loss.item())
     memory.insert(transitions, transition_losses)
+    return state_action_values, expected_state_action_values.unsqueeze(1), loss
+
+def optimize_model():
+    global episode_index
+    episode_index += 1
+
+    if len(memory) < BATCH_SIZE:
+        return
+
+    policy_net.train()
+    transitions = memory.sample(BATCH_SIZE)
+    calculated_values, expected_values, loss = evaluate_batch(transitions)
+
+    qvalue_range.append((episode_index, expected_values.numpy().mean(), expected_values.numpy().std()))
+    
+    print(loss.item(), np.mean(expected_values.numpy()))
+    losses.append([episode_index, loss.item()])
 
     # Optimize the model
     optimizer.zero_grad()
     loss.backward()
-    # for param in policy_net.parameters():
-        # param.grad.data.clamp_(-1, 1)
+    for param in policy_net.parameters():
+        param.grad.data.clamp_(-1, 1)
     optimizer.step()
+
+
+def evaluate_test_loss():
+    policy_net.eval()
+    transitions = test_data
+    calculated_values, expected_values, loss = evaluate_batch(transitions)
+    test_losses.append([episode_index, loss.item()])
 
 
 plt.ioff()
@@ -533,7 +633,9 @@ epss = []
 temps = []
 
 def plot_loss():
-    durations_t = torch.tensor(losses, dtype=torch.float)
+    if len(test_losses) == 0:
+        return
+
     fig = plt.figure(1)
     plt.clf()
     ax = fig.add_subplot(2,3,1)
@@ -541,17 +643,18 @@ def plot_loss():
     plt.xlabel('Step')
     plt.ylabel('Loss')
     ax.set_yscale('log')
-    plt.plot(durations_t.numpy())
+    losses_n = np.array(losses)
+    plt.plot(losses_n[:,0], losses_n[:,1])
+    losses_n = np.array(test_losses)
+    plt.plot(losses_n[:,0], losses_n[:,1])
 
-
-    x = torch.tensor(memory.health_diffs, dtype=torch.float)
-    smooth = np.convolve(x.numpy(), np.ones((10,))/10, mode='valid')
     ax = fig.add_subplot(2,3,2)
     plt.title('Training...')
     plt.xlabel('Episode')
-    plt.ylabel('Health Diff')
-    plt.plot(x.numpy())
-    plt.plot(smooth)
+    plt.ylabel('Q value')
+    qvalue_range_n = np.array(qvalue_range)
+    plt.plot(qvalue_range_n[:,0], qvalue_range_n[:,1] - qvalue_range_n[:,2])
+    plt.plot(qvalue_range_n[:,0], qvalue_range_n[:,1] + qvalue_range_n[:,2])
 
     x = torch.tensor(memory.total_rewards, dtype=torch.float)
     smooth = np.convolve(x.numpy(), np.ones((10,))/10, mode='valid')
@@ -592,35 +695,26 @@ def plot_loss():
 
 
 
+def optimize_epoch():
+    optimize(int(len(memory) / BATCH_SIZE))
+
 def optimize(steps: int):
     global episode
     for i in range(steps):
         optimize_model()
         episode += 1
-        # if episode % TARGET_UPDATE == 0:
-        #     target_net.load_state_dict(policy_net.state_dict())
+        if episode % TARGET_UPDATE == 0:
+            target_net.load_state_dict(policy_net.state_dict())
 
+    evaluate_test_loss()
     plot_loss()
     # plt.show()
 
-testSession = """
-{
-    "states": [
-        {
-            "tick": 0,
-            "playerID": 1,
-            "units": [],
-            "walkableMap": []
-        }
-    ]
-}"""
-
-addSession(testSession)
 
 if __name__ == "__main__":
-    load_all(20)
+    load_all(0)
     while True:
-        optimize(200)
+        optimize_epoch()
 else:
     load_all(200)
     pass

@@ -1,5 +1,6 @@
 #include "../BuildOptimizerGenetic.h"
 #include "../utilities/mappings.h"
+#include "../utilities/predicates.h"
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
 #include <random>
@@ -24,7 +25,20 @@ struct SerializedUnitInProgress {
 
     template <class Archive>
     void serialize(Archive& archive) {
-        archive(type, remainingTime);
+        archive(
+            CEREAL_NVP(type),
+            CEREAL_NVP(remainingTime)
+        );
+    }
+};
+
+struct UnitCount {
+    UNIT_TYPEID type;
+    int count;
+
+    template <class Archive>
+    void serialize(Archive& archive) {
+        archive(CEREAL_NVP(type), CEREAL_NVP(count));
     }
 };
 
@@ -40,11 +54,17 @@ struct SerializedUnit {
 
     template <class Archive>
     void serialize(Archive& archive) {
-        archive(type, addon, totalCount, availableCount);
+        archive(
+            CEREAL_NVP(type),
+            CEREAL_NVP(addon),
+            CEREAL_NVP(totalCount),
+            CEREAL_NVP(availableCount)
+        );
     }
 };
 
 struct SerializedState {
+    float time;
     vector<SerializedUnit> units;
     vector<SerializedUnitInProgress> unitsInProgress;
     float minerals;
@@ -76,6 +96,7 @@ struct SerializedState {
             }
         }
 
+        time = state.time;
         minerals = state.resources.minerals;
         vespene = state.resources.vespene;
         auto miningSpeed = state.miningSpeed();
@@ -96,16 +117,29 @@ struct SerializedState {
 
     template <class Archive>
     void serialize(Archive& archive) {
-        archive(units, unitsInProgress, minerals, vespene, mineralsPerSecond, vespenePerSecond);
+        archive(
+            CEREAL_NVP(units),
+            CEREAL_NVP(unitsInProgress),
+            CEREAL_NVP(time),
+            CEREAL_NVP(minerals),
+            CEREAL_NVP(vespene),
+            CEREAL_NVP(mineralsPerSecond),
+            CEREAL_NVP(vespenePerSecond),
+            CEREAL_NVP(highYieldMineralSlots),
+            CEREAL_NVP(lowYieldMineralSlots)
+        );
     }
 };
 
 struct Session {
     vector<SerializedState> states;
+    vector<UNIT_TYPEID> actions;
+    vector<UnitCount> goal;
+    bool failed = false;
 
     template <class Archive>
     void serialize(Archive& archive) {
-        archive(states);
+        archive(CEREAL_NVP(failed), CEREAL_NVP(states), CEREAL_NVP(actions), CEREAL_NVP(goal));
     }
 };
 
@@ -281,11 +315,11 @@ int main() {
     // optimizer.init();
     // unitTestBuildOptimizer(optimizer);
 
-    default_random_engine rnd;
+    default_random_engine rnd(time(0));
 
     while(true) {
         auto guaranteeFood = bernoulli_distribution(0.95);
-        auto gameStartConfig = bernoulli_distribution(0.1);
+        auto gameStartConfig = bernoulli_distribution(0.1)(rnd);
         auto startUnits = sampleUnitConfig(rnd, guaranteeFood(rnd));
         if (gameStartConfig) startUnits = { { UNIT_TYPEID::TERRAN_COMMANDCENTER, 1 }, { UNIT_TYPEID::TERRAN_SCV, 12 } };
         auto targetUnits = sampleUnitConfig(rnd, false);
@@ -294,8 +328,11 @@ int main() {
         exponential_distribution<double> vespeneDist(1.0/200.0);
 
         BuildState startState(startUnits);
+
+        bool hasVespene = false;
+        for (auto u : startUnits) hasVespene |= u.second > 0 && isVespeneHarvester(u.first);
         startState.resources.minerals = mineralDist(rnd);
-        startState.resources.minerals = vespeneDist(rnd);
+        startState.resources.vespene = hasVespene || bernoulli_distribution(0.05)(rnd) ? vespeneDist(rnd) : 0;
         startState.race = Race::Terran;
 
         if (gameStartConfig) {
@@ -304,10 +341,30 @@ int main() {
             for (int i = 0; i < 12; i++)
                 startState.addEvent(BuildEvent(BuildEventType::MakeUnitAvailable, 4, UNIT_TYPEID::PROTOSS_PROBE, ABILITY_ID::INVALID));
         }
+
+        Session session;
+        for (auto u : targetUnits) {
+            session.goal.push_back({ u.first, u.second });
+        }
+        auto buildOrder = findBestBuildOrderGenetic(startState, targetUnits, nullptr);
+        auto state = startState;
+        session.states.push_back(SerializedState(state));
+        int lastSuccessfullAction = -1;
+        bool success = state.simulateBuildOrder(buildOrder, [&](int index) {
+            lastSuccessfullAction = index;
+            session.actions.push_back(buildOrder[index]);
+            session.states.push_back(SerializedState(state));
+        });
+        if (!success) {
+            session.actions.push_back(buildOrder[lastSuccessfullAction+1]);
+            session.states.push_back(SerializedState(state));
+            session.failed = true;
+        }
         
 
         stringstream ss;
-        ss << "training_data/buildorders/1/chunk_" << rand() << ".json";
+        ss << "training_data/buildorders/1/chunk_" << uniform_int_distribution<int>(1, 1000000)(rnd) << ".json";
+        cout << "*" << endl;
         ofstream json(ss.str());
         {
             cereal::JSONOutputArchive archive(json);
