@@ -1,6 +1,6 @@
 #include "utilities/predicates.h"
 #include "behaviortree/StrategicNodes.h"
-#include "bot.h"
+#include "Bot.h"
 
 using namespace BOT;
 using namespace std;

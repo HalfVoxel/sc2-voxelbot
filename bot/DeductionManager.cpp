@@ -3,7 +3,7 @@
 #include "DependencyAnalyzer.h"
 #include "utilities/mappings.h"
 #include "utilities/predicates.h"
-#include "bot.h"
+#include "Bot.h"
 #include "utilities/stdutils.h"
 
 using namespace std;

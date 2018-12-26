@@ -3,7 +3,7 @@
 #include <iostream>
 #include <queue>
 #include "behaviortree/MicroNodes.h"
-#include "bot.h"
+#include "Bot.h"
 #include "sc2api/sc2_api.h"
 #include "sc2utils/sc2_manage_process.h"
 

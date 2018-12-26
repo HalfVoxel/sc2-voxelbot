@@ -1,4 +1,4 @@
-#include "bot.h"
+#include "Bot.h"
 #include "behaviortree/StrategicNodes.h"
 #include "sc2lib/sc2_lib.h"
 // #include "sc2renderer/sc2_renderer.h"

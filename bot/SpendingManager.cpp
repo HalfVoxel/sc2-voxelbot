@@ -5,7 +5,7 @@
 #include <map>
 #include <sstream>
 #include "utilities/mappings.h"
-#include "bot.h"
+#include "Bot.h"
 
 using namespace std;
 using namespace sc2;

@@ -4,7 +4,7 @@
 #include <vector>
 #include "utilities/mappings.h"
 #include "utilities/predicates.h"
-#include "bot.h"
+#include "Bot.h"
 #include "sc2api/sc2_api.h"
 
 using namespace sc2;

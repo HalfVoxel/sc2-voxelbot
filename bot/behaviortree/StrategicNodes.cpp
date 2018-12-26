@@ -2,7 +2,7 @@
 #include <iostream>
 #include "../utilities/mappings.h"
 #include "../utilities/predicates.h"
-#include "../bot.h"
+#include "../Bot.h"
 
 using namespace BOT;
 using namespace std;

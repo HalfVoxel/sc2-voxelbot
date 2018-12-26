@@ -2,7 +2,7 @@
 #include "utilities/pathfinding.h"
 #include "utilities/predicates.h"
 #include "utilities/renderer.h"
-#include "bot.h"
+#include "Bot.h"
 
 using namespace std;
 using namespace sc2;

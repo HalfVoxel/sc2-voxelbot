@@ -1,6 +1,6 @@
 #include "ScoutingManager.h"
 #include "InfluenceManager.h"
-#include "bot.h"
+#include "Bot.h"
 
 using namespace sc2;
 

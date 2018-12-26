@@ -1,5 +1,5 @@
 #pragma once
-#include "../bot.h"
+#include "../Bot.h"
 
 struct IsAttackable {
     bool operator()(const sc2::Unit& unit);

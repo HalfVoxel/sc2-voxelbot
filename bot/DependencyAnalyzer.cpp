@@ -3,7 +3,7 @@
 #include <stack>
 #include "utilities/mappings.h"
 #include "utilities/predicates.h"
-#include "bot.h"
+#include "Bot.h"
 
 using namespace std;
 using namespace sc2;
