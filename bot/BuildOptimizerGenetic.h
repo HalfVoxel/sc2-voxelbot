@@ -190,6 +190,7 @@ struct BuildState {
      * 
      * The optional callback will be called once exactly when build order item number N is executed, with N as the parameter.
      * Note that the this is when the item starts to be executed, not when the item is finished.
+     * The callback is called right after the action has been executed, but not necessarily completed.
      */
     bool simulateBuildOrder(std::vector<sc2::UNIT_TYPEID> buildOrder, std::function<void(int)> = nullptr);
 

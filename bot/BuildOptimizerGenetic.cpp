@@ -220,8 +220,8 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
                     for (auto u : units) {
                         cout << UnitTypeToName(u.type) << " " << UnitTypeToName(u.addon) << " " << u.units << endl;
                     }
-                    __builtin_trap();
-                    exit(1);
+                    // __builtin_trap();
+                    // exit(1);
                     return false;
                 }
 
@@ -290,7 +290,7 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
                     for (auto& casterCandidate : units) {
                         cout << "Caster: " << UnitTypeToName(casterCandidate.type) << " " << casterCandidate.units << "/" << casterCandidate.availableUnits() << " " << UnitTypeToName(casterCandidate.addon) << endl;
                     }
-                    exit(1);
+                    // exit(1);
                     return false;
                 }
 
@@ -315,9 +315,6 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
             }
             assert(casterUnit != nullptr);
 
-            if (callback != nullptr)
-                callback(buildIndex);
-
             // Pay for the item
             resources.minerals -= mineralCost;
             resources.vespene -= vespeneCost;
@@ -341,6 +338,9 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
             if (casterUnit->type == UNIT_TYPEID::PROTOSS_PROBE) {
                 addEvent(BuildEvent(BuildEventType::MakeUnitAvailable, time + 4, UNIT_TYPEID::PROTOSS_PROBE, ABILITY_ID::INVALID));
             }
+
+            if (callback != nullptr)
+                callback(buildIndex);
             break;
         }
     }
@@ -1150,7 +1150,7 @@ vector<UNIT_TYPEID> findBestBuildOrderGenetic(const BuildState& startState, cons
     Stopwatch watch;
 
     // const int POOL_SIZE = 25;
-    const int POOL_SIZE = 75;
+    const int POOL_SIZE = 25;
     const float mutationRateAddRemove = 0.025f;
     const float mutationRateMove = 0.025f;
     vector<Gene> generation(POOL_SIZE);
@@ -1159,7 +1159,7 @@ vector<UNIT_TYPEID> findBestBuildOrderGenetic(const BuildState& startState, cons
         generation[i] = Gene(rnd, actionRequirements);
         generation[i].validate(actionRequirements);
     }
-    for (int i = 0; i <= 350*2; i++) {
+    for (int i = 0; i <= 350; i++) {
         if (i == 150 && seed != nullptr) {
             // Add in the seed here
             generation[generation.size() - 1] = Gene(*seed, availableUnitTypes, actionRequirements);
