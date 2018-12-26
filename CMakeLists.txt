@@ -34,6 +34,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 # Also compile the Starcraft 2 c++ API
 add_subdirectory("s2client-api")
+add_subdirectory("pybind11")
 
 # Add include directories for the SC2 API (the examples one should be removed eventually when our bot doesn't depend on it)
 include_directories("s2client-api/include")
@@ -50,8 +51,6 @@ endif()
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -D_GLIBCXX_DEBUG -fsanitize=address")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -O0 -fsanitize=address")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized")
-
-find_package(pybind11 REQUIRED)
 
 # More dependencies
 include_directories(SYSTEM "${PROJECT_BINARY_DIR}/s2client-api/generated")
