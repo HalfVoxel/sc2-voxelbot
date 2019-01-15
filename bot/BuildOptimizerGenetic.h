@@ -25,6 +25,9 @@ struct MiningSpeed {
     }
 };
 
+const std::vector<sc2::UNIT_TYPEID>& getAvailableUnitTypesForRace (sc2::Race race);
+const std::vector<sc2::UNIT_TYPEID>& getEconomicUnitTypesForRace (sc2::Race race);
+
 struct BuildUnitInfo {
     /** Type of the unit */
     sc2::UNIT_TYPEID type;
@@ -192,7 +195,7 @@ struct BuildState {
      * Note that the this is when the item starts to be executed, not when the item is finished.
      * The callback is called right after the action has been executed, but not necessarily completed.
      */
-    bool simulateBuildOrder(std::vector<sc2::UNIT_TYPEID> buildOrder, std::function<void(int)> = nullptr);
+    bool simulateBuildOrder(std::vector<sc2::UNIT_TYPEID> buildOrder, std::function<void(int)> = nullptr, bool waitUntilItemsFinished = true);
 
     /** Food that is currently available.
      * Positive if there is a surplus of food.
@@ -205,7 +208,9 @@ struct BuildState {
     bool hasEquivalentTech(sc2::UNIT_TYPEID type) const;
 };
 
+std::pair<std::vector<sc2::UNIT_TYPEID>, std::vector<bool>> expandBuildOrderWithImplicitSteps (const BuildState& startState, std::vector<sc2::UNIT_TYPEID> buildOrder);
+
 std::vector<sc2::UNIT_TYPEID> findBestBuildOrderGenetic(const std::vector<std::pair<sc2::UNIT_TYPEID, int>>& startingUnits, const std::vector<std::pair<sc2::UNIT_TYPEID, int>>& target);
 std::vector<sc2::UNIT_TYPEID> findBestBuildOrderGenetic(const BuildState& startState, const std::vector<std::pair<sc2::UNIT_TYPEID, int>>& target, const std::vector<sc2::UNIT_TYPEID>* seed = nullptr);
 void unitTestBuildOptimizer();
-void printBuildOrderDetailed(const BuildState& startState, std::vector<sc2::UNIT_TYPEID> buildOrder);
+void printBuildOrderDetailed(const BuildState& startState, std::vector<sc2::UNIT_TYPEID> buildOrder, const std::vector<bool>* highlight = nullptr);

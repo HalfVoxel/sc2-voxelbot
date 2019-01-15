@@ -190,7 +190,7 @@ void BuildState::simulate(float endTime) {
     }
 }
 
-bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<void(int)> callback) {
+bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<void(int)> callback, bool waitUntilItemsFinished) {
     float lastEventInBuildOrder = 0;
 
     // Loop through the build order
@@ -286,6 +286,7 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
                 }
 
                 if (events.empty()) {
+                    printBuildOrder(buildOrder);
                     cout << "No possible caster " << UnitTypeToName(unitType) << endl;
                     for (auto& casterCandidate : units) {
                         cout << "Caster: " << UnitTypeToName(casterCandidate.type) << " " << casterCandidate.units << "/" << casterCandidate.availableUnits() << " " << UnitTypeToName(casterCandidate.addon) << endl;
@@ -345,7 +346,7 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
         }
     }
 
-    simulate(lastEventInBuildOrder);
+    if (waitUntilItemsFinished) simulate(lastEventInBuildOrder);
     return true;
 }
 
@@ -427,6 +428,161 @@ void BuildEvent::apply(BuildState& state) const {
             break;
         }
     }
+}
+
+/** Adds all dependencies of the required type to the requirements stack in the order that they need to be performed in order to fulfill all preconditions for building/training the required type
+ * 
+ * For example if the player only has some SCVs and a command center and the required type is a marine, then both a barracks and a supply depot will be added to the stack.
+ * Only takes care of direct tech dependencies, not indirect ones like supply or resource requirements.
+ */
+static void traceDependencies(const vector<int>& unitCounts, const vector<UNIT_TYPEID>& availableUnitTypes, stack<UNIT_TYPEID>& requirements, UNIT_TYPEID requiredType) {
+    // Need to break here to avoid an infinite loop of SCV requires command center requires SCV ...
+    if (isBasicHarvester(requiredType))
+        return;
+
+    auto& unitData = getUnitData(requiredType);
+    if (unitData.tech_requirement != UNIT_TYPEID::INVALID) {
+        requiredType = unitData.tech_requirement;
+
+        // Check if the tech requirement is an addon
+        if (unitData.require_attached) {
+            // techlab -> barracks-techlab for example.
+            // We need to do this as otherwise the build order becomes ambiguous.
+            requiredType = getSpecificAddonType(abilityToCasterUnit(unitData.ability_id)[0], unitData.tech_requirement);
+
+            if (unitCounts[indexOf(availableUnitTypes, requiredType)] == 0) {
+                // Need to add this type to the build order
+                requirements.push(requiredType);
+                // Note: don't trace dependencies for addons as they will only depend on the caster of this unit, which we will already trace.
+                // This is really a bit of a hack to avoid having to prune the requirements for duplicates, but it's good for performance too.
+            }
+        } else if (unitCounts[indexOf(availableUnitTypes, requiredType)] == 0) {
+            // Need to add this type to the build order
+            requirements.push(requiredType);
+            traceDependencies(unitCounts, availableUnitTypes, requirements, requiredType);
+        }
+    }
+
+    if (abilityToCasterUnit(unitData.ability_id).size() > 0) {
+        bool found = false;
+        for (auto possibleCaster : abilityToCasterUnit(unitData.ability_id)) {
+            if (unitCounts[indexOf(availableUnitTypes, possibleCaster)] > 0) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            requiredType = abilityToCasterUnit(unitData.ability_id)[0];
+
+            // Ignore larva
+            if (requiredType != UNIT_TYPEID::ZERG_LARVA) {
+                requirements.push(requiredType);
+                traceDependencies(unitCounts, availableUnitTypes, requirements, requiredType);
+            }
+        }
+    }
+}
+
+/** Finalizes the gene's build order by adding in all implicit steps */
+vector<UNIT_TYPEID> addImplicitBuildOrderSteps(const vector<int>& buildOrder, Race race, float startingFood, const vector<int>& startingUnitCounts, const vector<int>& startingAddonCountPerUnitType, const vector<UNIT_TYPEID>& availableUnitTypes, vector<bool>* outIsOriginalItem = nullptr) {
+    vector<int> unitCounts = startingUnitCounts;
+    vector<int> addonCountPerUnitType = startingAddonCountPerUnitType;
+    assert(unitCounts.size() == availableUnitTypes.size());
+    vector<UNIT_TYPEID> finalBuildOrder;
+    float totalFood = startingFood;
+    UNIT_TYPEID currentSupplyUnit = getSupplyUnitForRace(race);
+    UNIT_TYPEID currentVespeneHarvester = getVespeneHarvesterForRace(race);
+    UNIT_TYPEID currentTownHall = getTownHallForRace(race);
+
+    // Note: stack always starts empty at each iteration, so it could be moved to inside the loop
+    // but having it outside avoids some allocations+deallocations.
+    stack<UNIT_TYPEID> reqs;
+
+    for (auto type : buildOrder) {
+        auto unitType = availableUnitTypes[type];
+        reqs.push(unitType);
+
+        // Analyze the prerequisites for the action and add in implicit dependencies
+        // (e.g to train a marine, we first need a baracks)
+        // TODO: Need more sophisticated tracking because some dependencies can become invalid by other actions
+        // (e.g. when building a planetary fortress, a command center is 'used up')
+        // auto requiredType = unitType;
+        traceDependencies(unitCounts, availableUnitTypes, reqs, unitType);
+
+        while (!reqs.empty()) {
+            auto requirement = reqs.top();
+            auto& d = getUnitData(requirement);
+            // If we don't have enough food, push a supply unit (e.g. supply depot) to the stack
+            float foodDelta = d.food_provided - d.food_required;
+
+            // Check which unit (if any) this unit was created from (e.g. command center -> orbital command)
+            auto& previous = hasBeen(requirement);
+            if (previous.size() > 1) {
+                auto& d2 = getUnitData(previous[1]);
+                foodDelta -= (d2.food_provided - d2.food_required);
+            }
+
+            // BUILD ADDITIONAL PYLONS
+            if (totalFood + foodDelta < 0 && foodDelta < 0) {
+                reqs.push(currentSupplyUnit);
+                continue;
+            }
+
+            // Make sure we have a refinery if we need vespene for this unit
+            if (d.vespene_cost > 0 && unitCounts[indexOf(availableUnitTypes, currentVespeneHarvester)] == 0) {
+                reqs.push(currentVespeneHarvester);
+                continue;
+            }
+
+            // Only allow 2 vespene harvesting buildings per base
+            // TODO: Might be better to account for this by having a much lower harvesting rate?
+            if (requirement == currentVespeneHarvester) {
+                int numBases = 0;
+                for (int i = 0; i < availableUnitTypes.size(); i++) {
+                    if (isTownHall(availableUnitTypes[i]))
+                        numBases += unitCounts[i];
+                }
+
+                if (unitCounts[indexOf(availableUnitTypes, currentVespeneHarvester)] >= numBases * 2) {
+                    reqs.push(currentTownHall);
+                    continue;
+                }
+            }
+
+            // Addons should always list the original building in the previous list
+            assert(!isAddon(requirement) || previous.size() > 1);
+
+            if (previous.size() > 1) {
+                int idx = indexOf(availableUnitTypes, previous[1]);
+                assert(unitCounts[idx] > 0);
+                if (isAddon(requirement)) {
+                    // Try to mark another building has having an addon
+                    if (addonCountPerUnitType[idx] < unitCounts[idx]) {
+                        addonCountPerUnitType[idx]++;
+                    } else {
+                        // If there are no possible such buildings, then we need to add a new one of those buildings
+                        reqs.push(previous[1]);
+                        traceDependencies(unitCounts, availableUnitTypes, reqs, previous[1]);
+                        continue;
+                    }
+                } else {
+                    // Remove the previous unit if this is an upgrade (e.g. command center -> planetary fortress)
+                    // However make sure not to do it for addons, as the original building is still kept in that case
+                    unitCounts[idx]--;
+                }
+            }
+
+            totalFood += foodDelta;
+            finalBuildOrder.push_back(requirement);
+            unitCounts[indexOf(availableUnitTypes, requirement)] += 1;
+            reqs.pop();
+            // The last item that we add is the one from the original build order
+            if (outIsOriginalItem != nullptr) outIsOriginalItem->push_back(reqs.empty());
+        }
+    }
+
+    return finalBuildOrder;
 }
 
 /** A gene represents a build order.
@@ -600,189 +756,13 @@ struct Gene {
             }
         }
     }
-
-    /** Adds all dependencies of the required type to the requirements stack in the order that they need to be performed in order to fulfill all preconditions for building/training the required type
-     * 
-     * For example if the player only has some SCVs and a command center and the required type is a marine, then both a barracks and a supply depot will be added to the stack.
-     * Only takes care of direct tech dependencies, not indirect ones like supply or resource requirements.
-     */
-    static void traceDependencies(const vector<int>& unitCounts, const vector<UNIT_TYPEID>& availableUnitTypes, stack<UNIT_TYPEID>& requirements, UNIT_TYPEID requiredType) {
-        // Need to break here to avoid an infinite loop of SCV requires command center requires SCV ...
-        if (isBasicHarvester(requiredType))
-            return;
-
-        auto& unitData = getUnitData(requiredType);
-        if (unitData.tech_requirement != UNIT_TYPEID::INVALID) {
-            requiredType = unitData.tech_requirement;
-
-            // Check if the tech requirement is an addon
-            if (unitData.require_attached) {
-                // techlab -> barracks-techlab for example.
-                // We need to do this as otherwise the build order becomes ambiguous.
-                requiredType = getSpecificAddonType(abilityToCasterUnit(unitData.ability_id)[0], unitData.tech_requirement);
-
-                if (unitCounts[indexOf(availableUnitTypes, requiredType)] == 0) {
-                    // Need to add this type to the build order
-                    requirements.push(requiredType);
-                    // Note: don't trace dependencies for addons as they will only depend on the caster of this unit, which we will already trace.
-                    // This is really a bit of a hack to avoid having to prune the requirements for duplicates, but it's good for performance too.
-                }
-            } else if (unitCounts[indexOf(availableUnitTypes, requiredType)] == 0) {
-                // Need to add this type to the build order
-                requirements.push(requiredType);
-                traceDependencies(unitCounts, availableUnitTypes, requirements, requiredType);
-            }
-        }
-
-        if (abilityToCasterUnit(unitData.ability_id).size() > 0) {
-            bool found = false;
-            for (auto possibleCaster : abilityToCasterUnit(unitData.ability_id)) {
-                if (unitCounts[indexOf(availableUnitTypes, possibleCaster)] > 0) {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                requiredType = abilityToCasterUnit(unitData.ability_id)[0];
-
-                // Ignore larva
-                if (requiredType != UNIT_TYPEID::ZERG_LARVA) {
-                    requirements.push(requiredType);
-                    traceDependencies(unitCounts, availableUnitTypes, requirements, requiredType);
-                }
-            }
-        }
-    }
-
-    /** Finalizes the gene's build order by adding in all implicit steps */
+    
     vector<UNIT_TYPEID> constructBuildOrder(Race race, float startingFood, const vector<int>& startingUnitCounts, const vector<int>& startingAddonCountPerUnitType, const vector<UNIT_TYPEID>& availableUnitTypes) const {
-        vector<int> unitCounts = startingUnitCounts;
-        vector<int> addonCountPerUnitType = startingAddonCountPerUnitType;
-        assert(unitCounts.size() == availableUnitTypes.size());
-        vector<UNIT_TYPEID> finalBuildOrder;
-        float totalFood = startingFood;
-        UNIT_TYPEID currentSupplyUnit = getSupplyUnitForRace(race);
-        UNIT_TYPEID currentVespeneHarvester = getVespeneHarvesterForRace(race);
-        UNIT_TYPEID currentTownHall = getTownHallForRace(race);
-
-        // Note: stack always starts empty at each iteration, so it could be moved to inside the loop
-        // but having it outside avoids some allocations+deallocations.
-        stack<UNIT_TYPEID> reqs;
-
-        for (auto type : buildOrder) {
-            auto unitType = availableUnitTypes[type];
-            reqs.push(unitType);
-
-            // Analyze the prerequisites for the action and add in implicit dependencies
-            // (e.g to train a marine, we first need a baracks)
-            // TODO: Need more sophisticated tracking because some dependencies can become invalid by other actions
-            // (e.g. when building a planetary fortress, a command center is 'used up')
-            // auto requiredType = unitType;
-            traceDependencies(unitCounts, availableUnitTypes, reqs, unitType);
-            if (false && (unitType == UNIT_TYPEID::TERRAN_STARPORT || unitType == UNIT_TYPEID::TERRAN_FACTORY || true)) {
-                auto& unitData = getUnitData(unitType);
-                cout << "A " << unitData.require_attached << " " << UnitTypeToName(unitData.tech_requirement) << endl;
-                if (!isAddon(unitData.tech_requirement) && unitData.tech_requirement != UNIT_TYPEID::INVALID)
-                    cout << "Count: " << unitCounts[indexOf(availableUnitTypes, (UNIT_TYPEID)unitData.tech_requirement)] << endl;
-
-                cout << "Build order!" << endl;
-                for (int i = 0; i < startingUnitCounts.size(); i++) {
-                    assert(startingUnitCounts[i] >= 0);
-                    if (startingUnitCounts[i] > 0)
-                        cout << "Starting unit " << UnitTypeToName(availableUnitTypes[i]) << " " << startingUnitCounts[i] << endl;
-                }
-                for (auto b : buildOrder) {
-                    cout << "B " << UnitTypeToName(availableUnitTypes[b]) << endl;
-                }
-
-                for (int i = 0; i < unitCounts.size(); i++) {
-                    assert(unitCounts[i] >= 0);
-                    cout << "Current unit " << UnitTypeToName(availableUnitTypes[i]) << " " << unitCounts[i] << endl;
-                }
-
-                auto r2 = reqs;
-                while (!r2.empty()) {
-                    cout << "Req: " << UnitTypeToName(r2.top()) << endl;
-                    r2.pop();
-                }
-            }
-
-            while (!reqs.empty()) {
-                auto requirement = reqs.top();
-                auto& d = getUnitData(requirement);
-                // If we don't have enough food, push a supply unit (e.g. supply depot) to the stack
-                float foodDelta = d.food_provided - d.food_required;
-
-                // Check which unit (if any) this unit was created from (e.g. command center -> orbital command)
-                auto& previous = hasBeen(requirement);
-                if (previous.size() > 1) {
-                    auto& d2 = getUnitData(previous[1]);
-                    foodDelta -= (d2.food_provided - d2.food_required);
-                }
-
-                // BUILD ADDITIONAL PYLONS
-                if (totalFood + foodDelta < 0 && foodDelta < 0) {
-                    reqs.push(currentSupplyUnit);
-                    continue;
-                }
-
-                // Make sure we have a refinery if we need vespene for this unit
-                if (d.vespene_cost > 0 && unitCounts[indexOf(availableUnitTypes, currentVespeneHarvester)] == 0) {
-                    reqs.push(currentVespeneHarvester);
-                    continue;
-                }
-
-                // Only allow 2 vespene harvesting buildings per base
-                // TODO: Might be better to account for this by having a much lower harvesting rate?
-                if (requirement == currentVespeneHarvester) {
-                    int numBases = 0;
-                    for (int i = 0; i < availableUnitTypes.size(); i++) {
-                        if (isTownHall(availableUnitTypes[i]))
-                            numBases += unitCounts[i];
-                    }
-
-                    if (unitCounts[indexOf(availableUnitTypes, currentVespeneHarvester)] >= numBases * 2) {
-                        reqs.push(currentTownHall);
-                        continue;
-                    }
-                }
-
-                // Addons should always list the original building in the previous list
-                assert(!isAddon(requirement) || previous.size() > 1);
-
-                if (previous.size() > 1) {
-                    int idx = indexOf(availableUnitTypes, previous[1]);
-                    assert(unitCounts[idx] > 0);
-                    if (isAddon(requirement)) {
-                        // Try to mark another building has having an addon
-                        if (addonCountPerUnitType[idx] < unitCounts[idx]) {
-                            addonCountPerUnitType[idx]++;
-                        } else {
-                            // If there are no possible such buildings, then we need to add a new one of those buildings
-                            reqs.push(previous[1]);
-                            traceDependencies(unitCounts, availableUnitTypes, reqs, previous[1]);
-                            continue;
-                        }
-                    } else {
-                        // Remove the previous unit if this is an upgrade (e.g. command center -> planetary fortress)
-                        // However make sure not to do it for addons, as the original building is still kept in that case
-                        unitCounts[idx]--;
-                    }
-                }
-
-                totalFood += foodDelta;
-                finalBuildOrder.push_back(requirement);
-                unitCounts[indexOf(availableUnitTypes, requirement)] += 1;
-                reqs.pop();
-            }
-        }
-
-        return finalBuildOrder;
+        return addImplicitBuildOrderSteps(buildOrder, race, startingFood, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes);
     }
 };
 
-void printBuildOrderDetailed(const BuildState& startState, vector<UNIT_TYPEID> buildOrder) {
+void printBuildOrderDetailed(const BuildState& startState, vector<UNIT_TYPEID> buildOrder, const vector<bool>* highlight) {
     BuildState state = startState;
     cout << "Starting units" << endl;
     for (auto u : startState.units) {
@@ -793,8 +773,16 @@ void printBuildOrderDetailed(const BuildState& startState, vector<UNIT_TYPEID> b
     }
     cout << "Build order size " << buildOrder.size() << endl;
     bool success = state.simulateBuildOrder(buildOrder, [&](int i) {
+        if (highlight != nullptr && (*highlight)[i]) {
+            // Color the text
+            cout << "\x1b[" << 48 << ";2;" << 228 << ";" << 26 << ";" << 28 << "m"; 
+        }
         cout << "Step " << i << "\t" << (int)(state.time / 60.0f) << ":" << (int)(fmod(state.time, 60.0f)) << "\t" << UnitTypeToName(buildOrder[i]) << " "
-             << "food: " << state.foodAvailable() << " resources: " << (int)state.resources.minerals << "+" << (int)state.resources.vespene << " " << (state.baseInfos.size() > 0 ? state.baseInfos[0].remainingMinerals : 0) << endl;
+             << "food: " << state.foodAvailable() << " resources: " << (int)state.resources.minerals << "+" << (int)state.resources.vespene << " " << (state.baseInfos.size() > 0 ? state.baseInfos[0].remainingMinerals : 0);
+
+        // Reset color
+        cout << "\033[0m";
+        cout << endl;
     });
 
     cout << (success ? "Finished at " : "Failed at ");
@@ -1105,10 +1093,30 @@ std::vector<sc2::UNIT_TYPEID> findBestBuildOrderGenetic(const std::vector<std::p
     return findBestBuildOrderGenetic(BuildState(startingUnits), target, nullptr);
 }
 
-/** Finds the best build order using an evolutionary algorithm */
-vector<UNIT_TYPEID> findBestBuildOrderGenetic(const BuildState& startState, const vector<pair<UNIT_TYPEID, int>>& target, const vector<UNIT_TYPEID>* seed) {
-    const vector<UNIT_TYPEID>& availableUnitTypes = startState.race == Race::Terran ? unitTypesTerran : (startState.race == Race::Protoss ? unitTypesProtoss : unitTypesZerg);
-    const auto& allEconomicUnits = startState.race == Race::Terran ? unitTypesTerranEconomic : (startState.race == Race::Protoss ? unitTypesProtossEconomic : unitTypesZergEconomic);
+pair<vector<int>, vector<int>> calculateStartingUnitCounts(const BuildState& startState, const vector<UNIT_TYPEID>& availableUnitTypes) {
+    vector<int> startingUnitCounts(availableUnitTypes.size());
+    vector<int> startingAddonCountPerUnitType(availableUnitTypes.size());
+
+    for (auto p : startState.units) {
+        startingUnitCounts[indexOf(availableUnitTypes, p.type)] += p.units;
+        if (p.addon != UNIT_TYPEID::INVALID) {
+            startingUnitCounts[indexOf(availableUnitTypes, getSpecificAddonType(p.type, p.addon))] += p.units;
+            startingAddonCountPerUnitType[indexOf(availableUnitTypes, p.type)] += p.units;
+        }
+    }
+    return { startingUnitCounts, startingAddonCountPerUnitType };
+}
+
+const vector<UNIT_TYPEID>& getAvailableUnitTypesForRace (Race race) {
+    return race == Race::Terran ? unitTypesTerran : (race == Race::Protoss ? unitTypesProtoss : unitTypesZerg);
+}
+
+const vector<UNIT_TYPEID>& getEconomicUnitTypesForRace (Race race) {
+    return race == Race::Terran ? unitTypesTerranEconomic : (race == Race::Protoss ? unitTypesProtossEconomic : unitTypesZergEconomic);
+}
+
+pair<vector<UNIT_TYPEID>, vector<bool>> expandBuildOrderWithImplicitSteps (const BuildState& startState, vector<UNIT_TYPEID> buildOrder) {
+    const vector<UNIT_TYPEID>& availableUnitTypes = getAvailableUnitTypesForRace(startState.race);
 
     // Simulate the starting state until all current events have finished, only then do we know which exact unit types the player will start with.
     // This is important for implicit dependencies in the build order.
@@ -1116,16 +1124,32 @@ vector<UNIT_TYPEID> findBestBuildOrderGenetic(const BuildState& startState, cons
     BuildState startStateAfterEvents = startState;
     startStateAfterEvents.simulate(startStateAfterEvents.time + 1000000);
 
-    vector<int> startingUnitCounts(availableUnitTypes.size());
-    vector<int> startingAddonCountPerUnitType(availableUnitTypes.size());
+    vector<int> startingUnitCounts;
+    vector<int> startingAddonCountPerUnitType;
+    tie(startingUnitCounts, startingAddonCountPerUnitType) = calculateStartingUnitCounts(startStateAfterEvents, availableUnitTypes);
 
-    for (auto p : startStateAfterEvents.units) {
-        startingUnitCounts[indexOf(availableUnitTypes, p.type)] += p.units;
-        if (p.addon != UNIT_TYPEID::INVALID) {
-            startingUnitCounts[indexOf(availableUnitTypes, getSpecificAddonType(p.type, p.addon))] += p.units;
-            startingAddonCountPerUnitType[indexOf(availableUnitTypes, p.type)] += p.units;
-        }
-    }
+    vector<int> remappedBuildOrder(buildOrder.size());
+    for (int i = 0; i < buildOrder.size(); i++) remappedBuildOrder[i] = indexOf(availableUnitTypes, buildOrder[i]);
+
+    vector<bool> partOfOriginalBuildOrder;
+    vector<UNIT_TYPEID> finalBuildOrder = addImplicitBuildOrderSteps(remappedBuildOrder, startStateAfterEvents.race, startStateAfterEvents.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, &partOfOriginalBuildOrder);
+    return { finalBuildOrder, partOfOriginalBuildOrder };
+}
+
+/** Finds the best build order using an evolutionary algorithm */
+vector<UNIT_TYPEID> findBestBuildOrderGenetic(const BuildState& startState, const vector<pair<UNIT_TYPEID, int>>& target, const vector<UNIT_TYPEID>* seed) {
+    const vector<UNIT_TYPEID>& availableUnitTypes = getAvailableUnitTypesForRace(startState.race);
+    const vector<UNIT_TYPEID>& allEconomicUnits = getEconomicUnitTypesForRace(startState.race);
+
+    // Simulate the starting state until all current events have finished, only then do we know which exact unit types the player will start with.
+    // This is important for implicit dependencies in the build order.
+    // If say a factory is under construction, we don't want to implictly build another factory if the build order specifies that a tank is supposed to be built.
+    BuildState startStateAfterEvents = startState;
+    startStateAfterEvents.simulate(startStateAfterEvents.time + 1000000);
+
+    vector<int> startingUnitCounts;
+    vector<int> startingAddonCountPerUnitType;
+    tie(startingUnitCounts, startingAddonCountPerUnitType) = calculateStartingUnitCounts(startStateAfterEvents, availableUnitTypes);
 
     vector<int> actionRequirements(availableUnitTypes.size());
     for (int i = 0; i < actionRequirements.size(); i++) {
@@ -1405,7 +1429,10 @@ void unitTestBuildOptimizer() {
         startState.resources.minerals = 50;
         startState.race = Race::Terran;
 
-        // findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::TERRAN_VIKINGFIGHTER, 2 }, { UNIT_TYPEID::TERRAN_MEDIVAC, 3 }, { UNIT_TYPEID::TERRAN_BANSHEE, 3 }, { UNIT_TYPEID::TERRAN_MARINE, 20 }, { UNIT_TYPEID::TERRAN_BUNKER, 1 } });
+        auto bo = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::TERRAN_MARAUDER, 12 }, { UNIT_TYPEID::TERRAN_BANSHEE, 0 } });
+        printBuildOrderDetailed(startState, bo);
+        exit(0);
+
         // findBestBuildOrderGenetic({ { UNIT_TYPEID::TERRAN_COMMANDCENTER, 1 }, { UNIT_TYPEID::TERRAN_SCV, 12 } }, { { UNIT_TYPEID::TERRAN_BARRACKSREACTOR, 0 }, { UNIT_TYPEID::TERRAN_MARINE, 30 }, { UNIT_TYPEID::TERRAN_MARAUDER, 0 } });
 
         if (true) {
