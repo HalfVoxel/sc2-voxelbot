@@ -49,8 +49,8 @@ if(!MSVC)
 endif()
 
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -D_GLIBCXX_DEBUG -fsanitize=address")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -O0 -fsanitize=address")
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -O0 -fsanitize=address")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized")
 
 # More dependencies
 include_directories(SYSTEM "${PROJECT_BINARY_DIR}/s2client-api/generated")
@@ -88,7 +88,7 @@ function (create_library project_name source_code source_code2 source_code3 extr
 
     # Sets the grouping in IDEs like visual studio (last parameter is the group name)
     set_target_properties(${project_name} PROPERTIES FOLDER target)
-    target_link_libraries(${project_name} sc2api sc2lib sc2utils pybind11::embed ${extra_libs})
+    target_link_libraries(${project_name} sc2api sc2lib sc2utils pybind11 ${extra_libs})
 endfunction ()
 
 create_library(botlib "bot/*.cpp" "bot/behaviortree/*.cpp" "bot/utilities/*.cpp" "SDL2-static")
@@ -102,5 +102,14 @@ create_executable(build_optimizer "" "bot/build_optimizer/main.cpp" "SDL2-static
 create_executable(optimizer_train "" "bot/optimizer_Train/main.cpp" "SDL2-static")
 create_executable(build_order_train "" "bot/build_order_train/main.cpp" "SDL2-static")
 create_executable(combat_predictor_train "" "bot/combat_predictor_train/main.cpp" "SDL2-static")
+
+file (GLOB build_order_train_sources "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc" "bot/*.h" "bot/behaviortree/*.h" "bot/utilities/*.h" "bot/generated/*.cpp" "bot/build_order_train/main.cpp")
+pybind11_add_module(cppbot MODULE ${build_order_train_sources})
+target_link_libraries(cppbot PRIVATE pybind11::module sc2api sc2lib sc2utils botlib)
+
+# pybind11_add_module(testmod MODULE "bot/build_order_train/test.cpp")
+# target_link_libraries(testmod PUBLIC sc2api sc2lib sc2utils botlib)
+# get_target_property(OUT testmod LINK_LIBRARIES)
+# message(STATUS ${OUT})
 
 include_directories("s2client-api/contrib/SDL-mirror/include")
