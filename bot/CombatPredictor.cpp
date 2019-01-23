@@ -362,6 +362,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool
     auto units1 = filterByOwner(state.units, 1);
     auto units2 = filterByOwner(state.units, 2);
 
+    // TODO: Might always initialize to seed 0, check this
     auto rng = std::default_random_engine{};
     shuffle(begin(units1), end(units1), rng);
     shuffle(begin(units2), end(units2), rng);
