@@ -135,26 +135,25 @@ struct BaseInfo {
 /** Represents all units, buildings and current build/train actions that are in progress for a given player */
 struct BuildState {
     /** Time in game time seconds at normal speed */
-    float time;
+    float time = 0;
     /** Race of the player */
-    sc2::Race race;
+    sc2::Race race = sc2::Race::Terran;
 
     /** All units in the current state */
     std::vector<BuildUnitInfo> units;
     /** All future events, sorted in ascending order by their time */
     std::vector<BuildEvent> events;
     /** Current resources */
-    BuildResources resources;
+    BuildResources resources = BuildResources(0,0);
     /** Metadata (in particular resource info) about the bases that the player has */
     std::vector<BaseInfo> baseInfos;
 
-    BuildState()
-        : time(0), race(sc2::Race::Terran), units(), events(), resources(0, 0) {}
-    BuildState(std::vector<std::pair<sc2::UNIT_TYPEID, int>> unitCounts)
-        : time(0), race(sc2::Race::Terran), units(), events(), resources(0, 0) {
+    BuildState() {}
+    BuildState(std::vector<std::pair<sc2::UNIT_TYPEID, int>> unitCounts) {
         for (auto u : unitCounts)
             addUnits(u.first, u.second);
     }
+    BuildState(const sc2::ObservationInterface* observation, sc2::Unit::Alliance alliance, sc2::Race race, BuildResources resources, float time);
 
     /** Marks a number of units with the given type (and optionally addon) as being busy.
      * Delta may be negative to indicate that the units should be made available again after having been busy.

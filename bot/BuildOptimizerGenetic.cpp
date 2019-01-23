@@ -17,6 +17,110 @@ const BuildOrderFitness BuildOrderFitness::ReallyBad = { 100000, BuildResources(
 
 void printBuildOrder(vector<UNIT_TYPEID> buildOrder);
 
+BuildState::BuildState(const ObservationInterface* observation, Unit::Alliance alliance, Race race, BuildResources resources, float time) : time(time), race(race), resources(resources) {
+    map<UNIT_TYPEID, int> startingUnitsCount;
+    map<UNIT_TYPEID, int> targetUnitsCount;
+
+    auto ourUnits = observation->GetUnits(alliance);
+
+    for (int i = 0; i < ourUnits.size(); i++) {
+        auto unitType = ourUnits[i]->unit_type;
+
+        // Addons are handled when the unit they are attached to are handled
+        if (isAddon(unitType)) continue;
+
+        if (ourUnits[i]->build_progress < 1) {
+            if (race == Race::Terran) {
+                // Ignore (will be handled by the order code below)
+            } else {
+                unitType = canonicalize(unitType);
+                float buildTime = ticksToSeconds(getUnitData(unitType).build_time);
+                float remainingTime = (1 - ourUnits[i]->build_progress) * buildTime;
+                auto event = BuildEvent(BuildEventType::FinishedUnit, time + remainingTime, UNIT_TYPEID::INVALID, getUnitData(unitType).ability_id);
+                // Note: don't bother to handle addons as this code never runs for terran
+                addEvent(event);
+            }
+        } else {
+            if (ourUnits[i]->add_on_tag != NullTag) {
+                auto* addon = observation->GetUnit(ourUnits[i]->add_on_tag);
+                // Simplify to e.g. TERRAN_REACTOR instead of TERRAN_BARRACKSREACTOR
+                auto addonType = simplifyUnitType(addon->unit_type);
+                assert(addonType != UNIT_TYPEID::INVALID);
+                addUnits(canonicalize(unitType), addonType, 1);
+            } else {
+                addUnits(canonicalize(unitType), 1);
+            }
+        }
+
+        // Note: at least during replays, orders don't seem to contain the target_unit_tag for build construction
+        
+        for (auto order : ourUnits[i]->orders) {
+            auto createdUnit = abilityToUnit(order.ability_id);
+            if (createdUnit != UNIT_TYPEID::INVALID) {
+                if (canonicalize(createdUnit) == canonicalize(unitType)) {
+                    // This is just a morph ability (e.g. lower a supply depot)
+                    break;
+                }
+
+                float buildProgress = order.progress;
+                if (order.target_unit_tag != NullTag) {
+                    auto* targetUnit = observation->GetUnit(order.target_unit_tag);
+                    if (targetUnit == nullptr) {
+                        cerr << "Target for order does not seem to exist!??" << endl;
+                        break;
+                    }
+
+                    assert(targetUnit != nullptr);
+
+                    // In some cases the target unit can be something else, for example when constructing a refinery the target unit is the vespene geyser for a while
+                    if (targetUnit->owner == ourUnits[i]->owner) {
+                        buildProgress = targetUnit->build_progress;
+                        // TODO: build_progress is not empirically always order.progress, when is it not so?
+                        assert(targetUnit->build_progress >= 0 && targetUnit->build_progress <= 1);
+                    }
+                }
+
+                float buildTime = ticksToSeconds(getUnitData(createdUnit).build_time);
+                // TODO: Is this linear?
+                float remainingTime = (1 - buildProgress) * buildTime;
+                auto event = BuildEvent(BuildEventType::FinishedUnit, time + remainingTime, canonicalize(unitType), order.ability_id);
+                if (ourUnits[i]->add_on_tag != NullTag) {
+                    auto* addon = observation->GetUnit(ourUnits[i]->add_on_tag);
+                    assert(addon != nullptr);
+                    // Normalize from e.g. TERRAN_BARRACKSTECHLAB to TERRAN_TECHLAB
+                    event.casterAddon = simplifyUnitType(addon->unit_type);
+                }
+
+                // Make the caster busy first
+                makeUnitsBusy(event.caster, event.casterAddon, 1);
+                addEvent(event);
+            }
+
+            // Only process the first order (this bot should never have more than one anyway)
+            break;
+        }
+    }
+
+    vector<Point2D> basePositions;
+    for (auto u : ourUnits) {
+        if (isTownHall(u->unit_type)) {
+            basePositions.push_back(u->pos);
+            baseInfos.push_back(BaseInfo(0, 0, 0));
+        }
+    }
+    auto neutralUnits = observation->GetUnits(Unit::Alliance::Neutral);
+    for (auto u : neutralUnits) {
+        if (u->mineral_contents > 0) {
+            for (int i = 0; i < baseInfos.size(); i++) {
+                if (DistanceSquared2D(u->pos, basePositions[i]) < 10*10) {
+                    baseInfos[i].remainingMinerals += u->mineral_contents;
+                    break;
+                }
+            }
+        }
+    }
+}
+
 void BuildState::makeUnitsBusy(UNIT_TYPEID type, UNIT_TYPEID addon, int delta) {
     if (delta == 0)
         return;
@@ -398,7 +502,7 @@ void BuildEvent::apply(BuildState& state) const {
 
             // Probes are special because they don't actually have to stay while the building is being built
             // Another event will make them available a few seconds after the order has been issued.
-            if (caster != UNIT_TYPEID::PROTOSS_PROBE) {
+            if (caster != UNIT_TYPEID::PROTOSS_PROBE && caster != UNIT_TYPEID::INVALID) {
                 state.makeUnitsBusy(caster, casterAddon, -1);
             }
 
