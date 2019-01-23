@@ -1,0 +1,3687 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"Ve",
+				"VeryHard\tsc2::Difficulty VeryHard"
+			],
+			[
+				"MINERA",
+				"NEUTRAL_MINERALFIELD750\tsc2::UNIT_TYPEID NEUTRAL_MINERALFIELD750"
+			],
+			[
+				"MINE",
+				"NEUTRAL_MINERALFIELD\tsc2::UNIT_TYPEID NEUTRAL_MINERALFIELD"
+			],
+			[
+				"EFFECT_MUL",
+				"EFFECT_CALLDOWNMULE\tsc2::ABILITY_ID EFFECT_CALLDOWNMULE"
+			],
+			[
+				"lhs",
+				"lhs_life\tstatement"
+			],
+			[
+				"Ge",
+				"GetUnits"
+			],
+			[
+				"STARPO",
+				"TERRAN_STARPORT\tsc2::UNIT_TYPEID TERRAN_STARPORT"
+			],
+			[
+				"FACTO",
+				"TERRAN_FACTORY\tsc2::UNIT_TYPEID TERRAN_FACTORY"
+			],
+			[
+				"FACTOR",
+				"TERRAN_FACTORYFLYING\tsc2::UNIT_TYPEID TERRAN_FACTORYFLYING"
+			],
+			[
+				"TERRAN_BARRA",
+				"TERRAN_BARRACKSTECHLAB\tsc2::UNIT_TYPEID TERRAN_BARRACKSTECHLAB"
+			],
+			[
+				"TERRAN_BARRAC",
+				"TERRAN_BARRACKSREACTOR\tsc2::UNIT_TYPEID TERRAN_BARRACKSREACTOR"
+			],
+			[
+				"BARRAC",
+				"TERRAN_BARRACKS\tsc2::UNIT_TYPEID TERRAN_BARRACKS"
+			],
+			[
+				"SUPPL",
+				"TERRAN_SUPPLYDEPOT\tsc2::UNIT_TYPEID TERRAN_SUPPLYDEPOT"
+			],
+			[
+				"SUPPLY",
+				"TERRAN_SUPPLYDEPOTLOWERED\tsc2::UNIT_TYPEID TERRAN_SUPPLYDEPOTLOWERED"
+			],
+			[
+				"typ",
+				"unit_type"
+			],
+			[
+				"UnitType",
+				"UnitTypeToName\tconst char * UnitTypeToName(UnitTypeID unit_type)"
+			],
+			[
+				"ability",
+				"ability_id"
+			],
+			[
+				"UNi",
+				"UNIT_TYPEID\tUNIT_TYPEID"
+			],
+			[
+				"tar",
+				"target_pos"
+			],
+			[
+				"IsArm",
+				"IsArmy\tIsArmy(const sc2::ObservationInterface *obs)"
+			],
+			[
+				"abil",
+				"ability_id"
+			],
+			[
+				"inc",
+				"inc\t#include \"…\""
+			],
+			[
+				"add",
+				"addInfluence\tvoid addInfluence(double influence, sc2::Point2D pos)"
+			],
+			[
+				"Influence",
+				"InfluenceMap\tInfluenceMap"
+			],
+			[
+				"gam",
+				"game_info_\tsc2::GameInfo game_info_"
+			],
+			[
+				"Infl",
+				"InfluenceMap"
+			],
+			[
+				"Influe",
+				"InfluenceMap\tInfluenceMap::"
+			],
+			[
+				"OnGam",
+				"OnGameLoading\tvoid OnGameLoading()"
+			],
+			[
+				"Point2D",
+				"Point2DI\tPoint2DI"
+			],
+			[
+				"Bu",
+				"BuildingPlacement\tBuildingPlacement::"
+			],
+			[
+				"struc",
+				"structure\tsc2::UNIT_TYPEID structure"
+			],
+			[
+				"Ha",
+				"VeryHard\tsc2::Difficulty VeryHard"
+			],
+			[
+				"getunit",
+				"GetUnitTypeData"
+			],
+			[
+				"Factor",
+				"TERRAN_FACTORYREACTOR\tsc2::UNIT_TYPEID TERRAN_FACTORYREACTOR"
+			],
+			[
+				"Fac",
+				"TERRAN_FACTORYTECHLAB\tsc2::UNIT_TYPEID TERRAN_FACTORYTECHLAB"
+			],
+			[
+				"Barra",
+				"TERRAN_BARRACKSTECHLAB\tsc2::UNIT_TYPEID TERRAN_BARRACKSTECHLAB"
+			],
+			[
+				"Roo",
+				"PROTOSS_ROBOTICSFACILITY\tsc2::UNIT_TYPEID PROTOSS_ROBOTICSFACILITY"
+			],
+			[
+				"Robot",
+				"PROTOSS_ROBOTICSFACILITY\tsc2::UNIT_TYPEID PROTOSS_ROBOTICSFACILITY"
+			],
+			[
+				"PRBE",
+				"PROTOSS_PROBE\tsc2::UNIT_TYPEID PROTOSS_PROBE"
+			],
+			[
+				"ABi",
+				"ABILITY_ID\tABILITY_ID"
+			],
+			[
+				"TECH",
+				"BUILD_TECHLAB\tsc2::ABILITY_ID BUILD_TECHLAB"
+			],
+			[
+				"STAR",
+				"TERRAN_STARPORTTECHLAB\tsc2::UNIT_TYPEID TERRAN_STARPORTTECHLAB"
+			],
+			[
+				"TRAIN_BAN",
+				"TRAIN_BANSHEE\tsc2::ABILITY_ID TRAIN_BANSHEE"
+			],
+			[
+				"SCV",
+				"TERRAN_SCV"
+			],
+			[
+				"Terran_mar",
+				"TERRAN_MARINE\tsc2::UNIT_TYPEID TERRAN_MARINE"
+			],
+			[
+				"TRAIN_MAR",
+				"TRAIN_MARINE\tsc2::ABILITY_ID TRAIN_MARINE"
+			],
+			[
+				"TERRAN_MAR",
+				"TERRAN_MARINE\tsc2::UNIT_TYPEID TERRAN_MARINE"
+			],
+			[
+				"Abil",
+				"ABILITY_ID\tABILITY_ID"
+			],
+			[
+				"Ti",
+				"Tick (Hidden)\tBOT::Status BOT::TreeNode::Tick()"
+			],
+			[
+				"GetFoo",
+				"GetFoodCap"
+			],
+			[
+				"foo",
+				"GetFoodUsed"
+			],
+			[
+				"BuildSt",
+				"BuildStructure\tBuildStructure(sc2::AbilityID ability, sc2::UnitTypeID unit)"
+			],
+			[
+				"UnitT",
+				"UNIT_TYPEID\tUNIT_TYPEID"
+			],
+			[
+				"Has",
+				"HasUnit\tHasUnit(sc2::UnitTypeID unit, int count)"
+			],
+			[
+				"uni",
+				"unit\tsc2::Unit * unit"
+			],
+			[
+				"Suc",
+				"Success"
+			],
+			[
+				"GetUnit",
+				"GetUnitTypeData\tconst UnitTypes & GetUnitTypeData(bool force_refresh) const "
+			],
+			[
+				"UnitID",
+				"UnitTypeID\tUnitTypeID"
+			],
+			[
+				"AbilityI",
+				"ABILITY_ID\tABILITY_ID"
+			],
+			[
+				"unitType",
+				"UnitTypeID\tUnitTypeID"
+			],
+			[
+				"cate",
+				"category"
+			],
+			[
+				"all_",
+				"all_columns"
+			],
+			[
+				"all",
+				"all_columns"
+			],
+			[
+				"json",
+				"jsonify"
+			],
+			[
+				"Key",
+				"KeyboardInterrupt\tclass"
+			],
+			[
+				"catego",
+				"category_id"
+			],
+			[
+				"col",
+				"columns\tstatement"
+			],
+			[
+				"read",
+				"read_transforms\tparam"
+			],
+			[
+				"cat",
+				"cat_id\tstatement"
+			],
+			[
+				"base",
+				"currencyBase"
+			],
+			[
+				"curr",
+				"currencyBase"
+			],
+			[
+				"cur",
+				"cursor"
+			],
+			[
+				"text",
+				"textfield"
+			],
+			[
+				"padding",
+				"padding-top"
+			],
+			[
+				"font-",
+				"font-weight"
+			],
+			[
+				"back",
+				"background-color"
+			],
+			[
+				"text-",
+				"text-align"
+			],
+			[
+				"visi",
+				"visibility"
+			],
+			[
+				"total",
+				"total_amount"
+			],
+			[
+				"item",
+				"item_amounts\tstatement"
+			],
+			[
+				"expect",
+				"expectedSum"
+			],
+			[
+				"tota",
+				"total_amount\tstatement"
+			],
+			[
+				"expec",
+				"expected_amount\tstatement"
+			],
+			[
+				"fetch",
+				"fetchall"
+			],
+			[
+				"web",
+				"webshop_products"
+			],
+			[
+				"strip",
+				"stripe_amount\tstatement"
+			],
+			[
+				"curren",
+				"currency"
+			],
+			[
+				"amoutn",
+				"amountElem"
+			],
+			[
+				"amount",
+				"amountElem"
+			],
+			[
+				"name2",
+				"name2element"
+			],
+			[
+				"prod",
+				"product-list"
+			],
+			[
+				"border",
+				"border-radius"
+			],
+			[
+				"Boar",
+				"ChessBoard\tChessBoard"
+			],
+			[
+				"cap",
+				"capturingMove"
+			],
+			[
+				"Chess",
+				"ChessBoard"
+			],
+			[
+				"captu",
+				"capturingMove"
+			],
+			[
+				"on",
+				"on_board"
+			],
+			[
+				"rotation",
+				"rotationMode"
+			],
+			[
+				"enabl",
+				"enableRotationCompatibility"
+			],
+			[
+				"enable",
+				"enableRotation"
+			],
+			[
+				"simulated",
+				"simulatedRotation"
+			],
+			[
+				"hyena",
+				"hyenasInside\tatomic<int> hyenasInside"
+			],
+			[
+				"unor",
+				"unordered_map\tstandard header (since c++11)"
+			],
+			[
+				"hey",
+				"hyenasInside\tatomic<int> hyenasInside"
+			],
+			[
+				"h",
+				"hyenaEnters"
+			],
+			[
+				"agent",
+				"agentIndex\tstatement"
+			],
+			[
+				"game",
+				"gamestate"
+			],
+			[
+				"getpo",
+				"getAgentPosition"
+			],
+			[
+				"getAgent",
+				"getAgentState"
+			],
+			[
+				"bor",
+				"border_dist\tstatement"
+			],
+			[
+				"posi",
+				"position_estimators\tstatement"
+			],
+			[
+				"dataF",
+				"data_file\tstatement"
+			],
+			[
+				"add_",
+				"add_input_data\tfunction"
+			],
+			[
+				"new",
+				"new_data\tstatement"
+			],
+			[
+				"data",
+				"data_path\tstatement"
+			],
+			[
+				"tmp",
+				"tmp_path\tstatement"
+			],
+			[
+				"output",
+				"output_model\tstatement"
+			],
+			[
+				"for",
+				"forfeit"
+			],
+			[
+				"getAgen",
+				"getAgentState"
+			],
+			[
+				"predi",
+				"prediction"
+			],
+			[
+				"produ",
+				"produce_features"
+			],
+			[
+				"oppone",
+				"opponent_model_path\tstatement"
+			],
+			[
+				"mirro",
+				"mirror_grid"
+			],
+			[
+				"getPos",
+				"getAgentPosition"
+			],
+			[
+				"compl",
+				"complete_validation\tstatement"
+			],
+			[
+				"eva",
+				"evaluate\tfunction"
+			],
+			[
+				"ba",
+				"batch\tfunction"
+			],
+			[
+				"train",
+				"train_size\tstatement"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "bot/Mappings.cpp",
+			"settings":
+			{
+				"buffer_size": 19257,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/Mappings.h",
+			"settings":
+			{
+				"buffer_size": 227,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/Pathfinding.h",
+			"settings":
+			{
+				"buffer_size": 287,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/Predicates.h",
+			"settings":
+			{
+				"buffer_size": 736,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "s2client-api/examples/common/bot_examples.cc",
+			"settings":
+			{
+				"buffer_size": 135496,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/TacticalNodes.cpp",
+			"settings":
+			{
+				"buffer_size": 4637,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/TacticalManager.cpp",
+			"settings":
+			{
+				"buffer_size": 4295,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/StrategicNodes.cpp",
+			"settings":
+			{
+				"buffer_size": 15493,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/SpendingManager.cpp",
+			"settings":
+			{
+				"buffer_size": 6903,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/StrategicNodes.h",
+			"settings":
+			{
+				"buffer_size": 3854,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/CameraController.cpp",
+			"settings":
+			{
+				"buffer_size": 3892,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/main.cpp",
+			"settings":
+			{
+				"buffer_size": 1624,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/MicroNodes.cpp",
+			"settings":
+			{
+				"buffer_size": 6002,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "s2client-api/tests/test_unit_command.cc",
+			"settings":
+			{
+				"buffer_size": 55570,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/Bot.h",
+			"settings":
+			{
+				"buffer_size": 3410,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/bot.cpp",
+			"settings":
+			{
+				"buffer_size": 8095,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/InfluenceManager.cpp",
+			"settings":
+			{
+				"buffer_size": 5243,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/Influence.h",
+			"settings":
+			{
+				"buffer_size": 3267,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/InfluenceManager.h",
+			"settings":
+			{
+				"buffer_size": 289,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/ScoutingManager.cpp",
+			"settings":
+			{
+				"buffer_size": 1227,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/Influence.cpp",
+			"settings":
+			{
+				"buffer_size": 12521,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/Group.cpp",
+			"settings":
+			{
+				"buffer_size": 2051,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/CompositionAnalyzer.cpp",
+			"settings":
+			{
+				"buffer_size": 12033,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "build/out2.txt",
+			"settings":
+			{
+				"buffer_size": 1059506,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "# -*- coding: utf-8 -*-\nimport torch\n\n# N is batch size; D_in is input dimension;\n# H is hidden dimension; D_out is output dimension.\nN, D_in, H, D_out = 64, 1000, 100, 10\n\ndtype = torch.float\ndevice = torch.device(\"cpu\")\n\nlines = open(\"build/out2.txt\").read().split(\"\\n\")\nxs = []\nfor line in lines:\n    a, b = line.split(\";\")\n    lhs_unit, lhs_count = map(int, a.split())[1:]\n    rhs_unit, rhs_count = map(int, b.split()[1:3])\n    lhs_life, rhs_life = map(float, b.split()[3:5])\n    lhs_damage_taken, rhs_damage_taken = map(float, b.split()[5:6])\n\n    lhs_life = 1 - lhs_life\n    rhs_life = 1 - rhs_life\n    xs.append([lhs_unit, rhs_unit])\n    cs.append([lhs_count, rhs_count])\n    ys.append(lhs_life / (lhs_life + rhs_life))\n    outcome = lhs_life \n\n    # 0,0 => 0.5\n    # 1,1 => 0.5\n    # 1,0 => 0\n    # 0,1 => 1\n\n# Create random Tensors to hold inputs and outputs\nx = torch.randn(N, D_in)\ny = torch.randn(N, D_out)\n\n# C*aa + C*ag + dps_single + dps_multi*sqrt(N) + \n# Use the nn package to define our model and loss function.\n# model = torch.nn.Sequential(\n#     torch.nn.Linear(D_in, H),\n#     torch.nn.ReLU(),\n#     torch.nn.Linear(H, D_out),\n# )\n\n# Create random Tensors for weights.\n# Setting requires_grad=True indicates that we want to compute gradients with\n# respect to these Tensors during the backward pass.\nw1 = torch.randn(D_in, H, device=device, dtype=dtype, requires_grad=True)\nw2 = torch.randn(H, D_out, device=device, dtype=dtype, requires_grad=True)\n\nloss_fn = torch.nn.MSELoss(size_average=False)\n\n# Use the optim package to define an Optimizer that will update the weights of\n# the model for us. Here we will use Adam; the optim package contains many other\n# optimization algoriths. The first argument to the Adam constructor tells the\n# optimizer which Tensors it should update.\nlearning_rate = 1e-2\noptimizer = torch.optim.Adam([w1,w2], lr=learning_rate)\nfor t in range(500):\n    # Forward pass: compute predicted y using operations on Tensors; these\n    # are exactly the same operations we used to compute the forward pass using\n    # Tensors, but we do not need to keep references to intermediate values since\n    # we are not implementing the backward pass by hand.\n    y_pred = x.mm(w1).clamp(min=0).mm(w2)\n\n    # Compute and print loss using operations on Tensors.\n    # Now loss is a Tensor of shape (1,)\n    # loss.item() gets the a scalar value held in the loss.\n    loss = (y_pred - y).pow(2).sum()\n\n    # Compute and print loss.\n    # loss = loss_fn(y_pred, y)\n    print(t, loss.item())\n\n    # Before the backward pass, use the optimizer object to zero all of the\n    # gradients for the variables it will update (which are the learnable\n    # weights of the model). This is because by default, gradients are\n    # accumulated in buffers( i.e, not overwritten) whenever .backward()\n    # is called. Checkout docs of torch.autograd.backward for more details.\n    optimizer.zero_grad()\n\n    # Backward pass: compute gradient of the loss with respect to model\n    # parameters\n    loss.backward()\n\n    # Calling the step function on an Optimizer makes an update to its\n    # parameters\n    optimizer.step()\n",
+			"file": "learn/composition.py",
+			"file_size": 3024,
+			"file_write_time": 131712793880000000,
+			"settings":
+			{
+				"buffer_size": 3140,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/arong/Unity/a-pathfinding-project/Assets/AstarPathfindingProject/Generators/NavmeshBase.cs",
+			"settings":
+			{
+				"buffer_size": 59193,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/arong/Unity/a-pathfinding-project/Assets/AstarPathfindingProject/Generators/RecastGenerator.cs",
+			"settings":
+			{
+				"buffer_size": 39338,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "//@AstarPro\nusing Math = System.Math;\nusing UnityEngine;\nusing System.Collections.Generic;\n#if UNITY_5_5_OR_NEWER\nusing UnityEngine.Profiling;\n#endif\n\nnamespace Pathfinding {\n\tusing Pathfinding.Voxels;\n\tusing Pathfinding.Serialization;\n\tusing Pathfinding.Recast;\n\tusing Pathfinding.Util;\n\tusing System.Threading;\n\n\t/** Automatically generates navmesh graphs based on world geometry.\n\t * The recast graph is based on Recast (http://code.google.com/p/recastnavigation/).\\n\n\t * I have translated a good portion of it to C# to run it natively in Unity.\n\t *\n\t * \\section howitworks How a recast graph works\n\t * When generating a recast graph what happens is that the world is voxelized.\n\t * You can think of this as constructing an approximation of the world out of lots of boxes.\n\t * If you have played Minecraft it looks very similar (but with smaller boxes).\n\t * \\shadowimage{recast/voxelized_truck.jpg}\n\t *\n\t * The Recast process is described as follows:\n\t * - The voxel mold is build from the input triangle mesh by rasterizing the triangles into a multi-layer heightfield.\n\t * Some simple filters are then applied to the mold to prune out locations where the character would not be able to move.\n\t * - The walkable areas described by the mold are divided into simple overlayed 2D regions.\n\t * The resulting regions have only one non-overlapping contour, which simplifies the final step of the process tremendously.\n\t * - The navigation polygons are peeled off from the regions by first tracing the boundaries and then simplifying them.\n\t * The resulting polygons are finally converted to convex polygons which makes them perfect for pathfinding and spatial reasoning about the level.\n\t *\n\t * It works exactly like that in the C# version as well, except that everything is triangulated to triangles instead of n-gons.\n\t * The recast generation process usually works directly on the visiable geometry in the world, this is usually a good thing, because world geometry is usually more detailed than the colliders.\n\t * You can however specify that colliders should be rasterized, if you have very detailed world geometry, this can speed up the scan.\n\t *\n\t * Check out the second part of the Get Started Tutorial which discusses recast graphs.\n\t *\n\t * \\section export Exporting for manual editing\n\t * In the editor there is a button for exporting the generated graph to a .obj file.\n\t * Usually the generation process is good enough for the game directly, but in some cases you might want to edit some minor details.\n\t * So you can export the graph to a .obj file, open it in your favourite 3D application, edit it, and export it to a mesh which Unity can import.\n\t * You can then use that mesh in a navmesh graph.\n\t *\n\t * Since many 3D modelling programs use different axis systems (unity uses X=right, Y=up, Z=forward), it can be a bit tricky to get the rotation and scaling right.\n\t * For blender for example, what you have to do is to first import the mesh using the .obj importer. Don't change anything related to axes in the settings.\n\t * Then select the mesh, open the transform tab (usually the thin toolbar to the right of the 3D view) and set Scale -> Z to -1.\n\t * If you transform it using the S (scale) hotkey, it seems to set both Z and Y to -1 for some reason.\n\t * Then make the edits you need and export it as an .obj file to somewhere in the Unity project.\n\t * But this time, edit the setting named \"Forward\" to \"Z forward\" (not -Z as it is per default).\n\t *\n\t * \\shadowimage{recastgraph_graph.png}\n\t * \\shadowimage{recastgraph_inspector.png}\n\t *\n\t * \\ingroup graphs\n\t *\n\t * \\astarpro\n\t */\n\t[JsonOptIn]\n\tpublic class RecastGraph : NavmeshBase, IUpdatableGraph {\n#if ASTAR_RECAST_VOXEL_DEBUG\n\t\tpublic bool importMode = false;\n\t\tpublic bool exportMode = false;\n#endif\n\n\t\t[JsonMember]\n\t\t/** Radius of the agent which will traverse the navmesh.\n\t\t * The navmesh will be eroded with this radius.\n\t\t * \\shadowimage{recast/character_radius.gif}\n\t\t */\n\t\tpublic float characterRadius = 1.5F;\n\n\t\t/** Max distance from simplified edge to real edge.\n\t\t * This value is measured in voxels. So with the default value of 2 it means that the final navmesh contour may be at most\n\t\t * 2 voxels (i.e 2 times #cellSize) away from the border that was calculated when voxelizing the world.\n\t\t * A higher value will yield a more simplified and cleaner navmesh while a lower value may capture more details.\n\t\t * However a too low value will cause the individual voxels to be visible (see image below).\n\t\t *\n\t\t * \\shadowimage{recast/max_edge_error.gif}\n\t\t *\n\t\t * \\see #cellSize\n\t\t */\n\t\t[JsonMember]\n\t\tpublic float contourMaxError = 2F;\n\n\t\t/** Voxel sample size (x,z).\n\t\t * When generating a recast graph what happens is that the world is voxelized.\n\t\t * You can think of this as constructing an approximation of the world out of lots of boxes.\n\t\t * If you have played Minecraft it looks very similar (but with smaller boxes).\n\t\t * \\shadowimage{recast/voxelized_truck.jpg}\n\t\t * The cell size is the width and depth of those boxes. The height of the boxes is usually much smaller\n\t\t * and automatically calculated however. See #CellHeight.\n\t\t *\n\t\t * Lower values will yield higher quality navmeshes, however the graph will be slower to scan.\n\t\t *\n\t\t * \\shadowimage{recast/cell_size.gif}\n\t\t */\n\t\t[JsonMember]\n\t\tpublic float cellSize = 0.5F;\n\n\t\t/** Character height.\n\t\t * \\shadowimage{recast/walkable_height.gif}\n\t\t */\n\t\t[JsonMember]\n\t\tpublic float walkableHeight = 2F;\n\n\t\t/** Height the character can climb.\n\t\t * \\shadowimage{recast/walkable_climb.gif}\n\t\t */\n\t\t[JsonMember]\n\t\tpublic float walkableClimb = 0.5F;\n\n\t\t/** Max slope in degrees the character can traverse.\n\t\t * \\shadowimage{recast/max_slope.gif}\n\t\t */\n\t\t[JsonMember]\n\t\tpublic float maxSlope = 30;\n\n\t\t/** Longer edges will be subdivided.\n\t\t * Reducing this value can sometimes improve path quality since similarly sized triangles\n\t\t * yield better paths than really large and really triangles small next to each other.\n\t\t * However it will also add a lot more nodes which will make pathfinding slower.\n\t\t * For more information about this take a look at \\ref navmeshnotes.\n\t\t *\n\t\t * \\shadowimage{recast/max_edge_length.gif}\n\t\t */\n\t\t[JsonMember]\n\t\tpublic float maxEdgeLength = 20;\n\n\t\t/** Minumum region size.\n\t\t * Small regions will be removed from the navmesh.\n\t\t * Measured in square world units (square meters in most games).\n\t\t *\n\t\t * \\shadowimage{recast/min_region_size.gif}\n\t\t *\n\t\t * If a region is adjacent to a tile border, it will not be removed\n\t\t * even though it is small since the adjacent tile might join it\n\t\t * to form a larger region.\n\t\t *\n\t\t * \\shadowimage{recast_minRegionSize_1.png}\n\t\t * \\shadowimage{recast_minRegionSize_2.png}\n\t\t */\n\t\t[JsonMember]\n\t\tpublic float minRegionSize = 3;\n\n\t\t/** Size in voxels of a single tile.\n\t\t * This is the width of the tile.\n\t\t *\n\t\t * \\shadowimage{recast/tile.png}\n\t\t *\n\t\t * A large tile size can be faster to initially scan (but beware of out of memory issues if you try with a too large tile size in a large world)\n\t\t * smaller tile sizes are (much) faster to update.\n\t\t *\n\t\t * Different tile sizes can affect the quality of paths. It is often good to split up huge open areas into several tiles for\n\t\t * better quality paths, but too small tiles can also lead to effects looking like invisible obstacles.\n\t\t * For more information about this take a look at \\ref navmeshnotes.\n\t\t * Usually it is best to experiment and see what works best for your game.\n\t\t *\n\t\t * When scanning a recast graphs individual tiles can be calculated in parallel which can make it much faster to scan large worlds.\n\t\t * When you want to recalculate a part of a recast graph, this can only be done on a tile-by-tile basis which means that if you often try to update a region\n\t\t * of the recast graph much smaller than the tile size, then you will be doing a lot of unnecessary calculations. However if you on the other hand\n\t\t * update regions of the recast graph that are much larger than the tile size then it may be slower than necessary as there is some overhead in having lots of tiles\n\t\t * instead of a few larger ones (not that much though).\n\t\t *\n\t\t * Recommended values are between 64 and 256, but these are very soft limits. It is possible to use both larger and smaller values.\n\t\t */\n\t\t[JsonMember]\n\t\tpublic int editorTileSize = 128;\n\n\t\t/** Size of a tile along the X axis in voxels.\n\t\t * \\copydetails editorTileSize\n\t\t *\n\t\t * \\warning Do not modify, it is set from #editorTileSize at Scan\n\t\t *\n\t\t * \\see #tileSizeZ\n\t\t */\n\t\t[JsonMember]\n\t\tpublic int tileSizeX = 128;\n\n\t\t/** Size of a tile along the Z axis in voxels.\n\t\t * \\copydetails editorTileSize\n\t\t *\n\t\t * \\warning Do not modify, it is set from #editorTileSize at Scan\n\t\t *\n\t\t * \\see #tileSizeX\n\t\t */\n\t\t[JsonMember]\n\t\tpublic int tileSizeZ = 128;\n\n\n\t\t/** If true, divide the graph into tiles, otherwise use a single tile covering the whole graph.\n\t\t * \\since Since 4.1 the default value is \\a true.\n\t\t */\n\t\t[JsonMember]\n\t\tpublic bool useTiles = true;\n\n\t\t/** If true, scanning the graph will yield a completely empty graph.\n\t\t * Useful if you want to replace the graph with a custom navmesh for example\n\t\t */\n\t\tpublic bool scanEmptyGraph;\n\n\t\tpublic enum RelevantGraphSurfaceMode {\n\t\t\t/** No RelevantGraphSurface components are required anywhere */\n\t\t\tDoNotRequire,\n\t\t\t/** Any surfaces that are completely inside tiles need to have a \\link Pathfinding.RelevantGraphSurface RelevantGraphSurface\\endlink component\n\t\t\t * positioned on that surface, otherwise it will be stripped away.\n\t\t\t */\n\t\t\tOnlyForCompletelyInsideTile,\n\t\t\t/** All surfaces need to have one \\link Pathfinding.RelevantGraphSurface RelevantGraphSurface\\endlink component\n\t\t\t * positioned somewhere on the surface and in each tile that it touches, otherwise it will be stripped away.\n\t\t\t * Only tiles that have a RelevantGraphSurface component for that surface will keep it.\n\t\t\t */\n\t\t\tRequireForAll\n\t\t}\n\n\t\t/** Require every region to have a RelevantGraphSurface component inside it.\n\t\t * A RelevantGraphSurface component placed in the scene specifies that\n\t\t * the navmesh region it is inside should be included in the navmesh.\n\t\t *\n\t\t * If this is set to OnlyForCompletelyInsideTile\n\t\t * a navmesh region is included in the navmesh if it\n\t\t * has a RelevantGraphSurface inside it, or if it\n\t\t * is adjacent to a tile border. This can leave some small regions\n\t\t * which you didn't want to have included because they are adjacent\n\t\t * to tile borders, but it removes the need to place a component\n\t\t * in every single tile, which can be tedious (see below).\n\t\t *\n\t\t * If this is set to RequireForAll\n\t\t * a navmesh region is included only if it has a RelevantGraphSurface\n\t\t * inside it. Note that even though the navmesh\n\t\t * looks continous between tiles, the tiles are computed individually\n\t\t * and therefore you need a RelevantGraphSurface component for each\n\t\t * region and for each tile.\n\t\t *\n\t\t *\n\t\t *\n\t\t * \\shadowimage{relevantgraphsurface/dontreq.png}\n\t\t * In the above image, the mode OnlyForCompletelyInsideTile was used. Tile borders\n\t\t * are highlighted in black. Note that since all regions are adjacent to a tile border,\n\t\t * this mode didn't remove anything in this case and would give the same result as DoNotRequire.\n\t\t * The RelevantGraphSurface component is shown using the green gizmo in the top-right of the blue plane.\n\t\t *\n\t\t * \\shadowimage{relevantgraphsurface/no_tiles.png}\n\t\t * In the above image, the mode RequireForAll was used. No tiles were used.\n\t\t * Note that the small region at the top of the orange cube is now gone, since it was not the in the same\n\t\t * region as the relevant graph surface component.\n\t\t * The result would have been identical with OnlyForCompletelyInsideTile since there are no tiles (or a single tile, depending on how you look at it).\n\t\t *\n\t\t * \\shadowimage{relevantgraphsurface/req_all.png}\n\t\t * The mode RequireForAll was used here. Since there is only a single RelevantGraphSurface component, only the region\n\t\t * it was in, in the tile it is placed in, will be enabled. If there would have been several RelevantGraphSurface in other tiles,\n\t\t * those regions could have been enabled as well.\n\t\t *\n\t\t * \\shadowimage{relevantgraphsurface/tiled_uneven.png}\n\t\t * Here another tile size was used along with the OnlyForCompletelyInsideTile.\n\t\t * Note that the region on top of the orange cube is gone now since the region borders do not intersect that region (and there is no\n\t\t * RelevantGraphSurface component inside it).\n\t\t *\n\t\t * \\note When not using tiles. OnlyForCompletelyInsideTile is equivalent to RequireForAll.\n\t\t */\n\t\t[JsonMember]\n\t\tpublic RelevantGraphSurfaceMode relevantGraphSurfaceMode = RelevantGraphSurfaceMode.DoNotRequire;\n\n\t\t[JsonMember]\n\t\t/** Use colliders to calculate the navmesh */\n\t\tpublic bool rasterizeColliders;\n\n\t\t[JsonMember]\n\t\t/** Use scene meshes to calculate the navmesh */\n\t\tpublic bool rasterizeMeshes = true;\n\n\t\t/** Include the Terrain in the scene. */\n\t\t[JsonMember]\n\t\tpublic bool rasterizeTerrain = true;\n\n\t\t/** Rasterize tree colliders on terrains.\n\t\t *\n\t\t * If the tree prefab has a collider, that collider will be rasterized.\n\t\t * Otherwise a simple box collider will be used and the script will\n\t\t * try to adjust it to the tree's scale, it might not do a very good job though so\n\t\t * an attached collider is preferable.\n\t\t *\n\t\t * \\note It seems that Unity will only generate tree colliders at runtime when the game is started.\n\t\t * For this reason, this graph will not pick up tree colliders when scanned outside of play mode\n\t\t * but it will pick them up if the graph is scanned when the game has started. If it still does not pick them up\n\t\t * make sure that the trees actually have colliders attached to them and that the tree prefabs are\n\t\t * in the correct layer (the layer should be included in the layer mask).\n\t\t *\n\t\t * \\see rasterizeTerrain\n\t\t * \\see colliderRasterizeDetail\n\t\t */\n\t\t[JsonMember]\n\t\tpublic bool rasterizeTrees = true;\n\n\t\t/** Controls detail on rasterization of sphere and capsule colliders.\n\t\t * This controls the number of rows and columns on the generated meshes.\n\t\t * A higher value does not necessarily increase quality of the mesh, but a lower\n\t\t * value will often speed it up.\n\t\t *\n\t\t * You should try to keep this value as low as possible without affecting the mesh quality since\n\t\t * that will yield the fastest scan times.\n\t\t *\n\t\t * \\see rasterizeColliders\n\t\t */\n\t\t[JsonMember]\n\t\tpublic float colliderRasterizeDetail = 10;\n\n\t\t/** Layer mask which filters which objects to include.\n\t\t * \\see tagMask\n\t\t */\n\t\t[JsonMember]\n\t\tpublic LayerMask mask = -1;\n\n\t\t/** Objects tagged with any of these tags will be rasterized.\n\t\t * Note that this extends the layer mask, so if you only want to use tags, set #mask to 'Nothing'.\n\t\t *\n\t\t * \\see mask\n\t\t */\n\t\t[JsonMember]\n\t\tpublic List<string> tagMask = new List<string>();\n\n\t\t/** Controls how large the sample size for the terrain is.\n\t\t * A higher value is faster to scan but less accurate\n\t\t */\n\t\t[JsonMember]\n\t\tpublic int terrainSampleSize = 3;\n\n\t\t/** Rotation of the graph in degrees */\n\t\t[JsonMember]\n\t\tpublic Vector3 rotation;\n\n\t\t/** Center of the bounding box.\n\t\t * Scanning will only be done inside the bounding box */\n\t\t[JsonMember]\n\t\tpublic Vector3 forcedBoundsCenter;\n\n\t\tprivate Voxelize globalVox;\n\n\t\tpublic const int BorderVertexMask = 1;\n\t\tpublic const int BorderVertexOffset = 31;\n\n\t\t/** List of tiles that have been calculated in a graph update, but have not yet been added to the graph.\n\t\t * When updating the graph in a separate thread, large changes cannot be made directly to the graph\n\t\t * as other scripts might use the graph data structures at the same time in another thread.\n\t\t * So the tiles are calculated, but they are not yet connected to the existing tiles\n\t\t * that will be done in UpdateAreaPost which runs in the Unity thread.\n\t\t */\n\t\tList<NavmeshTile> stagingTiles = new List<NavmeshTile>();\n\n\t\tprotected override bool RecalculateNormals { get { return true; } }\n\n\t\tpublic override float TileWorldSizeX {\n\t\t\tget {\n\t\t\t\treturn tileSizeX*cellSize;\n\t\t\t}\n\t\t}\n\n\t\tpublic override float TileWorldSizeZ {\n\t\t\tget {\n\t\t\t\treturn tileSizeZ*cellSize;\n\t\t\t}\n\t\t}\n\n\t\tprotected override float MaxTileConnectionEdgeDistance {\n\t\t\tget {\n\t\t\t\treturn walkableClimb;\n\t\t\t}\n\t\t}\n\n\t\t/** World bounds for the graph.\n\t\t * Defined as a bounds object with size #forcedBoundsSize and centered at #forcedBoundsCenter\n\t\t * \\deprecated Obsolete since this is not accurate when the graph is rotated (rotation was not supported when this property was created)\n\t\t */\n\t\t[System.Obsolete(\"Obsolete since this is not accurate when the graph is rotated (rotation was not supported when this property was created)\")]\n\t\tpublic Bounds forcedBounds {\n\t\t\tget {\n\t\t\t\treturn new Bounds(forcedBoundsCenter, forcedBoundsSize);\n\t\t\t}\n\t\t}\n\n\t\t/** Returns the closest point of the node.\n\t\t * \\deprecated Use #Pathfinding.TriangleMeshNode.ClosestPointOnNode instead\n\t\t */\n\t\t[System.Obsolete(\"Use node.ClosestPointOnNode instead\")]\n\t\tpublic Vector3 ClosestPointOnNode (TriangleMeshNode node, Vector3 pos) {\n\t\t\treturn node.ClosestPointOnNode(pos);\n\t\t}\n\n\t\t/** Returns if the point is inside the node in XZ space.\n\t\t * \\deprecated Use #Pathfinding.TriangleMeshNode.ContainsPoint instead\n\t\t */\n\t\t[System.Obsolete(\"Use node.ContainsPoint instead\")]\n\t\tpublic bool ContainsPoint (TriangleMeshNode node, Vector3 pos) {\n\t\t\treturn node.ContainsPoint((Int3)pos);\n\t\t}\n\n\t\t/** Changes the bounds of the graph to precisely encapsulate all objects in the scene that can be included in the scanning process based on the settings.\n\t\t * Which objects are used depends on the settings. If an object would have affected the graph with the current settings if it would have\n\t\t * been inside the bounds of the graph, it will be detected and the bounds will be expanded to contain that object.\n\t\t *\n\t\t * This method corresponds to the 'Snap bounds to scene' button in the inspector.\n\t\t *\n\t\t * \\see rasterizeMeshes\n\t\t * \\see rasterizeTerrain\n\t\t * \\see rasterizeColliders\n\t\t * \\see mask\n\t\t * \\see tagMask\n\t\t *\n\t\t * \\see forcedBoundsCenter\n\t\t * \\see forcedBoundsSize\n\t\t */\n\t\tpublic void SnapForceBoundsToScene () {\n\t\t\tvar meshes = CollectMeshes(new Bounds(Vector3.zero, new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity)));\n\n\t\t\tif (meshes.Count == 0) {\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\tvar bounds = meshes[0].bounds;\n\n\t\t\tfor (int i = 1; i < meshes.Count; i++) {\n\t\t\t\tbounds.Encapsulate(meshes[i].bounds);\n\t\t\t\tmeshes[i].Pool();\n\t\t\t}\n\n\t\t\tforcedBoundsCenter = bounds.center;\n\t\t\tforcedBoundsSize = bounds.size;\n\t\t}\n\n\t\tGraphUpdateThreading IUpdatableGraph.CanUpdateAsync (GraphUpdateObject o) {\n\t\t\treturn o.updatePhysics ? GraphUpdateThreading.UnityInit | GraphUpdateThreading.SeparateThread | GraphUpdateThreading.UnityPost : GraphUpdateThreading.SeparateThread;\n\t\t}\n\n\t\tvoid IUpdatableGraph.UpdateAreaInit (GraphUpdateObject o) {\n\t\t\tif (!o.updatePhysics) {\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\tAstarProfiler.Reset();\n\t\t\tAstarProfiler.StartProfile(\"UpdateAreaInit\");\n\t\t\tAstarProfiler.StartProfile(\"CollectMeshes\");\n\n\t\t\tRelevantGraphSurface.UpdateAllPositions();\n\n\t\t\t// Calculate world bounds of all affected tiles\n\t\t\tIntRect touchingTiles = GetTouchingTiles(o.bounds);\n\t\t\tBounds tileBounds = GetTileBounds(touchingTiles);\n\n\t\t\t// Expand TileBorderSizeInWorldUnits voxels in all directions\n\t\t\ttileBounds.Expand(new Vector3(1, 0, 1)*TileBorderSizeInWorldUnits*2);\n\n\t\t\tvar meshes = CollectMeshes(tileBounds);\n\n\t\t\tif (globalVox == null) {\n\t\t\t\t// Create the voxelizer and set all settings\n\t\t\t\tglobalVox = new Voxelize(CellHeight, cellSize, walkableClimb, walkableHeight, maxSlope, maxEdgeLength);\n\t\t\t}\n\n\t\t\tglobalVox.inputMeshes = meshes;\n\n\t\t\tAstarProfiler.EndProfile(\"CollectMeshes\");\n\t\t\tAstarProfiler.EndProfile(\"UpdateAreaInit\");\n\t\t}\n\n\t\tvoid IUpdatableGraph.UpdateArea (GraphUpdateObject guo) {\n\t\t\t// Figure out which tiles are affected\n\t\t\tvar affectedTiles = GetTouchingTiles(guo.bounds);\n\n\t\t\tif (!guo.updatePhysics) {\n\t\t\t\tfor (int z = affectedTiles.ymin; z <= affectedTiles.ymax; z++) {\n\t\t\t\t\tfor (int x = affectedTiles.xmin; x <= affectedTiles.xmax; x++) {\n\t\t\t\t\t\tNavmeshTile tile = tiles[z*tileXCount + x];\n\t\t\t\t\t\tNavMeshGraph.UpdateArea(guo, tile);\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\tVoxelize vox = globalVox;\n\n\t\t\tif (vox == null) {\n\t\t\t\tthrow new System.InvalidOperationException(\"No Voxelizer object. UpdateAreaInit should have been called before this function.\");\n\t\t\t}\n\n\t\t\tAstarProfiler.StartProfile(\"Build Tiles\");\n\n\t\t\t// Build the new tiles\n\t\t\tfor (int x = affectedTiles.xmin; x <= affectedTiles.xmax; x++) {\n\t\t\t\tfor (int z = affectedTiles.ymin; z <= affectedTiles.ymax; z++) {\n\t\t\t\t\tstagingTiles.Add(BuildTileMesh(vox, x, z));\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tuint graphIndex = (uint)AstarPath.active.data.GetGraphIndex(this);\n\n\t\t\t// Set the correct graph index\n\t\t\tfor (int i = 0; i < stagingTiles.Count; i++) {\n\t\t\t\tNavmeshTile tile = stagingTiles[i];\n\t\t\t\tGraphNode[] nodes = tile.nodes;\n\n\t\t\t\tfor (int j = 0; j < nodes.Length; j++) nodes[j].GraphIndex = graphIndex;\n\t\t\t}\n\n\t\t\tfor (int i = 0; i < vox.inputMeshes.Count; i++) vox.inputMeshes[i].Pool();\n\t\t\tListPool<RasterizationMesh>.Release(ref vox.inputMeshes);\n\t\t\tAstarProfiler.EndProfile(\"Build Tiles\");\n\t\t}\n\n\t\t/** Called on the Unity thread to complete a graph update */\n\t\tvoid IUpdatableGraph.UpdateAreaPost (GraphUpdateObject guo) {\n\t\t\tProfiler.BeginSample(\"RemoveConnections\");\n\t\t\t// Remove connections from existing tiles destroy the nodes\n\t\t\t// Replace the old tile by the new tile\n\t\t\tfor (int i = 0; i < stagingTiles.Count; i++) {\n\t\t\t\tvar tile = stagingTiles[i];\n\t\t\t\tint index = tile.x + tile.z * tileXCount;\n\t\t\t\tvar oldTile = tiles[index];\n\n\t\t\t\t// Destroy the previous nodes\n\t\t\t\tfor (int j = 0; j < oldTile.nodes.Length; j++) {\n\t\t\t\t\toldTile.nodes[j].Destroy();\n\t\t\t\t}\n\n\t\t\t\ttiles[index] = tile;\n\t\t\t}\n\n\t\t\tProfiler.EndSample();\n\n\t\t\tProfiler.BeginSample(\"Connect With Neighbours\");\n\t\t\t// Connect the new tiles with their neighbours\n\t\t\tfor (int i = 0; i < stagingTiles.Count; i++) {\n\t\t\t\tvar tile = stagingTiles[i];\n\t\t\t\tConnectTileWithNeighbours(tile, false);\n\t\t\t}\n\n\t\t\t// This may be used to update the tile again to take into\n\t\t\t// account NavmeshCut components.\n\t\t\t// It is not the super efficient, but it works.\n\t\t\t// Usually you only use either normal graph updates OR navmesh\n\t\t\t// cutting, not both.\n\t\t\tif (OnRecalculatedTiles != null) {\n\t\t\t\tOnRecalculatedTiles(stagingTiles.ToArray());\n\t\t\t}\n\n\t\t\tstagingTiles.Clear();\n\t\t\tProfiler.EndSample();\n\t\t}\n\n\t\tprotected override IEnumerable<Progress> ScanInternal () {\n\t\t\tTriangleMeshNode.SetNavmeshHolder(AstarPath.active.data.GetGraphIndex(this), this);\n\n\t\t\tif (!Application.isPlaying) {\n\t\t\t\tRelevantGraphSurface.FindAllGraphSurfaces();\n\t\t\t}\n\n\t\t\tRelevantGraphSurface.UpdateAllPositions();\n\n#if ASTAR_DEBUGREPLAY\n\t\t\tDebugReplay.BeginGroup(\"Scanning\", 0);\n#endif\n\n\t\t\tforeach (var progress in ScanAllTiles()) {\n\t\t\t\tyield return progress;\n\t\t\t}\n\n#if ASTAR_DEBUGREPLAY\n\t\t\tDebugReplay.EndGroup();\n#endif\n\n#if DEBUG_REPLAY\n\t\t\tDebugReplay.WriteToFile();\n#endif\n\t\t}\n\n\t\tpublic override GraphTransform CalculateTransform () {\n\t\t\treturn new GraphTransform(Matrix4x4.TRS(forcedBoundsCenter, Quaternion.Euler(rotation), Vector3.one) * Matrix4x4.TRS(-forcedBoundsSize*0.5f, Quaternion.identity, Vector3.one));\n\t\t}\n\n\t\tvoid InitializeTileInfo () {\n\t\t\t// Voxel grid size\n\t\t\tint totalVoxelWidth = (int)(forcedBoundsSize.x/cellSize + 0.5f);\n\t\t\tint totalVoxelDepth = (int)(forcedBoundsSize.z/cellSize + 0.5f);\n\n\t\t\tif (!useTiles) {\n\t\t\t\ttileSizeX = totalVoxelWidth;\n\t\t\t\ttileSizeZ = totalVoxelDepth;\n\t\t\t} else {\n\t\t\t\ttileSizeX = editorTileSize;\n\t\t\t\ttileSizeZ = editorTileSize;\n\t\t\t}\n\n\t\t\t// Number of tiles\n\t\t\ttileXCount = (totalVoxelWidth + tileSizeX-1) / tileSizeX;\n\t\t\ttileZCount = (totalVoxelDepth + tileSizeZ-1) / tileSizeZ;\n\n\t\t\tif (tileXCount * tileZCount > TileIndexMask+1) {\n\t\t\t\tthrow new System.Exception(\"Too many tiles (\"+(tileXCount * tileZCount)+\") maximum is \"+(TileIndexMask+1)+\n\t\t\t\t\t\"\\nTry disabling ASTAR_RECAST_LARGER_TILES under the 'Optimizations' tab in the A* inspector.\");\n\t\t\t}\n\n\t\t\ttiles = new NavmeshTile[tileXCount*tileZCount];\n\t\t}\n\n\t\t/** Creates a list for every tile and adds every mesh that touches a tile to the corresponding list */\n\t\tList<RasterizationMesh>[] PutMeshesIntoTileBuckets (List<RasterizationMesh> meshes) {\n\t\t\tvar result = new List<RasterizationMesh>[tiles.Length];\n\t\t\tvar borderExpansion = new Vector3(1, 0, 1)*TileBorderSizeInWorldUnits*2;\n\n\t\t\tfor (int i = 0; i < result.Length; i++) {\n\t\t\t\tresult[i] = ListPool<RasterizationMesh>.Claim();\n\t\t\t}\n\n\t\t\tfor (int i = 0; i < meshes.Count; i++) {\n\t\t\t\tvar mesh = meshes[i];\n\t\t\t\tvar bounds = mesh.bounds;\n\t\t\t\t// Expand borderSize voxels on each side\n\t\t\t\tbounds.Expand(borderExpansion);\n\n\t\t\t\tvar rect = GetTouchingTiles(bounds);\n\t\t\t\tfor (int z = rect.ymin; z <= rect.ymax; z++) {\n\t\t\t\t\tfor (int x = rect.xmin; x <= rect.xmax; x++) {\n\t\t\t\t\t\tresult[x + z*tileXCount].Add(mesh);\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\n\t\t\treturn result;\n\t\t}\n\n\t\tprotected IEnumerable<Progress> ScanAllTiles () {\n\t\t\ttransform = CalculateTransform();\n\t\t\tInitializeTileInfo();\n\n\t\t\t// If this is true, just fill the graph with empty tiles\n\t\t\tif (scanEmptyGraph) {\n\t\t\t\tFillWithEmptyTiles();\n\t\t\t\tyield break;\n\t\t\t}\n\n\t\t\t// A walkableClimb higher than walkableHeight can cause issues when generating the navmesh since then it can in some cases\n\t\t\t// Both be valid for a character to walk under an obstacle and climb up on top of it (and that cannot be handled with navmesh without links)\n\t\t\t// The editor scripts also enforce this but we enforce it here too just to be sure\n\t\t\twalkableClimb = Mathf.Min(walkableClimb, walkableHeight);\n\n\t\t\tyield return new Progress(0, \"Finding Meshes\");\n\t\t\tvar bounds = transform.Transform(new Bounds(forcedBoundsSize*0.5f, forcedBoundsSize));\n\t\t\tvar meshes = CollectMeshes(bounds);\n\t\t\tvar buckets = PutMeshesIntoTileBuckets(meshes);\n\n\t\t\tQueue<Int2> tileQueue = new Queue<Int2>();\n\n\t\t\t// Put all tiles in the queue\n\t\t\tfor (int z = 0; z < tileZCount; z++) {\n\t\t\t\tfor (int x = 0; x < tileXCount; x++) {\n\t\t\t\t\ttileQueue.Enqueue(new Int2(x, z));\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tvar workQueue = new ParallelWorkQueue<Int2>(tileQueue);\n\t\t\t// Create the voxelizers and set all settings (one for each thread)\n\t\t\tvar voxelizers = new Voxelize[workQueue.threadCount];\n\t\t\tfor (int i = 0; i < voxelizers.Length; i++) voxelizers[i] = new Voxelize(CellHeight, cellSize, walkableClimb, walkableHeight, maxSlope, maxEdgeLength);\n\t\t\tworkQueue.action = (tile, threadIndex) => {\n\t\t\t\tvoxelizers[threadIndex].inputMeshes = buckets[tile.x + tile.y*tileXCount];\n\t\t\t\ttiles[tile.x + tile.y*tileXCount] = BuildTileMesh(voxelizers[threadIndex], tile.x, tile.y, threadIndex);\n\t\t\t};\n\n\t\t\t// Prioritize responsiveness while playing\n\t\t\t// but when not playing prioritize throughput\n\t\t\t// (the Unity progress bar is also pretty slow to update)\n\t\t\tint timeoutMillis = Application.isPlaying ? 1 : 200;\n\n\t\t\t// Scan all tiles in parallel\n\t\t\tforeach (var done in workQueue.Run(timeoutMillis)) {\n\t\t\t\tyield return new Progress(Mathf.Lerp(0.1f, 0.9f, done / (float)tiles.Length), \"Calculated Tiles: \" + done + \"/\" + tiles.Length);\n\t\t\t}\n\n\t\t\tyield return new Progress(0.9f, \"Assigning Graph Indices\");\n\n\t\t\t// Assign graph index to nodes\n\t\t\tuint graphIndex = (uint)AstarPath.active.data.GetGraphIndex(this);\n\n\t\t\tGetNodes(node => node.GraphIndex = graphIndex);\n\n\t\t\t// First connect all tiles with an EVEN coordinate sum\n\t\t\t// This would be the white squares on a chess board.\n\t\t\t// Then connect all tiles with an ODD coordinate sum (which would be all black squares on a chess board).\n\t\t\t// This will prevent the different threads that do all\n\t\t\t// this in parallel from conflicting with each other.\n\t\t\t// The directions are also done separately\n\t\t\t// first they are connected along the X direction and then along the Z direction.\n\t\t\t// Looping over 0 and then 1\n\t\t\tfor (int coordinateSum = 0; coordinateSum <= 1; coordinateSum++) {\n\t\t\t\tfor (int direction = 0; direction <= 1; direction++) {\n\t\t\t\t\tfor (int i = 0; i < tiles.Length; i++) {\n\t\t\t\t\t\tif ((tiles[i].x + tiles[i].z) % 2 == coordinateSum) {\n\t\t\t\t\t\t\ttileQueue.Enqueue(new Int2(tiles[i].x, tiles[i].z));\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\n\t\t\t\t\tworkQueue = new ParallelWorkQueue<Int2>(tileQueue);\n\t\t\t\t\tworkQueue.action = (tile, threadIndex) => {\n\t\t\t\t\t\t// Connect with tile at (x+1,z) and (x,z+1)\n\t\t\t\t\t\tif (direction == 0 && tile.x < tileXCount - 1)\n\t\t\t\t\t\t\tConnectTiles(tiles[tile.x + tile.y * tileXCount], tiles[tile.x + 1 + tile.y * tileXCount]);\n\t\t\t\t\t\tif (direction == 1 && tile.y < tileZCount - 1)\n\t\t\t\t\t\t\tConnectTiles(tiles[tile.x + tile.y * tileXCount], tiles[tile.x + (tile.y + 1) * tileXCount]);\n\t\t\t\t\t};\n\n\t\t\t\t\tvar numTilesInQueue = tileQueue.Count;\n\t\t\t\t\t// Connect all tiles in parallel\n\t\t\t\t\tforeach (var done in workQueue.Run(timeoutMillis)) {\n\t\t\t\t\t\tyield return new Progress(0.95f, \"Connected Tiles \" + (numTilesInQueue - done) + \"/\" + numTilesInQueue + \" (Phase \" + (direction + 1 + 2*coordinateSum) + \" of 4)\");\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tfor (int i = 0; i < meshes.Count; i++) meshes[i].Pool();\n\t\t\tListPool<RasterizationMesh>.Release(ref meshes);\n\n\t\t\t// This may be used by the TileHandlerHelper script to update the tiles\n\t\t\t// while taking NavmeshCuts into account after the graph has been completely recalculated.\n\t\t\tif (OnRecalculatedTiles != null) {\n\t\t\t\tOnRecalculatedTiles(tiles.Clone() as NavmeshTile[]);\n\t\t\t}\n\t\t}\n\n\t\tList<RasterizationMesh> CollectMeshes (Bounds bounds) {\n\t\t\tProfiler.BeginSample(\"Find Meshes for rasterization\");\n\t\t\tvar result = ListPool<RasterizationMesh>.Claim();\n\n\t\t\tvar meshGatherer = new RecastMeshGatherer(bounds, terrainSampleSize, mask, tagMask, colliderRasterizeDetail);\n\n\t\t\tif (rasterizeMeshes) {\n\t\t\t\tProfiler.BeginSample(\"Find meshes\");\n\t\t\t\tmeshGatherer.CollectSceneMeshes(result);\n\t\t\t\tProfiler.EndSample();\n\t\t\t}\n\n\t\t\tProfiler.BeginSample(\"Find RecastMeshObj components\");\n\t\t\tmeshGatherer.CollectRecastMeshObjs(result);\n\t\t\tProfiler.EndSample();\n\n\t\t\tif (rasterizeTerrain) {\n\t\t\t\tProfiler.BeginSample(\"Find terrains\");\n\t\t\t\t// Split terrains up into meshes approximately the size of a single chunk\n\t\t\t\tvar desiredTerrainChunkSize = cellSize*Math.Max(tileSizeX, tileSizeZ);\n\t\t\t\tmeshGatherer.CollectTerrainMeshes(rasterizeTrees, desiredTerrainChunkSize, result);\n\t\t\t\tProfiler.EndSample();\n\t\t\t}\n\n\t\t\tif (rasterizeColliders) {\n\t\t\t\tProfiler.BeginSample(\"Find colliders\");\n\t\t\t\tmeshGatherer.CollectColliderMeshes(result);\n\t\t\t\tProfiler.EndSample();\n\t\t\t}\n\n\t\t\tif (result.Count == 0) {\n\t\t\t\tDebug.LogWarning(\"No MeshFilters were found contained in the layers specified by the 'mask' variables\");\n\t\t\t}\n\n\t\t\tProfiler.EndSample();\n\t\t\treturn result;\n\t\t}\n\n\t\tfloat CellHeight {\n\t\t\tget {\n\t\t\t\t// Voxel y coordinates will be stored as ushorts which have 65536 values\n\t\t\t\t// Leave a margin to make sure things do not overflow\n\t\t\t\treturn Mathf.Max(forcedBoundsSize.y / 64000, 0.001f);\n\t\t\t}\n\t\t}\n\n\t\t/** Convert character radius to a number of voxels */\n\t\tint CharacterRadiusInVoxels {\n\t\t\tget {\n\t\t\t\t// Round it up most of the time, but round it down\n\t\t\t\t// if it is very close to the result when rounded down\n\t\t\t\treturn Mathf.CeilToInt((characterRadius / cellSize) - 0.1f);\n\t\t\t}\n\t\t}\n\n\t\t/** Number of extra voxels on each side of a tile to ensure accurate navmeshes near the tile border.\n\t\t * The width of a tile is expanded by 2 times this value (1x to the left and 1x to the right)\n\t\t */\n\t\tint TileBorderSizeInVoxels {\n\t\t\tget {\n\t\t\t\treturn CharacterRadiusInVoxels + 3;\n\t\t\t}\n\t\t}\n\n\t\tfloat TileBorderSizeInWorldUnits {\n\t\t\tget {\n\t\t\t\treturn TileBorderSizeInVoxels*cellSize;\n\t\t\t}\n\t\t}\n\n\t\tBounds CalculateTileBoundsWithBorder (int x, int z) {\n\t\t\tvar bounds = new Bounds();\n\n\t\t\tbounds.SetMinMax(new Vector3(x*TileWorldSizeX, 0, z*TileWorldSizeZ),\n\t\t\t\tnew Vector3((x+1)*TileWorldSizeX, forcedBoundsSize.y, (z+1)*TileWorldSizeZ)\n\t\t\t\t);\n\n\t\t\t// Expand borderSize voxels on each side\n\t\t\tbounds.Expand(new Vector3(1, 0, 1)*TileBorderSizeInWorldUnits*2);\n\t\t\treturn bounds;\n\t\t}\n\n\t\tprotected NavmeshTile BuildTileMesh (Voxelize vox, int x, int z, int threadIndex = 0) {\n\t\t\tAstarProfiler.StartProfile(\"Build Tile\");\n\t\t\tAstarProfiler.StartProfile(\"Init\");\n\n\t\t\tvox.borderSize = TileBorderSizeInVoxels;\n\t\t\tvox.forcedBounds = CalculateTileBoundsWithBorder(x, z);\n\t\t\tvox.width = tileSizeX + vox.borderSize*2;\n\t\t\tvox.depth = tileSizeZ + vox.borderSize*2;\n\n\t\t\tif (!useTiles && relevantGraphSurfaceMode == RelevantGraphSurfaceMode.OnlyForCompletelyInsideTile) {\n\t\t\t\t// This best reflects what the user would actually want\n\t\t\t\tvox.relevantGraphSurfaceMode = RelevantGraphSurfaceMode.RequireForAll;\n\t\t\t} else {\n\t\t\t\tvox.relevantGraphSurfaceMode = relevantGraphSurfaceMode;\n\t\t\t}\n\n\t\t\tvox.minRegionSize = Mathf.RoundToInt(minRegionSize / (cellSize*cellSize));\n\n\t\t\tAstarProfiler.EndProfile(\"Init\");\n\n\n\t\t\t// Init voxelizer\n\t\t\tvox.Init();\n\t\t\tvox.VoxelizeInput(transform, CalculateTileBoundsWithBorder(x, z));\n\n\t\t\tAstarProfiler.StartProfile(\"Filter Ledges\");\n\n\n\t\t\tvox.FilterLedges(vox.voxelWalkableHeight, vox.voxelWalkableClimb, vox.cellSize, vox.cellHeight);\n\n\t\t\tAstarProfiler.EndProfile(\"Filter Ledges\");\n\n\t\t\tAstarProfiler.StartProfile(\"Filter Low Height Spans\");\n\t\t\tvox.FilterLowHeightSpans(vox.voxelWalkableHeight, vox.cellSize, vox.cellHeight);\n\t\t\tAstarProfiler.EndProfile(\"Filter Low Height Spans\");\n\n\t\t\tvox.BuildCompactField();\n\t\t\tvox.BuildVoxelConnections();\n\t\t\tvox.ErodeWalkableArea(CharacterRadiusInVoxels);\n\t\t\tvox.BuildDistanceField();\n\t\t\tvox.BuildRegions();\n\n\t\t\tvar cset = new VoxelContourSet();\n\t\t\tvox.BuildContours(contourMaxError, 1, cset, Voxelize.RC_CONTOUR_TESS_WALL_EDGES | Voxelize.RC_CONTOUR_TESS_TILE_EDGES);\n\n\t\t\tVoxelMesh mesh;\n\t\t\tvox.BuildPolyMesh(cset, 3, out mesh);\n\n\t\t\tAstarProfiler.StartProfile(\"Build Nodes\");\n\n\t\t\t// Position the vertices correctly in graph space (all tiles are laid out on the xz plane with the (0,0) tile at the origin)\n\t\t\tfor (int i = 0; i < mesh.verts.Length; i++) {\n\t\t\t\tmesh.verts[i] *= Int3.Precision;\n\t\t\t}\n\t\t\tvox.transformVoxel2Graph.Transform(mesh.verts);\n\n\t\t\tNavmeshTile tile = CreateTile(vox, mesh, x, z, threadIndex);\n\n\t\t\tAstarProfiler.EndProfile(\"Build Nodes\");\n\n\t\t\tAstarProfiler.EndProfile(\"Build Tile\");\n\t\t\treturn tile;\n\t\t}\n\n\t\t/** Create a tile at tile index \\a x, \\a z from the mesh.\n\t\t * \\version Since version 3.7.6 the implementation is thread safe\n\t\t */\n\t\tNavmeshTile CreateTile (Voxelize vox, VoxelMesh mesh, int x, int z, int threadIndex) {\n\t\t\tif (mesh.tris == null) throw new System.ArgumentNullException(\"mesh.tris\");\n\t\t\tif (mesh.verts == null) throw new System.ArgumentNullException(\"mesh.verts\");\n\t\t\tif (mesh.tris.Length % 3 != 0) throw new System.ArgumentException(\"Indices array's length must be a multiple of 3 (mesh.tris)\");\n\t\t\tif (mesh.verts.Length >= VertexIndexMask) {\n\t\t\t\tif (tileXCount*tileZCount == 1) {\n\t\t\t\t\tthrow new System.ArgumentException(\"Too many vertices per tile (more than \" + VertexIndexMask + \").\" +\n\t\t\t\t\t\t\"\\n<b>Try enabling tiling in the recast graph settings.</b>\\n\");\n\t\t\t\t} else {\n\t\t\t\t\tthrow new System.ArgumentException(\"Too many vertices per tile (more than \" + VertexIndexMask + \").\" +\n\t\t\t\t\t\t\"\\n<b>Try reducing tile size or enabling ASTAR_RECAST_LARGER_TILES under the 'Optimizations' tab in the A* Inspector</b>\");\n\t\t\t\t}\n\t\t\t}\n\n\t\t\t// Create a new navmesh tile and assign its settings\n\t\t\tvar tile = new NavmeshTile {\n\t\t\t\tx = x,\n\t\t\t\tz = z,\n\t\t\t\tw = 1,\n\t\t\t\td = 1,\n\t\t\t\ttris = mesh.tris,\n\t\t\t\tbbTree = new BBTree(),\n\t\t\t\tgraph = this,\n\t\t\t};\n\n\t\t\ttile.vertsInGraphSpace = Utility.RemoveDuplicateVertices(mesh.verts, tile.tris);\n\t\t\ttile.verts = (Int3[])tile.vertsInGraphSpace.Clone();\n\t\t\ttransform.Transform(tile.verts);\n\n\t\t\t// Here we are faking a new graph\n\t\t\t// The tile is not added to any graphs yet, but to get the position queries from the nodes\n\t\t\t// to work correctly (not throw exceptions because the tile is not calculated) we fake a new graph\n\t\t\t// and direct the position queries directly to the tile\n\t\t\t// The thread index is added to make sure that if multiple threads are calculating tiles at the same time\n\t\t\t// they will not use the same temporary graph index\n\t\t\tuint temporaryGraphIndex = (uint)(active.data.graphs.Length + threadIndex);\n\n\t\t\tif (temporaryGraphIndex > GraphNode.MaxGraphIndex) {\n\t\t\t\t// Multithreaded tile calculations use fake graph indices, see above.\n\t\t\t\tthrow new System.Exception(\"Graph limit reached. Multithreaded recast calculations cannot be done because a few scratch graph indices are required.\");\n\t\t\t}\n\n\t\t\tTriangleMeshNode.SetNavmeshHolder((int)temporaryGraphIndex, tile);\n\t\t\t// We need to lock here because creating nodes is not thread safe\n\t\t\t// and we may be doing this from multiple threads at the same time\n\t\t\ttile.nodes = new TriangleMeshNode[tile.tris.Length/3];\n\t\t\tlock (active) {\n\t\t\t\tCreateNodes(tile.nodes, tile.tris, x + z*tileXCount, temporaryGraphIndex);\n\t\t\t}\n\n\t\t\ttile.bbTree.RebuildFrom(tile.nodes);\n\t\t\tCreateNodeConnections(tile.nodes);\n\t\t\t// Remove the fake graph\n\t\t\tTriangleMeshNode.SetNavmeshHolder((int)temporaryGraphIndex, null);\n\n\t\t\treturn tile;\n\t\t}\n\n\t\tprotected override void DeserializeSettingsCompatibility (GraphSerializationContext ctx) {\n\t\t\tbase.DeserializeSettingsCompatibility(ctx);\n\n\t\t\tcharacterRadius = ctx.reader.ReadSingle();\n\t\t\tcontourMaxError = ctx.reader.ReadSingle();\n\t\t\tcellSize = ctx.reader.ReadSingle();\n\t\t\tctx.reader.ReadSingle(); // Backwards compatibility, cellHeight was previously read here\n\t\t\twalkableHeight = ctx.reader.ReadSingle();\n\t\t\tmaxSlope = ctx.reader.ReadSingle();\n\t\t\tmaxEdgeLength = ctx.reader.ReadSingle();\n\t\t\teditorTileSize = ctx.reader.ReadInt32();\n\t\t\ttileSizeX = ctx.reader.ReadInt32();\n\t\t\tnearestSearchOnlyXZ = ctx.reader.ReadBoolean();\n\t\t\tuseTiles = ctx.reader.ReadBoolean();\n\t\t\trelevantGraphSurfaceMode = (RelevantGraphSurfaceMode)ctx.reader.ReadInt32();\n\t\t\trasterizeColliders = ctx.reader.ReadBoolean();\n\t\t\trasterizeMeshes = ctx.reader.ReadBoolean();\n\t\t\trasterizeTerrain = ctx.reader.ReadBoolean();\n\t\t\trasterizeTrees = ctx.reader.ReadBoolean();\n\t\t\tcolliderRasterizeDetail = ctx.reader.ReadSingle();\n\t\t\tforcedBoundsCenter = ctx.DeserializeVector3();\n\t\t\tforcedBoundsSize = ctx.DeserializeVector3();\n\t\t\tmask = ctx.reader.ReadInt32();\n\n\t\t\tint count = ctx.reader.ReadInt32();\n\t\t\ttagMask = new List<string>(count);\n\t\t\tfor (int i = 0; i < count; i++) {\n\t\t\t\ttagMask.Add(ctx.reader.ReadString());\n\t\t\t}\n\n\t\t\tshowMeshOutline = ctx.reader.ReadBoolean();\n\t\t\tshowNodeConnections = ctx.reader.ReadBoolean();\n\t\t\tterrainSampleSize = ctx.reader.ReadInt32();\n\n\t\t\t// These were originally forgotten but added in an upgrade\n\t\t\t// To keep backwards compatibility, they are only deserialized\n\t\t\t// If they exist in the streamed data\n\t\t\twalkableClimb = ctx.DeserializeFloat(walkableClimb);\n\t\t\tminRegionSize = ctx.DeserializeFloat(minRegionSize);\n\n\t\t\t// Make the world square if this value is not in the stream\n\t\t\ttileSizeZ = ctx.DeserializeInt(tileSizeX);\n\n\t\t\tshowMeshSurface = ctx.reader.ReadBoolean();\n\t\t}\n\t}\n}\n",
+			"file": "/tmp/subl stdin IZF9DI.txt",
+			"file_size": 39462,
+			"file_write_time": 131713658710000000,
+			"settings":
+			{
+				"buffer_size": 38664,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/TacticalNodes.h",
+			"settings":
+			{
+				"buffer_size": 2033,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "s2client-api/include/sc2api/sc2_gametypes.h",
+			"settings":
+			{
+				"buffer_size": 4486,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "s2client-api/include/sc2api/sc2_coordinator.h",
+			"settings":
+			{
+				"buffer_size": 8702,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/MicroNodes.h",
+			"settings":
+			{
+				"buffer_size": 1170,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "s2client-api/include/sc2api/sc2_action.h",
+			"settings":
+			{
+				"buffer_size": 3736,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "s2client-api/tests/test_feature_layer.cc",
+			"settings":
+			{
+				"buffer_size": 12889,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "s2client-api/include/sc2api/sc2_interfaces.h",
+			"settings":
+			{
+				"buffer_size": 26192,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "s2client-api/src/sc2api/sc2_client.cc",
+			"settings":
+			{
+				"buffer_size": 75756,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "s2client-api/src/sc2api/sc2_replay_observer.cc",
+			"settings":
+			{
+				"buffer_size": 12161,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "s2client-api/include/sc2api/sc2_data.h",
+			"settings":
+			{
+				"buffer_size": 8986,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/ScoutingNodes.cpp",
+			"settings":
+			{
+				"buffer_size": 1110,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/ScoutingNodes.h",
+			"settings":
+			{
+				"buffer_size": 223,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bot/ScoutingManager.h",
+			"settings":
+			{
+				"buffer_size": 330,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "s2client-api/examples/echo_actions.cc",
+			"settings":
+			{
+				"buffer_size": 7592,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "s2client-api/include/sc2api/sc2_unit.h",
+			"settings":
+			{
+				"buffer_size": 7423,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "s2client-api/include/sc2api/sc2_typeenums.h",
+			"settings":
+			{
+				"buffer_size": 53404,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 119.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"spaces",
+				"Indentation: Convert to Spaces"
+			],
+			[
+				"easy",
+				"EasyClangComplete: Open completion triggers location"
+			],
+			[
+				"cmake",
+				"Set Syntax: CMake"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"json",
+				"Pretty JSON: Format (Pretty Print) JSON"
+			],
+			[
+				"pep",
+				"Anaconda: Autoformat PEP8 Errors"
+			],
+			[
+				"wrap",
+				"Word Wrap: Toggle"
+			],
+			[
+				"jina",
+				"Set Syntax: HTML (Jinja2)"
+			],
+			[
+				"isntall",
+				"Package Control: Install Package"
+			],
+			[
+				"tabs",
+				"Indentation: Convert to Tabs"
+			],
+			[
+				"don",
+				"Anaconda: Disable linting on this file"
+			],
+			[
+				"mas",
+				"Set Syntax: Assembly x86 (MASM compatible)"
+			],
+			[
+				"assem",
+				"Set Syntax: Assembly x86 (NASM)"
+			],
+			[
+				"C",
+				"Set Syntax: C#"
+			],
+			[
+				"C++",
+				"Set Syntax: C++"
+			],
+			[
+				"cancel",
+				"Build: Cancel"
+			],
+			[
+				"asse",
+				"Set Syntax: Assembly x86 (NASM)"
+			],
+			[
+				"nasm",
+				"Build With: NASM"
+			],
+			[
+				"python",
+				"Set Syntax: Python"
+			],
+			[
+				"pep8",
+				"Anaconda: Autoformat PEP8 Errors"
+			],
+			[
+				"jsx",
+				"Set Syntax: JSX"
+			],
+			[
+				"revre",
+				"Permute Lines: Reverse"
+			],
+			[
+				"rev",
+				"Permute Lines: Reverse"
+			],
+			[
+				"rever",
+				"Permute Lines: Reverse"
+			],
+			[
+				"sapces",
+				"Indentation: Convert to Spaces"
+			],
+			[
+				"remove",
+				"Package Control: Remove Package"
+			],
+			[
+				"orgmo",
+				"Preferences: orgmode Settings – Default"
+			],
+			[
+				"C#",
+				"Set Syntax: C#"
+			],
+			[
+				"sort",
+				"Sort Lines"
+			],
+			[
+				"uniq",
+				"Permute Lines: Unique"
+			],
+			[
+				"reve",
+				"Permute Lines: Reverse"
+			],
+			[
+				"reverse",
+				"Permute Lines: Reverse"
+			],
+			[
+				"syntax c",
+				"Set Syntax: C"
+			],
+			[
+				"lower",
+				"Convert Case: Lower Case"
+			],
+			[
+				"rot",
+				"Rot13 Selection"
+			],
+			[
+				"align",
+				"AlignTab"
+			],
+			[
+				"calc",
+				"Calculate"
+			],
+			[
+				"lint",
+				"Anaconda: Disable linting on this file"
+			],
+			[
+				"comment",
+				"Toggle Comment"
+			],
+			[
+				"json fo",
+				"Pretty JSON: Format (Pretty Print) JSON"
+			],
+			[
+				"disable li",
+				"Anaconda: Disable linting on this file"
+			],
+			[
+				"them",
+				"UI: Select Theme"
+			],
+			[
+				"pepe8",
+				"Anaconda: Autoformat PEP8 Errors"
+			],
+			[
+				"format",
+				"Pretty JSON: Format and Sort JSON"
+			],
+			[
+				"validate",
+				"Pretty JSON: Validate"
+			],
+			[
+				"forma",
+				"Pretty JSON: Format (Pretty Print) JSON"
+			],
+			[
+				"pretty",
+				"Pretty JSON: Format (Pretty Print) JSON"
+			],
+			[
+				"prett",
+				"Pretty JSON: Format (Pretty Print) JSON"
+			],
+			[
+				"upper",
+				"Convert Case: Upper Case"
+			],
+			[
+				"alig",
+				"AlignTab"
+			],
+			[
+				"wra",
+				"Word Wrap: Toggle"
+			],
+			[
+				"ali",
+				"AlignTab"
+			],
+			[
+				"worl",
+				"Word Wrap: Toggle"
+			],
+			[
+				"wor",
+				"Word Wrap: Toggle"
+			],
+			[
+				"wo",
+				"Word Wrap: Toggle"
+			],
+			[
+				"comme",
+				"Toggle Comment"
+			],
+			[
+				"matla",
+				"Set Syntax: MATLAB"
+			],
+			[
+				"sor",
+				"Sort Lines"
+			],
+			[
+				"rein",
+				"Indentation: Reindent Lines"
+			],
+			[
+				"syntax sha",
+				"Set Syntax: Shell Script (Bash)"
+			],
+			[
+				"word",
+				"Word Wrap: Toggle"
+			],
+			[
+				"syntax rub",
+				"Set Syntax: Ruby"
+			],
+			[
+				"title",
+				"Convert Case: Title Case"
+			]
+		],
+		"width": 444.0
+	},
+	"console":
+	{
+		"height": 126.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/build",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/learn"
+	],
+	"file_history":
+	[
+		"/Users/arong/cloud/Resources/Misc/temp.txt",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/SpendingManager.h",
+		"/Users/arong/cloud/Programming/illustrator/Shortcuts.jsx",
+		"/Users/arong/Programming/kth/deepl/deep-piano/midisim.py",
+		"/Users/arong/Unity/a-pathfinding-project/midisim.py",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/build/out.txt",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/UnitNodes.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/Makefile",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/build_gmake/Makefile",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/CMakeLists.txt",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/CMakeLists.txt",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/src/sc2api/sc2_client.cc",
+		"/Users/arong/Unity/a-pathfinding-project/Documentation/buildVersions.py",
+		"/Users/arong/Unity/a-pathfinding-project/Assets/AstarPathfindingProject/changelog.cs",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/BehaviorTree.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/include/sc2api/sc2_game_settings.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/main.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/examples/feature_layers.cc",
+		"/Users/arong/Programming/competitions/battlecode2018/battlecode2018/player/pathfinding.hpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/include/sc2api/sc2_interfaces.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/include/sc2api/sc2_data.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/docs/tutorial2.md",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/include/sc2api/sc2_gametypes.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/include/sc2api/sc2_unit.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/UnitNodes.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/include/sc2api/sc2_types.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/Mappings.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/AssignHarvesters.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/build/bin/our_bot",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/StrategicNodes.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/Mappings.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/include/sc2api/sc2_typeenums.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/BehaviorTree.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/Bot.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/tests/test_unit_command.cc",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/tests/test_rendered.cc",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/tests/all_tests.cc",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/bot.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/CameraController.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/CameraController.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/examples/save_load.cc",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/TacticalNodes.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/include/sc2renderer/sc2_renderer.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/include/sc2api/sc2_map_info.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/src/sc2renderer/sc2_renderer.cc",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/Renderer.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/Renderer.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/src/CMakeLists.txt",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/BuildingPlacement.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/Influence.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/include/sc2api/sc2_common.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/Influence.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/Pathfinding.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/Pathfinding.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/TacticalManager.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/examples/common/bot_examples.cc",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/Predicates.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/Predicates.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/examples/common/bot_examples.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/include/sc2api/sc2_client.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/include/sc2api/sc2_coordinator.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/src/sc2api/sc2_typeenums.cc",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/src/sc2api/sc2_coordinator.cc",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot.sublime-project",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/.clang_complete",
+		"/Users/arong/Programming/kth/cpp/arong-labbar/04/matrix.h",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/BuildingPlacement.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/protocol/s2clientprotocol/raw.proto",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/examples/CMakeLists.txt",
+		"/Users/arong/Programming/competitions/battlecode2018/battlecode2018/player/influence.cpp",
+		"/Users/arong/Programming/competitions/battlecode2018/battlecode2018/player/influence.h",
+		"/Users/arong/Programming/competitions/battlecode2018/battlecode2018/player/maps.h",
+		"/Users/arong/Programming/competitions/battlecode2018/battlecode2018/player/maps.cpp",
+		"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-6v_xja/front.php",
+		"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-wxpbb0/header.php",
+		"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-lbbumy/buy.php",
+		"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-fko61u/download.php",
+		"/usr/local/lib/python3.6/site-packages/music21/stream/__init__.py",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/.clang-format",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/contrib/civetweb/examples/_obsolete/docroot/jquery.js",
+		"/Users/arong/Programming/competitions/battlecode2018/battlecode2018/.clang_complete",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/ActionNode.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/SequenceNode.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/SelectorNode.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/ParallelNode.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/bot/ControlFlowNode.cpp",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/src/sc2api/sc2_game_settings.cc",
+		"/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/s2client-api/tests/test_restart.cc",
+		"/Users/arong/cloud/Skolarbeten/ML-1/deepl/assignment2/main.py",
+		"/usr/local/lib/python3.6/dist-packages/flask/app.py",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/webshop/src/database/membership_groups.sql",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/webshop/src/database/1.sql",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/webshop/src/database/membership_roles.sql",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/webshop/src/database/membership_permissions.sql",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/webshop/src/database/membership_members_roles.sql",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/webshop/src/database/membership_member_groups.sql",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/webshop/src/database/membership_members.sql",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/webshop/tictail_scrape.py",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/webshop/tictail.json",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/webshop/tictail2db.py",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/webshop/src/database/product_images.sql",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/webshop/src/database/transactions.sql",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/webshop/src/database/transaction_contents.sql",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/webshop/src/database/product_variants.sql",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/webshop/src/database/products.sql",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/webshop/src/static/style.css",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-Frontend/dist/js/config.js",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/member_view/readme.md",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/webshop/src/database/migrations.sql",
+		"/Users/arong/MakerAdmin-Hub/MakerAdmin-CurrentMember/member_view/Dockerfile",
+		"/Users/arong/Programming/competitions/battlecode2018/battlecode-ci/battlecode2018/bc18-scaffold/battlecode-manager/simple_cli.py",
+		"/Users/arong/MakerAdmin-Hub/create_env.py",
+		"/Users/arong/MakerAdmin-Hub/.env",
+		"/Users/arong/MakerAdmin-Hub/readme.md",
+		"/Users/arong/Unity/a-pathfinding-project/archive/RichAI.cs",
+		"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-mn9k8i/buy.php",
+		"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-di20a4/front.php",
+		"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-1hztwz/header.php",
+		"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-__0qrn/quotes.php",
+		"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-lxba6g/quotes.php",
+		"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-5emk6_/revenue.php",
+		"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-h84d_y/buy.php",
+		"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-m7wkzu/header.php",
+		"/Applications/Adobe InDesign CS6/Scripts/Scripts Panel/User/export_diplomas.jsx",
+		"/Users/arong/Programming/kth/multi-agent/pacman-tournament/teams/group-1.py",
+		"/Users/arong/Programming/kth/multi-agent/pacman-tournament/docs/results/semi/r2b3.json",
+		"/Users/arong/unity/a-pathfinding-project/Assets/AstarPathfindingProject/Navmesh/TileHandlerHelper.cs"
+	],
+	"find":
+	{
+		"height": 40.0
+	},
+	"find_in_files":
+	{
+		"height": 105.0,
+		"where_history":
+		[
+			"",
+			"*.txt",
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": true,
+		"find_history":
+		[
+			"getPath",
+			"enemyDensity",
+			"enemyDensi",
+			"ORBITALCOMMAND",
+			"GetPreferredArmyPosition",
+			"map_state",
+			"Observation",
+			"map_state",
+			"p",
+			"NEUTRAL_",
+			"MINERA",
+			"MINERAL",
+			"closest",
+			"enemies",
+			"RequestScoutingPosition",
+			"scoutAssignments",
+			"bbTree",
+			"OnDestroy",
+			"model",
+			"wei",
+			"cout",
+			"Query",
+			"agent.Observation()->GetUnits(Unit::Alliance::Enemy)",
+			"LIBERATOR",
+			"unit",
+			"bot",
+			"AvailableAbilities",
+			"cout",
+			"sc2::",
+			"TERRAN_SUPPLYDEPOTLOWERED",
+			"get<0>(tup)",
+			"unit_data",
+			"unit_type",
+			"ability",
+			"#include \".*cpp\"",
+			"StrategicNodes",
+			"GetExpectedWorkers",
+			"STASIS",
+			"STATIS",
+			"REACTOR",
+			"NYDUS",
+			"GHOSTACA",
+			"CREEPTUMOR",
+			"unit->",
+			"TERRAN",
+			"ZERG_ASSIMILATOR",
+			"BUILD",
+			"abilityToUnit",
+			"targetPos",
+			"float",
+			"x",
+			"y*w+x",
+			"first",
+			"p",
+			"y",
+			"Point2DI",
+			"bot.Observation()",
+			"i",
+			"std::",
+			"x0",
+			"values",
+			"bestPosition",
+			"Position",
+			"T",
+			"data",
+			"walls",
+			"yw+x",
+			"NOT APPLE",
+			"yw+x",
+			".pos",
+			"->",
+			"weights",
+			"std::max(c2, ",
+			"std::max(c, ",
+			"pathing_grid",
+			"placement_grid",
+			"pathing_grid",
+			"placement_grid",
+			"pathing_grid",
+			"placement_grid",
+			"game_info_",
+			"pathing_grid",
+			"255",
+			"[",
+			"}",
+			"{",
+			"SDL_Color",
+			"), ",
+			"y",
+			"nx",
+			"max",
+			"y*w",
+			"colors",
+			"for (int x = 0; x < w; x++) {\n        for (int y = 0; y < h; y++) {",
+			"weights[x][y]",
+			"[x][y]",
+			"cout",
+			"sc2::renderer::",
+			"sc2renderer",
+			"10",
+			"char",
+			"x",
+			"kDrawSize",
+			"if \\(NOT APPLE\\)",
+			"if \\(APPLE\\)",
+			"sc2renderer",
+			"Point2DI",
+			"int x0, int y0",
+			"vector",
+			"max",
+			"void",
+			"operator",
+			"i2",
+			"j",
+			"i",
+			"i < w",
+			"PathfindingMap",
+			"production_types",
+			"vector<Point2D>::value_type",
+			"placements",
+			"float ",
+			"builderUnit",
+			"structureType",
+			"placements->",
+			"FindWallPlacements",
+			"GetPositionIndex",
+			"staging_location_",
+			"startLocation_"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": true,
+		"replace_history":
+		[
+			"abilityToCasterUnit",
+			"{ "
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 19,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "bot/Mappings.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 19257,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								16740,
+								16756
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 4426.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 34,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "bot/Mappings.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 227,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								214,
+								162
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 35,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "bot/Pathfinding.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 287,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 43,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "bot/Predicates.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 736,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								172,
+								172
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 15,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "s2client-api/examples/common/bot_examples.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 135496,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1450,
+								1460
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 334.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 14,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "bot/TacticalNodes.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4637,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2045,
+								2055
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 11,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "bot/TacticalManager.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4295,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2573,
+								2549
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 469.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 12,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "bot/StrategicNodes.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 15493,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1769,
+								1769
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "bot/SpendingManager.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6903,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3984,
+								3984
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "bot/StrategicNodes.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3854,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1446,
+								1446
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"file": "bot/CameraController.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3892,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 611.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 39,
+					"type": "text"
+				},
+				{
+					"buffer": 11,
+					"file": "bot/main.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1624,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1222,
+								1222
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 12,
+					"file": "bot/MicroNodes.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6002,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1031,
+								1031
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 43.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 13,
+					"file": "s2client-api/tests/test_unit_command.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 55570,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								31193,
+								31193
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 13860.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 36,
+					"type": "text"
+				},
+				{
+					"buffer": 14,
+					"file": "bot/Bot.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3410,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2527,
+								2527
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 37,
+					"type": "text"
+				},
+				{
+					"buffer": 15,
+					"file": "bot/bot.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 8095,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 141.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 16,
+					"file": "bot/InfluenceManager.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5243,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 9,
+					"type": "text"
+				},
+				{
+					"buffer": 17,
+					"file": "bot/Influence.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3267,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 554.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 21,
+					"type": "text"
+				},
+				{
+					"buffer": 18,
+					"file": "bot/InfluenceManager.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 289,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								105,
+								117
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 10,
+					"type": "text"
+				},
+				{
+					"buffer": 19,
+					"file": "bot/ScoutingManager.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1227,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1227,
+								1227
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 20,
+					"file": "bot/Influence.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 12521,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5141,
+								5141
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 2947.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 20,
+					"type": "text"
+				},
+				{
+					"buffer": 21,
+					"file": "bot/Group.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2051,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								220,
+								225
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 25,
+					"type": "text"
+				},
+				{
+					"buffer": 22,
+					"file": "bot/CompositionAnalyzer.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 12033,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3636,
+								3636
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1477.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 31,
+					"type": "text"
+				},
+				{
+					"buffer": 23,
+					"file": "build/out2.txt",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1059506,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								32,
+								32
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 30,
+					"type": "text"
+				},
+				{
+					"buffer": 24,
+					"file": "learn/composition.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3140,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								969,
+								969
+							]
+						],
+						"settings":
+						{
+							"auto_complete_triggers":
+							[
+								{
+									"characters": ".>:",
+									"selector": "source.c++ - string - comment - constant.numeric"
+								},
+								{
+									"characters": ".>:",
+									"selector": "source.c - string - comment - constant.numeric"
+								},
+								{
+									"characters": ".>: ",
+									"selector": "source.objc++ - string - comment - constant.numeric"
+								},
+								{
+									"characters": ".>: ",
+									"selector": "source.objc - string - comment - constant.numeric"
+								},
+								{
+									"characters": ".>: ",
+									"selector": "source.cuda-c++ - string - comment - constant.numeric"
+								},
+								{
+									"characters": ".",
+									"selector": "source.python - string - constant.numeric"
+								}
+							],
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 29,
+					"type": "text"
+				},
+				{
+					"buffer": 25,
+					"file": "/Users/arong/Unity/a-pathfinding-project/Assets/AstarPathfindingProject/Generators/NavmeshBase.cs",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 59193,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								6342,
+								6367
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C#/C#.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 2575.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 28,
+					"type": "text"
+				},
+				{
+					"buffer": 26,
+					"file": "/Users/arong/Unity/a-pathfinding-project/Assets/AstarPathfindingProject/Generators/RecastGenerator.cs",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 39338,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C#/C#.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 13444.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 27,
+					"type": "text"
+				},
+				{
+					"buffer": 27,
+					"file": "/tmp/subl stdin IZF9DI.txt",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 38664,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								33249,
+								33249
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 13758.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 26,
+					"type": "text"
+				},
+				{
+					"buffer": 28,
+					"file": "bot/TacticalNodes.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2033,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1332,
+								1332
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 13,
+					"type": "text"
+				},
+				{
+					"buffer": 29,
+					"file": "s2client-api/include/sc2api/sc2_gametypes.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4486,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3826,
+								3826
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1862.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 32,
+					"type": "text"
+				},
+				{
+					"buffer": 30,
+					"file": "s2client-api/include/sc2api/sc2_coordinator.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 8702,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5471,
+								5471
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1025.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 33,
+					"type": "text"
+				},
+				{
+					"buffer": 31,
+					"file": "bot/MicroNodes.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1170,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								799,
+								818
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 17,
+					"type": "text"
+				},
+				{
+					"buffer": 32,
+					"file": "s2client-api/include/sc2api/sc2_action.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3736,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2458,
+								2458
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 542.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 42,
+					"type": "text"
+				},
+				{
+					"buffer": 33,
+					"file": "s2client-api/tests/test_feature_layer.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 12889,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5315,
+								5305
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1995.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 41,
+					"type": "text"
+				},
+				{
+					"buffer": 34,
+					"file": "s2client-api/include/sc2api/sc2_interfaces.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 26192,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								10116,
+								10127
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 2856.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 19,
+					"type": "text"
+				},
+				{
+					"buffer": 35,
+					"file": "s2client-api/src/sc2api/sc2_client.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 75756,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								14551,
+								14579
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 7244.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 18,
+					"type": "text"
+				},
+				{
+					"buffer": 36,
+					"file": "s2client-api/src/sc2api/sc2_replay_observer.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 12161,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								10147,
+								10147
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 3161.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 40,
+					"type": "text"
+				},
+				{
+					"buffer": 37,
+					"file": "s2client-api/include/sc2api/sc2_data.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 8986,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2565,
+								2575
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				},
+				{
+					"buffer": 38,
+					"file": "bot/ScoutingNodes.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1110,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								847,
+								847
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 16,
+					"type": "text"
+				},
+				{
+					"buffer": 39,
+					"file": "bot/ScoutingNodes.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 223,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								104,
+								109
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 40,
+					"file": "bot/ScoutingManager.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 330,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								273,
+								273
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 24,
+					"type": "text"
+				},
+				{
+					"buffer": 41,
+					"file": "s2client-api/examples/echo_actions.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7592,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3308,
+								3308
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 945.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 38,
+					"type": "text"
+				},
+				{
+					"buffer": 42,
+					"file": "s2client-api/include/sc2api/sc2_unit.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7423,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5621,
+								5605
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 2367.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 23,
+					"type": "text"
+				},
+				{
+					"buffer": 43,
+					"file": "s2client-api/include/sc2api/sc2_typeenums.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 53404,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								20418,
+								20385
+							],
+							[
+								20470,
+								20434
+							],
+							[
+								21474,
+								21451
+							],
+							[
+								21516,
+								21490
+							],
+							[
+								21552,
+								21532
+							],
+							[
+								21591,
+								21568
+							],
+							[
+								21679,
+								21651
+							],
+							[
+								21726,
+								21695
+							],
+							[
+								21774,
+								21742
+							],
+							[
+								21825,
+								21790
+							],
+							[
+								21910,
+								21886
+							],
+							[
+								21953,
+								21926
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 3324.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 22,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 24.0
+	},
+	"input":
+	{
+		"height": 37.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 103.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.mdpopups":
+	{
+		"height": 0.0
+	},
+	"output.sftp":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "bot.sublime-project",
+	"replace":
+	{
+		"height": 44.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"Strate",
+				"bot/StrategicNodes.cpp"
+			],
+			[
+				"bot_examples.h",
+				"s2client-api/examples/common/bot_examples.h"
+			],
+			[
+				"make",
+				"Makefile"
+			],
+			[
+				"Test.cs",
+				"opt2/Test.cs"
+			],
+			[
+				"test.cpp",
+				"~/temp/test.cpp"
+			],
+			[
+				"Test",
+				"~/Unity/EmptyDummyProject/Assets/Test.cs"
+			],
+			[
+				"temp",
+				"~/cloud/Resources/Misc/temp.txt"
+			],
+			[
+				"MemberView",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-7clvqq/MemberView.jsx"
+			],
+			[
+				"user",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-4fujvq/user.py"
+			],
+			[
+				"Enti",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-jqmvhp/Entity.php"
+			],
+			[
+				"Rfid",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-kzvm5s/Rfid.php"
+			],
+			[
+				"rfid",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-vawtc7/Rfid.php"
+			],
+			[
+				"doc",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-ite2bp/docker-compose.yml"
+			],
+			[
+				"Member",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-_0ki2j/Member.jsx"
+			],
+			[
+				"auth",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-1wix7w/auth.js"
+			],
+			[
+				"MemberLog",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-27zuet/MemberLogin.jsx"
+			],
+			[
+				"GenericEntityFunctions",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-yfq8k4/GenericEntityFunctions.jsx"
+			],
+			[
+				"Member.jsx",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-_0ki2j/Member.jsx"
+			],
+			[
+				"auth.js",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-1wix7w/auth.js"
+			],
+			[
+				"servi",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-e85j2f/service.py"
+			],
+			[
+				"au",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-1wix7w/auth.js"
+			],
+			[
+				"MemberLo",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-27zuet/MemberLogin.jsx"
+			],
+			[
+				"Mem",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-_0ki2j/Member.jsx"
+			],
+			[
+				"Login",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-0p_7qt/Login.php"
+			],
+			[
+				"View",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-7clvqq/MemberView.jsx"
+			],
+			[
+				"Member .jsx",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-_0ki2j/Member.jsx"
+			],
+			[
+				"memberauth",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-69u247/member_auth.js"
+			],
+			[
+				"service",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-ghewbf/ServiceRegistry.php"
+			],
+			[
+				"web",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-zbmlz4/web.php"
+			],
+			[
+				"MakerGua",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-bdzpc1/MakerGuard.php"
+			],
+			[
+				"Incl",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-460bwa/IncludeUserId.php"
+			],
+			[
+				"mak",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-bdzpc1/MakerGuard.php"
+			],
+			[
+				"Authe",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-r3hvcv/Authenticate.php"
+			],
+			[
+				"Log",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-nf9y_9/Login.php"
+			],
+			[
+				"Maker",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-bppch5/MakerGuard.php"
+			],
+			[
+				"fullExtend",
+				"/var/folders/zp/n3ylh_dd0wgf9ylf2mlsv76c0000gn/T/rsub-j9a1mt/FullExtend.js"
+			],
+			[
+				"change",
+				"~/Unity/a-pathfinding-project/Assets/AstarPathfindingProject/changelog.cs"
+			],
+			[
+				".scss",
+				"resources/style.scss"
+			],
+			[
+				"buildver",
+				"~/Unity/a-pathfinding-project/Documentation/buildVersions.py"
+			],
+			[
+				"doxydo",
+				"doxydoc.py"
+			],
+			[
+				"stand",
+				"standaline.sh"
+			],
+			[
+				"docs.js",
+				"resources/docs.js"
+			],
+			[
+				"test.",
+				"~/Unity/a-pathfinding-project/Regression/test.py"
+			],
+			[
+				"blatu_bea",
+				"Blatu/blatu_beam.json"
+			],
+			[
+				"weapon_imob",
+				"Borgle/borgle_weapon_immobilize.json"
+			],
+			[
+				"whilr",
+				"Olga/olga_whirlwind.json"
+			],
+			[
+				"ectom",
+				"Mordrich/mordrich_ectoplasm_missile.json"
+			],
+			[
+				"passive_ever",
+				"Nara/nara_passive_everbloom.json"
+			],
+			[
+				"cocoon",
+				"Nara/nara_cocoon.json"
+			],
+			[
+				"vines_s",
+				"Nara/nara_summon_vines_straight.json"
+			],
+			[
+				"scree",
+				"Bonefinger/bonefinger_screech.json"
+			],
+			[
+				"spreadsh",
+				"Mordrich/mordrich_spread_shot.json"
+			],
+			[
+				"mordrich_summon",
+				"Mordrich/mordrich_summon_phase2.json"
+			],
+			[
+				"smite",
+				"Freya/freya_weapon_smite.json"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"",
+				"~/Programming/kth/multi-agent/MultiAgentSystemsA4/bot.sublime-project"
+			]
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 60.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"ShouldExpand",
+				"ShouldExpand"
+			],
+			[
+				"OnTIck",
+				"OnTick"
+			],
+			[
+				"Build",
+				"Build"
+			],
+			[
+				"GetPrefer",
+				"GetPreferredArmyPosition"
+			],
+			[
+				"IsArmy",
+				"IsArmy"
+			],
+			[
+				"Isa",
+				"IsArmy"
+			],
+			[
+				"Observation",
+				"Observation"
+			],
+			[
+				"ObservationInter",
+				"ObservationInterface"
+			],
+			[
+				"GetVisibility",
+				"GetVisibility"
+			],
+			[
+				"UNIT",
+				"UNIT_TYPEID"
+			],
+			[
+				"Unit",
+				"Unit"
+			],
+			[
+				"",
+				"ABILITY_ID"
+			],
+			[
+				"setInfluenceCircle",
+				"setInfluenceInCircle"
+			],
+			[
+				"UNIT_TY",
+				"UNIT_TYPEID"
+			],
+			[
+				"INfluenceMap",
+				"InfluenceMap"
+			],
+			[
+				"DebugInte",
+				"DebugInterface"
+			],
+			[
+				"UnitGroup",
+				"UnitGroup"
+			],
+			[
+				"Player",
+				"GetPlayerInfo"
+			],
+			[
+				"DebugInterface",
+				"DebugInterface"
+			],
+			[
+				"StartGame",
+				"StartGame"
+			],
+			[
+				"CreateParticipant",
+				"CreateParticipant"
+			],
+			[
+				"Coordinator",
+				"Coordinator"
+			],
+			[
+				"GetPlayerID",
+				"GetPlayerID"
+			],
+			[
+				"GetAbilitiesForUnit",
+				"GetAbilitiesForUnit"
+			],
+			[
+				"GetUnits",
+				"GetUnits"
+			],
+			[
+				"GetAbilityData",
+				"GetAbilityData"
+			],
+			[
+				"Unit_",
+				"UNIT_TYPEID"
+			],
+			[
+				"ABILITY_ID",
+				"ABILITY_ID"
+			],
+			[
+				"SiegeTa",
+				"TestMorphSiegeTankSiegeMode"
+			],
+			[
+				"Alliance",
+				"Alliance"
+			],
+			[
+				"simplifyUnitType",
+				"simplifyUnitType"
+			],
+			[
+				"DebugInter",
+				"DebugInterface"
+			],
+			[
+				"UnitCom",
+				"UnitCommand"
+			],
+			[
+				"ObservationINter",
+				"ObservationInterface"
+			],
+			[
+				"AbilityData",
+				"AbilityData"
+			],
+			[
+				"AvailableAbility",
+				"AvailableAbility"
+			],
+			[
+				"AvailableAbilities",
+				"AvailableAbilities"
+			],
+			[
+				"QueryInterface",
+				"QueryInterface"
+			],
+			[
+				"Avialable",
+				"AvailableAbilities"
+			],
+			[
+				"ObservationInterface",
+				"ObservationInterface"
+			],
+			[
+				"Avai",
+				"AvailableAbility"
+			],
+			[
+				"AbilityDa",
+				"AbilityData"
+			],
+			[
+				"CameraMove",
+				"CameraMove"
+			],
+			[
+				"Camera",
+				"TestCameraMove"
+			],
+			[
+				"MoveCam",
+				"DebugMoveCamera"
+			],
+			[
+				"UnitType",
+				"UnitTypeData"
+			],
+			[
+				"UnitData",
+				"UnitTypeData"
+			],
+			[
+				"abilityName",
+				"AbilityTypeToName"
+			],
+			[
+				"Order",
+				"UnitOrder"
+			],
+			[
+				"BuildUnit",
+				"BuildUnit"
+			],
+			[
+				"UNITY_",
+				"UNIT_TYPEID"
+			],
+			[
+				"operator*",
+				"operator*"
+			],
+			[
+				"operator",
+				"operator-"
+			],
+			[
+				"cameraPos",
+				"GetCameraPos"
+			],
+			[
+				"Tag",
+				"Tag"
+			],
+			[
+				"UnitOrder",
+				"UnitOrder"
+			],
+			[
+				"DebugMove",
+				"DebugMoveCamera"
+			],
+			[
+				"Point3D",
+				"Point3D"
+			],
+			[
+				"GetAbi",
+				"GetAbilityData"
+			],
+			[
+				"GetA",
+				"GetAbilityData"
+			],
+			[
+				"Obser",
+				"Observation"
+			],
+			[
+				"UnitOr",
+				"UnitOrder"
+			],
+			[
+				"AbilityID",
+				"AbilityID"
+			],
+			[
+				"getPath",
+				"getPath"
+			],
+			[
+				"addInfluence",
+				"addInfluenceMultiple"
+			],
+			[
+				"select",
+				"Select"
+			],
+			[
+				"GameInfo",
+				"GameInfo"
+			],
+			[
+				"Point2DI",
+				"Point2DI"
+			],
+			[
+				"QueryInter",
+				"QueryInterface"
+			],
+			[
+				"StepAgents",
+				"StepAgents"
+			],
+			[
+				"Update",
+				"Update"
+			],
+			[
+				"IsStrue",
+				"IsStructure"
+			],
+			[
+				"SampleImageData",
+				"SampleImageData"
+			],
+			[
+				"GameInf",
+				"GameInfo"
+			],
+			[
+				"gameIn",
+				"GameInfo"
+			],
+			[
+				"sample",
+				"SampleImageData"
+			],
+			[
+				"ImageData",
+				"ImageData"
+			],
+			[
+				"pathable",
+				"IsPathable"
+			],
+			[
+				"pathMa",
+				"PathfindingMap"
+			],
+			[
+				"Pathable",
+				"IsPathable"
+			],
+			[
+				"ImageRGB",
+				"ImageRGB"
+			],
+			[
+				"InitializeRenderer",
+				"InitializeRenderer"
+			],
+			[
+				"ImageGrayscale",
+				"ImageGrayscale"
+			],
+			[
+				"Image",
+				"ImageRGB"
+			],
+			[
+				"CreateRect",
+				"CreateRect"
+			],
+			[
+				"Matrix8BPPPlayers",
+				"Matrix8BPPPlayers"
+			],
+			[
+				"Matrix1BPP",
+				"Matrix1BPP"
+			],
+			[
+				"FeatureLayerSettings",
+				"FeatureLayerSettings"
+			],
+			[
+				"SetFeatureLayers",
+				"SetFeatureLayers"
+			],
+			[
+				"Initialize",
+				"Initialize"
+			],
+			[
+				"Render",
+				"RenderAgent"
+			],
+			[
+				"UNIT_TYPEID",
+				"UNIT_TYPEID"
+			],
+			[
+				"SC2Type",
+				"SC2Type"
+			],
+			[
+				"UnitORder",
+				"UnitOrder"
+			],
+			[
+				"Normalize2D",
+				"Normalize2D"
+			],
+			[
+				"Point2D",
+				"Point2D"
+			],
+			[
+				"DebugSphereOut",
+				"DebugSphereOut"
+			],
+			[
+				"Debug",
+				"Debug"
+			],
+			[
+				"Query",
+				"Query"
+			],
+			[
+				"insert",
+				"insert"
+			],
+			[
+				"gaps",
+				"findGaps"
+			],
+			[
+				"cloneEmpty",
+				"cloneEmpty"
+			],
+			[
+				"findGaps",
+				"findGaps"
+			],
+			[
+				"FindEnemy",
+				"FindEnemyPosition"
+			],
+			[
+				"GetStart",
+				"GetStartLocation"
+			],
+			[
+				"Attack",
+				"AttackWithUnit"
+			],
+			[
+				"GetUnitTypeData",
+				"GetUnitTypeData"
+			],
+			[
+				"UnitTypeDa",
+				"UnitTypeData"
+			],
+			[
+				"ABILITY_",
+				"ABILITY_ID"
+			],
+			[
+				"Attribute",
+				"Attribute"
+			],
+			[
+				"TypeID",
+				"UNIT_TYPEID"
+			],
+			[
+				"ClientEvents",
+				"ClientEvents"
+			],
+			[
+				"ClientError",
+				"ClientError"
+			],
+			[
+				"OnUnitIdle",
+				"OnUnitIdle"
+			],
+			[
+				"TerranMultiplayerBot",
+				"TerranMultiplayerBot"
+			],
+			[
+				"IsTownHall",
+				"IsTownHall"
+			],
+			[
+				"TryBuildStructure",
+				"TryBuildStructure"
+			],
+			[
+				"TryBuildGas",
+				"TryBuildGas"
+			],
+			[
+				"TryBuil",
+				"TryBuildGas"
+			],
+			[
+				"TreeNoe",
+				"TreeNode"
+			],
+			[
+				"TryBuild",
+				"TryBuildGas"
+			],
+			[
+				"Tick",
+				"Tick"
+			],
+			[
+				"SequenceNode",
+				"SequenceNode"
+			],
+			[
+				"speed",
+				"speed"
+			],
+			[
+				"Ability",
+				"ABILITY_ID"
+			],
+			[
+				"UnitTypeID",
+				"UnitTypeID"
+			],
+			[
+				"TryBuildUnit",
+				"TryBuildUnit"
+			],
+			[
+				"orders",
+				"orders"
+			]
+		],
+		"width": 725.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 357.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

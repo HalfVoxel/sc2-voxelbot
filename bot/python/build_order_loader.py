@@ -3,98 +3,98 @@ import random
 import numpy as np
 import json
 from replay_memory import Transition
+from mappings import UnitLookup, ignoredUnits
 
 
+# unitNameMap = {
+#     29: "TERRAN_ARMORY",
+#     55: "TERRAN_BANSHEE",
+#     21: "TERRAN_BARRACKS",
+#     38: "TERRAN_BARRACKSREACTOR",
+#     37: "TERRAN_BARRACKSTECHLAB",
+#     57: "TERRAN_BATTLECRUISER",
+#     24: "TERRAN_BUNKER",
+#     18: "TERRAN_COMMANDCENTER",
+#     692: "TERRAN_CYCLONE",
+#     22: "TERRAN_ENGINEERINGBAY",
+#     27: "TERRAN_FACTORY",
+#     40: "TERRAN_FACTORYREACTOR",
+#     39: "TERRAN_FACTORYTECHLAB",
+#     30: "TERRAN_FUSIONCORE",
+#     50: "TERRAN_GHOST",
+#     26: "TERRAN_GHOSTACADEMY",
+#     53: "TERRAN_HELLION",
+#     484: "TERRAN_HELLIONTANK",
+#     689: "TERRAN_LIBERATOR",
+#     51: "TERRAN_MARAUDER",
+#     48: "TERRAN_MARINE",
+#     54: "TERRAN_MEDIVAC",
+#     23: "TERRAN_MISSILETURRET",
+#     132: "TERRAN_ORBITALCOMMAND",
+#     130: "TERRAN_PLANETARYFORTRESS",
+#     56: "TERRAN_RAVEN",
+#     49: "TERRAN_REAPER",
+#     20: "TERRAN_REFINERY",
+#     45: "TERRAN_SCV",
+#     25: "TERRAN_SENSORTOWER",
+#     32: "TERRAN_SIEGETANKSIEGED",
+#     33: "TERRAN_SIEGETANK",
+#     28: "TERRAN_STARPORT",
+#     42: "TERRAN_STARPORTREACTOR",
+#     41: "TERRAN_STARPORTTECHLAB",
+#     19: "TERRAN_SUPPLYDEPOT",
+#     52: "TERRAN_THOR",
+#     691: "TERRAN_THORAP",
+#     34: "TERRAN_VIKINGASSAULT",
+#     35: "TERRAN_VIKINGFIGHTER",
+#     498: "TERRAN_WIDOWMINE",
+#     # 268: 23,  # TERRAN_MULE
+# }
 
-unitNameMap = {
-    29: "TERRAN_ARMORY",
-    55: "TERRAN_BANSHEE",
-    21: "TERRAN_BARRACKS",
-    38: "TERRAN_BARRACKSREACTOR",
-    37: "TERRAN_BARRACKSTECHLAB",
-    57: "TERRAN_BATTLECRUISER",
-    24: "TERRAN_BUNKER",
-    18: "TERRAN_COMMANDCENTER",
-    692: "TERRAN_CYCLONE",
-    22: "TERRAN_ENGINEERINGBAY",
-    27: "TERRAN_FACTORY",
-    40: "TERRAN_FACTORYREACTOR",
-    39: "TERRAN_FACTORYTECHLAB",
-    30: "TERRAN_FUSIONCORE",
-    50: "TERRAN_GHOST",
-    26: "TERRAN_GHOSTACADEMY",
-    53: "TERRAN_HELLION",
-    484: "TERRAN_HELLIONTANK",
-    689: "TERRAN_LIBERATOR",
-    51: "TERRAN_MARAUDER",
-    48: "TERRAN_MARINE",
-    54: "TERRAN_MEDIVAC",
-    23: "TERRAN_MISSILETURRET",
-    132: "TERRAN_ORBITALCOMMAND",
-    130: "TERRAN_PLANETARYFORTRESS",
-    56: "TERRAN_RAVEN",
-    49: "TERRAN_REAPER",
-    20: "TERRAN_REFINERY",
-    45: "TERRAN_SCV",
-    25: "TERRAN_SENSORTOWER",
-    32: "TERRAN_SIEGETANKSIEGED",
-    33: "TERRAN_SIEGETANK",
-    28: "TERRAN_STARPORT",
-    42: "TERRAN_STARPORTREACTOR",
-    41: "TERRAN_STARPORTTECHLAB",
-    19: "TERRAN_SUPPLYDEPOT",
-    52: "TERRAN_THOR",
-    691: "TERRAN_THORAP",
-    34: "TERRAN_VIKINGASSAULT",
-    35: "TERRAN_VIKINGFIGHTER",
-    498: "TERRAN_WIDOWMINE",
-    # 268: 23,  # TERRAN_MULE
-}
-
-unitIndexMap = {
-    29: 0,  # TERRAN_ARMORY
-    55: 1,  # TERRAN_BANSHEE
-    21: 2,  # TERRAN_BARRACKS
-    38: 3,  # TERRAN_BARRACKSREACTOR
-    37: 4,  # TERRAN_BARRACKSTECHLAB
-    57: 5,  # TERRAN_BATTLECRUISER
-    24: 6,  # TERRAN_BUNKER
-    18: 7,  # TERRAN_COMMANDCENTER
-    692: 8,  # TERRAN_CYCLONE
-    22: 9,  # TERRAN_ENGINEERINGBAY
-    27: 10,  # TERRAN_FACTORY
-    40: 11,  # TERRAN_FACTORYREACTOR
-    39: 12,  # TERRAN_FACTORYTECHLAB
-    30: 13,  # TERRAN_FUSIONCORE
-    50: 14,  # TERRAN_GHOST
-    26: 15,  # TERRAN_GHOSTACADEMY
-    53: 16,  # TERRAN_HELLION
-    484: 17,  # TERRAN_HELLIONTANK
-    689: 18,  # TERRAN_LIBERATOR
-    51: 19,  # TERRAN_MARAUDER
-    48: 20,  # TERRAN_MARINE
-    54: 21,  # TERRAN_MEDIVAC
-    23: 22,  # TERRAN_MISSILETURRET
-    132: 23,  # TERRAN_ORBITALCOMMAND
-    130: 24,  # TERRAN_PLANETARYFORTRESS
-    56: 25,  # TERRAN_RAVEN
-    49: 26,  # TERRAN_REAPER
-    20: 27,  # TERRAN_REFINERY
-    45: 28,  # TERRAN_SCV
-    25: 29,  # TERRAN_SENSORTOWER
-    32: 30,   # TERRAN_SIEGETANKSIEGED
-    33: 30,  # TERRAN_SIEGETANK
-    28: 31,  # TERRAN_STARPORT
-    42: 32,  # TERRAN_STARPORTREACTOR
-    41: 33,  # TERRAN_STARPORTTECHLAB
-    19: 34,  # TERRAN_SUPPLYDEPOT
-    52: 35,  # TERRAN_THOR
-    691: 35,  # TERRAN_THORAP
-    34: 36,   # TERRAN_VIKINGASSAULT
-    35: 36,  # TERRAN_VIKINGFIGHTER
-    498: 37,  # TERRAN_WIDOWMINE,
-    # 268: 23,  # TERRAN_MULE
-}
+# self.unit_lookup.unit_index_map = {
+#     29: 0,  # TERRAN_ARMORY
+#     55: 1,  # TERRAN_BANSHEE
+#     21: 2,  # TERRAN_BARRACKS
+#     38: 3,  # TERRAN_BARRACKSREACTOR
+#     37: 4,  # TERRAN_BARRACKSTECHLAB
+#     57: 5,  # TERRAN_BATTLECRUISER
+#     24: 6,  # TERRAN_BUNKER
+#     18: 7,  # TERRAN_COMMANDCENTER
+#     692: 8,  # TERRAN_CYCLONE
+#     22: 9,  # TERRAN_ENGINEERINGBAY
+#     27: 10,  # TERRAN_FACTORY
+#     40: 11,  # TERRAN_FACTORYREACTOR
+#     39: 12,  # TERRAN_FACTORYTECHLAB
+#     30: 13,  # TERRAN_FUSIONCORE
+#     50: 14,  # TERRAN_GHOST
+#     26: 15,  # TERRAN_GHOSTACADEMY
+#     53: 16,  # TERRAN_HELLION
+#     484: 17,  # TERRAN_HELLIONTANK
+#     689: 18,  # TERRAN_LIBERATOR
+#     51: 19,  # TERRAN_MARAUDER
+#     48: 20,  # TERRAN_MARINE
+#     54: 21,  # TERRAN_MEDIVAC
+#     23: 22,  # TERRAN_MISSILETURRET
+#     132: 23,  # TERRAN_ORBITALCOMMAND
+#     130: 24,  # TERRAN_PLANETARYFORTRESS
+#     56: 25,  # TERRAN_RAVEN
+#     49: 26,  # TERRAN_REAPER
+#     20: 27,  # TERRAN_REFINERY
+#     45: 28,  # TERRAN_SCV
+#     25: 29,  # TERRAN_SENSORTOWER
+#     32: 30,   # TERRAN_SIEGETANKSIEGED
+#     33: 30,  # TERRAN_SIEGETANK
+#     28: 31,  # TERRAN_STARPORT
+#     42: 32,  # TERRAN_STARPORTREACTOR
+#     41: 33,  # TERRAN_STARPORTTECHLAB
+#     19: 34,  # TERRAN_SUPPLYDEPOT
+#     52: 35,  # TERRAN_THOR
+#     691: 35,  # TERRAN_THORAP
+#     34: 36,   # TERRAN_VIKINGASSAULT
+#     35: 36,  # TERRAN_VIKINGFIGHTER
+#     498: 37,  # TERRAN_WIDOWMINE,
+#     # 268: 23,  # TERRAN_MULE
+# }
 
 # unitIndexMap = {
 #     21: 0,  # TERRAN_BARRACKS
@@ -107,60 +107,60 @@ unitIndexMap = {
 #     20: 7,  # TERRAN_REFINERY
 # }
 
-isUnitMilitary = {
-    29: False,  # TERRAN_ARMORY
-    55: True,  # TERRAN_BANSHEE
-    21: False,  # TERRAN_BARRACKS
-    57: True,  # TERRAN_BATTLECRUISER
-    24: False,  # TERRAN_BUNKER
-    18: False,  # TERRAN_COMMANDCENTER
-    692: True,  # TERRAN_CYCLONE
-    22: False,  # TERRAN_ENGINEERINGBAY
-    27: False,  # TERRAN_FACTORY
-    30: False,  # TERRAN_FUSIONCORE
-    50: True,  # TERRAN_GHOST
-    26: False,  # TERRAN_GHOSTACADEMY
-    53: True,  # TERRAN_HELLION
-    484: True,  # TERRAN_HELLIONTANK
-    689: True,  # TERRAN_LIBERATOR
-    51: True,  # TERRAN_MARAUDER
-    48: True,  # TERRAN_MARINE
-    54: True,  # TERRAN_MEDIVAC
-    23: False,  # TERRAN_MISSILETURRET
-    132: False,  # TERRAN_ORBITALCOMMAND
-    130: False,  # TERRAN_PLANETARYFORTRESS
-    56: True,  # TERRAN_RAVEN
-    49: True,  # TERRAN_REAPER
-    20: False,  # TERRAN_REFINERY
-    45: False,  # TERRAN_SCV
-    25: False,  # TERRAN_SENSORTOWER
-    32: True,   # TERRAN_SIEGETANKSIEGED
-    33: True,  # TERRAN_SIEGETANK
-    28: False,  # TERRAN_STARPORT
-    19: False,  # TERRAN_SUPPLYDEPOT
-    52: True,  # TERRAN_THOR
-    34: True,   # TERRAN_VIKINGASSAULT
-    35: True,  # TERRAN_VIKINGFIGHTER
-    498: True,  # TERRAN_WIDOWMINE
-}
+# isUnitMilitary = {
+#     29: False,  # TERRAN_ARMORY
+#     55: True,  # TERRAN_BANSHEE
+#     21: False,  # TERRAN_BARRACKS
+#     57: True,  # TERRAN_BATTLECRUISER
+#     24: False,  # TERRAN_BUNKER
+#     18: False,  # TERRAN_COMMANDCENTER
+#     692: True,  # TERRAN_CYCLONE
+#     22: False,  # TERRAN_ENGINEERINGBAY
+#     27: False,  # TERRAN_FACTORY
+#     30: False,  # TERRAN_FUSIONCORE
+#     50: True,  # TERRAN_GHOST
+#     26: False,  # TERRAN_GHOSTACADEMY
+#     53: True,  # TERRAN_HELLION
+#     484: True,  # TERRAN_HELLIONTANK
+#     689: True,  # TERRAN_LIBERATOR
+#     51: True,  # TERRAN_MARAUDER
+#     48: True,  # TERRAN_MARINE
+#     54: True,  # TERRAN_MEDIVAC
+#     23: False,  # TERRAN_MISSILETURRET
+#     132: False,  # TERRAN_ORBITALCOMMAND
+#     130: False,  # TERRAN_PLANETARYFORTRESS
+#     56: True,  # TERRAN_RAVEN
+#     49: True,  # TERRAN_REAPER
+#     20: False,  # TERRAN_REFINERY
+#     45: False,  # TERRAN_SCV
+#     25: False,  # TERRAN_SENSORTOWER
+#     32: True,   # TERRAN_SIEGETANKSIEGED
+#     33: True,  # TERRAN_SIEGETANK
+#     28: False,  # TERRAN_STARPORT
+#     19: False,  # TERRAN_SUPPLYDEPOT
+#     52: True,  # TERRAN_THOR
+#     34: True,   # TERRAN_VIKINGASSAULT
+#     35: True,  # TERRAN_VIKINGFIGHTER
+#     498: True,  # TERRAN_WIDOWMINE
+# }
 
-NUM_UNITS = len(set(unitIndexMap.values()))
-MILITARY_UNITS_MASK = np.zeros(NUM_UNITS)
-reverseUnitIndexMap = {}
-for k, v in unitIndexMap.items():
-    reverseUnitIndexMap[v] = k
-    MILITARY_UNITS_MASK[v] = 1 if k in isUnitMilitary and isUnitMilitary[k] else 0
+# NUM_UNITS = len(set(unitIndexMap.values()))
+# MILITARY_UNITS_MASK = np.zeros(NUM_UNITS)
+# reverseUnitIndexMap = {}
+# for k, v in unitIndexMap.items():
+#     reverseUnitIndexMap[v] = k
+#     MILITARY_UNITS_MASK[v] = 1 if k in isUnitMilitary and isUnitMilitary[k] else 0
 
-MILITARY_UNITS_MASK_INDICES = np.where(MILITARY_UNITS_MASK)[0]
-NON_MILITARY_UNITS_MASK_INDICES = np.where(MILITARY_UNITS_MASK==False)[0]
-TENSOR_INPUT_SIZE = len(NON_MILITARY_UNITS_MASK_INDICES)*3 + len(NON_MILITARY_UNITS_MASK_INDICES)*10 + len(NON_MILITARY_UNITS_MASK_INDICES)*5 + 7 + 8 + 2 * NUM_UNITS
-print(f"Input tensor size: {TENSOR_INPUT_SIZE}")
+# MILITARY_UNITS_MASK_INDICES = np.where(MILITARY_UNITS_MASK)[0]
+# NON_MILITARY_UNITS_MASK_INDICES = np.where(MILITARY_UNITS_MASK==False)[0]
 
-nonMilitaryIndexMap = {}
-for i in range(len(NON_MILITARY_UNITS_MASK_INDICES)):
-    for k, v in unitIndexMap.items():
-        if v == NON_MILITARY_UNITS_MASK_INDICES[i]:
-            nonMilitaryIndexMap[k] = i
+# print(f"Input tensor size: {TENSOR_INPUT_SIZE}")
+
+# nonMilitaryIndexMap = {}
+# for i in range(len(NON_MILITARY_UNITS_MASK_INDICES)):
+#     for k, v in unitIndexMap.items():
+#         if v == NON_MILITARY_UNITS_MASK_INDICES[i]:
+#             nonMilitaryIndexMap[k] = i
 
 
 class Statistics:
@@ -180,10 +180,20 @@ def to_one_hot(tensor: np.array, dim: int):
 
     return result
 
+
 class BuildOrderLoader:
-    def __init__(self, gamma_per_second):
+    def __init__(self, unit_lookup: UnitLookup, gamma_per_second: float):
         self.gamma_per_second = gamma_per_second
         self.goalPool = []
+        self.unit_lookup = unit_lookup
+        self.num_units = self.unit_lookup.num_units
+        self.tensor_input_size = self.get_tensor_size(self.unit_lookup.non_military_units_mask_indices, True)
+
+    def get_tensor_size(self, unitIndices, include_goal):
+        result = len(unitIndices)*3 + len(unitIndices)*10 + len(unitIndices)*5 + 7 + 8
+        if include_goal:
+            result += 2 * self.unit_lookup.num_units
+        return result
 
     def calculate_session_rewards(self, session_json):
         session = json.loads(session_json)
@@ -199,29 +209,38 @@ class BuildOrderLoader:
 
         return rewards
 
-    def createState(self, state):
-        unitCounts = np.zeros(NUM_UNITS, dtype=np.float32)
-        unitsAvailable = np.zeros(NUM_UNITS, dtype=np.float32)
-        unitsInProgress = np.zeros(NUM_UNITS, dtype=np.float32)
+    def createState(self, state, unitIndices=None):
+        if unitIndices is None:
+            unitIndices = self.unit_lookup.non_military_units_mask_indices
+
+        unitCounts = np.zeros(self.num_units, dtype=np.float32)
+        unitsAvailable = np.zeros(self.num_units, dtype=np.float32)
+        unitsInProgress = np.zeros(self.num_units, dtype=np.float32)
 
         for unit in state["units"]:
+            if unit["type"] in ignoredUnits:
+                continue
+
             # Finished
             # TODO: Addon
-            unitIndex = unitIndexMap[unit["type"]]
+            unitIndex = self.unit_lookup.unit_index_map[unit["type"]]
             unitCounts[unitIndex] += unit["totalCount"]
             unitsAvailable[unitIndex] += unit["availableCount"]
 
         for unit in state["unitsInProgress"]:
+            if unit["type"] in ignoredUnits:
+                continue
+
             # In progress
-            unitIndex = unitIndexMap[unit["type"]]
+            unitIndex = self.unit_lookup.unit_index_map[unit["type"]]
             unitCounts[unitIndex] += 1
             unitsInProgress[unitIndex] += 1
 
         originalUnitCounts = unitCounts
 
-        oneHotUnitsAvailable = to_one_hot(unitsAvailable[NON_MILITARY_UNITS_MASK_INDICES], 3)
-        oneHotUnitCounts = to_one_hot(unitCounts[NON_MILITARY_UNITS_MASK_INDICES], 10)
-        oneHotUnitsInProgress = to_one_hot(unitsInProgress[NON_MILITARY_UNITS_MASK_INDICES], 5)
+        oneHotUnitsAvailable = to_one_hot(unitsAvailable[unitIndices], 3)
+        oneHotUnitCounts = to_one_hot(unitCounts[unitIndices], 10)
+        oneHotUnitsInProgress = to_one_hot(unitsInProgress[unitIndices], 5)
 
         # Some metadata, the data is normalized to approximately 1
         metaTensor = np.zeros(7, dtype=np.float32)
@@ -231,7 +250,9 @@ class BuildOrderLoader:
         metaTensor[3] = state["vespenePerSecond"] / 10
         metaTensor[4] = state["highYieldMineralSlots"] / 10
         metaTensor[5] = state["lowYieldMineralSlots"] / 10
-        metaTensor[6] = unitCounts[unitIndexMap[45]] / 10  # SCV count
+        harvesters = [45, 104, 116, 84]
+        for h_type in harvesters:
+            metaTensor[6] += unitCounts[self.unit_lookup.unit_index_map[h_type]] / 10  # SCV+Drone+Probe count
         foodTensor = to_one_hot(np.array([state["foodAvailable"]]), 8)
 
         # stateTensor = np.concatenate([np.array([state["time"]]), oneHotUnitCounts, oneHotUnitsAvailable, oneHotUnitsInProgress, metaTensor])
@@ -239,18 +260,18 @@ class BuildOrderLoader:
         return stateTensor, originalUnitCounts
 
     def combineStateAndGoal(self, stateTensor, goalTensor):
-        assert goalTensor.shape == (NUM_UNITS,)
+        assert goalTensor.shape == (self.num_units,)
         _stateTensor = stateTensor[0]
         unitCountsOrInProgress = stateTensor[1]
         remainingGoal = np.maximum(0, goalTensor - unitCountsOrInProgress)
         inputTensor = np.concatenate([_stateTensor, remainingGoal > 0, remainingGoal])
-        assert inputTensor.shape == (TENSOR_INPUT_SIZE,)
+        assert inputTensor.shape == (self.tensor_input_size,)
         return inputTensor
 
     def createGoalTensor(self, goal):
-        inputTensor = np.zeros(NUM_UNITS, dtype=np.float32)
+        inputTensor = np.zeros(self.num_units, dtype=np.float32)
         for unit in goal:
-            unitIndex = unitIndexMap[unit["type"]]
+            unitIndex = self.unit_lookup.unit_index_map[unit["type"]]
             inputTensor[unitIndex] += unit["count"]
             assert unit["count"] >= 0
 
@@ -262,20 +283,20 @@ class BuildOrderLoader:
     def calculate_reward(self, t1, t2, goalTensor, deltaTime):
         s1unitCounts = t1[1]
         s2unitCounts = t2[1]
-        assert s1unitCounts.shape == (NUM_UNITS,)
-        assert s2unitCounts.shape == (NUM_UNITS,)
+        assert s1unitCounts.shape == (self.num_units,)
+        assert s2unitCounts.shape == (self.num_units,)
 
         # How many units were added
         deltaUnitCounts = np.maximum(0, s2unitCounts - s1unitCounts)
         # Total number of military units
-        numMilitaryUnits = (s1unitCounts * MILITARY_UNITS_MASK).sum()
+        # numMilitaryUnits = (s1unitCounts * self.unit_lookup.military_units_mask).sum()
         # Number of units that we do want
-        desiredUnitCounts = goalTensor * np.maximum(numMilitaryUnits, 1)
+        # desiredUnitCounts = goalTensor * np.maximum(numMilitaryUnits, 1)
 
-        falloff = 0.2
+        # falloff = 0.2
         # TODO: multiply by resource cost
         # scorePerUnit = goalTensor * np.minimum(1.0, np.exp((desiredUnitCounts - s1unitCounts)*falloff))
-        scorePerUnit = np.zeros(NUM_UNITS)
+        scorePerUnit = np.zeros(self.num_units)
         scorePerUnit[4] = 1
 
         # Get a score if we added a unit of that type
@@ -311,13 +332,13 @@ class BuildOrderLoader:
         for i in range(len(tensor_states) - 1):
             s1 = states[i]
             s2 = states[i + 1]
-            a1 = unitIndexMap[actions[i]]
+            a1 = self.unit_lookup.unit_index_map[actions[i]]
             t1 = tensor_states[i]
             t2 = tensor_states[i + 1]
             ct1 = combined_tensor_states[i]
             ct2 = combined_tensor_states[i + 1]
 
-            a2 = unitIndexMap[actions[i + 1]] if i + 1 < len(actions) else None
+            a2 = self.unit_lookup.unit_index_map[actions[i + 1]] if i + 1 < len(actions) else None
             deltaTime = s2["time"] - s1["time"]
 
             # reward = self.calculate_reward(t1, t2, goal_tensor, deltaTime)
@@ -338,10 +359,10 @@ class BuildOrderLoader:
                 k = min(len(tensor_states) - 1, i + step_size)
                 s1 = states[i]
                 s2 = states[k]
-                a1 = unitIndexMap[actions[i]]
+                a1 = self.unit_lookup.unit_index_map[actions[i]]
                 t1 = combined_tensor_states[i]
                 t2 = combined_tensor_states[k]
-                a2 = unitIndexMap[actions[k]] if k < len(actions) else None
+                a2 = self.unit_lookup.unit_index_map[actions[k]] if k < len(actions) else None
 
                 reward = 0
                 for j in range(i, k):
