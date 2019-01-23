@@ -59,3 +59,16 @@ docs/html
 docs/latex
 doxygen.log
 .idea
+
+/recording*.csv
+/replays
+/training_data
+/vel
+/libtorch
+/bot/generated/units_verify.txt
+/bot/generated/units_with_tech.txt
+*.pickle
+/maps
+/models
+/simple-A2C
+replays_protoss.txt
