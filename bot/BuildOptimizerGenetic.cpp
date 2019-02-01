@@ -4,6 +4,7 @@
 #include <map>
 #include <random>
 #include <stack>
+#include <iostream>
 #include "utilities/mappings.h"
 #include "utilities/predicates.h"
 #include "utilities/profiler.h"

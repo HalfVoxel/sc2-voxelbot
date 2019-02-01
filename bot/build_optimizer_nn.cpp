@@ -1,4 +1,5 @@
 #include "build_optimizer_nn.h"
+#include <iostream>
 
 using namespace std;
 using namespace sc2;

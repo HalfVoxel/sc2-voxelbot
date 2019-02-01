@@ -3,6 +3,7 @@ using namespace BOT;
 using namespace std;
 #include <iostream>
 #include <typeinfo>
+#include <algorithm>
 
 void ControlFlowNode::Add(shared_ptr<TreeNode> node) {
     children.push_back(move(node));

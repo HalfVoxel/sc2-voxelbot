@@ -5,6 +5,7 @@
 #include "utilities/predicates.h"
 #include "Bot.h"
 #include "utilities/stdutils.h"
+#include <iostream>
 
 using namespace std;
 using namespace sc2;

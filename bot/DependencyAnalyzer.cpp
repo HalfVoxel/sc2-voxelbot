@@ -4,6 +4,7 @@
 #include "utilities/mappings.h"
 #include "utilities/predicates.h"
 #include "Bot.h"
+#include <iostream>
 
 using namespace std;
 using namespace sc2;

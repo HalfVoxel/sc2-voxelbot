@@ -7,8 +7,8 @@
 #include <thread>
 #include <cmath>
 #include <iostream>
-#include <pybind11/embed.h>
-#include <pybind11/stl.h>
+//#include <pybind11/embed.h>
+//#include <pybind11/stl.h>
 #include <limits>
 #include <map>
 #include <random>
@@ -20,7 +20,7 @@
 #include "SDL.h"
 #include "ScoutingManager.h"
 #include "behaviortree/TacticalNodes.h"
-#include "buildingPlacement.h"
+#include "BuildingPlacement.h"
 #include <cereal/archives/json.hpp>
 #include <cereal/types/string.hpp>
 #include <fstream>

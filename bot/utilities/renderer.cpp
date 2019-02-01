@@ -4,6 +4,8 @@
 #include <cassert>
 #include <iostream>
 #include <vector>
+#include <cmath>
+
 #include "SDL.h"
 
 using namespace std;

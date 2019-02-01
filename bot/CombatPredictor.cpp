@@ -3,6 +3,7 @@
 #include <fstream>
 #include <functional>
 #include <random>
+#include <iostream>
 #include "Bot.h"
 #include "utilities/mappings.h"
 #include "utilities/profiler.h"

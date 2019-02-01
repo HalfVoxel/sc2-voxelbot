@@ -44,9 +44,9 @@ include_directories("cereal/include")
 # Setup MSVC parallelized builds
 add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 
-if(!MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=address -fsdfsdfe")
-endif()
+# if(!MSVC)
+#   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=address -fsdfsdfe")
+# endif()
 
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -D_GLIBCXX_DEBUG -fsanitize=address")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -O0 -fsanitize=address")
@@ -79,7 +79,7 @@ endfunction ()
 
 function (create_library project_name source_code source_code2 source_code3 extra_libs)
 	# TODO: The .h files don't seem to be necessary (think only .cpp files should be included here anyway)
-    file (GLOB example_project_sources ${source_code} ${source_code2} ${source_code3} "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc" "bot/*.h" "bot/behaviortree/*.h" "bot/utilities/*.h" "bot/generated/*.cpp" ${mainfile})
+    file (GLOB example_project_sources ${source_code} ${source_code2} ${source_code3} "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc" "bot/*.h" "bot/behaviortree/*.h" "bot/utilities/*.h" "bot/generated/*.cpp")
     add_library(${project_name} ${example_project_sources})
 
     if (MSCV AND (NOT (MSVC_VERSION LESS 1910)))
@@ -91,7 +91,9 @@ function (create_library project_name source_code source_code2 source_code3 extr
     target_link_libraries(${project_name} sc2api sc2lib sc2utils pybind11 ${extra_libs})
 endfunction ()
 
-create_library(botlib "bot/*.cpp" "bot/behaviortree/*.cpp" "bot/utilities/*.cpp" "SDL2-static")
+# Note: trying to add SDL2-static as the extra_libs parameter here causes pybind11 modules to fail to link (for unknown reasons, maybe PIC related?)
+create_library(botlib "bot/*.cpp" "bot/behaviortree/*.cpp" "bot/utilities/*.cpp" "")
+
 create_executable(our_bot "" "bot/bot/main.cpp" "SDL2-static")
 create_executable(replay_analyzer "" "bot/replay_analyzer/main.cpp" "SDL2-static")
 create_executable(caching "" "bot/caching/main.cpp" "SDL2-static")

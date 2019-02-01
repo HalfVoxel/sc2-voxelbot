@@ -1,6 +1,7 @@
 #include "TacticalManager.h"
 #include "utilities/predicates.h"
 #include "Bot.h"
+#include <iostream>
 
 using namespace std;
 using namespace sc2;
