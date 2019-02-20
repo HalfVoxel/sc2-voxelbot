@@ -11,6 +11,8 @@
 #include <cereal/archives/json.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
+#include <pybind11/embed.h>
+#include <pybind11/stl.h>
 
 using namespace sc2;
 using namespace std;
@@ -68,7 +70,7 @@ vector<pair<UNIT_TYPEID, int>> sampleUnitConfig (default_random_engine& rnd) {
         exponential_distribution<double> countDist;
         if (isStructure(type)) {
             countDist = exponential_distribution<double>(1.0/3.0);
-        } else if (type == UNIT_TYPEID::TERRAN_SCV) {
+        } else if (type == UNIT_TYPEID::TERRAN_SCV && false) {
             countDist = exponential_distribution<double>(1.0/40.0);
         } else {
             countDist = exponential_distribution<double>(1.0/10.0);
@@ -86,25 +88,25 @@ vector<pair<UNIT_TYPEID, int>> sampleUnitConfig (default_random_engine& rnd) {
 template <class Archive>
 void serialize(Archive& archive, CombatUnit& unit) {
     archive(
-        CEREAL_NVP(unit.owner),
-        CEREAL_NVP(unit.type),
-        CEREAL_NVP(unit.health),
-        CEREAL_NVP(unit.health_max),
-        CEREAL_NVP(unit.shield),
-        CEREAL_NVP(unit.shield_max),
-        CEREAL_NVP(unit.energy),
-        CEREAL_NVP(unit.is_flying)
+        cereal::make_nvp("owner", unit.owner),
+        cereal::make_nvp("type", unit.type),
+        cereal::make_nvp("health", unit.health),
+        cereal::make_nvp("health_max", unit.health_max),
+        cereal::make_nvp("shield", unit.shield),
+        cereal::make_nvp("shield_max", unit.shield_max),
+        cereal::make_nvp("energy", unit.energy),
+        cereal::make_nvp("is_flying", unit.is_flying)
     );
 }
 
 template <class Archive>
 void serialize(Archive& archive, CombatResult& result) {
-    archive(result.time, result.state);
+    archive(cereal::make_nvp("time", result.time), cereal::make_nvp("state", result.state));
 }
 
 template <class Archive>
 void serialize(Archive& archive, CombatState& state) {
-    archive(state.units);
+    archive(cereal::make_nvp("units", state.units));
 }
 
 struct CombatInstance {
@@ -122,11 +124,23 @@ struct Session {
 
     template <class Archive>
     void serialize(Archive& archive) {
-        archive(instances);
+        archive(CEREAL_NVP(instances));
     }
 };
 
+pybind11::object saveFunction;
+
 int main() {
+    pybind11::scoped_interpreter guard{};
+    pybind11::exec(R"(
+        import sys
+        sys.path.append("bot/python")
+    )");
+    pybind11::module mod = pybind11::module::import("replay_saver");
+    
+    saveFunction = mod.attr("save");
+
+
     CombatPredictor predictor;
     initMappings();
     predictor.init();
@@ -136,7 +150,7 @@ int main() {
 
     Session session;
     for (int i = 0; i < 1000000; i++) {
-        cout << endl << "Session " << i << endl << endl;
+        cout << "\rSession " << i;
 
         CombatState state;
 
@@ -145,23 +159,66 @@ int main() {
         for (auto u : defenders) for (int c = 0; c < u.second; c++) state.units.push_back(makeUnit(1, u.first));
         for (auto u : attackers) for (int c = 0; c < u.second; c++) state.units.push_back(makeUnit(2, u.first));
 
-        CombatResult result = predictor.predict_engage(state);
+        // cout << "Original" << endl;
+        // for (auto u : state.units) {
+        //     cout << u.owner << " " << UnitTypeToName(u.type) << endl;
+        // }
 
+        CombatResult result;
+
+        for (int it = 0;; it++) {
+            result = predictor.predict_engage(state);
+            if (it == 5) break;
+
+            int winner = result.state.owner_with_best_outcome();
+            int unitCount = 0;
+            for (int j = 0; j < state.units.size(); j++) {
+                unitCount += state.units[j].owner == winner;
+            }
+
+            if (unitCount > 3) {
+                for (int k = 0; k < 3; k++) {
+                    int offset = rand() % state.units.size();
+                    for (int j = 0; j < state.units.size(); j++) {
+                        int idx = (j + offset) % state.units.size();
+                        if (state.units[idx].owner == winner) {
+                            state.units.erase(state.units.begin() + idx);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // cout << "Balanced" << endl;
         CombatInstance inst;
         inst.startingState = state;
         inst.outcome = result;
 
+        // for (auto u : state.units) {
+        //     cout << u.owner << " " << UnitTypeToName(u.type) << endl;
+        // }
+
+        // cout << endl << "Outcome" << endl;
+        // for (auto u : result.state.units) {
+        //     cout << u.owner << " " << UnitTypeToName(u.type) << " " << u.health << endl;
+        // }
+        // exit(0);
+
         session.instances.push_back(inst);
 
         if (session.instances.size() > 1000) {
+            cout << endl;
             stringstream ss;
             cout << "Writing" << endl;
             ss << "training_data/combatsimulations/1/chunk_" << rand() << ".json";
-            ofstream json(ss.str());
+            stringstream json;
             {
                 cereal::JSONOutputArchive archive(json);
                 session.serialize(archive);
             }
+
+            saveFunction(json.str(), ss.str());
 
             session.instances.clear();
         }

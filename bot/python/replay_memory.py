@@ -1,11 +1,12 @@
 import random
 import math
 from collections import namedtuple
+from torch.utils.data import Dataset
 
 Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'next_action', 'reward', 'deltaTime'))
 
 
-class ReplayMemory(object):
+class ReplayMemory(Dataset):
     def __init__(self, capacity, prioritized_replay):
         self.capacity = capacity
         self.memory = []
@@ -91,3 +92,6 @@ class ReplayMemory(object):
 
     def __len__(self):
         return self.count if self.prioritized_replay else len(self.memory)
+
+    def __getitem__(self, index):
+        return self.memory[index]

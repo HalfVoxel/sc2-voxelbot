@@ -9,9 +9,11 @@
 #include <fstream>
 #include "../DependencyAnalyzer.h"
 #include "sc2utils/sc2_manage_process.h"
+#include <pybind11/embed.h>
+#include <pybind11/stl.h>
 
-const char* kReplayFolder = "/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/replays";
-const char* kReplayListProtoss = "/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/replays_protoss2.txt";
+const char* kReplayFolder = "/home/arong/learning/sc2-voxelbot/replays";
+const char* kReplayListProtoss = "/home/arong/learning/sc2-voxelbot/replays3.txt";
 // Protoss:
 // e5242d0a121db241ccfca68150feea57deeb82b9d7000e7d00c84b5cba4e511e.SC2Replay
 using namespace std;
@@ -216,7 +218,28 @@ class Replay : public sc2::ReplayObserver {
         if (!version_match) {
             cerr << "Skipping replay because of version mismatch " << replay_info.base_build << " != " << Control()->Proto().GetBaseBuild() << " || " << replay_info.data_version << " != " << Control()->Proto().GetDataVersion() << endl;
         }
-        return replay_info.num_players != 2 || !version_match;
+
+        if (replay_info.num_players != 2 || !version_match) {
+            return true;
+        }
+
+        ReplayPlayerInfo p1;
+        replay_info.GetPlayerInfo(p1, 1);
+
+        ReplayPlayerInfo p2;
+        replay_info.GetPlayerInfo(p2, 2);
+
+        if (p1.race != Race::Protoss || p2.race != Race::Protoss) {
+            cerr << "Skipping replay because matchup is not PvP (was " << RaceToString(p1.race) << "v" << RaceToString(p2.race) << ")" << endl;
+            return true;
+        }
+
+        if (p1.mmr < 3500 && p2.mmr < 3500) {
+            cerr << "Skipping replay because MMR is too low (" << p1.mmr << ", " << p2.mmr << ")" << endl;
+            return true;
+        }
+
+        return false;
     }
 
     void OnGameStart() final {
@@ -261,6 +284,7 @@ class Replay : public sc2::ReplayObserver {
     void OnStep() final {
         assert(Observation()->GetPlayerID() == playerID);
 
+        cout << "Step " << Observation()->GetGameLoop() << endl;
         // About every 10 seconds (faster game speed)
         collectState();
 
@@ -353,7 +377,7 @@ pybind11::object saveFunction;
 
 void saveSession (ReplaySession& session, default_random_engine& rnd) {
     stringstream ss;
-    ss << "training_data/replays/6/chunk_" << uniform_int_distribution<int>(1, 1000000)(rnd) << ".pickle";
+    ss << "training_data/replays/9/chunk_" << uniform_int_distribution<int>(1, 10000000)(rnd) << ".pickle";
     stringstream json;
     {
         cereal::JSONOutputArchive archive(json);

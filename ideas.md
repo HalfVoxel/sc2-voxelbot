@@ -21,6 +21,8 @@ Bayesian modelling of the state of the enemy
 
 			Log decomposition of unit groups (e.g. allow N units to be ordered somewhere, where N \in {1,2,4,8,16,32,64, etc.})
 
+
+
 	Actions
 		Don't use actions like 'produce units', instead use actions that determine the policy (e.g. focus on economy, focus on countering the enemy)
 		Possibly with occational 'scout'
@@ -35,7 +37,13 @@ ML states
 	Interpolate between states?
 	States are similar if they predict/lead to similar outcomes?
 
-
+Bayesian
+	Extract large scale unit movements
+		If unit moved more than say 1 screen distance, consider it important.
+			First try to predict which group of units will move
+				Score every unit?
+				Output GMM that queries the units?
+			Then given a unit group, where should it move to
 
 MCTS
 	Make a NN learn a representation for what reasonable actions there are in a given state, let the possible actions in a given MCTS state be samples from this NN instead of all possible actions (might be overwhelmingly many).
@@ -51,6 +59,8 @@ MCTS
 		NN that predicts which type of units from that region should move (branch 150)
 		NN that predicts how many units of them should move (branch log2 200. Alternatives are 1, 2, 4, 8, 16, etc. given the total count as 1, 2, 4, ... one hot encoded)
 		NN that predicts movement type (attack, move)
+
+	Learn NN that generates priors for states based on the simulation results so far ("every simulation that ends up attacking base B seems to turn out badly, maybe stop exploring attacks on base B?")
 
 State examples
 	1. Beginning of game, 12 workers and one command center

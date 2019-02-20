@@ -1,12 +1,12 @@
 #pragma once
-#include <pybind11/embed.h>
-#include <pybind11/stl.h>
+//#include <pybind11/embed.h>
+//#include <pybind11/stl.h>
 #include <vector>
 #include "BuildOptimizerGenetic.h"
 #include "utilities/mappings.h"
 
 struct BuildOptimizerNN {
-    pybind11::object predictFunction;
+    // pybind11::object predictFunction;
 
     void init();
 

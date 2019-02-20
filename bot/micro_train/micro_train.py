@@ -618,7 +618,8 @@ def load_all(optimization_steps_per_load: int):
     fs = natural_sort(fs)
     # random.shuffle(fs)
     for p in fs:
-        f = open(data_path + "/" + p)
+        path = data_path + "/" + p
+        f = open(path)
         s = f.read()
         f.close()
         memory.loadSession(s)
