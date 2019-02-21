@@ -56,11 +56,18 @@ MCTS
 
 	Sample actions from
 		NN that predicts which region units should come from (branch ≈25)
-		NN that predicts which type of units from that region should move (branch 150)
+		NN that predicts which type of units from that region should move (branch 150), given unit counts in the region
 		NN that predicts how many units of them should move (branch log2 200. Alternatives are 1, 2, 4, 8, 16, etc. given the total count as 1, 2, 4, ... one hot encoded)
 		NN that predicts movement type (attack, move)
 
 	Learn NN that generates priors for states based on the simulation results so far ("every simulation that ends up attacking base B seems to turn out badly, maybe stop exploring attacks on base B?")
+	Use GAN to sample actions using a latent space
+		Generator: (latent space, region x unit counts, mining speed etc.) -> (one hot from region, one hot to region, soft unit mask [0...1]^N, one hot log2 unit count, one hot attack/move)
+		Discriminator -> (input space, (one hot from region, one hot to region, soft unit mask [0...1]^N, one hot log2 unit count, one hot attack/move))
+
+		Can even be used for policies like how many units to produce.
+			Extract from replays state at T and T + dt and check how many units were produced of each type in between, set that as a policy goal.
+			Use GAN to sample this space and MCTS to evaluate the different actions
 
 State examples
 	1. Beginning of game, 12 workers and one command center
