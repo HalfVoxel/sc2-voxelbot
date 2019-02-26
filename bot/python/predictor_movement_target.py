@@ -456,19 +456,37 @@ def visualize(epoch):
 
 
 def cache_tenors():
-    if os.path.isdir(cache_dir):
-        shutil.rmtree(cache_dir)
     os.makedirs(cache_dir, exist_ok=True)
     index = 0
 
+    version = 0
+
+    def save_path(path):
+        name = path.split("/")[-1].split(".")[0]
+        final_path = os.path.join(cache_dir, f"{name}.{version}.pt")
+        return final_path
+
+    def should_process(path):
+        return not os.path.exists(save_path(path))
+
     def load_state(s):
+        final_path = save_path(s["data_path"])
+
         def save_sample(sample):
             nonlocal index
             index += 1
-            torch.save(sample, os.path.join(cache_dir, f"{index}.pt"))
+            with gzip.open(final_path, 'wb') as f:
+                torch.save(sample, f)
         game_state_loader.loadSessionMovementTarget(s, buildOrderLoader, save_sample, None)
 
-    load_all(data_paths, small_input, load_state)
+    def clear_old_tensors():
+        for path in os.listdir(cache_dir):
+            if not path.endswith(f".{version}.pt"):
+                print(f"Removing {path}")
+                os.remove(os.path.join(cache_dir, path))
+
+    load_all(data_paths, small_input, load_state, should_process)
+    clear_old_tensors()
 
 
 def learning_rate_by_time(epoch):

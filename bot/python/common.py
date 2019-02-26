@@ -51,17 +51,20 @@ def load_cached_tensors(caching_filename, memory, test_memory):
             test_memory.push(item)
 
 
-def load_all(data_paths, small_input, load_fn):
+def load_all(data_paths, small_input, load_fn, filter_fn):
     print("Loading training data...")
     for data_path in data_paths:
         fs = os.listdir(data_path)
-        fs = natural_sort(fs)
+        # fs = natural_sort(fs)
         if small_input:
             fs = fs[:20]
         random.shuffle(fs)
         for i in range(len(fs)):
             print(f"\r{i}/{len(fs)}", end="")
             path = data_path + "/" + fs[i]
+            if not filter_fn(path):
+                continue
+
             try:
                 with gzip.open(path, "rb") as f:
                     s = pickle.load(f)

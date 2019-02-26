@@ -3,6 +3,7 @@ from torch.utils.data import Dataset
 import os
 import math
 import random
+import gzip
 
 
 def create_datasets(directory, test_split=0.1):
@@ -23,5 +24,6 @@ class DatasetFolder(Dataset):
         return len(self.files)
 
     def __getitem__(self, index):
-        data = torch.load(self.files[index])
+        with gzip.open(self.files[index], 'rb') as f:
+            data = torch.load(f)
         return data
