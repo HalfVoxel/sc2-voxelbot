@@ -1,5 +1,8 @@
 from build_order_loader import BuildOrderLoader, to_one_hot
 from collections import namedtuple
+import os
+import PIL
+import torchvision
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -10,7 +13,7 @@ Trace = namedtuple('Trace', ['states', 'winner', 'replay_path', 'minimap_states'
 MovementTrace = namedtuple('MovementTrace', ['states', 'movement', 'replay_path', 'minimap_states',
                                              'raw_unit_states', 'raw_unit_coords', 'data_path', 'playerID'])
 MovementTargetTrace = namedtuple('MovementTargetTrace', ['states', 'target_positions',
-                                                         'unit_type_counts', 'replay_path', 'minimap_states', 'data_path', 'playerID'])
+                                                         'unit_type_counts', 'replay_path', 'minimap_states', 'data_path', 'playerID', 'pathfinding_minimap'])
 
 swap_winner_replays = [
     "/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/replays/231ccb5bdf905a4b7246a6800876fd03ca1eb7b0407ac9753c754e6675a63e44.SC2Replay",  # Other player rage-quits
@@ -69,21 +72,31 @@ def start_unit(session, player):
 
 def find_map_size(session):
     start_unit1 = start_unit(session, 0)
-    start_unit2 = start_unit(session, 1)
-    mn_x = min(start_unit1["pos"]["x"], start_unit2["pos"]["x"])
-    mn_y = min(start_unit1["pos"]["y"], start_unit2["pos"]["y"])
-    mx_x = max(start_unit1["pos"]["x"], start_unit2["pos"]["x"])
-    mx_y = max(start_unit1["pos"]["y"], start_unit2["pos"]["y"])
 
-    s = max(mx_x / 2, mx_y / 2)
-    mn_x = 0
-    mn_y = 0
-    mx_x = 2 * s
-    mx_y = 2 * s
+    if False:
+        start_unit2 = start_unit(session, 1)
+        mn_x = min(start_unit1["pos"]["x"], start_unit2["pos"]["x"])
+        mn_y = min(start_unit1["pos"]["y"], start_unit2["pos"]["y"])
+        mx_x = max(start_unit1["pos"]["x"], start_unit2["pos"]["x"])
+        mx_y = max(start_unit1["pos"]["y"], start_unit2["pos"]["y"])
 
-    flipX = start_unit1["pos"]["x"] > mx_x / 2
-    flipY = start_unit1["pos"]["y"] > mx_y / 2
+        s = max(mx_x / 2, mx_y / 2)
+        mn_x = 0
+        mn_y = 0
+        mx_x = 2 * s
+        mx_y = 2 * s
+    else:
+        mn_x, mn_y, mx_x, mx_y = findMapSizeFromMinimap(session)
+        margin = 4
+        mn_x -= margin
+        mn_y -= margin
+        mx_x += margin
+        mx_y += margin
+
+    flipX = start_unit1["pos"]["x"] > (mn_x + mx_x) / 2
+    flipY = start_unit1["pos"]["y"] > (mn_y + mx_y) / 2
     # print(((mn_x, mn_y), (mx_x, mx_y)), session["replayInfo"]["replay_path"])
+
     return ((mn_x, mn_y), (mx_x, mx_y), flipX, flipY)
 
 
@@ -250,7 +263,7 @@ def transform_coord_minimap(coord, map_size, scale, mirror):
 
     normalized_x *= scale
     normalized_y *= scale
-    return (min(scale - 1, max(0, round(normalized_x))), min(scale - 1, max(0, round(normalized_y))))
+    return (min(scale - 1, max(0, int(round(normalized_x)))), min(scale - 1, max(0, int(round(normalized_y)))))
 
 
 def playerObservationTensor2(loader: BuildOrderLoader, state, raw_units, playerID, map_size, minimap_size, mirror):
@@ -538,6 +551,11 @@ def loadSessionMovementTarget(session, loader: BuildOrderLoader, store_fn, stati
 
     replay_path = session["replayInfo"]["replay_path"]
 
+    map_name = session["gameInfo"]["map_name"]
+    if map_name == "Stasis LE":
+        print(f"Skipping blacklisted map {map_name}")
+        return
+
     # winner = 0 | 1
     winner = calculateWinner(session)
     if winner is None:
@@ -558,7 +576,7 @@ def loadSessionMovementTarget(session, loader: BuildOrderLoader, store_fn, stati
 
     selfStates = [session["observations"][0]["selfStates"], session["observations"][1]["selfStates"]]
     rawUnits = [session["observations"][0]["rawUnits"], session["observations"][1]["rawUnits"]]
-    minimap_size = 10
+    minimap_size = 14
 
     # In timesteps, so Nx5 seconds
     lookaheadTime = 4
@@ -576,10 +594,11 @@ def loadSessionMovementTarget(session, loader: BuildOrderLoader, store_fn, stati
     player1minimap1 = [minimapLayers(loader, r, playerID, map_size, minimap_size, mirror) for r in rawUnits[playerIndex][:max_time]]
     player1minimap2 = [minimapLayers(loader, r, opponentPlayerID, map_size, minimap_size, mirror) for r in rawUnits[playerIndex][:max_time]]
     player1minimap = torch.stack([torch.cat((m1, m2), dim=0) for (m1, m2) in zip(player1minimap1, player1minimap2)])
-    player1minimap = torch.cat([player1minimap, player1movementMinimap], dim=1)
 
     player1movementMinimap, unit_type_counts, target_positions = sampleMovementGroup(
         rawUnits[playerIndex], playerID, map_size, loader, minimap_size, mirror, lookaheadTime)
+
+    player1minimap = torch.cat([player1minimap, player1movementMinimap], dim=1)
 
     res1 = MovementTargetTrace(
         states=torch.stack([x[0] for x in player1obs2]),
@@ -589,8 +608,93 @@ def loadSessionMovementTarget(session, loader: BuildOrderLoader, store_fn, stati
         unit_type_counts=unit_type_counts,
         data_path=session["data_path"],
         playerID=playerID,
+        pathfinding_minimap=loadPathfindingMinimap(session, map_size, mirror)
     )
+
+    # plt.clf()
+    # plt.imshow(res1.pathfinding_minimap.transpose(0, 1), origin='lower')
+    # s = start_unit(session, playerIndex)
+    # coords = np.array([transform_coord(u["pos"], map_size, mirror) for u in rawUnits[0][1]["units"]])
+    # p = transform_coord(s["pos"], map_size, mirror)
+    # plt.scatter(coords[:, 0] * 168, coords[:, 1] * 168, c="#00FF00", marker='.')
+    # plt.scatter([p[0] * 168], [p[1] * 168], c="#FF0000")
+    # plt.pause(1)
+
     store_fn(res1)
+
+
+cached_map_sizes = {}
+
+
+def findMapSizeFromMinimap(session):
+    '''
+    Returns [mn_x, mn_y, mx_x, mx_y]
+    '''
+    def bbox1(img):
+        a = np.nonzero(img)
+        bbox = np.min(a[0]), np.min(a[1]), np.max(a[0]), np.max(a[1])
+        return bbox
+
+    name = session["replayInfo"]["map_name"]
+    filepath = f"training_data/maps/1/{name}.pickle"
+    minimap = None
+
+    if filepath in cached_pathfinding_minimaps:
+        return cached_map_sizes[filepath]
+
+    if not os.path.exists(filepath):
+        raise Exception(f"Could not find minimap at {filepath} (replay={session['replayInfo']['replay_path']})")
+
+    v = torch.load(filepath)
+    minimap = v[2]
+    res = bbox1(minimap.numpy())
+    cached_map_sizes[filepath] = res
+    return res
+
+
+cached_pathfinding_minimaps = {}
+
+def loadPathfindingMinimap(session, map_size, mirror):
+    name = session["replayInfo"]["map_name"]
+    filepath = f"training_data/maps/1/{name}.pickle"
+    minimap = None
+    mn, mx, flipX, flipY = map_size
+
+    if filepath in cached_pathfinding_minimaps:
+        minimap = cached_pathfinding_minimaps[filepath]
+
+    if minimap is None and os.path.exists(filepath):
+        v = torch.load(filepath)
+        minimap = v[2]
+
+        c1 = torchvision.transforms.ToPILImage()
+        c2 = torchvision.transforms.Resize(size=(168, 168), interpolation=PIL.Image.NEAREST)
+        c3 = torchvision.transforms.ToTensor()
+        minimap = c1(minimap.unsqueeze(0))
+
+        # plt.clf()
+        # plt.imshow(c3(minimap).squeeze(0))
+        # plt.plot([0, 168], [mn[1], mn[1]])
+        # plt.plot([0, 168], [mx[1], mx[1]])
+        # plt.plot([mn[0], mn[0]], [0, 168])
+        # plt.plot([mx[0], mx[0]], [0, 168])
+        # plt.pause(2)
+        minimap = torchvision.transforms.functional.crop(minimap, int(round(mn[0])), int(round(mn[1])), int(round(mx[0] - mn[0])), int(round(mx[1] - mn[1])))
+        minimap = c2(minimap)
+        minimap = c3(minimap).squeeze(0)  # .transpose(0, 1)
+        cached_pathfinding_minimaps[filepath] = minimap
+
+    if minimap is not None:
+        flipDims = []
+        if flipX != mirror:
+            flipDims.append(0)
+
+        if flipY != mirror:
+            flipDims.append(1)
+
+        return torch.flip(minimap, flipDims)
+    else:
+        raise Exception(f"Could not find minimap at {filepath} (replay={session['replayInfo']['replay_path']})")
 
 
 def packSequences(sequences):

@@ -11,6 +11,12 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
+def print_parameters(model):
+    for name, p in model.named_parameters():
+        if p.requires_grad:
+            print(f"{name}: {p.numel()}")
+
+
 def split_into_batches(l, batch_size):
     """
     :param l:           list

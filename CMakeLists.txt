@@ -96,6 +96,7 @@ create_library(botlib "bot/*.cpp" "bot/behaviortree/*.cpp" "bot/utilities/*.cpp"
 
 create_executable(our_bot "" "bot/bot/main.cpp" "SDL2-static")
 create_executable(replay_analyzer "" "bot/replay_analyzer/main.cpp" "SDL2-static")
+create_executable(map_exporter "" "bot/replay_analyzer/map_exporter.cpp" "SDL2-static")
 create_executable(caching "" "bot/caching/main.cpp" "SDL2-static")
 create_executable(micro_train "" "bot/micro_train/micro_train.cpp" "SDL2-static")
 create_executable(composition_analyzer "" "bot/composition_analyzer/main.cpp" "SDL2-static")

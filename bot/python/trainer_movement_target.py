@@ -22,10 +22,16 @@ class MovementStepper:
             target_positions=[x.to(device=self.device, non_blocking=True) for x in self.batch.target_positions],
             unit_type_counts=[x.to(device=self.device, non_blocking=True) for x in self.batch.unit_type_counts],
             minimap_states=[x.to(device=self.device, non_blocking=True) for x in self.batch.minimap_states],
+            pathfinding_minimap=self.forward_minimap(batch),
             replay_path=self.batch.replay_path,
             data_path=self.batch.data_path,
             playerID=self.batch.playerID,
         )
+
+    def forward_minimap(self, batch):
+        tensors = [x.to(device=self.device, non_blocking=True) for x in batch.pathfinding_minimap]
+        tensor = torch.stack(tensors)
+        return self.model.forward_minimap(tensor)
 
     def detach(self):
         self.losses_by_time = []
@@ -56,7 +62,8 @@ class MovementStepper:
                 globalState=batch_inputs,
                 unit_type_counts=batch_inputs2,
                 hiddenState=self.hidden_states[:in_progress_threshold],
-                minimap=batch_inputs3
+                minimap=batch_inputs3,
+                pathfinding_minimap=self.batch.pathfinding_minimap[:in_progress_threshold]
             )
 
             self.outputs = outputs

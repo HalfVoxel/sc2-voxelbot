@@ -12,12 +12,14 @@
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
 
-const char* kReplayFolder = "/home/arong/learning/sc2-voxelbot/replays";
-const char* kReplayListProtoss = "/home/arong/learning/sc2-voxelbot/replays3.txt";
 // Protoss:
 // e5242d0a121db241ccfca68150feea57deeb82b9d7000e7d00c84b5cba4e511e.SC2Replay
 using namespace std;
 using namespace sc2;
+
+const char* kReplayFolder = "/home/arong/learning/sc2-voxelbot/replays";
+const char* kReplayListProtoss = "/home/arong/learning/sc2-voxelbot/pvp.txt";
+const string saveDir = "/home/arong/learning/sc2-voxelbot/training_data/replays/s2";
 
 namespace sc2 {
     template <class Archive>
@@ -38,7 +40,9 @@ namespace sc2 {
             cereal::make_nvp("map_name", gameInfo.map_name),
             cereal::make_nvp("local_map_path", gameInfo.local_map_path),
             cereal::make_nvp("width", gameInfo.width),
-            cereal::make_nvp("height", gameInfo.height)
+            cereal::make_nvp("height", gameInfo.height),
+            cereal::make_nvp("playable_min", gameInfo.playable_min),
+            cereal::make_nvp("playable_max", gameInfo.playable_max)
         );
     }
 
@@ -48,7 +52,17 @@ namespace sc2 {
             cereal::make_nvp("duration_gameloops", replayInfo.duration_gameloops),
             cereal::make_nvp("replay_path", replayInfo.replay_path),
             cereal::make_nvp("version", replayInfo.version),
-            cereal::make_nvp("num_players", replayInfo.num_players)
+            cereal::make_nvp("num_players", replayInfo.num_players),
+            cereal::make_nvp("map_name", replayInfo.map_name),
+            cereal::make_nvp("map_path", replayInfo.map_path)
+        );
+    }
+
+    template <class Archive>
+    void serialize(Archive& archive, Point2D& p) {
+        archive(
+            cereal::make_nvp("x", p.x),
+            cereal::make_nvp("y", p.y)
         );
     }
 
@@ -194,6 +208,10 @@ struct ReplaySession {
     }
 };
 
+pybind11::object saveFunction;
+pybind11::object isReplayAlreadySavedFunction;
+pybind11::object replaySavePath;
+
 class Replay : public sc2::ReplayObserver {
    public:
     std::vector<uint32_t> count_units_built_;
@@ -211,6 +229,14 @@ class Replay : public sc2::ReplayObserver {
 
     virtual int GetReplayPerspective () override {
         return playerID;
+    }
+
+    virtual bool IgnoreReplay(const std::string& filepath) override {
+        if (isReplayAlreadySavedFunction(replaySavePath(filepath, saveDir)).cast<bool>()) {
+            cerr << "Skipping already processed replay" << endl;
+            return true;
+        }
+        return false;
     }
 
     virtual bool IgnoreReplay(const ReplayInfo& replay_info, uint32_t& player_id) override {
@@ -373,18 +399,14 @@ class Replay : public sc2::ReplayObserver {
     }
 };
 
-pybind11::object saveFunction;
-
 void saveSession (ReplaySession& session, default_random_engine& rnd) {
-    stringstream ss;
-    ss << "training_data/replays/9/chunk_" << uniform_int_distribution<int>(1, 10000000)(rnd) << ".pickle";
     stringstream json;
     {
         cereal::JSONOutputArchive archive(json);
         session.serialize(archive);
     }
 
-    saveFunction(json.str(), ss.str());
+    saveFunction(json.str(), replaySavePath(session.replayInfo.replay_path, saveDir));
 }
 
 void printMappings() {
@@ -439,6 +461,9 @@ int main(int argc, char* argv[]) {
     pybind11::module mod = pybind11::module::import("replay_saver");
     
     saveFunction = mod.attr("save");
+    isReplayAlreadySavedFunction = mod.attr("isReplayAlreadySaved");
+    replaySavePath = mod.attr("replaySavePath");
+    vector<string> replays = mod.attr("findReplays")(kReplayListProtoss).cast<vector<string>>();
 
 
     sc2::Coordinator coordinator;
@@ -452,10 +477,7 @@ int main(int argc, char* argv[]) {
     //     std::cout << "Unable to find replays." << std::endl;
     //     return 1;
     // }
-    if (!coordinator.LoadReplayList(kReplayListProtoss)) {
-        std::cout << "Unable to find replays." << std::endl;
-        return 1;
-    }
+    coordinator.LoadReplayList(replays);
 
     Replay replay_observer1;
     replay_observer1.playerID = 1;
@@ -466,6 +488,8 @@ int main(int argc, char* argv[]) {
     coordinator.AddReplayObserver(&replay_observer2);
 
     default_random_engine rnd(time(0));
+
+    coordinator.SetPortStart(mod.attr("getPort")().cast<int>());
 
     while (true) {
         bool done = !coordinator.Update();

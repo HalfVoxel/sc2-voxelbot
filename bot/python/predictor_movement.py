@@ -291,9 +291,6 @@ assert abs(learning_rate_by_time(learning_rate_decay) - 0.0001) < 0.00001
 assert abs(learning_rate_by_time(learning_rate_decay + 100) - 0.0001) < 0.00001
 
 
-print(f"Parameters: {count_parameters(model)}")
-
-
 def plot(tensorboard_writer):
     tensorboard_writer.add_embedding(model.embedding.weight, metadata=[u[0] for u in unit_lookup.units], global_step=current_step, tag="unit embedding")
 
@@ -304,6 +301,8 @@ def save_tensorboard_graph(memory, tensorboard_writer):
 
 
 def train(comment):
+    print(f"Parameters: {count_parameters(model)}")
+
     global training_losses_by_time, current_step
     tensorboard_writer = SummaryWriter(log_dir=f"tensorboard/{module_name}/{datetime.now():%Y-%m-%d_%H:%M} {comment}")
     memory, test_memory = create_datasets(cache_dir, test_split)
