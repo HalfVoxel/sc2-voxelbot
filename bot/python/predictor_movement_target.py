@@ -467,8 +467,17 @@ def train(comment):
     memory, test_memory = create_datasets(cache_dir, test_split)
     save_tensorboard_graph(test_memory, tensorboard_writer)
 
-    padding = PadSequence(MovementTargetTrace(states=True, replay_path=False, minimap_states=True, data_path=False, playerID=False, target_positions=True, unit_type_counts=True, pathfinding_minimap=False))
-    training_generator = torch.utils.data.DataLoader(memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=0, collate_fn=padding)
+    padding = PadSequence(MovementTargetTrace(
+        states=True,
+        replay_path=False,
+        minimap_states=True,
+        data_path=False,
+        playerID=False,
+        target_positions=True,
+        unit_type_counts=True,
+        pathfinding_minimap=False
+    ))
+    training_generator = torch.utils.data.DataLoader(memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=2, collate_fn=padding)
     testing_generator = torch.utils.data.DataLoader(test_memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=0, collate_fn=padding)
 
     for epoch, current_step in training_loop(training_generator, testing_generator, trainer, tensorboard_writer):

@@ -13,7 +13,7 @@ class MovementStepper:
         self.step_size = step_size
         self.timestep = 0
         self.losses_by_time = []
-        self.hidden_states = self.model.init_hidden_states(len(batch.states), device=self.device)
+        self.hidden_states = self.model.init_hidden_states(batch.states[0].size()[0], device=self.device)
         self.outputs = None
 
         # MovementTargetTrace = namedtuple('MovementTargetTrace', ['states', 'target_positions', 'unit_type_counts', 'replay_path', 'minimap_states', 'data_path', 'playerID'])
@@ -22,53 +22,41 @@ class MovementStepper:
             target_positions=[x.to(device=self.device, non_blocking=True) for x in self.batch.target_positions],
             unit_type_counts=[x.to(device=self.device, non_blocking=True) for x in self.batch.unit_type_counts],
             minimap_states=[x.to(device=self.device, non_blocking=True) for x in self.batch.minimap_states],
-            pathfinding_minimap=self.forward_minimap(batch),
+            pathfinding_minimap=self.forward_minimap(batch.pathfinding_minimap),
             replay_path=self.batch.replay_path,
             data_path=self.batch.data_path,
             playerID=self.batch.playerID,
         )
 
-    def forward_minimap(self, batch):
-        tensors = [x.to(device=self.device, non_blocking=True) for x in batch.pathfinding_minimap]
-        tensor = torch.stack(tensors)
-        return self.model.forward_minimap(tensor)
+    def forward_minimap(self, pathfinding_minimap):
+        tensors = pathfinding_minimap.to(device=self.device, non_blocking=False)
+        return self.model.forward_minimap(tensors)
 
     def detach(self):
         self.losses_by_time = []
         self.hidden_states = self.hidden_states.detach()
 
     def step(self):
-        in_progress_threshold = 0
-        while in_progress_threshold < len(self.batch.states) and self.timestep < len(self.batch.states[in_progress_threshold]):
-            in_progress_threshold += 1
+        if self.timestep < len(self.batch.states):
+            states = self.batch.states[self.timestep]
+            target_positions = self.batch.target_positions[self.timestep]
+            unit_type_counts = self.batch.unit_type_counts[self.timestep]
+            minimap = self.batch.minimap_states[self.timestep]
 
-        states = self.batch.states[:in_progress_threshold]
-        target_positions = self.batch.target_positions[:in_progress_threshold]
-        unit_type_counts = self.batch.unit_type_counts[:in_progress_threshold]
-        minimap = self.batch.minimap_states[:in_progress_threshold]
-
-        states = [x[self.timestep] for x in states]
-        target_positions = [x[self.timestep].to(device=self.device, non_blocking=True) for x in target_positions]
-        unit_type_counts = [x[self.timestep].to(device=self.device, non_blocking=True) for x in unit_type_counts]
-        minimap = [x[self.timestep] for x in minimap]
-
-        if len(states) > 0:
-            batch_outputs = torch.stack(target_positions)
-            batch_inputs = torch.stack(states)
-            batch_inputs2 = torch.stack(unit_type_counts)
-            batch_inputs3 = torch.stack(minimap)
+            in_progress_threshold = states.size()[0]
+            assert in_progress_threshold > 0
 
             outputs, self.hidden_states = self.model(
-                globalState=batch_inputs,
-                unit_type_counts=batch_inputs2,
+                globalState=states,
+                unit_type_counts=unit_type_counts,
                 hiddenState=self.hidden_states[:in_progress_threshold],
-                minimap=batch_inputs3,
+                minimap=minimap,
                 pathfinding_minimap=self.batch.pathfinding_minimap[:in_progress_threshold]
             )
 
             self.outputs = outputs
             # NLL loss, NN outputs logsoftmax, and batch_outputs is one-hot, so this is correct
-            losses = -(outputs * batch_outputs.view(outputs.size()[0], -1)).sum()
+            losses = -(outputs * target_positions.view(outputs.size()[0], -1)).sum()
             loss = losses.sum()
             steps = outputs.size()[0]
             self.timestep += self.step_size

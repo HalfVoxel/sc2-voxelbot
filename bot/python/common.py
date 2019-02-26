@@ -102,15 +102,38 @@ class PadSequence:
         # This is later needed in order to unpad the sequences
         lengths = torch.LongTensor([len(b[0]) for b in sorted_batch])
 
+        result = []
         for i in range(num_elements):
-            items = [x[i] for x in sorted_batch]
-            if self.is_sequence[i] and False:
-                sequences_padded = torch.nn.utils.rnn.pad_sequence(items, batch_first=True)
-                result.append(sequences_padded)
+            if self.is_sequence[i]:
+                result.append([])
             else:
-                result.append(items)
-                # result.append(torch.stack(items))
+                result.append([x[i] for x in sorted_batch])
+                if isinstance(result[-1][0], torch.Tensor):
+                    result[-1] = torch.stack(result[-1])
 
+        for timestep in range(lengths[0]):
+            in_progress_threshold = 0
+            while in_progress_threshold < len(sorted_batch) and timestep < lengths[in_progress_threshold]:
+                in_progress_threshold += 1
+
+            active_batch = sorted_batch[:in_progress_threshold]
+
+            for i in range(num_elements):
+                if self.is_sequence[i]:
+                    s = [x[i][timestep] for x in active_batch]
+                    s = torch.stack(s)
+                    result[i].append(s)
+
+        # for i in range(num_elements):
+        #     items = [x[i] for x in sorted_batch]
+        #     if self.is_sequence[i] and False:
+        #         sequences_padded = torch.nn.utils.rnn.pad_sequence(items, batch_first=True)
+        #         result.append(sequences_padded)
+        #     else:
+        #         result.append(items)
+        #         # result.append(torch.stack(items))
+
+        # combined = type(sorted_batch[0])(*result)
         combined = type(sorted_batch[0])(*result)
         return combined, lengths
 
