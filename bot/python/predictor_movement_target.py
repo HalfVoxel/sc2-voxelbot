@@ -149,6 +149,17 @@ class Net(nn.Module):
         self.conv_m4_1 = nn.Conv2d(in_channels=16, out_channels=4, kernel_size=1, padding=0)
         self.act_m4_1 = nn.ReLU()
 
+        # self.bn_1 = nn.BatchNorm2d(16)
+        # self.bn_2 = nn.BatchNorm2d(16)
+        # self.bn_3 = nn.BatchNorm2d(16)
+        # self.bn_4 = nn.BatchNorm2d(16)
+        # self.bn_5 = nn.BatchNorm2d(16)
+
+        # self.bn_c1 = nn.BatchNorm2d(12)
+        # self.bn_c2 = nn.BatchNorm2d(12)
+
+        # self.bn_g = nn.BatchNorm(64)
+
     def init_hidden_states(self, batch_size, device):
         return torch.zeros((batch_size, self.gru_hidden_size), device=device)
 
@@ -160,15 +171,21 @@ class Net(nn.Module):
         x = minimap
 
         y = self.act_m1_1(self.conv_m1_1(x))
+        # y = self.bn_1(y)
         x = self.act_m1_2(x + self.conv_m1_2(y))
+        # x = self.bn_2(x)
         x = self.conv_m1_3(x)
 
         y = self.act_m2_1(self.conv_m2_1(x))
+        # y = self.bn_3(y)
         x = self.act_m2_2(x + self.conv_m2_2(y))
+        # x = self.bn_4(x)
         x = self.conv_m2_3(x)
 
         y = self.act_m3_1(self.conv_m3_1(x))
+        # y = self.bn_4(y)
         x = self.act_m3_2(x + self.conv_m3_2(y))
+        # x = self.bn_5(x)
         x = self.conv_m3_3(x)
 
         x = self.act_m4_1(self.conv_m4_1(x))
@@ -189,6 +206,7 @@ class Net(nn.Module):
         m = minimap
         m = self.act_c1(self.conv1(m))
         m = self.act_c2(self.conv2(m))
+        # m = self.bn_c1(m)
         m = nn.functional.dropout(m, p=0.1)
         m = self.act_c2_2(self.conv2_2(m))
         # m = self.act_c2_3(self.conv2_3(m))
@@ -223,6 +241,7 @@ class Net(nn.Module):
         x = x.sum(dim=1)
 
         x = self.act4(self.lin4(hiddenState) + self.lin_t2g(x))
+        # x = self.bn_g(x)
         x = self.act_c4_0(self.conv_c4_0(m) + self.lin_g2c(x).view(batch_size, -1, 1, 1))
         self.last_c4_0 = x
         x = nn.functional.dropout2d(x, p=0.1)
@@ -259,6 +278,8 @@ unitSet = {
     "TERRAN_WIDOWMINE",
 }
 
+import flamegraph
+# flamegraph.start_profile_thread(fd=open("./perf.log", "w"))
 module_name = "movement_target"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # device = torch.device("cpu")
@@ -293,6 +314,17 @@ test_losses = []
 trainer = TrainerRNN(model, optimizer, action_loss_weights=[1, 1], device=device, sampleClass=MovementTargetTrace, stepperClass=MovementStepper, step_size=1)
 print("D")
 
+padding = PadSequence(MovementTargetTrace(
+    states=True,
+    replay_path=False,
+    minimap_states=True,
+    data_path=False,
+    playerID=False,
+    target_positions=True,
+    unit_type_counts=True,
+    pathfinding_minimap=False
+))
+
 
 def visualize(epoch):
     print("E")
@@ -307,7 +339,7 @@ def visualize(epoch):
             session = pickle.load(f)
 
         print("I")
-        stepper = trainer.stepperClass(model, MovementTargetTrace(*[[x] for x in sample]), device, 0, lambda a, b: 0, step_size=1)
+        stepper = trainer.stepperClass(model, padding([sample])[0], device, 0, lambda a, b: 0, step_size=1)
         print("J")
         map_size = game_state_loader.find_map_size(session)
         print("K")
@@ -467,18 +499,8 @@ def train(comment):
     memory, test_memory = create_datasets(cache_dir, test_split)
     save_tensorboard_graph(test_memory, tensorboard_writer)
 
-    padding = PadSequence(MovementTargetTrace(
-        states=True,
-        replay_path=False,
-        minimap_states=True,
-        data_path=False,
-        playerID=False,
-        target_positions=True,
-        unit_type_counts=True,
-        pathfinding_minimap=False
-    ))
-    training_generator = torch.utils.data.DataLoader(memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=2, collate_fn=padding)
-    testing_generator = torch.utils.data.DataLoader(test_memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=0, collate_fn=padding)
+    training_generator = torch.utils.data.DataLoader(memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=3, collate_fn=padding)
+    testing_generator = torch.utils.data.DataLoader(test_memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=1, collate_fn=padding)
 
     for epoch, current_step in training_loop(training_generator, testing_generator, trainer, tensorboard_writer):
         for g in optimizer.param_groups:
