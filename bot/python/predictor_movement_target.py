@@ -494,7 +494,7 @@ def load_weights(file):
 def save_git(comment):
     orig_hash = subprocess.check_output(["git", "describe", "--always"]).decode('utf-8').strip()
 
-    if subprocess.call(["git", "commit", "-a", "-m", comment]) != 0:
+    if subprocess.call(["git", "commit", "--allow-empty", "-a", "-m", comment]) != 0:
         print("Git commit failed")
         exit(1)
 
