@@ -60,7 +60,7 @@ include_directories(SYSTEM "${PROJECT_BINARY_DIR}/s2client-api/generated")
 # Function to generate an example project with extra libraries
 function (create_executable project_name source_code mainfile extra_libs)
 	# TODO: The .h files don't seem to be necessary (think only .cpp files should be included here anyway)
-    file (GLOB example_project_sources ${source_code} "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc" "bot/*.h" "bot/behaviortree/*.h" "bot/utilities/*.h" "bot/generated/*.cpp" ${mainfile})
+    file (GLOB example_project_sources ${source_code} "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc" "bot/*.h" "bot/behaviortree/*.h" "bot/ml/*.h" "bot/utilities/*.h" "bot/generated/*.cpp" ${mainfile})
     add_executable(${project_name} ${example_project_sources})
 
     # Sets the grouping in IDEs like visual studio (last parameter is the group name)
@@ -77,10 +77,11 @@ function (create_executable project_name source_code mainfile extra_libs)
     target_link_libraries(${project_name} sc2api sc2lib sc2utils pybind11::embed botlib ${extra_libs})
 endfunction ()
 
-function (create_library project_name source_code source_code2 source_code3 extra_libs)
+function (create_library project_name source_code extra_libs)
 	# TODO: The .h files don't seem to be necessary (think only .cpp files should be included here anyway)
-    file (GLOB example_project_sources ${source_code} ${source_code2} ${source_code3} "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc" "bot/*.h" "bot/behaviortree/*.h" "bot/utilities/*.h" "bot/generated/*.cpp")
-    add_library(${project_name} ${example_project_sources})
+    # file (GLOB example_project_sources ${source_code} "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc" "bot/*.h" "bot/behaviortree/*.h" "bot/ml/*.h" "bot/utilities/*.h" "bot/generated/*.cpp")
+    add_library(${project_name} ${source_code})
+    message(STATUS ${source_code})
 
     if (MSCV AND (NOT (MSVC_VERSION LESS 1910)))
 		target_link_libraries(${project_name} legacy_stdio_definitions)
@@ -88,11 +89,13 @@ function (create_library project_name source_code source_code2 source_code3 extr
 
     # Sets the grouping in IDEs like visual studio (last parameter is the group name)
     set_target_properties(${project_name} PROPERTIES FOLDER target)
-    target_link_libraries(${project_name} sc2api sc2lib sc2utils ${extra_libs})
+    target_link_libraries(${project_name} sc2api sc2lib sc2utils pybind11 ${extra_libs})
 endfunction ()
 
 # Note: trying to add SDL2-static as the extra_libs parameter here causes pybind11 modules to fail to link (for unknown reasons, maybe PIC related?)
-create_library(botlib "bot/*.cpp" "bot/behaviortree/*.cpp" "bot/utilities/*.cpp" "")
+file (GLOB botlib_sources "bot/*.cpp" "bot/behaviortree/*.cpp" "bot/utilities/*.cpp" "bot/ml/*.cpp" "bot/generated/*.cpp" "s2client-api/examples/common/*.cc")
+message(STATUS "${botlib_sources}")
+create_library(botlib "${botlib_sources}" "")
 
 create_executable(our_bot "" "bot/bot/main.cpp" "SDL2-static")
 create_executable(replay_analyzer "" "bot/replay_analyzer/main.cpp" "SDL2-static")
@@ -106,7 +109,7 @@ create_executable(optimizer_train "" "bot/optimizer_train/main.cpp" "SDL2-static
 create_executable(build_order_train "" "bot/build_order_train/main.cpp" "SDL2-static")
 create_executable(combat_predictor_train "" "bot/combat_predictor_train/main.cpp" "SDL2-static")
 
-file (GLOB build_order_train_sources "s2client-api/examples/common/*.h" "bot/*.h" "bot/behaviortree/*.h" "bot/utilities/*.h" "bot/generated/*.cpp" "bot/build_order_train/main.cpp")
+file (GLOB build_order_train_sources "s2client-api/examples/common/*.h" "bot/*.h" "bot/behaviortree/*.h" "bot/utilities/*.h" "bot/ml/*.h" "bot/generated/*.cpp" "bot/build_order_train/main.cpp")
 # pybind11_add_module(cppbot MODULE ${build_order_train_sources})
 # set_target_properties(cppbot PROPERTIES CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 # target_link_libraries(cppbot PRIVATE pybind11::module sc2api sc2lib sc2utils botlib)
