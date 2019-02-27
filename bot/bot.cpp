@@ -275,111 +275,22 @@ void Bot::OnStep() {
                 startingState.units.push_back(makeUnit(2, ourUnits[i]->unit_type));
             }
         }
-        
-        BuildState buildOrderStartingState;
-        buildOrderStartingState.race = Race::Terran;
-        map<UNIT_TYPEID, int> startingUnitsCount;
+
         map<UNIT_TYPEID, int> targetUnitsCount;
-        for (int i = 0; i < ourUnits.size(); i++) {
-            auto unitType = ourUnits[i]->unit_type;
-
-            // Addons are handled when the unit they are attached to are handled
-            if (isAddon(unitType)) continue;
-
-            if (ourUnits[i]->build_progress < 1) {
-                // Ignore
-            } else {
-                if (ourUnits[i]->add_on_tag != NullTag) {
-                    auto* addon = Observation()->GetUnit(ourUnits[i]->add_on_tag);
-                    assert(getUnitData(addon->unit_type).tech_alias.size() == 1);
-                    auto addonType = getUnitData(addon->unit_type).tech_alias[0];
-                    assert(addonType != UNIT_TYPEID::INVALID);
-                    buildOrderStartingState.addUnits(canonicalize(unitType), addonType, 1);
-                    targetUnitsCount[canonicalize(unitType)]++;
-                    cout << "Added addon " << UnitTypeToName(canonicalize(unitType)) << "+" << UnitTypeToName(addonType) << endl;
-                } else {
-                    buildOrderStartingState.addUnits(canonicalize(unitType), 1);
-                    targetUnitsCount[canonicalize(unitType)]++;
-                }
-            }
-
-            for (auto order : ourUnits[i]->orders) {
-                auto createdUnit = abilityToUnit(order.ability_id);
-                if (createdUnit != UNIT_TYPEID::INVALID) {
-                    if (canonicalize(createdUnit) == canonicalize(unitType)) {
-                        // This is just a morph ability (e.g. lower a supply depot)
-                        break;
-                    }
-
-                    float buildProgress = 0;
-                    if (order.target_unit_tag != NullTag) {
-                        auto* targetUnit = Observation()->GetUnit(order.target_unit_tag);
-                        if (targetUnit == nullptr) {
-                            cerr << "Target for order does not seem to exist!??" << endl;
-                            break;
-                        }
-
-                        assert(targetUnit != nullptr);
-
-                        // In some cases the target unit can be something else, for example when constructing a refinery the target unit is the vespene geyser for a while
-                        if (targetUnit->owner == ourUnits[i]->owner) {
-                            buildProgress = targetUnit->build_progress;
-                            assert(targetUnit->build_progress >= 0 && targetUnit->build_progress < 1);
-                        }
-                    }
-                    float buildTime = ticksToSeconds(getUnitData(createdUnit).build_time);
-                    // TODO: Is this linear?
-                    float remainingTime = (1 - buildProgress) * buildTime;
-                    auto event = BuildEvent(BuildEventType::FinishedUnit, buildOrderStartingState.time + remainingTime, canonicalize(unitType), order.ability_id);
-                    if (ourUnits[i]->add_on_tag != NullTag) {
-                        auto* addon = Observation()->GetUnit(ourUnits[i]->add_on_tag);
-                        assert(addon != nullptr);
-                        // Normalize from e.g. TERRAN_BARRACKSTECHLAB to TERRAN_TECHLAB
-                        event.casterAddon = simplifyUnitType(addon->unit_type);
-                    }
-
-                    // Make the caster busy first
-                    buildOrderStartingState.makeUnitsBusy(event.caster, event.casterAddon, 1);
-                    buildOrderStartingState.addEvent(event);
-                    // if (isAddon(createdUnit)) continue;
-
-                    // createdUnit = canonicalize(createdUnit);
-                    // buildOrderStartingState.addUnits(createdUnit, 1);
-
-                    if (!isAddon(createdUnit)) {
-                        targetUnitsCount[createdUnit]++;
-                    }
-                }
-
-                // Only process the first order (this bot should never have more than one anyway)
-                break;
-            }
+        BuildState buildOrderStartingState(Observation(), Unit::Alliance::Self, Race::Terran, BuildResources(Observation()->GetMinerals(), Observation()->GetVespene()), 0);
+        for (const auto& u : buildOrderStartingState.units) {
+            targetUnitsCount[u.type] += u.units;
         }
-
-        buildOrderStartingState.resources.minerals = Observation()->GetMinerals();
-        buildOrderStartingState.resources.vespene = Observation()->GetVespene();
-
-        vector<BaseInfo>& baseInfos = buildOrderStartingState.baseInfos;
-        vector<Point2D> basePositions;
-        for (auto u : ourUnits) {
-            if (isTownHall(u->unit_type)) {
-                basePositions.push_back(u->pos);
-                baseInfos.push_back(BaseInfo(0, 0, 0));
-            }
-        }
-        auto neutralUnits = Observation()->GetUnits(Unit::Alliance::Neutral);
-        for (auto u : neutralUnits) {
-            if (u->mineral_contents > 0) {
-                for (int i = 0; i < baseInfos.size(); i++) {
-                    if (DistanceSquared2D(u->pos, basePositions[i]) < 10*10) {
-                        baseInfos[i].remainingMinerals += u->mineral_contents;
-                        break;
-                    }
+        for (const auto& e : buildOrderStartingState.events) {
+            if (e.type == BuildEventType::FinishedUnit) {
+                auto createdUnit = abilityToUnit(e.ability);
+                if (createdUnit != UNIT_TYPEID::INVALID && !isAddon(createdUnit)) {
+                    targetUnitsCount[createdUnit]++;
                 }
             }
         }
 
-        for (auto& b : baseInfos) {
+        for (auto& b : buildOrderStartingState.baseInfos) {
             cout << "Base minerals " << b.remainingMinerals << endl;
         }
 
@@ -491,13 +402,13 @@ void Bot::OnStep() {
     }
 
     spendingManager.OnStep();
-    DebugBuildOrder(currentBuildOrder, currentBuildOrderTime);
+    // DebugBuildOrder(currentBuildOrder, currentBuildOrderTime);
     influenceManager.OnStep();
     scoutingManager->OnStep();
     tacticalManager->OnStep();
     // cameraController.OnStep();
     // DebugUnitPositions();
-    Debug()->SendDebug();
+    
     Actions()->SendActions();
 }
 

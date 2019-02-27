@@ -5,7 +5,7 @@ using namespace std;
 using namespace sc2;
 
 void BuildOptimizerNN::init() {
-    // return;
+    return;
     // pybind11::exec(R"(
     //     import sys
     //     sys.path.append("bot/optimizer_train")

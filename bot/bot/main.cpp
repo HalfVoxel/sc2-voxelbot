@@ -16,6 +16,7 @@ const char* BlackpinkLE = "Ladder/BlackpinkLE.SC2Map";
 const char* CatalystLE = "Ladder/CatalystLE.SC2Map";
 const char* EastwatchLE = "Ladder/EastwatchLE.SC2Map";
 const char* NeonVioletSquareLE = "Ladder/NeonVioletSquareLE.SC2Map";
+const char* ParaSiteLE = "Ladder/ParaSiteLE.SC2Map";
 
 int main(int argc, char* argv[]) { /*
     std::cout << argc << " " << (std::string(argv[1]) == "--composition") << std::endl;
@@ -54,7 +55,7 @@ int main(int argc, char* argv[]) { /*
 
     for (; !do_break;) {
         bot.OnGameLoading();
-        coordinator.StartGame(BelShirVestigeLE);
+        coordinator.StartGame(ParaSiteLE);
 
         while (coordinator.Update() && !do_break) {
             if (PollKeyPress()) {

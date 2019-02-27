@@ -68,6 +68,7 @@ struct SerializedState {
     int highYieldMineralSlots;
     int lowYieldMineralSlots;
     int version;
+    std::vector<BaseInfo> baseInfos;
     std::vector<sc2::UPGRADE_ID> upgrades;
 
     SerializedState(const BuildState& state) {
