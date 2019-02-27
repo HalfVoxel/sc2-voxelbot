@@ -323,7 +323,7 @@ padding = PadSequence(MovementTargetTrace(
     playerID=None,
     target_positions='stack-timewise',
     unit_type_counts='stack-timewise',
-    pathfinding_minimap=None
+    pathfinding_minimap='stack'
 ))
 
 
