@@ -9,14 +9,19 @@ using namespace sc2;
 
 struct PathfindingEntry {
     double cost;
+    double h;
     Point2DI pos;
 
     PathfindingEntry(double _cost, Point2DI _pos)
-        : cost(_cost), pos(_pos) {
+        : cost(_cost), h(0), pos(_pos) {
+    }
+
+    PathfindingEntry(double _cost, double _h, Point2DI _pos)
+        : cost(_cost), h(_h), pos(_pos) {
     }
 
     bool operator<(const PathfindingEntry& other) const {
-        return cost > other.cost;
+        return cost + h > other.cost + other.h;
     }
 };
 
@@ -133,7 +138,7 @@ vector<Point2DI> getPath(const Point2DI from, const Point2DI to, const Influence
                 cost[x][y] = newCost;
                 parent[x][y] = currentPos;
                 version[x][y] = pathfindingVersion;
-                pq.push(PathfindingEntry(newCost, Point2DI(x, y)));
+                pq.push(PathfindingEntry(newCost, 0 /* abs(x - to.x) + abs(y - to.y) */, Point2DI(x, y)));
             }
         }
     }
