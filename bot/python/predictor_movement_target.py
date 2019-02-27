@@ -316,14 +316,14 @@ trainer = TrainerRNN(model, optimizer, action_loss_weights=[1, 1], device=device
 print("D")
 
 padding = PadSequence(MovementTargetTrace(
-    states=True,
-    replay_path=False,
-    minimap_states=True,
-    data_path=False,
-    playerID=False,
-    target_positions=True,
-    unit_type_counts=True,
-    pathfinding_minimap=False
+    states='stack-timewise',
+    replay_path=None,
+    minimap_states='stack-timewise',
+    data_path=None,
+    playerID=None,
+    target_positions='stack-timewise',
+    unit_type_counts='stack-timewise',
+    pathfinding_minimap=None
 ))
 
 
@@ -515,8 +515,21 @@ def save(epoch):
 
 
 def load_weights(file):
-    model.load_state_dict(torch.load(file))
+    model.load_state_dict(torch.load(file, map_location='cpu'))
 
+class Stepper:
+    def __init__(self):
+        self.stepper = trainer.stepperClass(model, None, device, 0, lambda a, b: 0, step_size=1)
+
+    def step(self, json_data, unit_tag_mask, playerID):
+        observer_session = json.loads(json_data)
+        trace = game_state_loader.loadSessionMovementTarget2(observationSession, playerID, loader, unit_tag_mask, "invalid"):
+        self.stepper.set_batch(padding([trace])[0])
+        self.stepper.init_hidden_states()
+        self.stepper.step()
+        result = self.stepper.outputs.detach().cpu().exp().numpy()[0, :, 1].tolist()
+        print(result)
+        return result
 
 if __name__ == "__main__":
     common.train_interface(cache_tensors, train, visualize)
