@@ -1,38 +1,30 @@
+print("0")
 import os
-import argparse
-import shutil
-import random
-import math
+import json
+import common
 from common import count_parameters, load_all, PadSequence, training_loop
 import numpy as np
 import torch
 import torch.nn as nn
+print("A")
 from trainer_movement import MovementStepper
 from trainer_rnn import TrainerRNN
-import matplotlib
 from datetime import datetime
-import inspect
-from collections import namedtuple
 from build_order_loader import BuildOrderLoader, Statistics
-from replay_memory import ReplayMemory
 from mappings import UnitLookup, terranUnits, zergUnits, protossUnits
 import game_state_loader
 from game_state_loader import MovementTrace
-from attention import AttentionModule, AttentionDecoder, SelfAttention
-from tensorboardX import SummaryWriter
+print("B")
+print("C!")
 from dataset_folder import create_datasets
 import gzip
 import pickle
+print("C")
 # from pytorch_memory_utils.gpu_mem_track import MemTracker
-# Fix crash bug on some macOS versions
-matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
+
 torch.multiprocessing.set_sharing_strategy('file_system')
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-
-# Turn on non-blocking plotting mode
-plt.ion()
 
 
 # @torch.jit.trace
@@ -171,7 +163,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 small_input = False
 
 print("Loading")
-data_paths = ["training_data/replays/7", "training_data/replays/8", "training_data/replays/9"]
+data_paths = ["training_data/replays/s2"]
 cache_dir = f"training_cache/{module_name}"
 
 # unit_lookup = UnitLookup(terranUnits + zergUnits + protossUnits)
@@ -196,8 +188,26 @@ test_losses = []
 trainer = TrainerRNN(model, optimizer, action_loss_weights=[1, 1], device=device, sampleClass=MovementTrace, stepperClass=MovementStepper, step_size=1)
 learning_rate_decay = 200
 
+padding = PadSequence(MovementTrace(
+    states='stack-timewise',
+    movement='pad-timewise',
+    replay_path=None,
+    minimap_states='stack-timewise',
+    raw_unit_states='pad-timewise',
+    data_path=None,
+    playerID=None,
+    raw_unit_coords='pad-timewise'
+))
+
 
 def visualize(epoch):
+    import matplotlib
+    # Fix crash bug on some macOS versions
+    matplotlib.use('TkAgg')
+    import matplotlib.pyplot as plt
+    # Turn on non-blocking plotting mode
+    plt.ion()
+
     load_weights(f"models/{module_name}_{epoch}.weights")
     memory, test_memory = create_datasets(cache_dir, test_split)
     for sampleIndex in range(1000):
@@ -255,7 +265,7 @@ def visualize(epoch):
             for i in range(model.minimap_layers // 2):
                 for j in range(2):
                     plt.sca(axs[j, i + 1])
-                    plt.imshow(sample.minimap_states[timestep][i + j * model.minimap_layer s// 2].transpose(0, 1), origin="lower")
+                    plt.imshow(sample.minimap_states[timestep][i + j * model.minimap_layers // 2].transpose(0, 1), origin="lower")
 
             for i in range(6):
                 plt.sca(axs[2, i])
@@ -266,20 +276,15 @@ def visualize(epoch):
             # stepper.outputs
 
 
-def cache_tenors():
-    if os.path.isdir(cache_dir):
-        shutil.rmtree(cache_dir)
-    os.makedirs(cache_dir, exist_ok=True)
-    index = 0
-
-    def load_state(s):
+def cache_tensors():
+    def load_state(s, target_filepath):
         def save_sample(sample):
-            nonlocal index
-            index += 1
-            torch.save(sample, os.path.join(cache_dir, f"{index}.pt"))
+            with gzip.open(target_filepath, 'wb') as f:
+                torch.save(sample, f)
         game_state_loader.loadSessionMovement(s, buildOrderLoader, save_sample, None)
 
-    load_all(data_paths, small_input, load_state)
+    version = 0
+    common.cache_tenors(data_paths, cache_dir, small_input, load_state, version)
 
 
 def learning_rate_by_time(epoch):
@@ -301,6 +306,7 @@ def save_tensorboard_graph(memory, tensorboard_writer):
 
 
 def train(comment):
+    from tensorboardX import SummaryWriter
     print(f"Parameters: {count_parameters(model)}")
 
     global training_losses_by_time, current_step
@@ -308,9 +314,8 @@ def train(comment):
     memory, test_memory = create_datasets(cache_dir, test_split)
     save_tensorboard_graph(test_memory, tensorboard_writer)
 
-    padding = PadSequence(MovementTrace(states=True, movement=True, replay_path=False, minimap_states=True, raw_unit_states=True, data_path=False, playerID=False, raw_unit_coords=True))
-    training_generator = torch.utils.data.DataLoader(memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=0, collate_fn=padding)
-    testing_generator = torch.utils.data.DataLoader(test_memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=0, collate_fn=padding)
+    training_generator = torch.utils.data.DataLoader(memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=4, collate_fn=padding)
+    testing_generator = torch.utils.data.DataLoader(test_memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=2, collate_fn=padding)
 
     for epoch, current_step in training_loop(training_generator, testing_generator, trainer, tensorboard_writer):
         for g in optimizer.param_groups:
@@ -323,30 +328,26 @@ def train(comment):
 
 
 def save(epoch):
-    torch.save(model.state_dict(), "models/{module_name}_" + str(epoch) + ".weights")
+    torch.save(model.state_dict(), f"models/{module_name}_" + str(epoch) + ".weights")
 
 
 def load_weights(file):
     model.load_state_dict(torch.load(file))
 
 
+class Stepper:
+    def __init__(self):
+        self.stepper = trainer.stepperClass(model, None, device, 0, lambda a, b: 0, step_size=1)
+
+    def step(self, json_data, playerID):
+        observer_session = json.loads(json_data)
+        trace = game_state_loader.loadSessionMovement2(observer_session, playerID, buildOrderLoader, False, "invalid")
+        stepper = trainer.stepperClass(model, padding([trace])[0], device, 0, lambda a, b: 0, step_size=1)
+        stepper.set_batch(padding([trace])[0])
+        stepper.init_hidden_states()
+        stepper.step()
+        return stepper.outputs.detach().cpu().numpy()
+
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--save-cache", action="store_true")
-    parser.add_argument("--train", action="store_true")
-    parser.add_argument("--visualize", action="store_true")
-    parser.add_argument("--epoch", default=None, type=int)
-    parser.add_argument("--comment", default=None, type=str)
-    args = parser.parse_args()
-
-    if args.save_cache:
-        cache_tenors()
-
-    if args.train:
-        if args.comment is None or len(args.comment) == 0:
-            print("You need to supply a comment for the training run (--comment)")
-            exit(1)
-        train(args.comment)
-
-    if args.visualize:
-        visualize(args.epoch)
+    common.train_interface(cache_tensors, train, visualize)

@@ -1,4 +1,6 @@
 import pickle
+import argparse
+import subprocess
 import re
 import gzip
 import os
@@ -51,6 +53,27 @@ def load_cached_tensors(caching_filename, memory, test_memory):
             test_memory.push(item)
 
 
+def cache_tenors(data_paths, cache_dir, small_input, load_state_fn, version):
+    os.makedirs(cache_dir, exist_ok=True)
+
+    def save_path(path):
+        name = path.split("/")[-1].split(".")[0]
+        final_path = os.path.join(cache_dir, f"{name}.{version}.pt")
+        return final_path
+
+    def should_process(path):
+        return not os.path.exists(save_path(path))
+
+    def clear_old_tensors():
+        for path in os.listdir(cache_dir):
+            if not path.endswith(f".{version}.pt"):
+                print(f"Removing {path}")
+                os.remove(os.path.join(cache_dir, path))
+
+    load_all(data_paths, small_input, lambda s: load_state_fn(s, save_path(s["data_path"])), should_process)
+    clear_old_tensors()
+
+
 def load_all(data_paths, small_input, load_fn, filter_fn):
     print("Loading training data...")
     for data_path in data_paths:
@@ -86,9 +109,54 @@ def save_cache(caching_filename, memory, test_memory):
         pickle.dump(test_memory.get_all(), f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
+def save_git(comment):
+    orig_hash = subprocess.check_output(["git", "describe", "--always"]).decode('utf-8').strip()
+
+    if subprocess.call(["git", "commit", "--allow-empty", "-a", "-m", comment]) != 0:
+        print("Git commit failed")
+        exit(1)
+
+    hash = subprocess.check_output(["git", "describe", "--always"]).decode('utf-8').strip()
+
+    if subprocess.call(["git", "reset", orig_hash]) != 0:
+        print("Git reset failed")
+        exit(1)
+
+    comment = comment + " " + hash
+    print(comment)
+    return comment
+
+
+def train_interface(cache_fn, train_fn, visualize_fn):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--save-cache", action="store_true")
+    parser.add_argument("--train", action="store_true")
+    parser.add_argument("--visualize", action="store_true")
+    parser.add_argument("--epoch", default=None, type=int)
+    parser.add_argument("--comment", default=None, type=str)
+    args = parser.parse_args()
+
+    if args.save_cache:
+        cache_fn()
+
+    if args.train:
+        args.comment = save_git(args.comment)
+        if args.comment is None or len(args.comment) == 0:
+            print("You need to supply a comment for the training run (--comment)")
+            exit(1)
+        train_fn(args.comment)
+
+    if args.visualize:
+        visualize_fn(args.epoch)
+
+
 class PadSequence:
-    def __init__(self, is_sequence=[True, False]):
+    def __init__(self, is_sequence):
         self.is_sequence = is_sequence
+
+        valid_values = {None, 'pad-timewise', 'stack-timewise', 'stack'}
+        for x in is_sequence:
+            assert x in valid_values, f"Expected is_sequence member to be one of {valid_values}, found {x}"
 
     def __call__(self, batch):
         # Let's assume that each element in "batch" is a tuple (data, label).
@@ -107,12 +175,16 @@ class PadSequence:
 
         result = []
         for i in range(num_elements):
-            if self.is_sequence[i]:
+            mode = self.is_sequence[i]
+            if mode is None:
+                result.append([x[i] for x in sorted_batch])
+            elif mode == 'stack':
+                result.append([x[i] for x in sorted_batch])
+                result[-1] = torch.stack(result[-1])
+            elif mode == 'stack-timewise' or mode == 'pad-timewise':
                 result.append([])
             else:
-                result.append([x[i] for x in sorted_batch])
-                if isinstance(result[-1][0], torch.Tensor):
-                    result[-1] = torch.stack(result[-1])
+                assert False
 
         for timestep in range(lengths[0]):
             in_progress_threshold = 0
@@ -122,21 +194,16 @@ class PadSequence:
             active_batch = sorted_batch[:in_progress_threshold]
 
             for i in range(num_elements):
-                if self.is_sequence[i]:
+                mode = self.is_sequence[i]
+                if mode == 'stack-timewise':
                     s = [x[i][timestep] for x in active_batch]
                     s = torch.stack(s)
                     result[i].append(s)
+                elif mode == 'pad-timewise':
+                    s = [x[i][timestep] for x in active_batch]
+                    s = torch.nn.utils.rnn.pad_sequence(s, batch_first=True)
+                    result[i].append(s)
 
-        # for i in range(num_elements):
-        #     items = [x[i] for x in sorted_batch]
-        #     if self.is_sequence[i] and False:
-        #         sequences_padded = torch.nn.utils.rnn.pad_sequence(items, batch_first=True)
-        #         result.append(sequences_padded)
-        #     else:
-        #         result.append(items)
-        #         # result.append(torch.stack(items))
-
-        # combined = type(sorted_batch[0])(*result)
         combined = type(sorted_batch[0])(*result)
         return combined, lengths
 
@@ -154,14 +221,18 @@ def training_loop(training_generator, testing_generator, trainer, tensorboard_wr
         last_loss = 0
         num_batches = len(training_generator)
         for i, (batch_tuple, lengths) in enumerate(training_generator):
-            batch = trainer.sampleClass(*batch_tuple)
-            print(f"\rTraining Epoch {epoch} [{i+1}/{num_batches}] loss={last_loss}...", end="")
-            loss = trainer.train(batch)
-            print(f"\rTraining Epoch {epoch} [{i+1}/{num_batches}] loss={loss}", end="")
-            last_loss = loss
-            step += 1
-            current_step = step
-            tensorboard_writer.add_scalar("training loss", loss, step)
+            with torch.autograd.profiler.profile(enabled=False, use_cuda=True) as prof:
+                batch = trainer.sampleClass(*batch_tuple)
+                print(f"\rTraining Epoch {epoch} [{i+1}/{num_batches}] loss={last_loss}...", end="")
+                loss = trainer.train(batch)
+                print(f"\rTraining Epoch {epoch} [{i+1}/{num_batches}] loss={loss}", end="")
+                last_loss = loss
+                step += 1
+                current_step = step
+                tensorboard_writer.add_scalar("training loss", loss, step)
+
+            # prof.export_chrome_trace("trace.prof")
+            # print(prof.key_averages().table(sort_by="cpu_time_total"))
 
         print()
 

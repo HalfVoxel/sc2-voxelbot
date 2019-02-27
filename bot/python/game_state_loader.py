@@ -61,20 +61,20 @@ def getInputTensorSize(loader: BuildOrderLoader):
     return 7 + 2 + loader.unit_lookup.num_upgrades
 
 
-def start_unit(session, player):
-    units = session["observations"][player]["rawUnits"][0]["units"]
+def start_unit(observationSession, playerID):
+    units = observationSession["rawUnits"][0]["units"]
     for u in units:
-        if u["health"] > 100 and u["owner"] == player + 1:
+        if u["health"] > 100 and u["owner"] == playerID:
             return u
 
     assert False
 
 
-def find_map_size(session):
-    start_unit1 = start_unit(session, 0)
+def find_map_size(observationSession, playerID):
+    start_unit1 = start_unit(observationSession, playerID)
 
     if False:
-        start_unit2 = start_unit(session, 1)
+        start_unit2 = start_unit(observationSession, 1)
         mn_x = min(start_unit1["pos"]["x"], start_unit2["pos"]["x"])
         mn_y = min(start_unit1["pos"]["y"], start_unit2["pos"]["y"])
         mx_x = max(start_unit1["pos"]["x"], start_unit2["pos"]["x"])
@@ -86,7 +86,7 @@ def find_map_size(session):
         mx_x = 2 * s
         mx_y = 2 * s
     else:
-        mn_x, mn_y, mx_x, mx_y = findMapSizeFromMinimap(session)
+        mn_x, mn_y, mx_x, mx_y = findMapSizeFromMinimap(observationSession)
         margin = 4
         mn_x -= margin
         mn_y -= margin
@@ -493,8 +493,6 @@ def loadSessionMovement(session, loader: BuildOrderLoader, store_fn, statistics)
     if not filterSession(session, loader):
         return
 
-    replay_path = session["replayInfo"]["replay_path"]
-
     # winner = 0 | 1
     winner = calculateWinner(session)
     if winner is None:
@@ -503,53 +501,56 @@ def loadSessionMovement(session, loader: BuildOrderLoader, store_fn, statistics)
     # Map unit -> last known position
     # For every time
     #   If unit.pos is far from its last known position. Mark the unit as moved
-    playerIndex = winner
-    playerID = playerIndex + 1
+
+    playerID = winner + 1
+    trace = loadSessionMovement2(session["observations"][playerID - 1], playerID, loader, True, session["data_path"])
+    store_fn(trace)
+
+
+def loadSessionMovement2(observationSession, playerID, loader: BuildOrderLoader, extract_movement, data_path):
+    playerIndex = playerID - 1
     opponentPlayerID = 3 - playerID
-    map_size = find_map_size(session)
+    map_size = find_map_size(observationSession, playerID)
 
-    # Coordinates are normalized so that player 1 is always in the lower left corner.
-    # If the player is player 2 then we must therefore mirror the coordinates
-    # because we want player [playerID] to always be in the lower left corner.
-    mirror = playerID == 2
+    replay_path = observationSession["replayInfo"]["replay_path"]
 
-    selfStates = [session["observations"][0]["selfStates"], session["observations"][1]["selfStates"]]
-    rawUnits = [session["observations"][0]["rawUnits"], session["observations"][1]["rawUnits"]]
+    # Coordinates are normalized so that [playerID] is always in the lower left corner.
+    mirror = False
 
-    player1movement = extractMovement(rawUnits[playerIndex], playerID, map_size, loader, mirror)
+    selfStates = observationSession["selfStates"]
+    rawUnits = observationSession["rawUnits"]
+
+    player1movement = extractMovement(rawUnits, playerID, map_size, loader, mirror) if extract_movement else None
     # player2movement = extractMovement(session["observations"][1]["rawUnits"], 1, map_size, loader)
 
     minimap_size = 10
     player1obs2 = [playerObservationTensor2(loader, s, r, playerID, map_size, minimap_size, mirror)
-                   for (s, r) in zip(selfStates[playerIndex], rawUnits[playerIndex])]
+                   for (s, r) in zip(selfStates, rawUnits)]
     # player2obs2 = [playerObservationTensor2(loader, s, r, 2, map_size, minimap_size) for (s, r) in zip(selfStates[1], rawUnits[1])]
 
-    player1units = [movementUnitStates(r, loader, playerID, map_size, minimap_size, mirror) for (s, r) in zip(selfStates[playerIndex], rawUnits[playerIndex])]
+    player1units = [movementUnitStates(r, loader, playerID, map_size, minimap_size, mirror) for (s, r) in zip(selfStates, rawUnits)]
     # player2units = [movementUnitStates(r, loader, 2, map_size, minimap_size, False) for (s, r) in zip(selfStates[1], rawUnits[1])]
 
-    player1minimap1 = [minimapLayers(loader, r, playerID, map_size, minimap_size, mirror) for r in rawUnits[playerIndex]]
-    player1minimap2 = [minimapLayers(loader, r, opponentPlayerID, map_size, minimap_size, mirror) for r in rawUnits[playerIndex]]
+    player1minimap1 = [minimapLayers(loader, r, playerID, map_size, minimap_size, mirror) for r in rawUnits]
+    player1minimap2 = [minimapLayers(loader, r, opponentPlayerID, map_size, minimap_size, mirror) for r in rawUnits]
     player1minimap = torch.stack([torch.cat((m1, m2), dim=0) for (m1, m2) in zip(player1minimap1, player1minimap2)])
     # player2minimap2 = minimapLayers(loader, session["observations"][0]["rawUnits"], 1, map_size, minimap_size)
 
-    res1 = MovementTrace(
+    return MovementTrace(
         states=torch.stack([x[0] for x in player1obs2]),
         movement=player1movement,
         minimap_states=player1minimap,
         replay_path=replay_path,
         raw_unit_states=[x[0] for x in player1units],
         raw_unit_coords=[x[1] for x in player1units],
-        data_path=session["data_path"],
+        data_path=data_path,
         playerID=playerID,
     )
-    store_fn(res1)
 
 
 def loadSessionMovementTarget(session, loader: BuildOrderLoader, store_fn, statistics):
     if not filterSession(session, loader):
         return
-
-    replay_path = session["replayInfo"]["replay_path"]
 
     map_name = session["gameInfo"]["map_name"]
     if map_name == "Stasis LE":
@@ -564,9 +565,16 @@ def loadSessionMovementTarget(session, loader: BuildOrderLoader, store_fn, stati
     # Map unit -> last known position
     # For every time
     #   If unit.pos is far from its last known position. Mark the unit as moved
-    playerIndex = winner
-    playerID = playerIndex + 1
+
+    playerID = winner + 1
+    loadSessionMovementTarget2(session, playerID, loader, store_fn)
+
+
+def loadSessionMovementTarget2(session, playerID, loader: BuildOrderLoader, store_fn):
+    replay_path = session["replayInfo"]["replay_path"]
+    playerIndex = playerID - 1
     opponentPlayerID = 3 - playerID
+
     map_size = find_map_size(session)
 
     # Coordinates are normalized so that player 1 is always in the lower left corner.

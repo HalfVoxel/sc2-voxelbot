@@ -73,6 +73,7 @@ void Bot::OnGameStart() {
     deductionManager.OnGameStart();
     ourDeductionManager.OnGameStart();
     buildingPlacement.OnGameStart();
+    mlMovement.OnGameStart();
 
     scoutingManager = new ScoutingManager();
 

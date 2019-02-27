@@ -14,6 +14,7 @@
 #include "BuildOptimizerGenetic.h"
 #include "build_optimizer_nn.h"
 #include "CombatPredictor.h"
+#include "ml/ml_movement.h"
 
 extern int ticks;
 
@@ -74,6 +75,8 @@ public:
     DeductionManager ourDeductionManager;
     DependencyAnalyzer dependencyAnalyzer;
     std::shared_ptr<ControlFlowNode> researchTree;
+    MLMovement mlMovement;
+
     std::vector<sc2::Point2D>* FindWallPlacements(size_t size);
     
     int GetPositionIndex(int x, int y);

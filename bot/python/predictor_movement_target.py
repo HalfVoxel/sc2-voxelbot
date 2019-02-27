@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import math
 from common import count_parameters, load_all, PadSequence, training_loop, print_parameters
+import common
 import numpy as np
 import torch
 import torch.nn as nn
@@ -455,38 +456,15 @@ def visualize(epoch):
             # stepper.outputs
 
 
-def cache_tenors():
-    os.makedirs(cache_dir, exist_ok=True)
-    index = 0
-
-    version = 0
-
-    def save_path(path):
-        name = path.split("/")[-1].split(".")[0]
-        final_path = os.path.join(cache_dir, f"{name}.{version}.pt")
-        return final_path
-
-    def should_process(path):
-        return not os.path.exists(save_path(path))
-
-    def load_state(s):
-        final_path = save_path(s["data_path"])
-
+def cache_tensors():
+    def load_state(s, target_filepath):
         def save_sample(sample):
-            nonlocal index
-            index += 1
-            with gzip.open(final_path, 'wb') as f:
+            with gzip.open(target_filepath, 'wb') as f:
                 torch.save(sample, f)
         game_state_loader.loadSessionMovementTarget(s, buildOrderLoader, save_sample, None)
 
-    def clear_old_tensors():
-        for path in os.listdir(cache_dir):
-            if not path.endswith(f".{version}.pt"):
-                print(f"Removing {path}")
-                os.remove(os.path.join(cache_dir, path))
-
-    load_all(data_paths, small_input, load_state, should_process)
-    clear_old_tensors()
+    version = 0
+    common.cache_tenors(data_paths, cache_dir, small_input, load_state, version)
 
 
 def learning_rate_by_time(epoch):
@@ -540,42 +518,5 @@ def load_weights(file):
     model.load_state_dict(torch.load(file))
 
 
-def save_git(comment):
-    orig_hash = subprocess.check_output(["git", "describe", "--always"]).decode('utf-8').strip()
-
-    if subprocess.call(["git", "commit", "--allow-empty", "-a", "-m", comment]) != 0:
-        print("Git commit failed")
-        exit(1)
-
-    hash = subprocess.check_output(["git", "describe", "--always"]).decode('utf-8').strip()
-
-    if subprocess.call(["git", "reset", orig_hash]) != 0:
-        print("Git reset failed")
-        exit(1)
-
-    comment = comment + " " + hash
-    print(comment)
-    return comment
-
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--save-cache", action="store_true")
-    parser.add_argument("--train", action="store_true")
-    parser.add_argument("--visualize", action="store_true")
-    parser.add_argument("--epoch", default=None, type=int)
-    parser.add_argument("--comment", default=None, type=str)
-    args = parser.parse_args()
-
-    if args.save_cache:
-        cache_tenors()
-
-    if args.train:
-        args.comment = save_git(args.comment)
-        if args.comment is None or len(args.comment) == 0:
-            print("You need to supply a comment for the training run (--comment)")
-            exit(1)
-        train(args.comment)
-
-    if args.visualize:
-        visualize(args.epoch)
+    common.train_interface(cache_tensors, train, visualize)

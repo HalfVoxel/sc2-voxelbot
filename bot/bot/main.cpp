@@ -25,6 +25,11 @@ int main(int argc, char* argv[]) { /*
     }*/
 
     pybind11::scoped_interpreter guard{};
+    pybind11::exec(R"(
+        import sys
+        sys.path.append("bot/python")
+    )");
+
     Coordinator coordinator;
     if (!coordinator.LoadSettings(argc, argv)) {
         return 1;

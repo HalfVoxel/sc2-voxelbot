@@ -3,11 +3,13 @@
 #include "sc2api/sc2_interfaces.h"
 #include "sc2api/sc2_map_info.h"
 #include "../build_order_train/serialized_state.h"
+#include "../ml/replay.h"
 #include "../BuildOptimizerGenetic.h"
 #include <random>
 #include <iostream>
 #include <fstream>
 #include "../DependencyAnalyzer.h"
+#include "../utilities/sc2_serialization.h"
 #include "sc2utils/sc2_manage_process.h"
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
@@ -21,192 +23,8 @@ const char* kReplayFolder = "/home/arong/learning/sc2-voxelbot/replays";
 const char* kReplayListProtoss = "/home/arong/learning/sc2-voxelbot/pvp.txt";
 const string saveDir = "/home/arong/learning/sc2-voxelbot/training_data/replays/s2";
 
-namespace sc2 {
-    template <class Archive>
-    void serialize(Archive& archive, PlayerInfo& playerInfo) {
-        archive(
-            cereal::make_nvp("player_id", playerInfo.player_id),
-            cereal::make_nvp("player_type", playerInfo.player_type),
-            cereal::make_nvp("race_requested", playerInfo.race_requested),
-            cereal::make_nvp("race_actual", playerInfo.race_actual),
-            cereal::make_nvp("difficulty", playerInfo.difficulty)
-        );
-    }
 
-    template <class Archive>
-    void serialize(Archive& archive, GameInfo& gameInfo) {
-        archive(
-            cereal::make_nvp("player_info", gameInfo.player_info),
-            cereal::make_nvp("map_name", gameInfo.map_name),
-            cereal::make_nvp("local_map_path", gameInfo.local_map_path),
-            cereal::make_nvp("width", gameInfo.width),
-            cereal::make_nvp("height", gameInfo.height),
-            cereal::make_nvp("playable_min", gameInfo.playable_min),
-            cereal::make_nvp("playable_max", gameInfo.playable_max)
-        );
-    }
 
-    template <class Archive>
-    void serialize(Archive& archive, ReplayInfo& replayInfo) {
-        archive(
-            cereal::make_nvp("duration_gameloops", replayInfo.duration_gameloops),
-            cereal::make_nvp("replay_path", replayInfo.replay_path),
-            cereal::make_nvp("version", replayInfo.version),
-            cereal::make_nvp("num_players", replayInfo.num_players),
-            cereal::make_nvp("map_name", replayInfo.map_name),
-            cereal::make_nvp("map_path", replayInfo.map_path)
-        );
-    }
-
-    template <class Archive>
-    void serialize(Archive& archive, Point2D& p) {
-        archive(
-            cereal::make_nvp("x", p.x),
-            cereal::make_nvp("y", p.y)
-        );
-    }
-
-    template <class Archive>
-    void serialize(Archive& archive, Point3D& p) {
-        archive(
-            cereal::make_nvp("x", p.x),
-            cereal::make_nvp("y", p.y),
-            cereal::make_nvp("z", p.z)
-        );
-    }
-
-    template <class Archive>
-    void serialize(Archive& archive, Unit& unit) {
-        UNIT_TYPEID unit_type = unit.unit_type;
-        archive(
-            cereal::make_nvp("display_type", unit.display_type),
-            cereal::make_nvp("tag", unit.tag),
-            cereal::make_nvp("unit_type", unit_type),
-            cereal::make_nvp("owner", unit.owner),
-            cereal::make_nvp("pos", unit.pos),
-            cereal::make_nvp("facing", unit.facing),
-            cereal::make_nvp("radius", unit.radius),
-            cereal::make_nvp("build_progress", unit.build_progress),
-            cereal::make_nvp("cloak", unit.cloak),
-            cereal::make_nvp("detect_range", unit.detect_range),
-            cereal::make_nvp("is_blip", unit.is_blip),
-            cereal::make_nvp("health", unit.health),
-            cereal::make_nvp("health_max", unit.health_max),
-            cereal::make_nvp("shield", unit.shield),
-            cereal::make_nvp("shield_max", unit.shield_max),
-            cereal::make_nvp("energy", unit.energy),
-            cereal::make_nvp("energy_max", unit.energy_max),
-            cereal::make_nvp("mineral_contents", unit.mineral_contents),
-            cereal::make_nvp("vespene_contents", unit.vespene_contents),
-            cereal::make_nvp("is_flying", unit.is_flying),
-            cereal::make_nvp("is_burrowed", unit.is_burrowed),
-            cereal::make_nvp("weapon_cooldown", unit.weapon_cooldown),
-            cereal::make_nvp("cargo_space_taken", unit.cargo_space_taken),
-            cereal::make_nvp("cargo_space_max", unit.cargo_space_max),
-            cereal::make_nvp("engaged_target_tag", unit.engaged_target_tag),
-            cereal::make_nvp("is_powered", unit.is_powered),
-            cereal::make_nvp("is_alive", unit.is_alive)
-        );
-    }
-};
-
-struct RawState {
-    vector<Unit> units;
-
-    RawState(vector<const Unit*> units) {
-        for (auto u : units) {
-            this->units.push_back(*u);
-        }
-    }
-
-    template <class Archive>
-    void serialize(Archive& archive) {
-        archive(CEREAL_NVP(units));
-    }
-};
-
-struct PlayerObservations {
-    std::vector<SerializedState> selfStates;
-    std::vector<SerializedState> enemyStates;
-    vector<RawState> rawUnits;
-
-    template <class Archive>
-    void serialize(Archive& archive) {
-        archive(CEREAL_NVP(selfStates), CEREAL_NVP(enemyStates), CEREAL_NVP(rawUnits));
-    }
-};
-
-struct ObserverSession {
-    PlayerObservations observations;
-    int winner = -1;
-    GameInfo gameInfo;
-    ReplayInfo replayInfo;
-};
-
-string RaceToString(Race race) {
-    switch(race) {
-        case Race::Terran:
-            return "Terran";
-        case Race::Protoss:
-            return "Protoss";
-        case Race::Zerg:
-            return "Zerg";
-        default:
-            return "Unknown";
-    }
-}
-
-float combatStrength(SerializedState& state) {
-    float count = 0;
-    for (auto& u : state.units) {
-        count += (isArmy(u.type) ? 1 : 0.1f) * getUnitData(u.type).food_required * u.totalCount;
-    }
-    return count;
-}
-
-struct ReplaySession {
-    std::vector<PlayerObservations> observations = std::vector<PlayerObservations>(2);
-    int winner = -1;
-    GameInfo gameInfo;
-    ReplayInfo replayInfo;
-    vector<int> mmrs;
-
-    ReplaySession(const ObserverSession& player1, const ObserverSession& player2) {
-        observations = { player1.observations, player2.observations };
-        assert(player1.winner == player2.winner);
-        winner = player1.winner;
-        gameInfo = player1.gameInfo;
-        replayInfo = player1.replayInfo;
-        assert(player1.replayInfo.duration_gameloops == player2.replayInfo.duration_gameloops);
-        ReplayPlayerInfo player1info;
-        ReplayPlayerInfo player2info;
-        player1.replayInfo.GetPlayerInfo(player1info, 1);
-        player2.replayInfo.GetPlayerInfo(player2info, 2);
-        mmrs = { player1info.mmr, player2info.mmr };
-        cout << "Player MMRs: " << player1info.mmr << " " << player2info.mmr << endl;
-
-        if (winner != 1 && winner != 2) {
-            cerr << "Unknown game result!" << endl;
-        } else {
-            cout << "Winner is " << winner << " " << RaceToString(observations[winner-1].selfStates[0].race) << endl;
-            float a1 = combatStrength(observations[(winner-1)].selfStates.back());
-            float a2 = combatStrength(observations[1-(winner-1)].selfStates.back());
-            if (a1 > a2) {
-                cout << "Winner seems consistent with game state" << endl;
-            } else {
-                cout << "Winner not consistent with game state " << a1 << " < " << a2 << endl;
-            }
-            // Save session
-
-            
-        }
-    }
-
-    template <class Archive>
-    void serialize(Archive& archive) {
-        archive(CEREAL_NVP(observations), CEREAL_NVP(winner), CEREAL_NVP(gameInfo), CEREAL_NVP(replayInfo), CEREAL_NVP(mmrs));
-    }
-};
 
 pybind11::object saveFunction;
 pybind11::object isReplayAlreadySavedFunction;
