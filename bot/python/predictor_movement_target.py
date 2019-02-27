@@ -523,7 +523,7 @@ class Stepper:
 
     def step(self, json_data, unit_tag_mask, playerID):
         observer_session = json.loads(json_data)
-        trace = game_state_loader.loadSessionMovementTarget2(observationSession, playerID, loader, unit_tag_mask, "invalid"):
+        trace = game_state_loader.loadSessionMovementTarget2(observationSession, playerID, loader, unit_tag_mask, "invalid")
         self.stepper.set_batch(padding([trace])[0])
         self.stepper.init_hidden_states()
         self.stepper.step()
