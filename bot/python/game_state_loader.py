@@ -101,8 +101,8 @@ def find_map_size(observationSession, playerID):
 
 
 def filter_matchup(session, loader):
-    start_unit1 = start_unit(session, 0)
-    start_unit2 = start_unit(session, 1)
+    start_unit1 = start_unit({ "observations": session["observations"][0] }, 1)
+    start_unit2 = start_unit({ "observations": session["observations"][1] }, 2)
     return start_unit1["unit_type"] in loader.unit_lookup.unit_index_map and start_unit2["unit_type"] in loader.unit_lookup.unit_index_map
 
 
@@ -584,10 +584,6 @@ def loadSessionMovementTarget(session, loader: BuildOrderLoader, store_fn, stati
     # For every time
     #   If unit.pos is far from its last known position. Mark the unit as moved
 
-    if max_time <= 0:
-        print("Skipping game with too few samples")
-        return
-
     playerID = winner + 1
     observationSession = {
         "observations": session["observations"][playerID-1],
@@ -619,6 +615,10 @@ def loadSessionMovementTarget2(observationSession, playerID, loader: BuildOrderL
     # Note: if unit_tag_mask is provided then we don't use lookahead for anything, so it doesn't constrain the times
     lookaheadTime = 4 if unit_tag_mask == 'random' else 0
     max_time = len(rawUnits) - lookaheadTime
+
+    if max_time <= 0:
+        print("Skipping game with too few samples")
+        return
 
     player1obs2 = [
         playerObservationTensor2(loader, s, r, playerID, map_size, minimap_size, mirror)
@@ -789,7 +789,7 @@ def sampleMovementGroup(rawUnits, playerID, map_size, loader, minimap_size, mirr
 
             target_position[cell_x, cell_y] = 1
         
-        layers, unit_type_counts = movementGroupFeatures([u for u in state["units"] if u["tag"] in filtered_tags], loader, map_size, minimap_size, mirror)
+        layers, unit_type_counts = movementGroupFeatures([u for u in state["units"] if u["tag"] in filtered_tags], [u for u in rawUnits[i + lookaheadTime]["units"] if u["tag"] not in filtered_tags], loader, map_size, minimap_size, mirror)
         minimap_layers.append(layers)
         unit_types.append(unit_type_counts)
         target_positions.append(target_position)
@@ -797,22 +797,30 @@ def sampleMovementGroup(rawUnits, playerID, map_size, loader, minimap_size, mirr
     return torch.tensor(np.stack(minimap_layers)), torch.tensor(np.stack(unit_types)), torch.tensor(np.stack(target_positions))
 
 
-def movementGroupFeatures(units, loader, map_size, minimap_size, mirror):
+def movementGroupFeatures(units, futureUnitsComplement, loader, map_size, minimap_size, mirror):
     has_unit = np.zeros((minimap_size, minimap_size), dtype=np.float32)
     normalized_unit_counts = np.zeros((minimap_size, minimap_size), dtype=np.float32)
     unit_type_counts = np.zeros((loader.unit_lookup.num_units), dtype=np.float32)
+    normalized_unit_counts_future = np.zeros((minimap_size, minimap_size), dtype=np.float32)
 
     for unit in units:
         coord = transform_coord_minimap(unit["pos"], map_size, minimap_size, mirror)
         has_unit[coord[0], coord[1]] = 1
         normalized_unit_counts[coord[0], coord[1]] += 1
         unit_type_counts[loader.unit_lookup.unit_index_map[unit["unit_type"]]] += 1
+    
+    for unit in futureUnitsComplement:
+        coord = transform_coord_minimap(unit["pos"], map_size, minimap_size, mirror)
+        normalized_unit_counts_future[coord[0], coord[1]] += 1
 
     if len(units) > 0:
         normalized_unit_counts /= normalized_unit_counts.sum()
         unit_type_counts /= unit_type_counts.sum()
+    
+    if len(futureUnitsComplement) > 0:
+        normalized_unit_counts_future /= normalized_unit_counts_future.sum()
 
-    minimap_layers = np.stack([has_unit, normalized_unit_counts])
+    minimap_layers = np.stack([has_unit, normalized_unit_counts, normalized_unit_counts_future])
     return minimap_layers, unit_type_counts
 
 def extractMovement(rawUnits, playerID, map_size, loader, mirror):
