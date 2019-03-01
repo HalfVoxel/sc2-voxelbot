@@ -109,10 +109,11 @@ bool IsTownHall::operator()(const Unit& unit) {
 bool IsVespeneGeyser::operator()(const Unit& unit) {
     switch (unit.unit_type.ToType()) {
         case UNIT_TYPEID::NEUTRAL_VESPENEGEYSER:
-            return true;
         case UNIT_TYPEID::NEUTRAL_SPACEPLATFORMGEYSER:
-            return true;
         case UNIT_TYPEID::NEUTRAL_PROTOSSVESPENEGEYSER:
+        case UNIT_TYPEID::NEUTRAL_PURIFIERVESPENEGEYSER:
+        case UNIT_TYPEID::NEUTRAL_RICHVESPENEGEYSER:
+        case UNIT_TYPEID::NEUTRAL_SHAKURASVESPENEGEYSER:
             return true;
         default:
             return false;

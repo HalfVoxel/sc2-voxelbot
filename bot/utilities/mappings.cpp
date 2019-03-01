@@ -244,10 +244,15 @@ void initMappings() {
     init();
 }
 
+
+vector<UNIT_TYPEID> emptyVector;
+
 /** Maps an ability to the unit that primarily uses it.
  * In particular this is defined for BUILD_* and TRAIN_* abilities.
  */
 const std::vector<UNIT_TYPEID>& abilityToCasterUnit(ABILITY_ID ability) {
+    if ((int)ability >= mAbilityToCasterUnit.size()) return emptyVector;
+
     assert((int)ability < mAbilityToCasterUnit.size());
     return mAbilityToCasterUnit[(int)ability];
     /*

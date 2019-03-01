@@ -30,9 +30,7 @@ inline float ticksToSeconds(float ticks) {
 inline bool isBasicHarvester(sc2::UNIT_TYPEID type) {
     switch (type) {
         case sc2::UNIT_TYPEID::TERRAN_SCV:
-            return true;
         case sc2::UNIT_TYPEID::ZERG_DRONE:
-            return true;
         case sc2::UNIT_TYPEID::PROTOSS_PROBE:
             return true;
         default:
@@ -43,19 +41,12 @@ inline bool isBasicHarvester(sc2::UNIT_TYPEID type) {
 inline bool isTownHall(sc2::UNIT_TYPEID type) {
     switch (type) {
         case sc2::UNIT_TYPEID::ZERG_HATCHERY:
-            return true;
         case sc2::UNIT_TYPEID::ZERG_LAIR:
-            return true;
         case sc2::UNIT_TYPEID::ZERG_HIVE:
-            return true;
         case sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER:
-            return true;
         case sc2::UNIT_TYPEID::TERRAN_ORBITALCOMMAND:
-            return true;
         case sc2::UNIT_TYPEID::TERRAN_ORBITALCOMMANDFLYING:
-            return true;
         case sc2::UNIT_TYPEID::TERRAN_PLANETARYFORTRESS:
-            return true;
         case sc2::UNIT_TYPEID::PROTOSS_NEXUS:
             return true;
         default:
@@ -66,13 +57,25 @@ inline bool isTownHall(sc2::UNIT_TYPEID type) {
 inline bool isVespeneHarvester(sc2::UNIT_TYPEID type) {
     switch (type) {
         case sc2::UNIT_TYPEID::TERRAN_REFINERY:
-            return true;
         case sc2::UNIT_TYPEID::ZERG_EXTRACTOR:
-            return true;
         case sc2::UNIT_TYPEID::PROTOSS_ASSIMILATOR:
             return true;
         default:
             return false;
+    }
+}
+
+inline sc2::UNIT_TYPEID getHarvesterUnitForRace(sc2::Race race) {
+    switch (race) {
+        case sc2::Race::Protoss:
+            return sc2::UNIT_TYPEID::PROTOSS_PROBE;
+        case sc2::Race::Terran:
+            return sc2::UNIT_TYPEID::TERRAN_SCV;
+        case sc2::Race::Zerg:
+            return sc2::UNIT_TYPEID::ZERG_DRONE;
+        default:
+            assert(false);
+            return sc2::UNIT_TYPEID::INVALID;
     }
 }
 
@@ -128,6 +131,26 @@ inline bool isAddon(sc2::UNIT_TYPEID unit) {
         case sc2::UNIT_TYPEID::TERRAN_BARRACKSTECHLAB:
         case sc2::UNIT_TYPEID::TERRAN_FACTORYTECHLAB:
         case sc2::UNIT_TYPEID::TERRAN_STARPORTTECHLAB:
+            return true;
+        default:
+            return false;
+    }
+}
+
+inline bool isMineralField(sc2::UNIT_TYPEID unit) {
+    switch (unit) {
+        case sc2::UNIT_TYPEID::NEUTRAL_BATTLESTATIONMINERALFIELD:
+        case sc2::UNIT_TYPEID::NEUTRAL_BATTLESTATIONMINERALFIELD750:
+        case sc2::UNIT_TYPEID::NEUTRAL_LABMINERALFIELD:
+        case sc2::UNIT_TYPEID::NEUTRAL_LABMINERALFIELD750:
+        case sc2::UNIT_TYPEID::NEUTRAL_MINERALFIELD:
+        case sc2::UNIT_TYPEID::NEUTRAL_MINERALFIELD750:
+        case sc2::UNIT_TYPEID::NEUTRAL_PURIFIERMINERALFIELD:
+        case sc2::UNIT_TYPEID::NEUTRAL_PURIFIERMINERALFIELD750:
+        case sc2::UNIT_TYPEID::NEUTRAL_PURIFIERRICHMINERALFIELD:
+        case sc2::UNIT_TYPEID::NEUTRAL_PURIFIERRICHMINERALFIELD750:
+        case sc2::UNIT_TYPEID::NEUTRAL_RICHMINERALFIELD:
+        case sc2::UNIT_TYPEID::NEUTRAL_RICHMINERALFIELD750:
             return true;
         default:
             return false;
