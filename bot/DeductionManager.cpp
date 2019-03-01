@@ -144,19 +144,43 @@ vector<pair<UNIT_TYPEID, int>> DeductionManager::ApproximateArmy(float scale) {
     // Prior
     int k = 0;
     while(totalCount < 25) {
-        result.emplace_back(UNIT_TYPEID::ZERG_ROACH, 1);
-        totalCount += 1;
-
-
-        result.emplace_back(UNIT_TYPEID::ZERG_ZERGLING, 1);
-        totalCount += 1;
-
-
-        if ((k % 4) == 0) {
-            result.emplace_back(UNIT_TYPEID::ZERG_HYDRALISK, 1);
+        if (false) {
+            result.emplace_back(UNIT_TYPEID::ZERG_ROACH, 1);
             totalCount += 1;
+
+
+            result.emplace_back(UNIT_TYPEID::ZERG_ZERGLING, 1);
+            totalCount += 1;
+
+
+            if ((k % 4) == 0) {
+                result.emplace_back(UNIT_TYPEID::ZERG_HYDRALISK, 1);
+                totalCount += 1;
+            }
+            k++;
+        } else {
+            if ((k % 4) == 0) {
+                result.emplace_back(UNIT_TYPEID::PROTOSS_ZEALOT, 1);
+                totalCount += 1;
+            }
+
+            if ((k % 4) == 1) {
+                result.emplace_back(UNIT_TYPEID::PROTOSS_STALKER, 1);
+                totalCount += 1;
+            }
+
+
+            if ((k % 4) == 2) {
+                result.emplace_back(UNIT_TYPEID::PROTOSS_ADEPT, 1);
+                totalCount += 1;
+            }
+
+            if ((k % 4) == 3) {
+                result.emplace_back(UNIT_TYPEID::PROTOSS_ZEALOT, 1);
+                totalCount += 1;
+            }
+            k++;
         }
-        k++;
     }
 
     if(totalCount < 25 * scale) {
