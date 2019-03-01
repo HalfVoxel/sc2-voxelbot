@@ -17,10 +17,11 @@ import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde as kde
 from matplotlib import cm
 import time
+import mappings
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-data_path = "training_data/buildorders/1"
+data_path = "training_data/buildorders_time/1"
 
 manualSeed = 123
 np.random.seed(manualSeed)
@@ -39,7 +40,45 @@ def natural_sort(l):
     return sorted(l, key=alphanum_key)
 
 
-unitIndexMap = {
+units = set([
+    "PROTOSS_ADEPT",
+    "PROTOSS_ASSIMILATOR",
+    "PROTOSS_CARRIER",
+    "PROTOSS_COLOSSUS",
+    "PROTOSS_CYBERNETICSCORE",
+    "PROTOSS_DARKSHRINE",
+    "PROTOSS_DARKTEMPLAR",
+    "PROTOSS_DISRUPTOR",
+    "PROTOSS_FLEETBEACON",
+    "PROTOSS_FORGE",
+    "PROTOSS_GATEWAY",
+    "PROTOSS_HIGHTEMPLAR",
+    "PROTOSS_IMMORTAL",
+    "PROTOSS_MOTHERSHIP",
+    "PROTOSS_NEXUS",
+    "PROTOSS_OBSERVER",
+    "PROTOSS_ORACLE",
+    "PROTOSS_PHOENIX",
+    "PROTOSS_PHOTONCANNON",
+    "PROTOSS_PROBE",
+    "PROTOSS_PYLON",
+    "PROTOSS_ROBOTICSBAY",
+    "PROTOSS_ROBOTICSFACILITY",
+    "PROTOSS_SENTRY",
+    "PROTOSS_SHIELDBATTERY",
+    "PROTOSS_STALKER",
+    "PROTOSS_STARGATE",
+    "PROTOSS_TEMPEST",
+    "PROTOSS_TEMPLARARCHIVE",
+    "PROTOSS_TWILIGHTCOUNCIL",
+    "PROTOSS_VOIDRAY",
+    "PROTOSS_WARPGATE",
+    "PROTOSS_WARPPRISM",
+    "PROTOSS_ZEALOT",
+])
+
+
+unitIndexMapTerran = {
     29: 0,  # TERRAN_ARMORY
     55: 1,  # TERRAN_BANSHEE
     21: 2,  # TERRAN_BARRACKS
@@ -84,7 +123,7 @@ unitIndexMap = {
     498: 38,  # TERRAN_WIDOWMINE,
 }
 
-economicallyRelevantUnits = [
+economicallyRelevantUnitsTerran = [
     29,  # TERRAN_ARMORY
     21,  # TERRAN_BARRACKS
     38,  # TERRAN_BARRACKSREACTOR
@@ -109,59 +148,80 @@ economicallyRelevantUnits = [
     19,  # TERRAN_SUPPLYDEPOT
 ]
 
-economicallyRelevantUnitsMap = {}
-for i in range(len(economicallyRelevantUnits)):
-    economicallyRelevantUnitsMap[economicallyRelevantUnits[i]] = i
+economicallyRelevantUnitsProtoss = [
+    "PROTOSS_ASSIMILATOR",
+    "PROTOSS_CYBERNETICSCORE",
+    "PROTOSS_DARKSHRINE",
+    "PROTOSS_FLEETBEACON",
+    "PROTOSS_FORGE",
+    "PROTOSS_GATEWAY",
+    "PROTOSS_NEXUS",
+    "PROTOSS_PROBE",
+    "PROTOSS_PYLON",
+    "PROTOSS_ROBOTICSBAY",
+    "PROTOSS_ROBOTICSFACILITY",
+    "PROTOSS_STARGATE",
+    "PROTOSS_TEMPLARARCHIVE",
+    "PROTOSS_TWILIGHTCOUNCIL",
+    "PROTOSS_WARPGATE",
+]
 
-# economicallyRelevantUnitsMap = unitIndexMap
+unitLookup = mappings.UnitLookup([u for u in mappings.protossUnits if u[0] in units])
+economicUnitLookup = mappings.UnitLookup([u for u in mappings.protossUnits if u[0] in economicallyRelevantUnitsProtoss])
 
-unitFoodRequirement = {
-    29: 0,  # TERRAN_ARMORY
-    55: -3,  # TERRAN_BANSHEE
-    21: 0,  # TERRAN_BARRACKS
-    57: -6,  # TERRAN_BATTLECRUISER
-    24: 0,  # TERRAN_BUNKER
-    18: 15,  # TERRAN_COMMANDCENTER
-    692: -3,  # TERRAN_CYCLONE
-    22: 0,  # TERRAN_ENGINEERINGBAY
-    27: 0,  # TERRAN_FACTORY
-    30: 0,  # TERRAN_FUSIONCORE
-    50: -2,  # TERRAN_GHOST
-    26: 0,  # TERRAN_GHOSTACADEMY
-    53: -2,  # TERRAN_HELLION
-    484: -2,  # TERRAN_HELLIONTANK
-    689: -3,  # TERRAN_LIBERATOR
-    51: -2,  # TERRAN_MARAUDER
-    48: -1,  # TERRAN_MARINE
-    54: -2,  # TERRAN_MEDIVAC
-    23: 0,  # TERRAN_MISSILETURRET
-    132: 15,  # TERRAN_ORBITALCOMMAND
-    130: 15,  # TERRAN_PLANETARYFORTRESS
-    56: -2,  # TERRAN_RAVEN
-    49: -1,  # TERRAN_REAPER
-    20: 0,  # TERRAN_REFINERY
-    45: -1,  # TERRAN_SCV
-    25: 0,  # TERRAN_SENSORTOWER
-    32: -3,   # TERRAN_SIEGETANKSIEGED
-    33: -3,  # TERRAN_SIEGETANK
-    28: 0,  # TERRAN_STARPORT
-    19: 8,  # TERRAN_SUPPLYDEPOT
-    52: -6,  # TERRAN_THOR
-    34: -2,   # TERRAN_VIKINGASSAULT
-    35: -2,  # TERRAN_VIKINGFIGHTER
-    498: -2,  # TERRAN_WIDOWMINE
-}
+# economicallyRelevantUnitsMap = {}
+# for i in range(len(economicallyRelevantUnits)):
+    # economicallyRelevantUnitsMap[economicallyRelevantUnits[i]] = i
 
-NUM_UNITS = len(set(unitIndexMap.values()))
-NUM_UNITS_ECONOMICAL = len(set(economicallyRelevantUnitsMap.values()))
+# economicallyRelevantUnitsMap = unit_index_map
+
+# unitFoodRequirement = {
+#     29: 0,  # TERRAN_ARMORY
+#     55: -3,  # TERRAN_BANSHEE
+#     21: 0,  # TERRAN_BARRACKS
+#     57: -6,  # TERRAN_BATTLECRUISER
+#     24: 0,  # TERRAN_BUNKER
+#     18: 15,  # TERRAN_COMMANDCENTER
+#     692: -3,  # TERRAN_CYCLONE
+#     22: 0,  # TERRAN_ENGINEERINGBAY
+#     27: 0,  # TERRAN_FACTORY
+#     30: 0,  # TERRAN_FUSIONCORE
+#     50: -2,  # TERRAN_GHOST
+#     26: 0,  # TERRAN_GHOSTACADEMY
+#     53: -2,  # TERRAN_HELLION
+#     484: -2,  # TERRAN_HELLIONTANK
+#     689: -3,  # TERRAN_LIBERATOR
+#     51: -2,  # TERRAN_MARAUDER
+#     48: -1,  # TERRAN_MARINE
+#     54: -2,  # TERRAN_MEDIVAC
+#     23: 0,  # TERRAN_MISSILETURRET
+#     132: 15,  # TERRAN_ORBITALCOMMAND
+#     130: 15,  # TERRAN_PLANETARYFORTRESS
+#     56: -2,  # TERRAN_RAVEN
+#     49: -1,  # TERRAN_REAPER
+#     20: 0,  # TERRAN_REFINERY
+#     45: -1,  # TERRAN_SCV
+#     25: 0,  # TERRAN_SENSORTOWER
+#     32: -3,   # TERRAN_SIEGETANKSIEGED
+#     33: -3,  # TERRAN_SIEGETANK
+#     28: 0,  # TERRAN_STARPORT
+#     19: 8,  # TERRAN_SUPPLYDEPOT
+#     52: -6,  # TERRAN_THOR
+#     34: -2,   # TERRAN_VIKINGASSAULT
+#     35: -2,  # TERRAN_VIKINGFIGHTER
+#     498: -2,  # TERRAN_WIDOWMINE
+# }
+
+NUM_UNITS = len(unitLookup.units)
+NUM_UNITS_ECONOMICAL = len(economicUnitLookup.units)
 STARTING_UNIT_TENSOR_SIZE = NUM_UNITS_ECONOMICAL * 3
 TARGET_UNIT_TENSOR_SIZE = NUM_UNITS * 3
 META_SIZE = 4
 MAX_INSTANCE_TIME = 30 * 60
 
 unitFoodRequirementTensor = torch.zeros(NUM_UNITS)
-for k,v in unitFoodRequirement.items():
-    unitFoodRequirementTensor[unitIndexMap[k]] = v
+for i, u in enumerate(unitLookup.units):
+    unitFoodRequirementTensor[i] = u.food_delta
 
 class ListDataset(torch.utils.data.Dataset):
     def __init__(self):
@@ -193,20 +253,18 @@ def load_instance(item):
     targetUnits = torch.zeros(NUM_UNITS, dtype=torch.float)
 
     for u in item["startingUnits"]:
-        allStartingUnits[unitIndexMap[u["type"]]] += u["count"]
+        allStartingUnits[unitLookup.unit_index_map[u["type"]]] += u["count"]
 
-        if u["type"] in economicallyRelevantUnitsMap:
-            startingUnits[economicallyRelevantUnitsMap[u["type"]]] += u["count"]
+        if u["type"] in economicUnitLookup.unit_index_map:
+            startingUnits[economicUnitLookup.unit_index_map[u["type"]]] += u["count"]
 
     for u in item["targetUnits"]:
-        targetUnits[unitIndexMap[u["type"]]] += u["count"]
+        targetUnits[unitLookup.unit_index_map[u["type"]]] += u["count"]
 
     if allStartingUnits.sum() > 200:
         # print("Skipping item with", startingUnits.sum(), "units")
         return
     
-    # print(startingUnits)
-    # print(allStartingUnits)
     # print(targetUnits)
     # print(startingFood)
     targetUnits = torch.max(torch.tensor(0.0), targetUnits - allStartingUnits)
@@ -239,9 +297,10 @@ def predict(startingUnits, resources, targetUnitsList):
     startingUnitsTensor = torch.zeros(NUM_UNITS_ECONOMICAL, dtype=torch.float)
     allStartingUnitsTensor = torch.zeros(NUM_UNITS, dtype=torch.float)
     for u in startingUnits:
-        allStartingUnitsTensor[unitIndexMap[u[0]]] += u[1]
-        if u[0] in economicallyRelevantUnitsMap:
-            startingUnitsTensor[economicallyRelevantUnitsMap[u[0]]] += u[1]
+        if u[0] in unitLookup.unit_index_map:
+            allStartingUnitsTensor[unitLookup.unit_index_map[u[0]]] += u[1]
+        if u[0] in economicUnitLookup.unit_index_map:
+            startingUnitsTensor[economicUnitLookup.unit_index_map[u[0]]] += u[1]
     
     startingFood = (allStartingUnitsTensor * unitFoodRequirementTensor).sum()
     startingUnits1 = (startingUnitsTensor > 0).to(dtype=torch.float)
@@ -254,7 +313,7 @@ def predict(startingUnits, resources, targetUnitsList):
     for targetUnits in targetUnitsList:
         targetUnitsTensor = torch.zeros(NUM_UNITS, dtype=torch.float)
         for u in targetUnits:
-            targetUnitsTensor[unitIndexMap[u[0]]] += u[1]
+            targetUnitsTensor[unitLookup.unit_index_map[u[0]]] += u[1]
 
         targetFood = (targetUnitsTensor * unitFoodRequirementTensor).sum()
         targetUnits1 = (targetUnitsTensor > 0).to(dtype=torch.float)
@@ -286,7 +345,7 @@ def predict(startingUnits, resources, targetUnitsList):
 
 def load_session(s):
     data = json.loads(s)
-    for item in data["value0"]:
+    for item in data["instances"]:
         load_instance(item)
 
 def load_all():
@@ -432,7 +491,7 @@ def optimize_model():
         for i, data in enumerate(trainLoader, 0):
             # get the inputs
             startingUnits, targetUnits, metas, targetTimes, origDataIndices = data
-            targetTimes = torch.tensor(targetTimes, dtype=torch.float) * score_scale
+            targetTimes = targetTimes.to(dtype=torch.float) * score_scale
 
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -470,7 +529,7 @@ def optimize_model():
             last_scatter_y = np.array([])
             for data in testLoader:
                 startingUnits, targetUnits, metas, targetTimes, origDataIndices = data
-                targetTimes = torch.tensor(targetTimes, dtype=torch.float) * score_scale
+                targetTimes = targetTimes.to(dtype=torch.float) * score_scale
 
                 # forward + backward + optimize
                 outputs = net(startingUnits, targetUnits, metas)
@@ -490,7 +549,6 @@ def optimize_model():
 
                 worstIndex = item_losses_w.argmax()
                 print("Worst index " + str(worstIndex))
-                invIndices = {v:k for k,v in unitIndexMap.items()}
                 print("Expected time " + str(outputs[worstIndex]/score_scale))
                 print(originalDatas[origDataIndices[worstIndex].item()])
 

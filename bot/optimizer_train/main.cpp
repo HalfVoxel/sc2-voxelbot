@@ -107,8 +107,102 @@ static vector<UNIT_TYPEID> unitTypesTerran3 = {
     UNIT_TYPEID::TERRAN_WIDOWMINE,
 };
 
+
+
+vector<UNIT_TYPEID> unitTypesProtossMilitary = {
+    UNIT_TYPEID::PROTOSS_ADEPT,
+    // UNIT_TYPEID::PROTOSS_ADEPTPHASESHIFT,
+    // UNIT_TYPEID::PROTOSS_ARCHON, // TODO: Special case creation rule
+    // UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+    UNIT_TYPEID::PROTOSS_CARRIER,
+    UNIT_TYPEID::PROTOSS_COLOSSUS,
+    // UNIT_TYPEID::PROTOSS_CYBERNETICSCORE,
+    // UNIT_TYPEID::PROTOSS_DARKSHRINE,
+    UNIT_TYPEID::PROTOSS_DARKTEMPLAR,
+    UNIT_TYPEID::PROTOSS_DISRUPTOR,
+    // UNIT_TYPEID::PROTOSS_DISRUPTORPHASED,
+    // UNIT_TYPEID::PROTOSS_FLEETBEACON,
+    // UNIT_TYPEID::PROTOSS_FORGE,
+    // UNIT_TYPEID::PROTOSS_GATEWAY,
+    UNIT_TYPEID::PROTOSS_HIGHTEMPLAR,
+    UNIT_TYPEID::PROTOSS_IMMORTAL,
+    // UNIT_TYPEID::PROTOSS_INTERCEPTOR,
+    // UNIT_TYPEID::PROTOSS_MOTHERSHIP, // TODO: Mothership cannot be created for some reason (no unit has the required ability)
+    // UNIT_TYPEID::PROTOSS_MOTHERSHIPCORE,
+    // UNIT_TYPEID::PROTOSS_NEXUS,
+    UNIT_TYPEID::PROTOSS_OBSERVER,
+    UNIT_TYPEID::PROTOSS_ORACLE,
+    // UNIT_TYPEID::PROTOSS_ORACLESTASISTRAP,
+    // UNIT_TYPEID::PROTOSS_PHOENIX,
+    // UNIT_TYPEID::PROTOSS_PHOTONCANNON,
+    UNIT_TYPEID::PROTOSS_PROBE,
+    // UNIT_TYPEID::PROTOSS_PYLON,
+    // UNIT_TYPEID::PROTOSS_PYLONOVERCHARGED,
+    // UNIT_TYPEID::PROTOSS_ROBOTICSBAY,
+    // UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY,
+    UNIT_TYPEID::PROTOSS_SENTRY,
+    // UNIT_TYPEID::PROTOSS_SHIELDBATTERY,
+    UNIT_TYPEID::PROTOSS_STALKER,
+    // UNIT_TYPEID::PROTOSS_STARGATE,
+    UNIT_TYPEID::PROTOSS_TEMPEST,
+    // UNIT_TYPEID::PROTOSS_TEMPLARARCHIVE,
+    // UNIT_TYPEID::PROTOSS_TWILIGHTCOUNCIL,
+    UNIT_TYPEID::PROTOSS_VOIDRAY,
+    // UNIT_TYPEID::PROTOSS_WARPGATE,
+    UNIT_TYPEID::PROTOSS_WARPPRISM,
+    // UNIT_TYPEID::PROTOSS_WARPPRISMPHASING,
+    UNIT_TYPEID::PROTOSS_ZEALOT,
+};
+
+vector<UNIT_TYPEID> unitTypesProtossAll = {
+    UNIT_TYPEID::PROTOSS_ADEPT,
+    // UNIT_TYPEID::PROTOSS_ADEPTPHASESHIFT,
+    // UNIT_TYPEID::PROTOSS_ARCHON, // TODO: Special case creation rule
+    UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+    UNIT_TYPEID::PROTOSS_CARRIER,
+    UNIT_TYPEID::PROTOSS_COLOSSUS,
+    UNIT_TYPEID::PROTOSS_CYBERNETICSCORE,
+    UNIT_TYPEID::PROTOSS_DARKSHRINE,
+    UNIT_TYPEID::PROTOSS_DARKTEMPLAR,
+    UNIT_TYPEID::PROTOSS_DISRUPTOR,
+    // UNIT_TYPEID::PROTOSS_DISRUPTORPHASED,
+    UNIT_TYPEID::PROTOSS_FLEETBEACON,
+    UNIT_TYPEID::PROTOSS_FORGE,
+    UNIT_TYPEID::PROTOSS_GATEWAY,
+    UNIT_TYPEID::PROTOSS_HIGHTEMPLAR,
+    UNIT_TYPEID::PROTOSS_IMMORTAL,
+    // UNIT_TYPEID::PROTOSS_INTERCEPTOR,
+    // UNIT_TYPEID::PROTOSS_MOTHERSHIP,
+    // UNIT_TYPEID::PROTOSS_MOTHERSHIPCORE,
+    UNIT_TYPEID::PROTOSS_NEXUS,
+    UNIT_TYPEID::PROTOSS_OBSERVER,
+    UNIT_TYPEID::PROTOSS_ORACLE,
+    // UNIT_TYPEID::PROTOSS_ORACLESTASISTRAP,
+    UNIT_TYPEID::PROTOSS_PHOENIX,
+    UNIT_TYPEID::PROTOSS_PHOTONCANNON,
+    UNIT_TYPEID::PROTOSS_PROBE,
+    UNIT_TYPEID::PROTOSS_PYLON,
+    // UNIT_TYPEID::PROTOSS_PYLONOVERCHARGED,
+    UNIT_TYPEID::PROTOSS_ROBOTICSBAY,
+    UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY,
+    UNIT_TYPEID::PROTOSS_SENTRY,
+    UNIT_TYPEID::PROTOSS_SHIELDBATTERY,
+    UNIT_TYPEID::PROTOSS_STALKER,
+    UNIT_TYPEID::PROTOSS_STARGATE,
+    UNIT_TYPEID::PROTOSS_TEMPEST,
+    UNIT_TYPEID::PROTOSS_TEMPLARARCHIVE,
+    UNIT_TYPEID::PROTOSS_TWILIGHTCOUNCIL,
+    UNIT_TYPEID::PROTOSS_VOIDRAY,
+    UNIT_TYPEID::PROTOSS_WARPGATE,
+    UNIT_TYPEID::PROTOSS_WARPPRISM,
+    // UNIT_TYPEID::PROTOSS_WARPPRISMPHASING,
+    UNIT_TYPEID::PROTOSS_ZEALOT,
+};
+
 vector<pair<UNIT_TYPEID, int>> sampleUnitConfig (default_random_engine& rnd, bool guaranteeFood) {
-    auto& pool = guaranteeFood ? unitTypesTerran2 : unitTypesTerran3;
+    // auto& pool = guaranteeFood ? unitTypesTerran2 : unitTypesTerran3;
+    auto& pool = guaranteeFood ? unitTypesProtossAll : unitTypesProtossMilitary;
+    Race race = Race::Protoss;
 
     exponential_distribution<float> numUnitsDist;
     if (bernoulli_distribution(0.05)(rnd)) {
@@ -126,13 +220,13 @@ vector<pair<UNIT_TYPEID, int>> sampleUnitConfig (default_random_engine& rnd, boo
         UNIT_TYPEID type = pool[typeDist(rnd)];
         exponential_distribution<double> countDist;
 
-        if (!isStructure(type) && type != UNIT_TYPEID::TERRAN_SCV) {
+        if (!isStructure(type) && !isBasicHarvester(type)) {
             if (bernoulli_distribution(0.8)(rnd)) continue;
         }
 
         if (isStructure(type)) {
             countDist = exponential_distribution<double>(1.0/3.0);
-        } else if (type == UNIT_TYPEID::TERRAN_SCV) {
+        } else if (isBasicHarvester(type)) {
             countDist = exponential_distribution<double>(1.0/40.0);
         } else {
             if (bernoulli_distribution(0.05)(rnd)) {
@@ -147,15 +241,15 @@ vector<pair<UNIT_TYPEID, int>> sampleUnitConfig (default_random_engine& rnd, boo
             result.push_back(make_pair(type, min(100, cnt)));
 
             hasCMD |= isTownHall(type);
-            hasSCV |= type == UNIT_TYPEID::TERRAN_SCV;
+            hasSCV |= isBasicHarvester(type);
         }
     }
 
     if (guaranteeFood) {
         exponential_distribution<float> numSCVDist(1.0/15.0);
-        if (!hasSCV) result.push_back({UNIT_TYPEID::TERRAN_SCV, 1+(int)round(numSCVDist(rnd))});
+        if (!hasSCV) result.push_back({ getHarvesterUnitForRace(race), 1+(int)round(numSCVDist(rnd))});
         exponential_distribution<float> numCMDDist(1.0/1.0);
-        if (!hasCMD) result.push_back({UNIT_TYPEID::TERRAN_COMMANDCENTER, 1 + (int)round(numCMDDist(rnd))});
+        if (!hasCMD) result.push_back({ getTownHallForRace(race), 1 + (int)round(numCMDDist(rnd))});
     }
 
     if (guaranteeFood) {
@@ -168,7 +262,7 @@ vector<pair<UNIT_TYPEID, int>> sampleUnitConfig (default_random_engine& rnd, boo
         // Add some noise
         food = (int)round(normal_distribution<float>(food, 8)(rnd));
 
-        auto supplyUnit = getSupplyUnitForRace(Race::Terran);
+        auto supplyUnit = getSupplyUnitForRace(race);
         int numSupply = (-food + getUnitData(supplyUnit).food_provided - 1) / getUnitData(supplyUnit).food_provided;
         numSupply = max(numSupply, 0);
 
@@ -223,7 +317,7 @@ struct Session {
 
     template <class Archive>
     void serialize(Archive& archive) {
-        archive(instances);
+        archive(CEREAL_NVP(instances));
     }
 };
 
@@ -243,7 +337,7 @@ int main() {
     default_random_engine rnd(time(0));
     srand(time(0));
 
-    if (false) {
+    /*if (false) {
         // vector<pair<UNIT_TYPEID,int>> startingUnits = {{(UNIT_TYPEID)48, 6}, {(UNIT_TYPEID)50, 14}, {(UNIT_TYPEID)28, 1}, {(UNIT_TYPEID)30, 2}, {(UNIT_TYPEID)56, 37}, {(UNIT_TYPEID)28, 1}, {(UNIT_TYPEID)24, 2}, {(UNIT_TYPEID)35, 7}, {(UNIT_TYPEID)484, 8}, {(UNIT_TYPEID)20, 5}, {(UNIT_TYPEID)23, 1}, {(UNIT_TYPEID)19, 3}, {(UNIT_TYPEID)53, 19}, {(UNIT_TYPEID)33, 25}, {(UNIT_TYPEID)689, 22}, {(UNIT_TYPEID)49, 1}, {(UNIT_TYPEID)29, 3}, {(UNIT_TYPEID)57, 24}, {(UNIT_TYPEID)19, 1}, {(UNIT_TYPEID)53, 30}, {(UNIT_TYPEID)49, 2}, {(UNIT_TYPEID)30, 2}, {(UNIT_TYPEID)57, 1}, {(UNIT_TYPEID)51, 9}, {(UNIT_TYPEID)21, 3}, {(UNIT_TYPEID)48, 16}, {(UNIT_TYPEID)45, 12}, {(UNIT_TYPEID)18, 1}};
         vector<pair<UNIT_TYPEID,int>> startingUnits = {{UNIT_TYPEID::TERRAN_COMMANDCENTER, 1}, {UNIT_TYPEID::TERRAN_SCV, 12}, {UNIT_TYPEID::TERRAN_BARRACKS, 0}, {UNIT_TYPEID::TERRAN_SUPPLYDEPOT, 3}};
         for (auto p : startingUnits) {
@@ -335,7 +429,7 @@ int main() {
         }
 
         exit(0);
-    }
+    }*/
 
     Session session;
     for (int i = 0; i < 1000000; i++) {
@@ -344,11 +438,11 @@ int main() {
         exponential_distribution<double> vespeneDist(1.0/200.0);
 
         BuildOrderInstance inst;
-        inst.race = Race::Terran;
+        inst.race = Race::Protoss;
         auto startingUnits = sampleUnitConfig(rnd, true);
         auto targetUnits = sampleUnitConfig(rnd, false);
-        for (auto p : startingUnits) inst.startingUnits.push_back({ p.first, p.second });
         for (auto p : targetUnits) inst.targetUnits.push_back({ p.first, p.second });
+        for (auto p : startingUnits) inst.startingUnits.push_back({ p.first, p.second });
         inst.startingMinerals = mineralDist(rnd);
         inst.startingVespene = vespeneDist(rnd);
 
@@ -359,7 +453,7 @@ int main() {
 
         inst.buildOrderTime = 1000000000;
         inst.version = 5;
-
+        
         for (int k = 0; k < 4; k++) {
             auto buildOrder = findBestBuildOrderGenetic(startState, targetUnits);
             auto state2 = startState;
@@ -390,7 +484,7 @@ int main() {
 
         if (session.instances.size() > 20) {
             stringstream ss;
-            ss << "training_data/buildorders/1/chunk_" << rand() << ".json";
+            ss << "training_data/buildorders_time/1/chunk_" << rand() << ".json";
             ofstream json(ss.str());
             {
                 cereal::JSONOutputArchive archive(json);
