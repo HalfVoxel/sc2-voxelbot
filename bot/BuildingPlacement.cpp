@@ -75,7 +75,6 @@ void BuildingPlacement::FindWallPlacements(Point3D startLocation_) {
         wallPlacement = p;
         locationQueues[UNIT_TYPEID::TERRAN_BARRACKS].push_back(p);
     }
-    bot.Debug()->SendDebug();
 }
 
 Point2D BuildingPlacement::GetReasonablePlacement(sc2::UnitTypeID unitType) {
