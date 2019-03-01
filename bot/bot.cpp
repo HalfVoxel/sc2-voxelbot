@@ -174,8 +174,10 @@ void Bot::OnStep() {
         //cout << "FPS: " << (int)(ticks/(double)(time(0) - t0)) << endl;
     }
 
-    // if ((ticks % 200) == 1 && (ticks == 1 || ticks == 2)) {
-    if ((ticks == 1 || ticks == 2)) {
+    mlMovement.Tick(Observation());
+
+    if ((ticks % 200) == 1) {
+    // if ((ticks == 1 || ticks == 2)) {
         if (currentBuildOrderFuture.valid()) {
             currentBuildOrderFuture.wait();
             float buildOrderTime;
@@ -194,8 +196,8 @@ void Bot::OnStep() {
                 enemyScaling = max(1.0f, enemyScaling * 0.9f);
             }
             cout << "Enemy scaling " << enemyScaling << endl;
-
-            currentBuildOrder = {
+            
+            /*currentBuildOrder = {
                 UNIT_TYPEID::PROTOSS_PROBE,
                 UNIT_TYPEID::PROTOSS_PYLON,
                 UNIT_TYPEID::PROTOSS_PROBE,
@@ -241,7 +243,7 @@ void Bot::OnStep() {
                 UNIT_TYPEID::PROTOSS_OBSERVER,
                 UNIT_TYPEID::PROTOSS_CARRIER,
                 UNIT_TYPEID::PROTOSS_IMMORTAL,
-            };
+            };*/
 
             
         }
@@ -277,7 +279,7 @@ void Bot::OnStep() {
         }
 
         map<UNIT_TYPEID, int> targetUnitsCount;
-        BuildState buildOrderStartingState(Observation(), Unit::Alliance::Self, Race::Terran, BuildResources(Observation()->GetMinerals(), Observation()->GetVespene()), 0);
+        BuildState buildOrderStartingState(Observation(), Unit::Alliance::Self, Race::Protoss, BuildResources(Observation()->GetMinerals(), Observation()->GetVespene()), 0);
         for (const auto& u : buildOrderStartingState.units) {
             targetUnitsCount[u.type] += u.units;
         }
@@ -295,9 +297,10 @@ void Bot::OnStep() {
         }
 
         currentBuildOrderFuture = std::async(std::launch::async, [=]{
-            return make_tuple(vector<UNIT_TYPEID>(0), buildOrderStartingState, 0.0f, vector<pair<UNIT_TYPEID,int>>(0));
+            // return make_tuple(vector<UNIT_TYPEID>(0), buildOrderStartingState, 0.0f, vector<pair<UNIT_TYPEID,int>>(0));
             // Make sure most buildings are built even though they are currently under construction.
             // The buildTimePredictor cannot take buildings under construction into account.
+            cout << "Async..." << endl;
             auto futureState = buildOrderStartingState;
             futureState.simulate(futureState.time + 40);
             futureState.resources = buildOrderStartingState.resources;
@@ -309,7 +312,9 @@ void Bot::OnStep() {
                 else targetUnitsCount2[u.first] = u.second;
             }
 
-            auto bestCounter = findBestCompositionGenetic(combatPredictor, availableUnitTypesTerran, startingState, &buildTimePredictor, &futureState, &lastCounter);
+            cout << "Finding best composition" << endl;
+            auto bestCounter = findBestCompositionGenetic(combatPredictor, availableUnitTypesProtoss, startingState, &buildTimePredictor, &futureState, &lastCounter);
+            // auto bestCounter = findBestCompositionGenetic(combatPredictor, availableUnitTypesProtoss, startingState, nullptr, &futureState, &lastCounter);
             /*vector<pair<UNIT_TYPEID, int>> bestCounter = {
                 { UNIT_TYPEID::TERRAN_MARINE, 30 },
                 { UNIT_TYPEID::TERRAN_SIEGETANK, 10 },
@@ -404,11 +409,14 @@ void Bot::OnStep() {
     spendingManager.OnStep();
     // DebugBuildOrder(currentBuildOrder, currentBuildOrderTime);
     influenceManager.OnStep();
-    scoutingManager->OnStep();
-    tacticalManager->OnStep();
+    // scoutingManager->OnStep();
+    // tacticalManager->OnStep();
+
     // cameraController.OnStep();
     // DebugUnitPositions();
-    
+
+    Debug()->SendDebug();
+
     Actions()->SendActions();
 }
 
