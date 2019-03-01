@@ -102,8 +102,6 @@ void MLMovement::Tick(const ObservationInterface* observation) {
         lastMoveProbs.clear();
         assert(validUnits.size() == res.size());
 
-        vector<int> sampledTags;
-        vector<const Unit*> sampledUnits;
         vector<bool> isSampled;
         for (int i = 0; i < res.size(); i++) {
             if (res[i] > 0.05) {
@@ -129,10 +127,14 @@ void MLMovement::Tick(const ObservationInterface* observation) {
                 }
             }
 
+            vector<int> sampledTags;
+            vector<const Unit*> sampledUnits;
+
             if (sampledUnit != -1) {
                 // Pick other nearby units
                 for (int j = 0; j < res.size(); j++) {
-                    if (!isSampled[j] && Distance2D(validUnits[j]->pos, validUnits[sampledUnit]->pos) < 8 && res[j] > res[sampledUnit]*0.5f) {
+                    bool valid = (armyFilter == -1 || isArmy(validUnits[j]->unit_type) == armyFilter);
+                    if (valid && !isSampled[j] && Distance2D(validUnits[j]->pos, validUnits[sampledUnit]->pos) < 8 && res[j] > res[sampledUnit]*0.5f) {
                         sampledTags.push_back((int)validUnits[j]->tag);
                         sampledUnits.push_back(validUnits[j]);
                         isSampled[j] = true;
