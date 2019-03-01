@@ -1380,7 +1380,7 @@ Gateway PROTOSS_GATEWAY
 	Weapons:
 	Has been: PROTOSS_GATEWAY, 
 	Can become: PROTOSS_WARPGATE, 
-	Dependencies: PROTOSS_NEXUS, PROTOSS_PYLON, PROTOSS_PROBE, 
+	Dependencies: PROTOSS_PYLON, PROTOSS_PROBE, PROTOSS_NEXUS, 
 
 Forge PROTOSS_FORGE
 	ID: 63
@@ -1544,7 +1544,7 @@ RoboticsBay PROTOSS_ROBOTICSBAY
 
 RoboticsFacility PROTOSS_ROBOTICSFACILITY
 	ID: 71
-	Minerals: 200
+	Minerals: 150
 	Vespene: 100
 	Supply Required: 0
 	Supply Provided: 0
@@ -1605,7 +1605,7 @@ Zealot PROTOSS_ZEALOT
 
 	Has been: PROTOSS_ZEALOT, 
 	Can become: 
-	Dependencies: PROTOSS_GATEWAY, PROTOSS_NEXUS, PROTOSS_PYLON, PROTOSS_PROBE, 
+	Dependencies: PROTOSS_GATEWAY, PROTOSS_PYLON, PROTOSS_PROBE, PROTOSS_NEXUS, 
 
 Stalker PROTOSS_STALKER
 	ID: 74
@@ -1815,7 +1815,7 @@ Observer PROTOSS_OBSERVER
 	Supply Provided: 0
 	Build time: 480
 	Armor: 0
-	Movement speed: 1.875
+	Movement speed: 2.14844
 	Unit Alias: UNKNOWN
 	Tech Aliases: 
 	Tech Requirement: UNKNOWN
@@ -1828,7 +1828,7 @@ Observer PROTOSS_OBSERVER
 
 Immortal PROTOSS_IMMORTAL
 	ID: 83
-	Minerals: 250
+	Minerals: 275
 	Vespene: 100
 	Supply Required: 4
 	Supply Provided: 0
@@ -2019,7 +2019,7 @@ HydraliskDen ZERG_HYDRALISKDEN
 	Weapons:
 	Has been: ZERG_HYDRALISKDEN, ZERG_DRONE, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_LAIR, ZERG_DRONE, ZERG_LARVA, ZERG_HATCHERY, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_LAIR, ZERG_DRONE, ZERG_LARVA, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, 
 
 Spire ZERG_SPIRE
 	ID: 92
@@ -2038,7 +2038,7 @@ Spire ZERG_SPIRE
 	Weapons:
 	Has been: ZERG_SPIRE, ZERG_DRONE, 
 	Can become: ZERG_GREATERSPIRE, 
-	Dependencies: ZERG_EXTRACTOR, ZERG_LAIR, ZERG_DRONE, ZERG_LARVA, ZERG_HATCHERY, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_LAIR, ZERG_DRONE, ZERG_LARVA, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, 
 
 UltraliskCavern ZERG_ULTRALISKCAVERN
 	ID: 93
@@ -2057,7 +2057,7 @@ UltraliskCavern ZERG_ULTRALISKCAVERN
 	Weapons:
 	Has been: ZERG_ULTRALISKCAVERN, ZERG_DRONE, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_HIVE, ZERG_DRONE, ZERG_LARVA, ZERG_LAIR, ZERG_HATCHERY, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_HIVE, ZERG_DRONE, ZERG_LARVA, ZERG_INFESTATIONPIT, ZERG_LAIR, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, 
 
 InfestationPit ZERG_INFESTATIONPIT
 	ID: 94
@@ -2076,7 +2076,7 @@ InfestationPit ZERG_INFESTATIONPIT
 	Weapons:
 	Has been: ZERG_INFESTATIONPIT, ZERG_DRONE, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_LAIR, ZERG_DRONE, ZERG_LARVA, ZERG_HATCHERY, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_LAIR, ZERG_DRONE, ZERG_LARVA, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, 
 
 NydusNetwork ZERG_NYDUSNETWORK
 	ID: 95
@@ -2095,7 +2095,7 @@ NydusNetwork ZERG_NYDUSNETWORK
 	Weapons:
 	Has been: ZERG_NYDUSNETWORK, ZERG_DRONE, 
 	Can become: ZERG_NYDUSCANAL, 
-	Dependencies: ZERG_EXTRACTOR, ZERG_LAIR, ZERG_DRONE, ZERG_LARVA, ZERG_HATCHERY, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_LAIR, ZERG_DRONE, ZERG_LARVA, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, 
 
 BanelingNest ZERG_BANELINGNEST
 	ID: 96
@@ -2201,13 +2201,13 @@ Lair ZERG_LAIR
 	Tech Alias: ZERG_HATCHERY
 	Unit Alias: UNKNOWN
 	Tech Aliases: ZERG_HATCHERY 
-	Tech Requirement: UNKNOWN
+	Tech Requirement: ZERG_SPAWNINGPOOL
 	Ability: MORPH_LAIR
 	Attributes: Armored Biological Structure
 	Weapons:
 	Has been: ZERG_LAIR, ZERG_HATCHERY, ZERG_DRONE, 
 	Can become: ZERG_HIVE, 
-	Dependencies: ZERG_HATCHERY, ZERG_EXTRACTOR, ZERG_DRONE, ZERG_LARVA, 
+	Dependencies: ZERG_HATCHERY, ZERG_EXTRACTOR, ZERG_SPAWNINGPOOL, ZERG_DRONE, ZERG_LARVA, 
 
 Hive ZERG_HIVE
 	ID: 101
@@ -2222,13 +2222,13 @@ Hive ZERG_HIVE
 	Tech Alias: ZERG_LAIR
 	Unit Alias: UNKNOWN
 	Tech Aliases: ZERG_HATCHERY ZERG_LAIR 
-	Tech Requirement: UNKNOWN
+	Tech Requirement: ZERG_INFESTATIONPIT
 	Ability: MORPH_HIVE
 	Attributes: Armored Biological Structure
 	Weapons:
 	Has been: ZERG_HIVE, ZERG_LAIR, ZERG_HATCHERY, ZERG_DRONE, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_LAIR, ZERG_HATCHERY, ZERG_DRONE, ZERG_LARVA, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_INFESTATIONPIT, ZERG_LAIR, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, ZERG_DRONE, ZERG_LARVA, 
 
 GreaterSpire ZERG_GREATERSPIRE
 	ID: 102
@@ -2242,13 +2242,13 @@ GreaterSpire ZERG_GREATERSPIRE
 	Tech Alias: ZERG_SPIRE
 	Unit Alias: UNKNOWN
 	Tech Aliases: ZERG_SPIRE 
-	Tech Requirement: UNKNOWN
+	Tech Requirement: ZERG_HIVE
 	Ability: MORPH_GREATERSPIRE
 	Attributes: Armored Biological Structure
 	Weapons:
 	Has been: ZERG_GREATERSPIRE, ZERG_SPIRE, ZERG_DRONE, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_SPIRE, ZERG_LAIR, ZERG_DRONE, ZERG_LARVA, ZERG_HATCHERY, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_SPIRE, ZERG_HIVE, ZERG_INFESTATIONPIT, ZERG_LAIR, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, ZERG_DRONE, ZERG_LARVA, 
 
 Egg ZERG_EGG
 	ID: 103
@@ -2367,7 +2367,7 @@ Hydralisk ZERG_HYDRALISK
 
 	Has been: ZERG_HYDRALISK, 
 	Can become: ZERG_LURKERMP, 
-	Dependencies: ZERG_EXTRACTOR, ZERG_HYDRALISKDEN, ZERG_LARVA, ZERG_LAIR, ZERG_DRONE, ZERG_HATCHERY, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_HYDRALISKDEN, ZERG_LARVA, ZERG_LAIR, ZERG_DRONE, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, 
 
 Mutalisk ZERG_MUTALISK
 	ID: 108
@@ -2394,7 +2394,7 @@ Mutalisk ZERG_MUTALISK
 
 	Has been: ZERG_MUTALISK, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_SPIRE, ZERG_LARVA, ZERG_LAIR, ZERG_DRONE, ZERG_HATCHERY, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_SPIRE, ZERG_LARVA, ZERG_LAIR, ZERG_DRONE, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, 
 
 Ultralisk ZERG_ULTRALISK
 	ID: 109
@@ -2421,7 +2421,7 @@ Ultralisk ZERG_ULTRALISK
 
 	Has been: ZERG_ULTRALISK, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_ULTRALISKCAVERN, ZERG_LARVA, ZERG_HIVE, ZERG_DRONE, ZERG_LAIR, ZERG_HATCHERY, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_ULTRALISKCAVERN, ZERG_LARVA, ZERG_HIVE, ZERG_DRONE, ZERG_INFESTATIONPIT, ZERG_LAIR, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, 
 
 Roach ZERG_ROACH
 	ID: 110
@@ -2467,7 +2467,7 @@ Infestor ZERG_INFESTOR
 	Weapons:
 	Has been: ZERG_INFESTOR, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_INFESTATIONPIT, ZERG_LARVA, ZERG_LAIR, ZERG_DRONE, ZERG_HATCHERY, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_INFESTATIONPIT, ZERG_LARVA, ZERG_LAIR, ZERG_DRONE, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, 
 
 Corruptor ZERG_CORRUPTOR
 	ID: 112
@@ -2494,7 +2494,7 @@ Corruptor ZERG_CORRUPTOR
 
 	Has been: ZERG_CORRUPTOR, 
 	Can become: ZERG_BROODLORD, 
-	Dependencies: ZERG_EXTRACTOR, ZERG_SPIRE, ZERG_LARVA, ZERG_LAIR, ZERG_DRONE, ZERG_HATCHERY, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_SPIRE, ZERG_LARVA, ZERG_LAIR, ZERG_DRONE, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, 
 
 BroodLordCocoon ZERG_BROODLORDCOCOON
 	ID: 113
@@ -2526,7 +2526,7 @@ BroodLord ZERG_BROODLORD
 	Movement speed: 1.40625
 	Unit Alias: UNKNOWN
 	Tech Aliases: 
-	Tech Requirement: UNKNOWN
+	Tech Requirement: ZERG_GREATERSPIRE
 	Ability: MORPH_BROODLORD
 	Attributes: Armored Biological Massive
 	Weapons:
@@ -2540,7 +2540,7 @@ BroodLord ZERG_BROODLORD
 
 	Has been: ZERG_BROODLORD, ZERG_CORRUPTOR, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_CORRUPTOR, ZERG_SPIRE, ZERG_LARVA, ZERG_LAIR, ZERG_DRONE, ZERG_HATCHERY, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_GREATERSPIRE, ZERG_CORRUPTOR, ZERG_SPIRE, ZERG_LARVA, ZERG_LAIR, ZERG_DRONE, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, ZERG_HIVE, ZERG_INFESTATIONPIT, 
 
 BanelingBurrowed ZERG_BANELINGBURROWED
 	ID: 115
@@ -2837,13 +2837,13 @@ Overseer ZERG_OVERSEER
 	Tech Alias: ZERG_OVERLORD
 	Unit Alias: UNKNOWN
 	Tech Aliases: ZERG_OVERLORD 
-	Tech Requirement: UNKNOWN
+	Tech Requirement: ZERG_LAIR
 	Ability: MORPH_OVERSEER
 	Attributes: Armored Biological
 	Weapons:
 	Has been: ZERG_OVERSEER, ZERG_OVERLORD, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_OVERLORD, ZERG_LARVA, ZERG_DRONE, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_LAIR, ZERG_OVERLORD, ZERG_LARVA, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, ZERG_DRONE, 
 
 PlanetaryFortress TERRAN_PLANETARYFORTRESS
 	ID: 130
@@ -2857,7 +2857,7 @@ PlanetaryFortress TERRAN_PLANETARYFORTRESS
 	Tech Alias: TERRAN_COMMANDCENTER
 	Unit Alias: UNKNOWN
 	Tech Aliases: TERRAN_COMMANDCENTER 
-	Tech Requirement: UNKNOWN
+	Tech Requirement: TERRAN_ENGINEERINGBAY
 	Ability: MORPH_PLANETARYFORTRESS
 	Attributes: Armored Mechanical Structure
 	Weapons:
@@ -2871,7 +2871,7 @@ PlanetaryFortress TERRAN_PLANETARYFORTRESS
 
 	Has been: TERRAN_PLANETARYFORTRESS, TERRAN_COMMANDCENTER, 
 	Can become: 
-	Dependencies: TERRAN_COMMANDCENTER, TERRAN_REFINERY, TERRAN_SCV, 
+	Dependencies: TERRAN_COMMANDCENTER, TERRAN_REFINERY, TERRAN_ENGINEERINGBAY, TERRAN_SCV, 
 
 UltraliskBurrowed UNKNOWN
 	ID: 131
@@ -2904,13 +2904,13 @@ OrbitalCommand TERRAN_ORBITALCOMMAND
 	Tech Alias: TERRAN_COMMANDCENTER
 	Unit Alias: UNKNOWN
 	Tech Aliases: TERRAN_COMMANDCENTER 
-	Tech Requirement: UNKNOWN
+	Tech Requirement: TERRAN_BARRACKS
 	Ability: MORPH_ORBITALCOMMAND
 	Attributes: Armored Mechanical Structure
 	Weapons:
 	Has been: TERRAN_ORBITALCOMMAND, TERRAN_COMMANDCENTER, 
 	Can become: 
-	Dependencies: TERRAN_COMMANDCENTER, TERRAN_SCV, 
+	Dependencies: TERRAN_COMMANDCENTER, TERRAN_BARRACKS, TERRAN_SUPPLYDEPOT, TERRAN_SCV, 
 
 WarpGate PROTOSS_WARPGATE
 	ID: 133
@@ -2930,7 +2930,7 @@ WarpGate PROTOSS_WARPGATE
 	Weapons:
 	Has been: PROTOSS_WARPGATE, PROTOSS_GATEWAY, 
 	Can become: 
-	Dependencies: PROTOSS_PYLON, PROTOSS_GATEWAY, PROTOSS_NEXUS, PROTOSS_PROBE, 
+	Dependencies: PROTOSS_PYLON, PROTOSS_GATEWAY, PROTOSS_PROBE, PROTOSS_NEXUS, 
 
 OrbitalCommandFlying TERRAN_ORBITALCOMMANDFLYING
 	ID: 134
@@ -3113,7 +3113,7 @@ NydusCanal ZERG_NYDUSCANAL
 	Weapons:
 	Has been: ZERG_NYDUSCANAL, ZERG_NYDUSNETWORK, ZERG_DRONE, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_NYDUSNETWORK, ZERG_LAIR, ZERG_DRONE, ZERG_LARVA, ZERG_HATCHERY, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_NYDUSNETWORK, ZERG_LAIR, ZERG_DRONE, ZERG_LARVA, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, 
 
 BroodlingEscort UNKNOWN
 	ID: 143
@@ -6337,7 +6337,7 @@ Adept PROTOSS_ADEPT
 	Vespene: 25
 	Supply Required: 2
 	Supply Provided: 0
-	Build time: 608
+	Build time: 672
 	Armor: 1
 	Movement speed: 2.5
 	Unit Alias: UNKNOWN
@@ -9873,7 +9873,7 @@ SwarmHostMP ZERG_SWARMHOSTMP
 	Weapons:
 	Has been: ZERG_SWARMHOSTMP, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_INFESTATIONPIT, ZERG_LARVA, ZERG_LAIR, ZERG_DRONE, ZERG_HATCHERY, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_INFESTATIONPIT, ZERG_LARVA, ZERG_LAIR, ZERG_DRONE, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, 
 
 Oracle PROTOSS_ORACLE
 	ID: 495
@@ -9888,7 +9888,7 @@ Oracle PROTOSS_ORACLE
 	Tech Aliases: 
 	Tech Requirement: UNKNOWN
 	Ability: TRAIN_ORACLE
-	Attributes: Light Mechanical Psionic
+	Attributes: Armored Mechanical Psionic
 	Weapons:
 	Has been: PROTOSS_ORACLE, 
 	Can become: 
@@ -9902,7 +9902,7 @@ Tempest PROTOSS_TEMPEST
 	Supply Provided: 0
 	Build time: 960
 	Armor: 2
-	Movement speed: 2.5
+	Movement speed: 2.25
 	Unit Alias: UNKNOWN
 	Tech Aliases: 
 	Tech Requirement: PROTOSS_FLEETBEACON
@@ -9992,7 +9992,7 @@ Viper ZERG_VIPER
 	Weapons:
 	Has been: ZERG_VIPER, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_HIVE, ZERG_LARVA, ZERG_LAIR, ZERG_HATCHERY, ZERG_DRONE, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_HIVE, ZERG_LARVA, ZERG_INFESTATIONPIT, ZERG_LAIR, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, ZERG_DRONE, 
 
 WidowMineBurrowed TERRAN_WIDOWMINEBURROWED
 	ID: 500
@@ -10044,13 +10044,13 @@ LurkerMP ZERG_LURKERMP
 	Movement speed: 2.95312
 	Unit Alias: UNKNOWN
 	Tech Aliases: 
-	Tech Requirement: UNKNOWN
+	Tech Requirement: ZERG_LURKERDENMP
 	Ability: UNKNOWN
 	Attributes: Armored Biological
 	Weapons:
 	Has been: ZERG_LURKERMP, ZERG_HYDRALISK, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_DRONE, ZERG_LARVA, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_LURKERDENMP, ZERG_HYDRALISKDEN, ZERG_DRONE, ZERG_LARVA, ZERG_LAIR, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, 
 
 LurkerMPBurrowed ZERG_LURKERMPBURROWED
 	ID: 503
@@ -10096,7 +10096,7 @@ LurkerDenMP ZERG_LURKERDENMP
 	Weapons:
 	Has been: ZERG_LURKERDENMP, ZERG_DRONE, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_HYDRALISKDEN, ZERG_DRONE, ZERG_LARVA, ZERG_LAIR, ZERG_HATCHERY, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_HYDRALISKDEN, ZERG_DRONE, ZERG_LARVA, ZERG_LAIR, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, 
 
 ExtendingBridgeNEWide8Out UNKNOWN
 	ID: 505
@@ -13586,7 +13586,7 @@ Ravager ZERG_RAVAGER
 	Movement speed: 2.75
 	Unit Alias: UNKNOWN
 	Tech Aliases: 
-	Tech Requirement: UNKNOWN
+	Tech Requirement: ZERG_ROACHWARREN
 	Ability: MORPH_RAVAGER
 	Attributes: Biological
 	Weapons:
@@ -13600,7 +13600,7 @@ Ravager ZERG_RAVAGER
 
 	Has been: ZERG_RAVAGER, ZERG_ROACH, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_ROACH, ZERG_ROACHWARREN, ZERG_LARVA, ZERG_SPAWNINGPOOL, ZERG_DRONE, ZERG_HATCHERY, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_ROACHWARREN, ZERG_ROACH, ZERG_LARVA, ZERG_SPAWNINGPOOL, ZERG_DRONE, ZERG_HATCHERY, 
 
 Liberator TERRAN_LIBERATOR
 	ID: 689
@@ -13668,7 +13668,7 @@ ThorAP TERRAN_THORAP
 		Target: Air
 		Bonuses: Massive=+15 
 		Attacks: 1
-		Range: 10
+		Range: 11
 		Cooldown: 2.3999
 		DPS: 16.6673
 
@@ -14368,7 +14368,7 @@ GuardianMP UNKNOWN
 	Movement speed: 1.5
 	Unit Alias: UNKNOWN
 	Tech Aliases: 
-	Tech Requirement: UNKNOWN
+	Tech Requirement: ZERG_GREATERSPIRE
 	Ability: UNKNOWN
 	Attributes: Armored Biological Massive
 	Weapons:
@@ -14382,7 +14382,7 @@ GuardianMP UNKNOWN
 
 	Has been: UNKNOWN, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_DRONE, ZERG_LARVA, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_GREATERSPIRE, ZERG_SPIRE, ZERG_HIVE, ZERG_INFESTATIONPIT, ZERG_LAIR, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, ZERG_DRONE, ZERG_LARVA, 
 
 DevourerCocoonMP UNKNOWN
 	ID: 728
@@ -14414,7 +14414,7 @@ DevourerMP UNKNOWN
 	Movement speed: 2.25
 	Unit Alias: UNKNOWN
 	Tech Aliases: 
-	Tech Requirement: UNKNOWN
+	Tech Requirement: ZERG_GREATERSPIRE
 	Ability: UNKNOWN
 	Attributes: Armored Biological Massive
 	Weapons:
@@ -14428,7 +14428,7 @@ DevourerMP UNKNOWN
 
 	Has been: UNKNOWN, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_DRONE, ZERG_LARVA, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_GREATERSPIRE, ZERG_SPIRE, ZERG_HIVE, ZERG_INFESTATIONPIT, ZERG_LAIR, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, ZERG_DRONE, ZERG_LARVA, 
 
 DefilerMPBurrowed UNKNOWN
 	ID: 730
@@ -17612,13 +17612,13 @@ OverlordTransport ZERG_OVERLORDTRANSPORT
 	Tech Alias: ZERG_OVERLORD
 	Unit Alias: UNKNOWN
 	Tech Aliases: ZERG_OVERLORD 
-	Tech Requirement: UNKNOWN
+	Tech Requirement: ZERG_LAIR
 	Ability: MORPH_OVERLORDTRANSPORT
 	Attributes: Armored Biological
 	Weapons:
 	Has been: ZERG_OVERLORDTRANSPORT, 
 	Can become: 
-	Dependencies: ZERG_OVERLORD, ZERG_LARVA, 
+	Dependencies: ZERG_LAIR, ZERG_OVERLORD, ZERG_LARVA, ZERG_HATCHERY, ZERG_EXTRACTOR, ZERG_SPAWNINGPOOL, ZERG_DRONE, 
 
 PylonOvercharged PROTOSS_PYLONOVERCHARGED
 	ID: 894
@@ -19008,7 +19008,7 @@ OverseerSiegeMode UNKNOWN
 	Weapons:
 	Has been: UNKNOWN, 
 	Can become: 
-	Dependencies: ZERG_EXTRACTOR, ZERG_OVERSEER, ZERG_OVERLORD, ZERG_LARVA, ZERG_DRONE, 
+	Dependencies: ZERG_EXTRACTOR, ZERG_OVERSEER, ZERG_LAIR, ZERG_OVERLORD, ZERG_LARVA, ZERG_HATCHERY, ZERG_SPAWNINGPOOL, ZERG_DRONE, 
 
 RavenRepairDrone UNKNOWN
 	ID: 1913
@@ -19583,6 +19583,275 @@ ParasiticBombRelayDummy UNKNOWN
 	Tech Requirement: UNKNOWN
 	Ability: UNKNOWN
 	Attributes:
+	Weapons:
+	Has been: UNKNOWN, 
+	Can become: 
+	Dependencies: 
+
+PreviewBunkerUpgraded UNKNOWN
+	ID: 1943
+	Minerals: 0
+	Vespene: 0
+	Supply Required: 0
+	Supply Provided: 0
+	Build time: 0
+	Armor: 0
+	Movement speed: 0
+	Unit Alias: UNKNOWN
+	Tech Aliases: 
+	Tech Requirement: UNKNOWN
+	Ability: UNKNOWN
+	Attributes:
+	Weapons:
+	Has been: UNKNOWN, 
+	Can become: 
+	Dependencies: 
+
+AssimilatorRich UNKNOWN
+	ID: 1944
+	Minerals: 75
+	Vespene: 0
+	Supply Required: 0
+	Supply Provided: 0
+	Build time: 0
+	Armor: 1
+	Movement speed: 0
+	Tech Alias: PROTOSS_ASSIMILATOR
+	Unit Alias: PROTOSS_ASSIMILATOR
+	Tech Aliases: PROTOSS_ASSIMILATOR 
+	Tech Requirement: UNKNOWN
+	Ability: UNKNOWN
+	Attributes: Armored Structure
+	Weapons:
+	Has been: UNKNOWN, 
+	Can become: 
+	Dependencies: PROTOSS_PYLON, PROTOSS_PROBE, PROTOSS_NEXUS, 
+
+ExtractorRich UNKNOWN
+	ID: 1945
+	Minerals: 75
+	Vespene: 0
+	Supply Required: 0
+	Supply Provided: 0
+	Build time: 0
+	Armor: 1
+	Movement speed: 0
+	Tech Alias: ZERG_EXTRACTOR
+	Unit Alias: ZERG_EXTRACTOR
+	Tech Aliases: ZERG_EXTRACTOR 
+	Tech Requirement: UNKNOWN
+	Ability: UNKNOWN
+	Attributes: Armored Biological Structure
+	Weapons:
+	Has been: UNKNOWN, 
+	Can become: 
+	Dependencies: 
+
+InhibitorZoneSmall UNKNOWN
+	ID: 1946
+	Minerals: 0
+	Vespene: 0
+	Supply Required: 0
+	Supply Provided: 0
+	Build time: 0
+	Armor: 0
+	Movement speed: 0
+	Unit Alias: UNKNOWN
+	Tech Aliases: 
+	Tech Requirement: UNKNOWN
+	Ability: UNKNOWN
+	Attributes: Structure
+	Weapons:
+	Has been: UNKNOWN, 
+	Can become: 
+	Dependencies: 
+
+InhibitorZoneMedium UNKNOWN
+	ID: 1947
+	Minerals: 0
+	Vespene: 0
+	Supply Required: 0
+	Supply Provided: 0
+	Build time: 0
+	Armor: 0
+	Movement speed: 0
+	Unit Alias: UNKNOWN
+	Tech Aliases: 
+	Tech Requirement: UNKNOWN
+	Ability: UNKNOWN
+	Attributes: Structure
+	Weapons:
+	Has been: UNKNOWN, 
+	Can become: 
+	Dependencies: 
+
+InhibitorZoneLarge UNKNOWN
+	ID: 1948
+	Minerals: 0
+	Vespene: 0
+	Supply Required: 0
+	Supply Provided: 0
+	Build time: 0
+	Armor: 0
+	Movement speed: 0
+	Unit Alias: UNKNOWN
+	Tech Aliases: 
+	Tech Requirement: UNKNOWN
+	Ability: UNKNOWN
+	Attributes: Structure
+	Weapons:
+	Has been: UNKNOWN, 
+	Can become: 
+	Dependencies: 
+
+RefineryRich UNKNOWN
+	ID: 1949
+	Minerals: 75
+	Vespene: 0
+	Supply Required: 0
+	Supply Provided: 0
+	Build time: 0
+	Armor: 1
+	Movement speed: 0
+	Tech Alias: TERRAN_REFINERY
+	Unit Alias: TERRAN_REFINERY
+	Tech Aliases: TERRAN_REFINERY 
+	Tech Requirement: UNKNOWN
+	Ability: UNKNOWN
+	Attributes: Armored Mechanical Structure
+	Weapons:
+	Has been: UNKNOWN, 
+	Can become: 
+	Dependencies: 
+
+MineralField450 UNKNOWN
+	ID: 1950
+	Minerals: 0
+	Vespene: 0
+	Supply Required: 0
+	Supply Provided: 0
+	Build time: 0
+	Armor: 10
+	Movement speed: 0
+	Unit Alias: UNKNOWN
+	Tech Aliases: 
+	Tech Requirement: UNKNOWN
+	Ability: UNKNOWN
+	Attributes: Structure
+	Weapons:
+	Has been: UNKNOWN, 
+	Can become: 
+	Dependencies: 
+
+CollapsibleRockTowerDebrisRampLeftGreen UNKNOWN
+	ID: 1951
+	Minerals: 0
+	Vespene: 0
+	Supply Required: 0
+	Supply Provided: 0
+	Build time: 0
+	Armor: 3
+	Movement speed: 0
+	Unit Alias: UNKNOWN
+	Tech Aliases: 
+	Tech Requirement: UNKNOWN
+	Ability: UNKNOWN
+	Attributes: Armored Structure
+	Weapons:
+	Has been: UNKNOWN, 
+	Can become: 
+	Dependencies: 
+
+CollapsibleRockTowerDebrisRampRightGreen UNKNOWN
+	ID: 1952
+	Minerals: 0
+	Vespene: 0
+	Supply Required: 0
+	Supply Provided: 0
+	Build time: 0
+	Armor: 3
+	Movement speed: 0
+	Unit Alias: UNKNOWN
+	Tech Aliases: 
+	Tech Requirement: UNKNOWN
+	Ability: UNKNOWN
+	Attributes: Armored Structure
+	Weapons:
+	Has been: UNKNOWN, 
+	Can become: 
+	Dependencies: 
+
+CollapsibleRockTowerPushUnitRampLeftGreen UNKNOWN
+	ID: 1953
+	Minerals: 0
+	Vespene: 0
+	Supply Required: 0
+	Supply Provided: 0
+	Build time: 0
+	Armor: 0
+	Movement speed: 0
+	Unit Alias: UNKNOWN
+	Tech Aliases: 
+	Tech Requirement: UNKNOWN
+	Ability: UNKNOWN
+	Attributes: Armored Structure
+	Weapons:
+	Has been: UNKNOWN, 
+	Can become: 
+	Dependencies: 
+
+CollapsibleRockTowerPushUnitRampRightGreen UNKNOWN
+	ID: 1954
+	Minerals: 0
+	Vespene: 0
+	Supply Required: 0
+	Supply Provided: 0
+	Build time: 0
+	Armor: 0
+	Movement speed: 0
+	Unit Alias: UNKNOWN
+	Tech Aliases: 
+	Tech Requirement: UNKNOWN
+	Ability: UNKNOWN
+	Attributes: Armored Structure
+	Weapons:
+	Has been: UNKNOWN, 
+	Can become: 
+	Dependencies: 
+
+CollapsibleRockTowerRampLeftGreen UNKNOWN
+	ID: 1955
+	Minerals: 0
+	Vespene: 0
+	Supply Required: 0
+	Supply Provided: 0
+	Build time: 0
+	Armor: 3
+	Movement speed: 0
+	Unit Alias: UNKNOWN
+	Tech Aliases: 
+	Tech Requirement: UNKNOWN
+	Ability: UNKNOWN
+	Attributes: Armored Structure
+	Weapons:
+	Has been: UNKNOWN, 
+	Can become: 
+	Dependencies: 
+
+CollapsibleRockTowerRampRightGreen UNKNOWN
+	ID: 1956
+	Minerals: 0
+	Vespene: 0
+	Supply Required: 0
+	Supply Provided: 0
+	Build time: 0
+	Armor: 3
+	Movement speed: 0
+	Unit Alias: UNKNOWN
+	Tech Aliases: 
+	Tech Requirement: UNKNOWN
+	Ability: UNKNOWN
+	Attributes: Armored Structure
 	Weapons:
 	Has been: UNKNOWN, 
 	Can become: 
