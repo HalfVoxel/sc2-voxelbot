@@ -40,6 +40,7 @@ struct CombatPredictor {
 CombatUnit makeUnit(int owner, sc2::UNIT_TYPEID type);
 
 extern std::vector<sc2::UNIT_TYPEID> availableUnitTypesTerran;
+extern std::vector<sc2::UNIT_TYPEID> availableUnitTypesProtoss;
 
 std::vector<std::pair<sc2::UNIT_TYPEID,int>> findBestCompositionGenetic(const CombatPredictor& predictor, const std::vector<sc2::UNIT_TYPEID>& availableUnitTypes, const CombatState& opponent, const BuildOptimizerNN* buildTimePredictor = nullptr, const BuildState* startingBuildState = nullptr, std::vector<std::pair<sc2::UNIT_TYPEID,int>>* seedComposition = nullptr);
 
