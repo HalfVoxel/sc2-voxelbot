@@ -1203,10 +1203,13 @@ pair<vector<int>, vector<int>> calculateStartingUnitCounts(const BuildState& sta
     vector<int> startingAddonCountPerUnitType(availableUnitTypes.size());
 
     for (auto p : startState.units) {
-        startingUnitCounts[indexOf(availableUnitTypes, p.type)] += p.units;
-        if (p.addon != UNIT_TYPEID::INVALID) {
-            startingUnitCounts[indexOf(availableUnitTypes, getSpecificAddonType(p.type, p.addon))] += p.units;
-            startingAddonCountPerUnitType[indexOf(availableUnitTypes, p.type)] += p.units;
+        int index = indexOfMaybe(availableUnitTypes, p.type);
+        if (index != -1) {
+            startingUnitCounts[index] += p.units;
+            if (p.addon != UNIT_TYPEID::INVALID) {
+                startingUnitCounts[indexOf(availableUnitTypes, getSpecificAddonType(p.type, p.addon))] += p.units;
+                startingAddonCountPerUnitType[index] += p.units;
+            }
         }
     }
     return { startingUnitCounts, startingAddonCountPerUnitType };
