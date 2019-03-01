@@ -227,45 +227,6 @@ void saveSession (ReplaySession& session, default_random_engine& rnd) {
     saveFunction(json.str(), replaySavePath(session.replayInfo.replay_path, saveDir));
 }
 
-void printMappings() {
-    for (int race = 0; race < 3; race++) {
-        map<UNIT_TYPEID, int> mapping;
-        vector<vector<UNIT_TYPEID>> units;
-        cout << "[" << endl;
-        for (int k = 0; k < 2; k++) {
-            for (auto& t : getUnitTypes()) {
-                if (t.race == (Race)race && string(UnitTypeToName(t.unit_type_id)) != "UNKNOWN") {
-                    auto ut = canonicalize(t.unit_type_id);
-
-                    if (ut == t.unit_type_id && k == 0) {
-                        units.push_back({ut});
-                    }
-                    if (ut != t.unit_type_id && k == 1) {
-                        for (auto& us : units) {
-                            if (us[0] == ut) {
-                                us.push_back(t.unit_type_id);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        for (int j = 0; j < units.size(); j++) {
-            auto& us = units[j];
-
-            cout << "   (\"" << UnitTypeToName(us[0]) << "\", " << (isArmy(us[0]) ? "True" : "False") << ", [";
-            for (int i = 0; i < us.size(); i++) {
-                if (i > 0) cout << ", ";
-                cout << (int)us[i];
-            }
-            cout << "])," << endl;
-        }
-        cout << "]" << endl;
-    }
-    exit(0);
-}
-
 int main(int argc, char* argv[]) {
     initMappings();
 
