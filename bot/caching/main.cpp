@@ -119,128 +119,141 @@ class CachingBot : public sc2::Agent {
     int tick = 0;
 
    public:
+    int mode = 0;
+
     void OnGameLoading() {
     }
 
     void OnGameStart() override {
-        results = ofstream("bot/generated/abilities.h");
-        results << "#pragma once" << endl;
-        results << "#include<vector>" << endl;
-        results << "extern std::vector<std::pair<int,int>> unit_type_has_ability;" << endl;
-        results << "extern std::vector<std::pair<float,float>> unit_type_initial_health;" << endl;
-        results << "extern std::vector<bool> unit_type_is_flying;" << endl;
-        results << "extern std::vector<float> unit_type_radius;" << endl;
+        if (mode == 0) {
+            results = ofstream("bot/generated/abilities.h");
+            results << "#pragma once" << endl;
+            results << "#include<vector>" << endl;
+            results << "extern std::vector<std::pair<int,int>> unit_type_has_ability;" << endl;
+            results << "extern std::vector<std::pair<float,float>> unit_type_initial_health;" << endl;
+            results << "extern std::vector<bool> unit_type_is_flying;" << endl;
+            results << "extern std::vector<float> unit_type_radius;" << endl;
 
-        results.close();
+            results.close();
 
-        results = ofstream("bot/generated/abilities.cpp");
-        results << "#include \"abilities.h\"" << endl;
+            results = ofstream("bot/generated/abilities.cpp");
+            results << "#include \"abilities.h\"" << endl;
+        }
+
         Debug()->DebugEnemyControl();
         Debug()->DebugShowMap();
         Debug()->DebugIgnoreFood();
         Debug()->DebugIgnoreResourceCost();
         Debug()->SendDebug();
-        initMappings(Observation());
+        Debug()->DebugGiveAllTech();
+        Debug()->SendDebug();
 
         Point2D mn = Observation()->GetGameInfo().playable_min;
         Point2D mx = Observation()->GetGameInfo().playable_max;
 
-        DependencyAnalyzer deps;
-        // TODO: Use Observation here
-        deps.analyze();
-
         const sc2::UnitTypes& unit_types = Observation()->GetUnitTypeData(true);
 
-        // Note: this depends on output from this program, so it really has to be run twice to get the correct output.
-        ofstream unit_lookup = ofstream("bot/generated/units.txt");
-        writeUnitTypeOverview(unit_lookup, unit_types, deps);
-        unit_lookup.close();
+        if (mode == 1) {
+            initMappings(Observation());
 
-        Debug()->DebugGiveAllTech();
-        Debug()->SendDebug();
-        const sc2::UnitTypes& unit_types3 = Observation()->GetUnitTypeData(true);
+            DependencyAnalyzer deps;
+            // TODO: Use Observation here
+            deps.analyze();
+            
+            // Note: this depends on output from this program, so it really has to be run twice to get the correct output.
+            ofstream unit_lookup = ofstream("bot/generated/units.txt");
+            writeUnitTypeOverview(unit_lookup, unit_types, deps);
+            unit_lookup.close();
 
-        // Note: this depends on output from this program, so it really has to be run twice to get the correct output.
-        unit_lookup = ofstream("bot/generated/units_with_tech.txt");
-        writeUnitTypeOverview(unit_lookup, unit_types3, deps);
-        unit_lookup.close();
+            const sc2::UnitTypes& unit_types3 = Observation()->GetUnitTypeData(true);
 
-        int i = 0;
-        for (const UnitTypeData& type : unit_types) {
-            if (!type.available)
-                continue;
-            float x = mn.x + ((rand() % 1000) / 1000.0f) * (mx.x - mn.x);
-            float y = mn.y + ((rand() % 1000) / 1000.0f) * (mx.y - mn.y);
-            if (type.race == Race::Protoss && type.movement_speed == 0) {
-                Debug()->DebugCreateUnit(UNIT_TYPEID::PROTOSS_PYLON, Point2D(x, y));
+            // Note: this depends on output from this program, so it really has to be run twice to get the correct output.
+            unit_lookup = ofstream("bot/generated/units_with_tech.txt");
+            writeUnitTypeOverview(unit_lookup, unit_types3, deps);
+            unit_lookup.close();
+
+            save_unit_data(unit_types);
+
+            // Try loading and re-saving the data to make sure that everything is loaded correctly
+            int hash = hashFile(UNIT_DATA_CACHE_PATH);
+            auto unit_types2 = load_unit_data();
+            save_unit_data(unit_types2, "/tmp/unit_data.data");
+            int hash2 = hashFile("/tmp/unit_data.data");
+            if (hash != hash2) {
+                cerr << "Error in unit type data serialization code" << endl;
+                exit(1);
             }
-            Debug()->DebugCreateUnit(type.unit_type_id, Point2D(x, y));
-            i++;
+
+            ofstream unit_lookup2 = ofstream("bot/generated/units_verify.txt");
+            writeUnitTypeOverview(unit_lookup2, unit_types2, deps);
+            unit_lookup2.close();
+
+            save_ability_data(Observation()->GetAbilityData());
+        } else {
+            cerr << "Note: run program again with 'pass2' as an argument on the commandline to get the correct output" << endl;
+
+            int i = 0;
+            for (const UnitTypeData& type : unit_types) {
+                if (!type.available)
+                    continue;
+                float x = mn.x + ((rand() % 1000) / 1000.0f) * (mx.x - mn.x);
+                float y = mn.y + ((rand() % 1000) / 1000.0f) * (mx.y - mn.y);
+                if (type.race == Race::Protoss && type.movement_speed == 0) {
+                    Debug()->DebugCreateUnit(UNIT_TYPEID::PROTOSS_PYLON, Point2D(x, y));
+                }
+                Debug()->DebugCreateUnit(type.unit_type_id, Point2D(x, y));
+                i++;
+            }
         }
 
         Debug()->SendDebug();
-
-        save_unit_data(unit_types);
-
-        // Try loading and re-saving the data to make sure that everything is loaded correctly
-        int hash = hashFile(UNIT_DATA_CACHE_PATH);
-        auto unit_types2 = load_unit_data();
-        save_unit_data(unit_types2, "/tmp/unit_data.data");
-        int hash2 = hashFile("/tmp/unit_data.data");
-        if (hash != hash2) {
-            cerr << "Error in unit type data serialization code" << endl;
-            exit(1);
-        }
-
-        ofstream unit_lookup2 = ofstream("bot/generated/units_verify.txt");
-        writeUnitTypeOverview(unit_lookup2, unit_types2, deps);
-        unit_lookup2.close();
-
-        save_ability_data(Observation()->GetAbilityData());
     }
 
     void OnStep() override {
         if (tick == 2) {
-            results << "std::vector<std::pair<int,int>> unit_type_has_ability = {" << endl;
-            auto ourUnits = Observation()->GetUnits(Unit::Alliance::Self);
-            auto abilities = Query()->GetAbilitiesForUnits(ourUnits, true);
-            const sc2::UnitTypes& unitTypes = Observation()->GetUnitTypeData();
-            for (int i = 0; i < ourUnits.size(); i++) {
-                AvailableAbilities& abilitiesForUnit = abilities[i];
-                for (auto availableAbility : abilitiesForUnit.abilities) {
-                    results << "\t{ " << ourUnits[i]->unit_type << ", " << availableAbility.ability_id << " }," << endl;
-                    cout << unitTypes[ourUnits[i]->unit_type].name << " has " << AbilityTypeToName(availableAbility.ability_id) << endl;
+            if (mode == 0) {
+                results << "std::vector<std::pair<int,int>> unit_type_has_ability = {" << endl;
+                auto ourUnits = Observation()->GetUnits(Unit::Alliance::Self);
+                auto abilities = Query()->GetAbilitiesForUnits(ourUnits, true);
+                const sc2::UnitTypes& unitTypes = Observation()->GetUnitTypeData();
+                for (int i = 0; i < ourUnits.size(); i++) {
+                    AvailableAbilities& abilitiesForUnit = abilities[i];
+                    for (auto availableAbility : abilitiesForUnit.abilities) {
+                        results << "\t{ " << ourUnits[i]->unit_type << ", " << availableAbility.ability_id << " }," << endl;
+                        cout << unitTypes[ourUnits[i]->unit_type].name << " has " << AbilityTypeToName(availableAbility.ability_id) << endl;
+                    }
                 }
-            }
 
-            results << "};" << endl;
+                results << "};" << endl;
 
-            const sc2::UnitTypes& unit_types = Observation()->GetUnitTypeData();
-            vector<pair<float, float>> initial_health(unit_types.size());
-            vector<bool> is_flying(unit_types.size());
-            vector<float> radii(unit_types.size());
-            for (int i = 0; i < ourUnits.size(); i++) {
-                initial_health[(int)ourUnits[i]->unit_type] = make_pair(ourUnits[i]->health_max, ourUnits[i]->shield_max);
-                is_flying[(int)ourUnits[i]->unit_type] = ourUnits[i]->is_flying;
-                radii[(int)ourUnits[i]->unit_type] = ourUnits[i]->radius;
-            }
-            results << "std::vector<std::pair<float,float>> unit_type_initial_health = {" << endl;
-            for (int i = 0; i < initial_health.size(); i++) {
-                results << "\t{" << initial_health[i].first << ", " << initial_health[i].second << "},\n";
-            }
-            results << "};" << endl;
+                const sc2::UnitTypes& unit_types = Observation()->GetUnitTypeData();
+                vector<pair<float, float>> initial_health(unit_types.size());
+                vector<bool> is_flying(unit_types.size());
+                vector<float> radii(unit_types.size());
+                for (int i = 0; i < ourUnits.size(); i++) {
+                    initial_health[(int)ourUnits[i]->unit_type] = make_pair(ourUnits[i]->health_max, ourUnits[i]->shield_max);
+                    is_flying[(int)ourUnits[i]->unit_type] = ourUnits[i]->is_flying;
+                    radii[(int)ourUnits[i]->unit_type] = ourUnits[i]->radius;
+                }
+                results << "std::vector<std::pair<float,float>> unit_type_initial_health = {" << endl;
+                for (int i = 0; i < initial_health.size(); i++) {
+                    results << "\t{" << initial_health[i].first << ", " << initial_health[i].second << "},\n";
+                }
+                results << "};" << endl;
 
-            results << "std::vector<bool> unit_type_is_flying = {" << endl;
-            for (int i = 0; i < initial_health.size(); i++) {
-                results << "\t" << (is_flying[i] ? "true" : "false") << ",\n";
-            }
-            results << "};" << endl;
+                results << "std::vector<bool> unit_type_is_flying = {" << endl;
+                for (int i = 0; i < initial_health.size(); i++) {
+                    results << "\t" << (is_flying[i] ? "true" : "false") << ",\n";
+                }
+                results << "};" << endl;
 
-            results << "std::vector<float> unit_type_radius = {" << endl;
-            for (int i = 0; i < initial_health.size(); i++) {
-                results << "\t" << radii[i] << ",\n";
+                results << "std::vector<float> unit_type_radius = {" << endl;
+                for (int i = 0; i < initial_health.size(); i++) {
+                    results << "\t" << radii[i] << ",\n";
+                }
+                results << "};" << endl;
+                results.close();
             }
-            results << "};" << endl;
 
             Debug()->DebugEndGame(false);
         }
@@ -270,6 +283,10 @@ int main(int argc, char* argv[]) {
     bool do_break = false;
 
     bot.OnGameLoading();
+
+    if (argc > 1 && string(argv[1]) == "pass2") {
+        bot.mode = 1;
+    }
     coordinator.StartGame(EmptyMap);
 
     while (coordinator.Update() && !do_break) {
