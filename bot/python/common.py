@@ -196,13 +196,15 @@ class PadSequence:
             for i in range(num_elements):
                 mode = self.is_sequence[i]
                 if mode == 'stack-timewise':
-                    s = [x[i][timestep] for x in active_batch]
-                    s = torch.stack(s)
-                    result[i].append(s)
+                    if active_batch[0][i] is not None:
+                        s = [x[i][timestep] for x in active_batch]
+                        s = torch.stack(s)
+                        result[i].append(s)
                 elif mode == 'pad-timewise':
-                    s = [x[i][timestep] for x in active_batch]
-                    s = torch.nn.utils.rnn.pad_sequence(s, batch_first=True)
-                    result[i].append(s)
+                    s = [x[i][timestep] for x in active_batch if x[i] is not None]
+                    if len(s) > 0:
+                        s = torch.nn.utils.rnn.pad_sequence(s, batch_first=True)
+                        result[i].append(s)
 
         combined = type(sorted_batch[0])(*result)
         return combined, lengths

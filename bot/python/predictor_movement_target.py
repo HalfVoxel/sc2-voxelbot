@@ -1,5 +1,5 @@
 import os
-import argparse
+import json
 import shutil
 import subprocess
 import math
@@ -10,26 +10,20 @@ import torch
 import torch.nn as nn
 from trainer_movement_target import MovementStepper
 from trainer_rnn import TrainerRNN
-import matplotlib
 from datetime import datetime
 from build_order_loader import BuildOrderLoader
 from mappings import UnitLookup, terranUnits, zergUnits, protossUnits
 import game_state_loader
 from game_state_loader import MovementTargetTrace
-from tensorboardX import SummaryWriter
 from dataset_folder import create_datasets
 import gzip
 import pickle
 # from pytorch_memory_utils.gpu_mem_track import MemTracker
 # Fix crash bug on some macOS versions
-matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
+
 torch.multiprocessing.set_sharing_strategy('file_system')
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-
-# Turn on non-blocking plotting mode
-plt.ion()
 
 
 # @torch.jit.trace
@@ -122,7 +116,7 @@ class Net(nn.Module):
         self.conv_c4_2 = nn.Conv2d(in_channels=4 * scale, out_channels=1, kernel_size=3, padding=1)
         self.logsoftmax = nn.LogSoftmax(dim=1)
 
-        self.xs = (torch.tensor(list(range(self.minimap_size)), dtype=torch.float) / self.minimap_size).unsqueeze(1).expand(self.minimap_size, self.minimap_size).cuda()
+        self.xs = (torch.tensor(list(range(self.minimap_size)), dtype=torch.float) / self.minimap_size).unsqueeze(1).expand(self.minimap_size, self.minimap_size)
         self.ys = self.xs.transpose(0, 1)
 
         # self.conv_m1 = nn.Conv2d(in_channels=1, out_channels=4, kernel_size=3, padding=0, stride=3)
@@ -279,8 +273,6 @@ unitSet = {
     "TERRAN_WIDOWMINE",
 }
 
-import flamegraph
-# flamegraph.start_profile_thread(fd=open("./perf.log", "w"))
 module_name = "movement_target"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # device = torch.device("cpu")
@@ -328,6 +320,12 @@ padding = PadSequence(MovementTargetTrace(
 
 
 def visualize(epoch):
+    import matplotlib
+    matplotlib.use('TkAgg')
+    import matplotlib.pyplot as plt
+    # Turn on non-blocking plotting mode
+    plt.ion()
+
     print("E")
     load_weights(f"models/{module_name}_{epoch}.weights")
     print("F")
@@ -487,6 +485,8 @@ def save_tensorboard_graph(memory, tensorboard_writer):
 
 
 def train(comment):
+    from tensorboardX import SummaryWriter
+
     print_parameters(model)
     print(f"Parameters: {count_parameters(model)}")
 
@@ -517,19 +517,41 @@ def save(epoch):
 def load_weights(file):
     model.load_state_dict(torch.load(file, map_location='cpu'))
 
+# import matplotlib
+# matplotlib.use('TkAgg')
+# import matplotlib.pyplot as plt
+# Turn on non-blocking plotting mode
+# plt.ion()
+
 class Stepper:
     def __init__(self):
+
         self.stepper = trainer.stepperClass(model, None, device, 0, lambda a, b: 0, step_size=1)
+        self.stepper.init_hidden_states(batch_size=1)
 
     def step(self, json_data, unit_tag_mask, playerID):
+        # fig, axs = plt.subplots(1, 1, num=1, clear=True)
+
         observer_session = json.loads(json_data)
-        trace = game_state_loader.loadSessionMovementTarget2(observationSession, playerID, loader, unit_tag_mask, "invalid")
+        trace = game_state_loader.loadSessionMovementTarget2(observer_session, playerID, buildOrderLoader, set(unit_tag_mask), "invalid")
         self.stepper.set_batch(padding([trace])[0])
-        self.stepper.init_hidden_states()
         self.stepper.step()
-        result = self.stepper.outputs.detach().cpu().exp().numpy()[0, :, 1].tolist()
-        print(result)
-        return result
+        result = self.stepper.outputs.detach().cpu().exp()
+        probs = result.numpy().flatten()
+        probs = probs**3
+        probs /= probs.sum()
+        index = np.random.choice(14*14, p=probs)
+        # coord = (index % 14, index // 14)
+        coord = (index // 14, index % 14)
+        target_coord = game_state_loader.inverse_transform_coord_minimap(coord, game_state_loader.find_map_size(observer_session, playerID), 14, False)
+
+        # axs[0].imshow(result.tranpose(0, 1), origin='lower')
+        # plt.pause(0.001)
+
+        print(target_coord)
+
+
+        return target_coord
 
 if __name__ == "__main__":
     common.train_interface(cache_tensors, train, visualize)

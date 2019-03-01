@@ -332,21 +332,22 @@ def save(epoch):
 
 
 def load_weights(file):
-    model.load_state_dict(torch.load(file))
+    model.load_state_dict(torch.load(file, map_location='cpu'))
 
 
 class Stepper:
     def __init__(self):
         self.stepper = trainer.stepperClass(model, None, device, 0, lambda a, b: 0, step_size=1)
+        self.stepper.init_hidden_states(batch_size=1)
 
     def step(self, json_data, playerID):
         observer_session = json.loads(json_data)
         trace = game_state_loader.loadSessionMovement2(observer_session, playerID, buildOrderLoader, False, "invalid")
-        stepper = trainer.stepperClass(model, padding([trace])[0], device, 0, lambda a, b: 0, step_size=1)
-        stepper.set_batch(padding([trace])[0])
-        stepper.init_hidden_states()
-        stepper.step()
-        return stepper.outputs.detach().cpu().numpy()
+        self.stepper.set_batch(padding([trace])[0])
+        self.stepper.step()
+        result = self.stepper.outputs.detach().cpu().exp().numpy()[0, :, 1].tolist()
+        print(result)
+        return result
 
 
 if __name__ == "__main__":

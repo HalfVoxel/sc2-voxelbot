@@ -4,9 +4,10 @@
 #include <vector>
 #include "BuildOptimizerGenetic.h"
 #include "utilities/mappings.h"
+#include <pybind11/pybind11.h>
 
 struct BuildOptimizerNN {
-    // pybind11::object predictFunction;
+    pybind11::object predictFunction;
 
     void init();
 

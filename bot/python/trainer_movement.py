@@ -16,10 +16,10 @@ class MovementStepper:
         self.batch = None
         if batch is not None:
             self.set_batch(batch, True)
-            self.init_hidden_states()
+            self.init_hidden_states(len(self.batch.states))
 
-    def init_hidden_states(self):
-        self.hidden_states = self.model.init_hidden_states(len(self.batch.states), device=self.device)
+    def init_hidden_states(self, batch_size):
+        self.hidden_states = self.model.init_hidden_states(batch_size, device=self.device)
 
     def set_batch(self, batch, non_blocking=False):
         self.timestep = 0
@@ -43,7 +43,7 @@ class MovementStepper:
             states = self.batch.states[self.timestep]
             raw_unit_states = self.batch.raw_unit_states[self.timestep]
             raw_unit_coords = self.batch.raw_unit_coords[self.timestep]
-            movement = self.batch.movement[self.timestep]
+            movement = self.batch.movement[self.timestep] if len(self.batch.movement) > 0 else None
             minimap_states = self.batch.minimap_states[self.timestep]
 
             in_progress_threshold = states.size()[0]
@@ -54,11 +54,6 @@ class MovementStepper:
             # batch_outputs = torch.nn.utils.rnn.pad_sequence(movement, batch_first=True)
             # batch_inputs2 = torch.nn.utils.rnn.pad_sequence(raw_unit_states, batch_first=True)
             # batch_inputs4 = torch.nn.utils.rnn.pad_sequence(raw_unit_coords, batch_first=True)
-            max_unit_count = movement.size()[1]
-
-            maskTensor = torch.zeros((len(raw_unit_states), max_unit_count), dtype=torch.float, device=self.device)
-            for i in range(len(raw_unit_states)):
-                maskTensor[i, :raw_unit_states[i].size()[0]] = 1
 
             # assert batch_inputs.size() == (len(states), *states[0].shape)
             # batch_outputs = torch.tensor(labels, dtype=torch.long, device=self.device)
@@ -72,12 +67,22 @@ class MovementStepper:
             )
 
             self.outputs = outputs
-            losses = self.loss_fn(outputs.view(-1, 2), movement.view(-1))
-            # Don't consider units that do not exist
-            losses = losses * maskTensor.view(-1)
-            loss = losses.sum()
-            steps = maskTensor.sum()
-            self.timestep += self.step_size
-            return loss, steps
+
+            if movement is not None:
+                max_unit_count = movement.size()[1]
+
+                maskTensor = torch.zeros((len(raw_unit_states), max_unit_count), dtype=torch.float, device=self.device)
+                for i in range(len(raw_unit_states)):
+                    maskTensor[i, :raw_unit_states[i].size()[0]] = 1
+
+                losses = self.loss_fn(outputs.view(-1, 2), movement.view(-1))
+                # Don't consider units that do not exist
+                losses = losses * maskTensor.view(-1)
+                loss = losses.sum()
+                steps = maskTensor.sum()
+                self.timestep += self.step_size
+                return loss, steps
+            else:
+                return None
         else:
             return None

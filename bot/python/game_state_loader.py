@@ -62,7 +62,7 @@ def getInputTensorSize(loader: BuildOrderLoader):
 
 
 def start_unit(observationSession, playerID):
-    units = observationSession["rawUnits"][0]["units"]
+    units = observationSession["observations"]["rawUnits"][0]["units"]
     for u in units:
         if u["health"] > 100 and u["owner"] == playerID:
             return u
@@ -258,12 +258,30 @@ def transform_coord(coord, map_size, mirror):
     return normalized_x, normalized_y
 
 
+def inverse_transform_coord(normalized_coord, map_size, mirror):
+    mn, mx, flipX, flipY = map_size
+    normalized_x, normalized_y = normalized_coord
+    if flipX != mirror:
+        normalized_x = 1 - normalized_x
+    if flipY != mirror:
+        normalized_y = 1 - normalized_y
+
+    x = normalized_x * (mx[0] - mn[0]) + mn[0]
+    y = normalized_y * (mx[1] - mn[1]) + mn[1]
+
+    return x, y
+
 def transform_coord_minimap(coord, map_size, scale, mirror):
     normalized_x, normalized_y = transform_coord(coord, map_size, mirror)
 
     normalized_x *= scale
     normalized_y *= scale
     return (min(scale - 1, max(0, int(round(normalized_x)))), min(scale - 1, max(0, int(round(normalized_y)))))
+
+
+def inverse_transform_coord_minimap(coord, map_size, scale, mirror):
+    coord = (coord[0]/scale, coord[1]/scale)
+    return inverse_transform_coord(coord, map_size, mirror)
 
 
 def playerObservationTensor2(loader: BuildOrderLoader, state, raw_units, playerID, map_size, minimap_size, mirror):
@@ -517,8 +535,8 @@ def loadSessionMovement2(observationSession, playerID, loader: BuildOrderLoader,
     # Coordinates are normalized so that [playerID] is always in the lower left corner.
     mirror = False
 
-    selfStates = observationSession["selfStates"]
-    rawUnits = observationSession["rawUnits"]
+    selfStates = observationSession["observations"]["selfStates"]
+    rawUnits = observationSession["observations"]["rawUnits"]
 
     player1movement = extractMovement(rawUnits, playerID, map_size, loader, mirror) if extract_movement else None
     # player2movement = extractMovement(session["observations"][1]["rawUnits"], 1, map_size, loader)
@@ -566,57 +584,71 @@ def loadSessionMovementTarget(session, loader: BuildOrderLoader, store_fn, stati
     # For every time
     #   If unit.pos is far from its last known position. Mark the unit as moved
 
-    playerID = winner + 1
-    loadSessionMovementTarget2(session, playerID, loader, store_fn)
-
-
-def loadSessionMovementTarget2(session, playerID, loader: BuildOrderLoader, store_fn):
-    replay_path = session["replayInfo"]["replay_path"]
-    playerIndex = playerID - 1
-    opponentPlayerID = 3 - playerID
-
-    map_size = find_map_size(session)
-
-    # Coordinates are normalized so that player 1 is always in the lower left corner.
-    # If the player is player 2 then we must therefore mirror the coordinates
-    # because we want player [playerID] to always be in the lower left corner.
-    mirror = playerID == 2
-
-    selfStates = [session["observations"][0]["selfStates"], session["observations"][1]["selfStates"]]
-    rawUnits = [session["observations"][0]["rawUnits"], session["observations"][1]["rawUnits"]]
-    minimap_size = 14
-
-    # In timesteps, so Nx5 seconds
-    lookaheadTime = 4
-    max_time = len(rawUnits[0]) - lookaheadTime
-
     if max_time <= 0:
         print("Skipping game with too few samples")
         return
 
+    playerID = winner + 1
+    observationSession = {
+        "observations": session["observations"][playerID-1],
+        "gameInfo": session["gameInfo"],
+        "replayInfo": session["replayInfo"]
+    }
+    res = loadSessionMovementTarget2(observationSession, playerID, loader, 'random', session["data_path"])
+    if res is not None:
+        store_fn(res)
+
+
+def loadSessionMovementTarget2(observationSession, playerID, loader: BuildOrderLoader, unit_tag_mask, data_path):
+    ''' unit_tag_mask is either 'random' or a set of unit tags'''
+
+    replay_path = observationSession["replayInfo"]["replay_path"]
+    playerIndex = playerID - 1
+    opponentPlayerID = 3 - playerID
+
+    map_size = find_map_size(observationSession, playerID)
+
+    # Coordinates are normalized so that player [playerID] is always in the lower left corner.
+    mirror = False
+
+    selfStates = observationSession["observations"]["selfStates"]
+    rawUnits = observationSession["observations"]["rawUnits"]
+    minimap_size = 14
+
+    # In timesteps, so Nx5 seconds
+    # Note: if unit_tag_mask is provided then we don't use lookahead for anything, so it doesn't constrain the times
+    lookaheadTime = 4 if unit_tag_mask == 'random' else 0
+    max_time = len(rawUnits) - lookaheadTime
+
     player1obs2 = [
         playerObservationTensor2(loader, s, r, playerID, map_size, minimap_size, mirror)
-        for (s, r) in zip(selfStates[playerIndex][:max_time], rawUnits[playerIndex][:max_time])
+        for (s, r) in zip(selfStates[:max_time], rawUnits[:max_time])
     ]
 
-    player1minimap1 = [minimapLayers(loader, r, playerID, map_size, minimap_size, mirror) for r in rawUnits[playerIndex][:max_time]]
-    player1minimap2 = [minimapLayers(loader, r, opponentPlayerID, map_size, minimap_size, mirror) for r in rawUnits[playerIndex][:max_time]]
+    player1minimap1 = [minimapLayers(loader, r, playerID, map_size, minimap_size, mirror) for r in rawUnits[:max_time]]
+    player1minimap2 = [minimapLayers(loader, r, opponentPlayerID, map_size, minimap_size, mirror) for r in rawUnits[:max_time]]
     player1minimap = torch.stack([torch.cat((m1, m2), dim=0) for (m1, m2) in zip(player1minimap1, player1minimap2)])
 
-    player1movementMinimap, unit_type_counts, target_positions = sampleMovementGroup(
-        rawUnits[playerIndex], playerID, map_size, loader, minimap_size, mirror, lookaheadTime)
+    if unit_tag_mask == "random":
+        player1movementMinimap, unit_type_counts, target_positions = sampleMovementGroup(rawUnits, playerID, map_size, loader, minimap_size, mirror, lookaheadTime)
+    else:
+        target_positions = None
+        assert len(rawUnits) == 1
+        player1movementMinimap, unit_type_counts = movementGroupFeatures([u for u in rawUnits[0]["units"] if u["tag"] in unit_tag_mask], loader, map_size, minimap_size, mirror)
+        player1movementMinimap = torch.tensor(player1movementMinimap).unsqueeze(0)
+        unit_type_counts = torch.tensor(unit_type_counts).unsqueeze(0)
 
     player1minimap = torch.cat([player1minimap, player1movementMinimap], dim=1)
 
-    res1 = MovementTargetTrace(
+    return MovementTargetTrace(
         states=torch.stack([x[0] for x in player1obs2]),
         minimap_states=player1minimap,
         replay_path=replay_path,
         target_positions=target_positions,
         unit_type_counts=unit_type_counts,
-        data_path=session["data_path"],
+        data_path=data_path,
         playerID=playerID,
-        pathfinding_minimap=loadPathfindingMinimap(session, map_size, mirror)
+        pathfinding_minimap=loadPathfindingMinimap(observationSession, map_size, mirror)
     )
 
     # plt.clf()
@@ -627,8 +659,6 @@ def loadSessionMovementTarget2(session, playerID, loader: BuildOrderLoader, stor
     # plt.scatter(coords[:, 0] * 168, coords[:, 1] * 168, c="#00FF00", marker='.')
     # plt.scatter([p[0] * 168], [p[1] * 168], c="#FF0000")
     # plt.pause(1)
-
-    store_fn(res1)
 
 
 cached_map_sizes = {}
@@ -740,10 +770,8 @@ def sampleMovementGroup(rawUnits, playerID, map_size, loader, minimap_size, mirr
                 coord = transform_coord_minimap(future_unit["pos"], map_size, minimap_size, mirror)
                 has_any_units[coord[0], coord[1]] = 1
 
-        has_unit = np.zeros((minimap_size, minimap_size), dtype=np.float32)
-        normalized_unit_counts = np.zeros((minimap_size, minimap_size), dtype=np.float32)
-        unit_type_counts = np.zeros((loader.unit_lookup.num_units), dtype=np.float32)
         target_position = np.zeros((minimap_size, minimap_size), dtype=np.float32)
+        filtered_tags = set()
 
         if has_any_units.sum() > 0:
             has_any_units = has_any_units.flatten() / has_any_units.sum()
@@ -751,7 +779,6 @@ def sampleMovementGroup(rawUnits, playerID, map_size, loader, minimap_size, mirr
             cell_x = cell_index // minimap_size
             cell_y = cell_index % minimap_size
 
-            filtered_tags = set()
             for future_unit in rawUnits[i + lookaheadTime]["units"]:
                 if future_unit["tag"] in valid_unit_tags:
                     coord = transform_coord_minimap(future_unit["pos"], map_size, minimap_size, mirror)
@@ -761,26 +788,32 @@ def sampleMovementGroup(rawUnits, playerID, map_size, loader, minimap_size, mirr
             assert len(filtered_tags) > 0
 
             target_position[cell_x, cell_y] = 1
-
-            selectedUnits = []
-            for unit in state["units"]:
-                if unit["tag"] in filtered_tags:
-                    selectedUnits.append(unit)
-                    coord = transform_coord_minimap(unit["pos"], map_size, minimap_size, mirror)
-                    has_unit[coord[0], coord[1]] = 1
-                    normalized_unit_counts[coord[0], coord[1]] += 1
-                    unit_type_counts[loader.unit_lookup.unit_index_map[unit["unit_type"]]] += 1
-
-            assert normalized_unit_counts.sum() > 0
-            normalized_unit_counts /= normalized_unit_counts.sum()
-            unit_type_counts /= unit_type_counts.sum()
-
-        minimap_layers.append(np.stack([has_unit, normalized_unit_counts]))
+        
+        layers, unit_type_counts = movementGroupFeatures([u for u in state["units"] if u["tag"] in filtered_tags], loader, map_size, minimap_size, mirror)
+        minimap_layers.append(layers)
         unit_types.append(unit_type_counts)
         target_positions.append(target_position)
 
     return torch.tensor(np.stack(minimap_layers)), torch.tensor(np.stack(unit_types)), torch.tensor(np.stack(target_positions))
 
+
+def movementGroupFeatures(units, loader, map_size, minimap_size, mirror):
+    has_unit = np.zeros((minimap_size, minimap_size), dtype=np.float32)
+    normalized_unit_counts = np.zeros((minimap_size, minimap_size), dtype=np.float32)
+    unit_type_counts = np.zeros((loader.unit_lookup.num_units), dtype=np.float32)
+
+    for unit in units:
+        coord = transform_coord_minimap(unit["pos"], map_size, minimap_size, mirror)
+        has_unit[coord[0], coord[1]] = 1
+        normalized_unit_counts[coord[0], coord[1]] += 1
+        unit_type_counts[loader.unit_lookup.unit_index_map[unit["unit_type"]]] += 1
+
+    if len(units) > 0:
+        normalized_unit_counts /= normalized_unit_counts.sum()
+        unit_type_counts /= unit_type_counts.sum()
+
+    minimap_layers = np.stack([has_unit, normalized_unit_counts])
+    return minimap_layers, unit_type_counts
 
 def extractMovement(rawUnits, playerID, map_size, loader, mirror):
     def transform_coord(coord):
