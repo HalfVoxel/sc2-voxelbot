@@ -31,6 +31,13 @@ int indexOf(const std::vector<T>& arr, const T& item) {
 	return (int)(c - arr.begin());
 }
 
+template<class T>
+int indexOfMaybe(const std::vector<T>& arr, const T& item) {
+	auto c = find(arr.begin(), arr.end(), item);
+	if (c == arr.end()) return -1;
+	return (int)(c - arr.begin());
+}
+
 template <class T, class V>
 void sortByValueAscending (std::vector<T>& arr, std::function<V(const T&)> value) {
 	std::sort(arr.begin(), arr.end(), [&](const T& a, const T& b) -> bool {
