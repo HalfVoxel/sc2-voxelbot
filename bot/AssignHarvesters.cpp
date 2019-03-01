@@ -10,7 +10,7 @@ BOT::Status AssignHarvesters::OnTick() {
     Units workers = bot.Observation()->GetUnits(Unit::Alliance::Self, IsUnit(workerUnitType));
     for (const auto& worker : workers) {
         if (worker->orders.empty()) {
-            MineIdleWorkers(worker, ABILITY_ID::HARVEST_GATHER, UNIT_TYPEID::TERRAN_REFINERY);
+            MineIdleWorkers(worker, ABILITY_ID::HARVEST_GATHER, gasBuildingType);
         }
     }
     return ManageWorkers(workerUnitType, abilityType, gasBuildingType);
@@ -107,8 +107,10 @@ Status AssignHarvesters::MineIdleWorkers(const Unit* worker, AbilityID worker_ga
         }
         if (base->assigned_harvesters < base->ideal_harvesters) {
             valid_mineral_patch = FindNearestMineralPatch(base->pos);
-            bot.Actions()->UnitCommand(worker, worker_gather_command, valid_mineral_patch);
-            return Status::Success;
+            if (valid_mineral_patch != nullptr) {
+                bot.Actions()->UnitCommand(worker, worker_gather_command, valid_mineral_patch);
+                return Status::Success;
+            }
         }
     }
 
@@ -119,8 +121,12 @@ Status AssignHarvesters::MineIdleWorkers(const Unit* worker, AbilityID worker_ga
     // If all workers are spots are filled just go to any base.
     const Unit* random_base = GetRandomEntry(bases);
     valid_mineral_patch = FindNearestMineralPatch(random_base->pos);
-    bot.Actions()->UnitCommand(worker, worker_gather_command, valid_mineral_patch);
-    return Status::Success;
+    if (valid_mineral_patch != nullptr) {
+        bot.Actions()->UnitCommand(worker, worker_gather_command, valid_mineral_patch);
+        return Status::Success;
+    } else {
+        return Status::Failure;
+    }
 }
 
 const Unit* AssignHarvesters::FindNearestMineralPatch(const Point2D& start) {
@@ -128,7 +134,7 @@ const Unit* AssignHarvesters::FindNearestMineralPatch(const Point2D& start) {
     float distance = std::numeric_limits<float>::max();
     const Unit* target = nullptr;
     for (const auto& u : units) {
-        if (u->unit_type == UNIT_TYPEID::NEUTRAL_MINERALFIELD) {
+        if (isMineralField(u->unit_type)) {
             float d = DistanceSquared2D(u->pos, start);
             if (d < distance) {
                 distance = d;
