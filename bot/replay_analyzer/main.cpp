@@ -21,7 +21,7 @@ using namespace sc2;
 
 const char* kReplayFolder = "/home/arong/learning/sc2-voxelbot/replays";
 const char* kReplayListProtoss = "/home/arong/learning/sc2-voxelbot/pvp.txt";
-const string saveDir = "/home/arong/learning/sc2-voxelbot/training_data/replays/s2";
+const string saveDir = "/home/arong/learning/sc2-voxelbot/training_data/replays/s3";
 
 
 
