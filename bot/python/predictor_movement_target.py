@@ -99,7 +99,7 @@ class Net(nn.Module):
         # self.act_t1 = nn.LeakyReLU()
 
         # self.lin_t2 = nn.Linear(16, 16)
-        # self.act_t2 = nn.LeakyReLU()
+        self.act_t2 = nn.LeakyReLU()
 
         self.lin4 = nn.Linear(self.gru_hidden_size, 64)
         self.act4 = nn.LeakyReLU()
