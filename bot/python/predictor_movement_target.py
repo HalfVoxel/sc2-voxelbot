@@ -18,6 +18,8 @@ from game_state_loader import MovementTargetTrace
 from dataset_folder import create_datasets
 import gzip
 import pickle
+import random
+
 # from pytorch_memory_utils.gpu_mem_track import MemTracker
 # Fix crash bug on some macOS versions
 
@@ -565,6 +567,7 @@ def load_weights(file):
 
 class Stepper:
     def __init__(self):
+        init_network(device=torch.device("cpu"))
 
         self.stepper = trainer.stepperClass(model, None, device, 0, lambda a, b: 0, step_size=1)
         self.stepper.init_hidden_states(batch_size=1)
@@ -577,12 +580,15 @@ class Stepper:
         self.stepper.set_batch(padding([trace])[0])
         self.stepper.step()
         result = self.stepper.outputs.detach().cpu().exp()
+        should_keep_order = self.stepper.outputs_keep_orders.item()
+        should_keep_order = random.random() < should_keep_order
         probs = result.numpy().flatten()
         probs = probs**3
         probs /= probs.sum()
         index = np.random.choice(14*14, p=probs)
-        # coord = (index % 14, index // 14)
-        coord = (index // 14, index % 14)
+        index = probs.argmax()
+        coord = (index % 14, index // 14)
+        # coord = (index // 14, index % 14)
         target_coord = game_state_loader.inverse_transform_coord_minimap(coord, game_state_loader.find_map_size(observer_session, playerID), 14, False)
 
         # axs[0].imshow(result.tranpose(0, 1), origin='lower')
@@ -591,7 +597,7 @@ class Stepper:
         print(target_coord)
 
 
-        return target_coord
+        return target_coord, should_keep_order
 
 if __name__ == "__main__":
     common.train_interface(cache_tensors, train, visualize)

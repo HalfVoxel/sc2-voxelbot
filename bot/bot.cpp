@@ -308,7 +308,7 @@ void Bot::OnStep() {
             Stopwatch watch;
             map<UNIT_TYPEID, int> targetUnitsCount2;
             for (auto u : targetUnitsCount) {
-                if (isArmy(u.first)) targetUnitsCount2[u.first] = u.second * 2;
+                if (isArmy(u.first)) targetUnitsCount2[u.first] = u.second;
                 else targetUnitsCount2[u.first] = u.second;
             }
 

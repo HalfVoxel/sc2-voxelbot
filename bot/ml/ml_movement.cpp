@@ -50,8 +50,8 @@ void MLMovement::OnGameStart() {
     stepperTarget = modMovementTarget.attr("Stepper")();
 
 	cout << "Loading weights" << endl;
-	modMovement.attr("load_weights")("models/movement_41.weights");
-    modMovementTarget.attr("load_weights")("models/movement_target_41.weights");
+	modMovement.attr("load_weights")("models/movement_10.weights");
+    modMovementTarget.attr("load_weights")("models/movement_target_13.weights");
 }
 
 bool isMovableUnit(UNIT_TYPEID type) {
@@ -63,8 +63,10 @@ vector<float> lastMoveProbs;
 map<int, float> timeBias;
 
 void MLMovement::Tick(const ObservationInterface* observation) {
+    auto playerID = observation->GetPlayerID();
+    auto ourUnits = observation->GetUnits(Unit::Alliance::Self);
 
-    if ((ticks % 100) == 1) {
+    if ((ticks % 25) == 1) {
         // Create state
         // Serialize state
         // Predict
@@ -80,12 +82,10 @@ void MLMovement::Tick(const ObservationInterface* observation) {
         // pybind11::gil_scoped_acquire acquire;
         lock_guard<mutex> lock(python_thread_mutex);
 
-        auto playerID = observation->GetPlayerID();
         string sessionString = json.str();
         auto res = stepper.attr("step")(sessionString, playerID).cast<vector<float>>();
 
         vector<const Unit*> validUnits;
-        auto ourUnits = observation->GetUnits(Unit::Alliance::Self);
         for (const Unit*& u : ourUnits) {
             if (u->owner == playerID && isMovableUnit(u->unit_type)) {
                 validUnits.push_back(u);
@@ -111,7 +111,7 @@ void MLMovement::Tick(const ObservationInterface* observation) {
             }
         }
 
-        for (int k = 0; k < 2; k++) {
+        for (int k = 0; k < 4; k++) {
             // Reservoir sampling
             int armyFilter = 1;
             float totalWeight = 0;
@@ -144,12 +144,17 @@ void MLMovement::Tick(const ObservationInterface* observation) {
             }
 
             if (sampledTags.size() > 0) {
-                auto targetCoord = stepperTarget.attr("step")(sessionString, sampledTags, playerID).cast<vector<float>>();
-                Point2D coord = Point2D(targetCoord[0], targetCoord[1]);
+                vector<float> targetCoord;
+                bool shouldKeepOrder;
+                tie(targetCoord, shouldKeepOrder) = stepperTarget.attr("step")(sessionString, sampledTags, playerID).cast<tuple<vector<float>, bool>>();
 
-                for (auto* u : sampledUnits) {
-                    bot.Actions()->UnitCommand(u, ABILITY_ID::ATTACK, coord);
-                    bot.Debug()->DebugLineOut(u->pos, Point3D(coord.x, coord.y, u->pos.z));
+                if (!shouldKeepOrder) {
+                    Point2D coord = Point2D(targetCoord[0], targetCoord[1]);
+
+                    for (auto* u : sampledUnits) {
+                        bot.Actions()->UnitCommand(u, ABILITY_ID::ATTACK, coord);
+                        bot.Debug()->DebugLineOut(u->pos, Point3D(coord.x, coord.y, u->pos.z));
+                    }
                 }
             }
         }
@@ -157,5 +162,26 @@ void MLMovement::Tick(const ObservationInterface* observation) {
 
     for (int i = 0; i < lastMovedUnits.size(); i++) {
         bot.Debug()->DebugSphereOut(lastMovedUnits[i]->pos, min(lastMoveProbs[i], 0.5f) * 3, lastMoveProbs[i] > 0.5 ? Colors::Yellow : (lastMoveProbs[i] > 0.2 ? Colors::Red : Colors::Blue));
+    }
+
+    for (const Unit*& u : ourUnits) {
+        if (u->owner == playerID && isMovableUnit(u->unit_type)) {
+            if (u->orders.size() > 0) {
+                auto& order = u->orders[0];
+                if (Point2D(0.0f, 0.0f) != order.target_pos) {
+                    bot.Debug()->DebugLineOut(u->pos, Point3D(order.target_pos.x, order.target_pos.y, u->pos.z), Colors::Red);
+                }
+
+                if (u->orders.size() > 1) {
+                    cout << "Multiple orders ";
+                    for (auto o : u->orders) {
+                        cout << AbilityTypeToName(o.ability_id) << " ";
+                        if (o.target_unit_tag != NullTag) cout << "(unit) ";
+                        if (Point2D(0,0) != o.target_pos) cout << "(point) ";
+                    }
+                    cout << endl;
+                }
+            }
+        }
     }
 }
