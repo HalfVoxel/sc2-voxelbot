@@ -253,8 +253,8 @@ class TensorBoardWrapper:
         else:
             self.scalars.append((message, loss, step))
 
-    def add_embedding(self, **kwargs):
-        self.writer.add_embedding(**kwargs)
+    def add_embedding(self, *args, **kwargs):
+        self.writer.add_embedding(*args, **kwargs)
 
     def init(self):
         if self.writer is not None:
