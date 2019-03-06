@@ -38,6 +38,7 @@ class MovementStepper:
             unit_type_counts=unpack_sequences(batch.unit_type_counts, device=self.device, non_blocking=True),
             minimap_states=unpack_sequences(batch.minimap_states, device=self.device, non_blocking=True),
             fraction_similar_orders=unpack_sequences(batch.fraction_similar_orders, device=self.device, non_blocking=True),
+            attack_order=unpack_sequences(batch.attack_order, device=self.device, non_blocking=True),
             pathfinding_minimap=self.minimap_cache,
             replay_path=batch.replay_path,
             data_path=batch.data_path,
@@ -59,11 +60,12 @@ class MovementStepper:
             unit_type_counts = self.batch.unit_type_counts[self.timestep]
             minimap = self.batch.minimap_states[self.timestep]
             fraction_similar_orders = self.batch.fraction_similar_orders[self.timestep]
+            attack_order = self.batch.attack_order[self.timestep]
 
             in_progress_threshold = states.size()[0]
             assert in_progress_threshold > 0
 
-            outputs, self.hidden_states, outputs_keep_orders = self.model(
+            outputs, self.hidden_states, outputs_keep_orders, outputs_attack_order = self.model(
                 globalState=states,
                 unit_type_counts=unit_type_counts,
                 hiddenState=self.hidden_states[:in_progress_threshold],
@@ -73,6 +75,8 @@ class MovementStepper:
 
             self.outputs = outputs
             self.outputs_keep_orders = outputs_keep_orders
+            self.outputs_attack_order = outputs_attack_order
+
             self.timestep += self.step_size
             if target_positions is not None:
                 # NLL loss, NN outputs logsoftmax, and batch_outputs is one-hot, so this is correct
@@ -84,6 +88,7 @@ class MovementStepper:
 
                 loss = losses.sum()
                 loss = loss + (self.loss_changed(outputs_keep_orders, fraction_similar_orders) * any_orders_mask).sum()
+                loss = loss + (self.loss_changed(outputs_attack_order, attack_order) * any_orders_mask).sum()
                 steps = outputs.size()[0]
                 return loss, steps
             else:
