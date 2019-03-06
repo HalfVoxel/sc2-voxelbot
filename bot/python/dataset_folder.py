@@ -6,8 +6,11 @@ import random
 import gzip
 
 
-def create_datasets(directory, test_split=0.1):
-    files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(".pt")]
+def create_datasets(directory, test_split=0.1, suffix=None):
+    if suffix is None:
+        suffix = ".pt"
+
+    files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(suffix)]
     random.shuffle(files)
     split_index = math.floor(len(files) * test_split)
 
@@ -24,6 +27,11 @@ class DatasetFolder(Dataset):
         return len(self.files)
 
     def __getitem__(self, index):
-        with gzip.open(self.files[index], 'rb') as f:
-            data = torch.load(f)
+        try:
+            with gzip.open(self.files[index], 'rb') as f:
+                data = torch.load(f)
+        except:
+            print("Failed to deserialize file, moving to next one")
+            return self[index + 1]
+
         return data
