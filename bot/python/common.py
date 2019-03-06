@@ -150,11 +150,31 @@ def train_interface(cache_fn, train_fn, visualize_fn):
         visualize_fn(args.epoch)
 
 
+def pack_sequences(sequences):
+    res = torch.cat(sequences, dim=0)
+    indices = []
+    offset = 0
+    for i in range(len(sequences)):
+        indices.append((offset, offset + sequences[i].size()[0]))
+        offset += sequences[i].size()[0]
+
+    return res, indices
+
+
+def unpack_sequences(packed_sequence, device=None, non_blocking=False):
+    data = packed_sequence[0]
+    if device is not None:
+        data = data.to(device=device, non_blocking=non_blocking)
+    indices = packed_sequence[1]
+    sequences = [data[a:b] for a, b in indices]
+    return sequences
+
+
 class PadSequence:
     def __init__(self, is_sequence):
         self.is_sequence = is_sequence
 
-        valid_values = {None, 'pad-timewise', 'stack-timewise', 'stack'}
+        valid_values = {None, 'pad-timewise', 'stack-timewise', 'stack', 'pack-stack-timewise'}
         for x in is_sequence:
             assert x in valid_values, f"Expected is_sequence member to be one of {valid_values}, found {x}"
 
@@ -181,7 +201,7 @@ class PadSequence:
             elif mode == 'stack':
                 result.append([x[i] for x in sorted_batch])
                 result[-1] = torch.stack(result[-1])
-            elif mode == 'stack-timewise' or mode == 'pad-timewise':
+            elif mode == 'stack-timewise' or mode == 'pad-timewise' or mode == 'pack-stack-timewise':
                 result.append([])
             else:
                 assert False
@@ -195,7 +215,7 @@ class PadSequence:
 
             for i in range(num_elements):
                 mode = self.is_sequence[i]
-                if mode == 'stack-timewise':
+                if mode == 'stack-timewise' or mode == 'pack-stack-timewise':
                     if active_batch[0][i] is not None:
                         s = [x[i][timestep] for x in active_batch]
                         s = torch.stack(s)
@@ -205,6 +225,11 @@ class PadSequence:
                     if len(s) > 0:
                         s = torch.nn.utils.rnn.pad_sequence(s, batch_first=True)
                         result[i].append(s)
+
+        for i in range(num_elements):
+            mode = self.is_sequence[i]
+            if mode == 'pack-stack-timewise':
+                result[i] = pack_sequences(result[i])
 
         combined = type(sorted_batch[0])(*result)
         return combined, lengths
