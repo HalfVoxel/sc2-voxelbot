@@ -10,6 +10,8 @@
 struct RawState {
     std::vector<sc2::Unit> units;
 
+    RawState() {}
+
     RawState(std::vector<const sc2::Unit*> units) {
         for (auto u : units) {
             this->units.push_back(*u);
@@ -54,6 +56,7 @@ struct ReplaySession {
     sc2::ReplayInfo replayInfo;
     std::vector<int> mmrs;
 
+    ReplaySession() {}
     ReplaySession(const ObserverSession& player1, const ObserverSession& player2);
 
     template <class Archive>
