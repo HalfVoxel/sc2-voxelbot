@@ -22,7 +22,7 @@ PYBIND11_MAKE_OPAQUE(std::vector<RawState>);
 PYBIND11_MAKE_OPAQUE(std::vector<Unit>);
 
 
-ReplaySession load_replay(string jsonData, string name) {
+ReplaySession load_replay(string jsonData, string filepath) {
     Stopwatch w1;
     stringstream json(jsonData);
     cereal::JSONInputArchive archive(json);
@@ -31,9 +31,7 @@ ReplaySession load_replay(string jsonData, string name) {
     w1.stop();
 
     Stopwatch w2;
-    stringstream filepath;
-    filepath << "training_data/replays/b1/" << name << ".bin";
-    ofstream json2(filepath.str());
+    ofstream json2(filepath);
     {
         cereal::BinaryOutputArchive archive2(json2);
         session.serialize(archive2);
@@ -47,7 +45,58 @@ ReplaySession load_replay(string jsonData, string name) {
     // session.serialize(archive3);
     w3.stop();
 
-    // cout << w1.millis() << " " << w2.millis() << " " << w3.millis() << endl;
+    cout << w1.millis() << " " << w2.millis() << " " << w3.millis() << endl;
+    return session;
+}
+
+ReplaySession load_replay2(string jsonData, pybind11::object output) {
+    Stopwatch w1;
+    stringstream json(jsonData);
+    cereal::JSONInputArchive archive(json);
+    ReplaySession session;
+    session.serialize(archive);
+    w1.stop();
+
+    Stopwatch w2;
+    stringstream json2;
+    {
+        cereal::BinaryOutputArchive archive2(json2);
+        session.serialize(archive2);
+    }
+    output.attr("write")(pybind11::bytes(json2.str()));
+    w2.stop();
+
+    Stopwatch w3;
+    // stringstream json3(json2.str());
+    // cereal::BinaryInputArchive archive3(json3);
+    // session.serialize(archive3);
+    w3.stop();
+
+    cout << w1.millis() << " " << w2.millis() << " " << w3.millis() << endl;
+    return session;
+}
+
+ReplaySession load_binary(string filepath) {
+    ReplaySession session;
+    {
+        ifstream json3(filepath);
+        cereal::BinaryInputArchive archive3(json3);
+        session.serialize(archive3);
+        json3.close();
+    }
+    return session;
+}
+
+ReplaySession load_binary2(std::string f) {
+    Stopwatch w;
+    ReplaySession session;
+    {
+        stringstream json3(f);
+        cereal::BinaryInputArchive archive3(json3);
+        session.serialize(archive3);
+    }
+    w.stop();
+    cout << w.millis() << endl;
     return session;
 }
 
@@ -58,7 +107,8 @@ PYBIND11_MODULE(botlib_bindings, m) {
     pybind11::bind_vector<vector<RawState>>(m, "VectorRawState");
     pybind11::bind_vector<vector<Unit>>(m, "VectorUnit");
 
-    m.def("load", &load_replay);
+    m.def("load", &load_replay2);
+    m.def("load_binary", &load_binary2);
 
     pybind11::class_<Example>(m, "Example")
         .def(pybind11::init())
