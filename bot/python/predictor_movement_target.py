@@ -95,11 +95,11 @@ class Net(nn.Module):
 
         self.lin_g2t = nn.Linear(self.gru_hidden_size, 16)
 
-        self.lin_t1 = nn.Linear(16, 16)
-        self.act_t1 = nn.LeakyReLU()
+        # self.lin_t1 = nn.Linear(16, 16)
+        # self.act_t1 = nn.LeakyReLU()
 
-        self.lin_t2 = nn.Linear(16, 16)
-        self.act_t2 = nn.LeakyReLU()
+        # self.lin_t2 = nn.Linear(16, 16)
+        # self.act_t2 = nn.LeakyReLU()
 
         self.lin4 = nn.Linear(self.gru_hidden_size, 64)
         self.act4 = nn.LeakyReLU()
@@ -147,6 +147,7 @@ class Net(nn.Module):
         self.act_m4_1 = nn.ReLU()
 
         self.lin_s1 = nn.Linear(self.lin4.out_features, 1)
+        self.lin_a1 = nn.Linear(self.lin4.out_features, 1)
 
         # self.bn_1 = nn.BatchNorm2d(16)
         # self.bn_2 = nn.BatchNorm2d(16)
@@ -242,8 +243,8 @@ class Net(nn.Module):
         scale = unit_type_counts.view(batch_size, unit_type_counts.size()[1], 1)
         x = x * scale
         x = self.act_t0(self.lin_t0(x))
-        x = self.act_t1(self.lin_t1(x))
-        x = self.act_t2(self.lin_t2(x) + self.lin_g2t(hiddenState).view(batch_size, 1, -1))
+        # x = self.act_t1(self.lin_t1(x))
+        x = self.act_t2(x + self.lin_g2t(hiddenState).view(batch_size, 1, -1))
         # Sum over all unit types
         x = x.sum(dim=1)
 
@@ -261,10 +262,13 @@ class Net(nn.Module):
         y = self.lin_s1(state)
         y = y.view(batch_size).sigmoid()
 
+        z = self.lin_a1(state)
+        z = z.view(batch_size).sigmoid()
+
         # r = torch.zeros((batch_size, num_units, 16)).cuda()
         # r = self.act_u3(self.lin_u3(r))
 
-        return x, hiddenState, y
+        return x, hiddenState, y, z
 
 
 unitSet = {
@@ -312,7 +316,7 @@ learning_rate_decay = 500
 learning_rate_final = 0.001
 test_split = 0.1
 batch_size = 48
-tensor_version = 7
+tensor_version = 8
 
 current_step = 0
 # gpu_tracker.track()
@@ -341,6 +345,7 @@ padding = PadSequence(MovementTargetTrace(
     unit_type_counts='pack-stack-timewise',
     pathfinding_minimap='stack',
     fraction_similar_orders='pack-stack-timewise',
+    attack_order='pack-stack-timewise',
 ))
 
 
