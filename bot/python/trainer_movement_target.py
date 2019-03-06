@@ -55,7 +55,7 @@ class MovementStepper:
     def step(self):
         if self.timestep < len(self.batch.states):
             states = self.batch.states[self.timestep]
-            target_positions = self.batch.target_positions[self.timestep] if len(self.batch.target_positions) > 0 else None
+            target_positions = self.batch.target_positions[self.timestep] if self.batch.target_positions is not None else None
             unit_type_counts = self.batch.unit_type_counts[self.timestep]
             minimap = self.batch.minimap_states[self.timestep]
             fraction_similar_orders = self.batch.fraction_similar_orders[self.timestep]

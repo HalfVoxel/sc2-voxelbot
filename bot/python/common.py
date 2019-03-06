@@ -151,6 +151,9 @@ def train_interface(cache_fn, train_fn, visualize_fn):
 
 
 def pack_sequences(sequences):
+    if len(sequences) == 0:
+        return None
+
     res = torch.cat(sequences, dim=0)
     indices = []
     offset = 0
@@ -162,6 +165,9 @@ def pack_sequences(sequences):
 
 
 def unpack_sequences(packed_sequence, device=None, non_blocking=False):
+    if packed_sequence is None:
+        return None
+
     data = packed_sequence[0]
     if device is not None:
         data = data.to(device=device, non_blocking=non_blocking)
