@@ -35,10 +35,12 @@ struct UnitCount {
 };
 
 struct SerializedUnit {
-    sc2::UNIT_TYPEID type;
-    sc2::UNIT_TYPEID addon;
-    int totalCount;
-    int availableCount;
+    sc2::UNIT_TYPEID type = sc2::UNIT_TYPEID::INVALID;
+    sc2::UNIT_TYPEID addon = sc2::UNIT_TYPEID::INVALID;
+    int totalCount = 0;
+    int availableCount = 0;
+
+    SerializedUnit() {}
 
     SerializedUnit(const BuildUnitInfo& unit)
         : type(unit.type), addon(unit.addon), totalCount(unit.units), availableCount(unit.availableUnits()) {
@@ -56,20 +58,21 @@ struct SerializedUnit {
 };
 
 struct SerializedState {
-    float time;
+    float time = 0;
     std::vector<SerializedUnit> units;
     std::vector<SerializedUnitInProgress> unitsInProgress;
-    float minerals;
-    float vespene;
-    float mineralsPerSecond;
-    float vespenePerSecond;
-    float foodAvailable;
-    sc2::Race race;
-    int highYieldMineralSlots;
-    int lowYieldMineralSlots;
-    int version;
-    std::vector<BaseInfo> baseInfos;
+    float minerals = 0;
+    float vespene = 0;
+    float mineralsPerSecond = 0;
+    float vespenePerSecond = 0;
+    float foodAvailable = 0;
+    sc2::Race race = sc2::Race::Random;
+    int highYieldMineralSlots = 0;
+    int lowYieldMineralSlots = 0;
+    int version = 0;
     std::vector<sc2::UPGRADE_ID> upgrades;
+
+    SerializedState() {}
 
     SerializedState(const BuildState& state) {
         for (auto& u : state.units) {
@@ -138,3 +141,4 @@ struct Session {
         archive(CEREAL_NVP(failed), CEREAL_NVP(states), CEREAL_NVP(actions), CEREAL_NVP(goal));
     }
 };
+
