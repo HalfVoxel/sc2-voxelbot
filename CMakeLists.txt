@@ -9,7 +9,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(PYTHON_EXECUTABLE:FILEPATH "/home/arong/anaconda3/bin/python")
 
 set(CMAKE_CONFIGURATION_TYPES, ${CMAKE_CONFIGURATION_TYPES} RelWithDebug)
-set(CMAKE_CXX_FLAGS_RELWITHDEBUG "-O2 -g")
+set(CMAKE_CXX_FLAGS_RELWITHDEBUG "-O2 -g -fPIC")
 
 # Windows builds subdirectories Debug/Release.
 # These variables will overwrite that and put binaries in bin.
@@ -120,5 +120,8 @@ pybind11_add_module(testmod MODULE "bot/build_order_train/test.cpp")
 target_link_libraries(testmod PUBLIC pybind11::module sc2api sc2lib sc2utils botlib)
 # get_target_property(OUT testmod LINK_LIBRARIES)
 # message(STATUS ${OUT})
+
+pybind11_add_module(botlib_bindings MODULE "bot/python_bindings/bindings.cpp")
+target_link_libraries(botlib_bindings PUBLIC pybind11::module sc2api sc2lib sc2utils botlib)
 
 include_directories("s2client-api/contrib/SDL-mirror/include")

@@ -3,7 +3,7 @@ import json
 import shutil
 import subprocess
 import math
-from common import count_parameters, load_all, PadSequence, training_loop, print_parameters
+from common import count_parameters, load_all, PadSequence, training_loop, print_parameters, TensorBoardWrapper
 import common
 import numpy as np
 import torch
@@ -21,7 +21,7 @@ import pickle
 # from pytorch_memory_utils.gpu_mem_track import MemTracker
 # Fix crash bug on some macOS versions
 
-torch.multiprocessing.set_sharing_strategy('file_system')
+# torch.multiprocessing.set_sharing_strategy('file_system')
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
@@ -33,7 +33,7 @@ class Net(nn.Module):
 
         self.global_state_size = 97
         self.minimap_size = 14
-        self.minimap_layers = 12 + 2 + 4
+        self.minimap_layers = 13 + 2 + 4 + 1
 
         scale = 2
         self.gru_hidden_size = 64 * scale
@@ -144,6 +144,8 @@ class Net(nn.Module):
         self.conv_m4_1 = nn.Conv2d(in_channels=16, out_channels=4, kernel_size=1, padding=0)
         self.act_m4_1 = nn.ReLU()
 
+        self.lin_s1 = nn.Linear(self.lin4.out_features, 1)
+
         # self.bn_1 = nn.BatchNorm2d(16)
         # self.bn_2 = nn.BatchNorm2d(16)
         # self.bn_3 = nn.BatchNorm2d(16)
@@ -154,6 +156,14 @@ class Net(nn.Module):
         # self.bn_c2 = nn.BatchNorm2d(12)
 
         # self.bn_g = nn.BatchNorm(64)
+
+    def to(self, device):
+        n = super().to(device=device)
+        n.xs = n.xs.to(device=device)
+        n.ys = n.ys.to(device=device)
+        n.embedding = n.embedding.to(device=device)
+        n.constant_minimap = n.constant_minimap.to(device=device)
+        return n
 
     def init_hidden_states(self, batch_size, device):
         return torch.zeros((batch_size, self.gru_hidden_size), device=device)
@@ -235,9 +245,9 @@ class Net(nn.Module):
         # Sum over all unit types
         x = x.sum(dim=1)
 
-        x = self.act4(self.lin4(hiddenState) + self.lin_t2g(x))
+        state = self.act4(self.lin4(hiddenState) + self.lin_t2g(x))
         # x = self.bn_g(x)
-        x = self.act_c4_0(self.conv_c4_0(m) + self.lin_g2c(x).view(batch_size, -1, 1, 1))
+        x = self.act_c4_0(self.conv_c4_0(m) + self.lin_g2c(state).view(batch_size, -1, 1, 1))
         self.last_c4_0 = x
         x = nn.functional.dropout2d(x, p=0.1)
         x = self.act_c4_1(self.conv_c4_1(x))
@@ -246,10 +256,13 @@ class Net(nn.Module):
 
         x = self.logsoftmax(x)
 
+        y = self.lin_s1(state)
+        y = y.view(batch_size).sigmoid()
+
         # r = torch.zeros((batch_size, num_units, 16)).cuda()
         # r = self.act_u3(self.lin_u3(r))
 
-        return x, hiddenState
+        return x, hiddenState, y
 
 
 unitSet = {
@@ -274,12 +287,11 @@ unitSet = {
 }
 
 module_name = "movement_target"
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # device = torch.device("cpu")
 small_input = False
 
 print("Loading")
-data_paths = ["training_data/replays/s2"]
+data_paths = ["training_data/replays/s3"]
 cache_dir = f"training_cache/{module_name}"
 
 # unit_lookup = UnitLookup(terranUnits + zergUnits + protossUnits)
@@ -288,38 +300,51 @@ buildOrderLoader = BuildOrderLoader(unit_lookup, 1.0)
 print("A")
 # gpu_tracker.track()
 
-model = Net(unit_lookup.num_units)
-print("B")
-model = model.to(device)
-print("C")
+device = None
+model = None
+optimizer = None
+trainer = None
 
 learning_rate = 0.004
 learning_rate_decay = 500
 learning_rate_final = 0.001
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 test_split = 0.1
 batch_size = 48
+tensor_version = 7
+
 current_step = 0
 # gpu_tracker.track()
 
 training_losses = []
 test_losses = []
-trainer = TrainerRNN(model, optimizer, action_loss_weights=[1, 1], device=device, sampleClass=MovementTargetTrace, stepperClass=MovementStepper, step_size=1)
+
 print("D")
 
+
+def init_network(device):
+    global model, optimizer, trainer
+    model = Net(unit_lookup.num_units)
+    model = model.to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    trainer = TrainerRNN(model, optimizer, action_loss_weights=[1, 1], device=device, sampleClass=MovementTargetTrace, stepperClass=MovementStepper, step_size=1)    
+
+
 padding = PadSequence(MovementTargetTrace(
-    states='stack-timewise',
+    states='pack-stack-timewise',
     replay_path=None,
-    minimap_states='stack-timewise',
+    minimap_states='pack-stack-timewise',
     data_path=None,
     playerID=None,
-    target_positions='stack-timewise',
-    unit_type_counts='stack-timewise',
-    pathfinding_minimap='stack'
+    target_positions='pack-stack-timewise',
+    unit_type_counts='pack-stack-timewise',
+    pathfinding_minimap='stack',
+    fraction_similar_orders='pack-stack-timewise',
 ))
 
 
 def visualize(epoch):
+    init_network(device=torch.device("cpu"))
+
     import matplotlib
     matplotlib.use('TkAgg')
     import matplotlib.pyplot as plt
@@ -329,7 +354,7 @@ def visualize(epoch):
     print("E")
     load_weights(f"models/{module_name}_{epoch}.weights")
     print("F")
-    memory, test_memory = create_datasets(cache_dir, test_split)
+    memory, test_memory = create_datasets(cache_dir, test_split, suffix=f".{tensor_version}.pt")
     print("G")
     for sampleIndex in range(1000):
         sample = memory[sampleIndex]
@@ -340,7 +365,12 @@ def visualize(epoch):
         print("I")
         stepper = trainer.stepperClass(model, padding([sample])[0], device, 0, lambda a, b: 0, step_size=1)
         print("J")
-        map_size = game_state_loader.find_map_size(session)
+        observationSession = {
+            "observations": session["observations"][sample.playerID - 1],
+            "gameInfo": session["gameInfo"],
+            "replayInfo": session["replayInfo"]
+        }
+        map_size = game_state_loader.find_map_size(observationSession, sample.playerID)
         print("K")
         while True:
             timestep = stepper.timestep
@@ -359,7 +389,7 @@ def visualize(epoch):
 
             print("Plotting")
             playerIndex = sample.playerID - 1
-            units = session["observations"][playerIndex]["rawUnits"][timestep]["units"]
+            units = observationSession["observations"]["rawUnits"][timestep]["units"]
             our_units = [u for u in units if u["owner"] == sample.playerID and game_state_loader.isMovableUnit(u, buildOrderLoader)]
             our_buildings = [u for u in units if u["owner"] == sample.playerID and not game_state_loader.isMovableUnit(u, buildOrderLoader)]
 
@@ -426,11 +456,17 @@ def visualize(epoch):
             w = 0.5
             plt.plot([xc + w, xc - w, xc - w, xc + w, xc + w], [yc + w, yc + w, yc - w, yc - w, yc + w], c="#FF0000")
 
-            targetCoord = sample.minimap_states[timestep][-1].argmax().item()
+            targetCoord = sample.minimap_states[timestep][-3].argmax().item()
             xc = targetCoord // model.minimap_size
             yc = targetCoord % model.minimap_size
             w = 0.4
             plt.plot([xc + w, xc - w, xc - w, xc + w, xc + w], [yc + w, yc + w, yc - w, yc - w, yc + w], c="#000000")
+
+            targetCoord = sample.minimap_states[timestep][-2].argmax().item()
+            xc = targetCoord // model.minimap_size
+            yc = targetCoord % model.minimap_size
+            w = 0.8
+            plt.plot([xc + w, xc - w, xc - w, xc + w, xc + w], [yc + w, yc + w, yc - w, yc - w, yc + w], c="#0000FF")
 
             print("B")
 
@@ -448,6 +484,9 @@ def visualize(epoch):
                 plt.sca(axs[3, 3 + i])
                 plt.imshow(stepper.batch.pathfinding_minimap.detach()[0, i, :, :].cpu().transpose(0, 1), origin="lower")
 
+            plt.sca(axs[2, 7])
+            plt.bar([0], [stepper.outputs_keep_orders.detach().item()])
+            plt.ylim((0, 1))
             print("C")
             # plt.tight_layout()
             plt.pause(0.01)
@@ -455,14 +494,15 @@ def visualize(epoch):
 
 
 def cache_tensors():
+    init_network(device=torch.device("cpu"))
+
     def load_state(s, target_filepath):
         def save_sample(sample):
             with gzip.open(target_filepath, 'wb') as f:
                 torch.save(sample, f)
         game_state_loader.loadSessionMovementTarget(s, buildOrderLoader, save_sample, None)
 
-    version = 0
-    common.cache_tenors(data_paths, cache_dir, small_input, load_state, version)
+    common.cache_tenors(data_paths, cache_dir, small_input, load_state, tensor_version)
 
 
 def learning_rate_by_time(epoch):
@@ -485,17 +525,17 @@ def save_tensorboard_graph(memory, tensorboard_writer):
 
 
 def train(comment):
-    from tensorboardX import SummaryWriter
+    init_network(device=torch.device("cuda" if torch.cuda.is_available() else "cpu"))
 
     print_parameters(model)
     print(f"Parameters: {count_parameters(model)}")
 
     global training_losses_by_time, current_step
-    tensorboard_writer = SummaryWriter(log_dir=f"tensorboard/{module_name}/{datetime.now():%Y-%m-%d_%H:%M} {comment}")
-    memory, test_memory = create_datasets(cache_dir, test_split)
+    tensorboard_writer = TensorBoardWrapper(log_dir=f"tensorboard/{module_name}/{datetime.now():%Y-%m-%d_%H:%M} {comment}")
+    memory, test_memory = create_datasets(cache_dir, test_split, suffix=f".{tensor_version}.pt")
     save_tensorboard_graph(test_memory, tensorboard_writer)
 
-    training_generator = torch.utils.data.DataLoader(memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=3, collate_fn=padding)
+    training_generator = torch.utils.data.DataLoader(memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=2, collate_fn=padding)
     testing_generator = torch.utils.data.DataLoader(test_memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=1, collate_fn=padding)
 
     for epoch, current_step in training_loop(training_generator, testing_generator, trainer, tensorboard_writer):

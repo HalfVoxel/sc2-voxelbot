@@ -10,10 +10,10 @@ import math
 import torch
 
 Trace = namedtuple('Trace', ['states', 'winner', 'replay_path', 'minimap_states', 'raw_unit_states', 'masks'])
-MovementTrace = namedtuple('MovementTrace', ['states', 'movement', 'replay_path', 'minimap_states',
+MovementTrace = namedtuple('MovementTrace', ['states', 'movement', 'order_changed', 'replay_path', 'minimap_states',
                                              'raw_unit_states', 'raw_unit_coords', 'data_path', 'playerID'])
 MovementTargetTrace = namedtuple('MovementTargetTrace', ['states', 'target_positions',
-                                                         'unit_type_counts', 'replay_path', 'minimap_states', 'data_path', 'playerID', 'pathfinding_minimap'])
+                                                         'unit_type_counts', 'replay_path', 'minimap_states', 'data_path', 'playerID', 'pathfinding_minimap', 'fraction_similar_orders'])
 
 swap_winner_replays = [
     "/Users/arong/Programming/kth/multi-agent/MultiAgentSystemsA4/replays/231ccb5bdf905a4b7246a6800876fd03ca1eb7b0407ac9753c754e6675a63e44.SC2Replay",  # Other player rage-quits
@@ -142,6 +142,10 @@ def filterSession(session, loader: BuildOrderLoader):
     # Skip very short games (very likely a player quitting due to some other reason)
     if gameDurationSeconds < 60:
         print("Skipping short game")
+        return False
+
+    if gameDurationSeconds > 40 * 60:
+        print(f"Skipping long game ({gameDurationSeconds//60} minutes)")
         return False
 
     replay_path = session["replayInfo"]["replay_path"]
@@ -521,7 +525,12 @@ def loadSessionMovement(session, loader: BuildOrderLoader, store_fn, statistics)
     #   If unit.pos is far from its last known position. Mark the unit as moved
 
     playerID = winner + 1
-    trace = loadSessionMovement2(session["observations"][playerID - 1], playerID, loader, True, session["data_path"])
+    observationSession = {
+        "observations": session["observations"][playerID - 1],
+        "gameInfo": session["gameInfo"],
+        "replayInfo": session["replayInfo"]
+    }
+    trace = loadSessionMovement2(observationSession, playerID, loader, True, session["data_path"])
     store_fn(trace)
 
 
@@ -539,6 +548,7 @@ def loadSessionMovement2(observationSession, playerID, loader: BuildOrderLoader,
     rawUnits = observationSession["observations"]["rawUnits"]
 
     player1movement = extractMovement(rawUnits, playerID, map_size, loader, mirror) if extract_movement else None
+    player1orderChanged = extractOrderChanged(rawUnits, playerID, map_size, loader, mirror) if extract_movement else None
     # player2movement = extractMovement(session["observations"][1]["rawUnits"], 1, map_size, loader)
 
     minimap_size = 10
@@ -557,6 +567,7 @@ def loadSessionMovement2(observationSession, playerID, loader: BuildOrderLoader,
     return MovementTrace(
         states=torch.stack([x[0] for x in player1obs2]),
         movement=player1movement,
+        order_changed=player1orderChanged,
         minimap_states=player1minimap,
         replay_path=replay_path,
         raw_unit_states=[x[0] for x in player1units],
@@ -630,7 +641,7 @@ def loadSessionMovementTarget2(observationSession, playerID, loader: BuildOrderL
     player1minimap = torch.stack([torch.cat((m1, m2), dim=0) for (m1, m2) in zip(player1minimap1, player1minimap2)])
 
     if unit_tag_mask == "random":
-        player1movementMinimap, unit_type_counts, target_positions = sampleMovementGroup(rawUnits, playerID, map_size, loader, minimap_size, mirror, lookaheadTime)
+        player1movementMinimap, unit_type_counts, target_positions, fractionSimilarOrders = sampleMovementGroupOrder(rawUnits, playerID, map_size, loader, minimap_size, mirror, lookaheadTime)
     else:
         target_positions = None
         assert len(rawUnits) == 1
@@ -646,6 +657,7 @@ def loadSessionMovementTarget2(observationSession, playerID, loader: BuildOrderL
         replay_path=replay_path,
         target_positions=target_positions,
         unit_type_counts=unit_type_counts,
+        fraction_similar_orders=fractionSimilarOrders,
         data_path=data_path,
         playerID=playerID,
         pathfinding_minimap=loadPathfindingMinimap(observationSession, map_size, mirror)
@@ -735,17 +747,6 @@ def loadPathfindingMinimap(session, map_size, mirror):
         raise Exception(f"Could not find minimap at {filepath} (replay={session['replayInfo']['replay_path']})")
 
 
-def packSequences(sequences):
-    res = torch.cat(sequences, dim=0)
-    indices = []
-    offset = 0
-    for i in range(len(sequences)):
-        indices.append((offset, offset + sequences[i].size()[0]))
-        offset += sequences[i].size()[0]
-
-    return res, indices
-
-
 def squaredDistance(a, b):
     dx = a[0] - b[0]
     dy = a[1] - b[1]
@@ -756,6 +757,7 @@ def sampleMovementGroup(rawUnits, playerID, map_size, loader, minimap_size, mirr
     minimap_layers = []
     unit_types = []
     target_positions = []
+    fractionSimilarOrders = []
 
     for i, state in enumerate(rawUnits[:-lookaheadTime]):
         valid_unit_tags = set()
@@ -788,40 +790,197 @@ def sampleMovementGroup(rawUnits, playerID, map_size, loader, minimap_size, mirr
             assert len(filtered_tags) > 0
 
             target_position[cell_x, cell_y] = 1
-        
-        layers, unit_type_counts = movementGroupFeatures([u for u in state["units"] if u["tag"] in filtered_tags], [u for u in rawUnits[i + lookaheadTime]["units"] if u["tag"] not in filtered_tags], loader, map_size, minimap_size, mirror)
+
+        units = [u for u in state["units"] if u["tag"] in filtered_tags]
+        unitsFuture = [u for u in rawUnits[i + 1]["units"] if u["tag"] in filtered_tags]
+        unitsComplement = [u for u in rawUnits[i + 0]["units"] if u["tag"] not in filtered_tags]
+        layers, unit_type_counts, fractionSimilar = movementGroupFeatures(units, unitsFuture, unitsComplement, loader, map_size, minimap_size, mirror)
         minimap_layers.append(layers)
         unit_types.append(unit_type_counts)
         target_positions.append(target_position)
+        fractionSimilarOrders.append(fractionSimilar)
 
-    return torch.tensor(np.stack(minimap_layers)), torch.tensor(np.stack(unit_types)), torch.tensor(np.stack(target_positions))
+    minimap_layers = torch.tensor(np.stack(minimap_layers))
+    unit_types = torch.tensor(np.stack(unit_types))
+    target_positions = torch.tensor(np.stack(target_positions))
+    fractionSimilarOrders = torch.tensor(fractionSimilarOrders, dtype=torch.float32)
+    return minimap_layers, unit_types, target_positions, fractionSimilarOrders
 
 
-def movementGroupFeatures(units, futureUnitsComplement, loader, map_size, minimap_size, mirror):
+def sampleMovementGroupOrder(rawUnits, playerID, map_size, loader, minimap_size, mirror, lookaheadTime):
+    '''
+    Extract unit groups which have the same destination one frame in the future (but not necessarily this frame)
+    '''
+    minimap_layers = []
+    unit_types = []
+    target_positions = []
+    fractionSimilarOrders = []
+
+    for i, state in enumerate(rawUnits[:-lookaheadTime]):
+        has_any_units = np.zeros((minimap_size, minimap_size))
+        existing_unit_tags = [u["tag"] for u in state["units"]]
+        valid_units = []
+        for unit in rawUnits[i + 1]["units"]:
+            is_worker = unit["unit_type"] in loader.unit_lookup.workerUnitTypes
+            unit_exists = unit["tag"] in existing_unit_tags
+            known_type = unit["unit_type"] in loader.unit_lookup.unit_index_map
+            if (not is_worker) and unit["owner"] == playerID and isMovableUnit(unit, loader) and known_type and unit_exists:
+                coord = transform_coord_minimap(unitDestination(unit), map_size, minimap_size, mirror)
+                has_any_units[coord[0], coord[1]] = 1
+                valid_units.append(unit)
+
+        target_position = np.zeros((minimap_size, minimap_size), dtype=np.float32)
+        filtered_unit_tags = set()
+
+        if has_any_units.sum() > 0:
+            has_any_units = has_any_units.flatten() / has_any_units.sum()
+            cell_index = np.random.choice(has_any_units.shape[0], p=has_any_units)
+            cell_x = cell_index // minimap_size
+            cell_y = cell_index % minimap_size
+
+            # TODO: Make sure they are not far from each other originally
+            for unit in valid_units:
+                coord = transform_coord_minimap(unitDestination(unit), map_size, minimap_size, mirror)
+                if coord[0] == cell_x and coord[1] == cell_y:
+                    filtered_unit_tags.add(unit["tag"])
+
+            assert len(filtered_unit_tags) > 0
+
+            target_position[cell_x, cell_y] = 1
+
+        units = [u for u in state["units"] if u["tag"] in filtered_unit_tags and u["unit_type"] in loader.unit_lookup.unit_index_map]
+
+        unitsFuture = [u for u in rawUnits[i + 1]["units"] if u["tag"] in filtered_unit_tags]
+        # Note: includes workers
+        unitsComplement = [u for u in state["units"] if u["owner"] == playerID and isMovableUnit(u, loader) and u["tag"] not in filtered_unit_tags]
+        layers, unit_type_counts, fractionSimilar = movementGroupFeatures(units, unitsFuture, unitsComplement, loader, map_size, minimap_size, mirror)
+        minimap_layers.append(layers)
+        unit_types.append(unit_type_counts)
+        target_positions.append(target_position)
+        fractionSimilarOrders.append(fractionSimilar)
+
+    minimap_layers = torch.tensor(np.stack(minimap_layers))
+    unit_types = torch.tensor(np.stack(unit_types))
+    target_positions = torch.tensor(np.stack(target_positions))
+    fractionSimilarOrders = torch.tensor(fractionSimilarOrders, dtype=torch.float32)
+    return minimap_layers, unit_types, target_positions, fractionSimilarOrders
+
+
+def unitOrderDestination(unit):
+    if len(unit["orders"]) == 0:
+        return None
+
+    order = unit["orders"][0]
+    target_pos = order["target_pos"]
+    if target_pos is not None and (target_pos["x"] != 0 or target_pos["y"] != 0):
+        return target_pos
+
+    # TODO: map target_unit_tag to position
+    return None
+
+
+def unitDestination(unit):
+    orderDest = unitOrderDestination(unit)
+    if orderDest is not None:
+        return orderDest
+
+    return unit["pos"]
+
+
+def similarOrders(unit1, unit2):
+    distanceThreshold = 6
+    # Special case
+    # If the future unit has no orders, but the current unit has an order
+    # that has the future position of the unit as the destination, we say that they are similar.
+    # It is likely that the unit continued with the order until it reached its destination.
+    if len(unit1["orders"]) > 0 and len(unit2["orders"]) == 0:
+        dest1 = unit1["orders"][0]["target_pos"]
+        if dest1 is not None:
+            if squaredDistance((dest1["x"], dest1["y"]), (unit2["pos"]["x"], unit2["pos"]["y"])) <= distanceThreshold * distanceThreshold:
+                return True
+
+    if (len(unit1["orders"]) > 0) != (len(unit2["orders"]) > 0):
+        return False
+
+    # Both are standing still
+    if (len(unit1["orders"]) == 0) and (len(unit2["orders"]) == 0):
+        return True
+
+    order1 = unit1["orders"][0]
+    order2 = unit2["orders"][0]
+
+    if order1["ability_id"] != order2["ability_id"]:
+        return False
+
+    if order1["target_unit_tag"] != order2["target_unit_tag"]:
+        return False
+
+    dest1 = order1["target_pos"]
+    dest2 = order2["target_pos"]
+
+    if (dest1 is not None) != (dest2 is not None):
+        return False
+
+    if squaredDistance((dest1["x"], dest1["y"]), (dest2["x"], dest2["y"])) > distanceThreshold * distanceThreshold:
+        return False
+
+    return True
+
+
+def movementGroupFeatures(units, unitsFuture, unitsComplement, loader, map_size, minimap_size, mirror):
     has_unit = np.zeros((minimap_size, minimap_size), dtype=np.float32)
     normalized_unit_counts = np.zeros((minimap_size, minimap_size), dtype=np.float32)
+    unit_destinations = np.zeros((minimap_size, minimap_size), dtype=np.float32)
     unit_type_counts = np.zeros((loader.unit_lookup.num_units), dtype=np.float32)
-    normalized_unit_counts_future = np.zeros((minimap_size, minimap_size), dtype=np.float32)
+    normalized_unit_counts = np.zeros((minimap_size, minimap_size), dtype=np.float32)
+    unit_destinations_complement = np.zeros((minimap_size, minimap_size), dtype=np.float32)
+    tag2futureUnit = {u["tag"]: u for u in unitsFuture}
+
+    similar = 0
+    totalOrders = 0
 
     for unit in units:
         coord = transform_coord_minimap(unit["pos"], map_size, minimap_size, mirror)
         has_unit[coord[0], coord[1]] = 1
         normalized_unit_counts[coord[0], coord[1]] += 1
         unit_type_counts[loader.unit_lookup.unit_index_map[unit["unit_type"]]] += 1
-    
-    for unit in futureUnitsComplement:
-        coord = transform_coord_minimap(unit["pos"], map_size, minimap_size, mirror)
-        normalized_unit_counts_future[coord[0], coord[1]] += 1
+
+        target = unitDestination(unit)
+        coord = transform_coord_minimap(target, map_size, minimap_size, mirror)
+        unit_destinations[coord[0], coord[1]] += 1
+
+        futureUnit = tag2futureUnit[unit["tag"]] if unit["tag"] in tag2futureUnit else None
+        if futureUnit is not None:
+            if similarOrders(unit, futureUnit):
+                similar += 1
+
+            totalOrders += 1
+
+    if totalOrders > 0:
+        fractionSimilar = similar / totalOrders
+    else:
+        # Assume they just continued doing what they were doing
+        # Unfortunately they died
+        fractionSimilar = 1
+
+    for unit in unitsComplement:
+        target = unitDestination(unit)
+        coord = transform_coord_minimap(target, map_size, minimap_size, mirror)
+        unit_destinations_complement[coord[0], coord[1]] += 1
 
     if len(units) > 0:
         normalized_unit_counts /= normalized_unit_counts.sum()
         unit_type_counts /= unit_type_counts.sum()
-    
-    if len(futureUnitsComplement) > 0:
-        normalized_unit_counts_future /= normalized_unit_counts_future.sum()
 
-    minimap_layers = np.stack([has_unit, normalized_unit_counts, normalized_unit_counts_future])
-    return minimap_layers, unit_type_counts
+    if len(unitsComplement) > 0:
+        unit_destinations_complement /= unit_destinations_complement.sum()
+
+    if len(units) > 0:
+        unit_destinations /= unit_destinations.sum()
+
+    minimap_layers = np.stack([has_unit, normalized_unit_counts, unit_destinations, unit_destinations_complement])
+    return minimap_layers, unit_type_counts, fractionSimilar
+
 
 def extractMovement(rawUnits, playerID, map_size, loader, mirror):
     def transform_coord(coord):
@@ -842,7 +1001,7 @@ def extractMovement(rawUnits, playerID, map_size, loader, mirror):
     for i in range(len(rawUnits)):
         moves.append(set())
 
-    movementThreshold = 10
+    movementThreshold = 6
 
     for i, state in enumerate(rawUnits):
         units = state["units"]
@@ -880,6 +1039,65 @@ def extractMovement(rawUnits, playerID, map_size, loader, mirror):
     return didMove
 
 
+def extractOrderChanged(rawUnits, playerID, map_size, loader, mirror):
+    def transform_coord(coord):
+        mn, mx, flipX, flipY = map_size
+        normalized_x = (coord["x"] - mn[0]) / (mx[0] - mn[0])
+        normalized_y = (coord["y"] - mn[1]) / (mx[1] - mn[1])
+
+        if flipX != mirror:
+            normalized_x = 1 - normalized_x
+        if flipY != mirror:
+            normalized_y = 1 - normalized_y
+        return (normalized_x, normalized_y)
+
+    # ["observations"][0]["rawUnits"]
+    lastKnownPositions = {}
+    didMove = []
+    moves = []
+    for i in range(len(rawUnits)):
+        moves.append(set())
+
+    movementThreshold = 5
+
+    for i, state in enumerate(rawUnits):
+        units = state["units"]
+        for unit in units:
+            if unit["owner"] != playerID:
+                continue
+
+            tag = unit["tag"]
+            newPos = unitDestination(unit)
+            newPos = (newPos["x"], newPos["y"])
+
+            if tag not in lastKnownPositions:
+                lastKnownPositions[tag] = newPos
+                moves[i].add(tag)
+            else:
+                oldPos = lastKnownPositions[tag]
+                if squaredDistance(oldPos, newPos) > movementThreshold * movementThreshold:
+                    # Register movement
+                    moves[i - 1].add(tag)
+                    lastKnownPositions[tag] = newPos
+
+    for i in range(len(rawUnits)):
+        playerUnits = [u for u in rawUnits[i]["units"] if u["owner"] == playerID and isMovableUnit(u, loader)]
+        numPlayerUnits = len(playerUnits)
+        didMoveThisFrame = torch.zeros(numPlayerUnits, dtype=torch.long)
+        for j, u in enumerate(playerUnits):
+            if u["tag"] in moves[i]:
+                didMoveThisFrame[j] = 1
+        didMove.append(didMoveThisFrame)
+
+        # plt.clf()
+        # coords = np.array([transform_coord(u["pos"]) for u in playerUnits])
+        # plt.scatter(coords[:, 0], coords[:, 1], c=didMoveThisFrame)
+        # plt.xlim((0, 1))
+        # plt.ylim((0, 1))
+        # plt.pause(0.1)
+
+    return didMove
+
 def isMovableUnit(u, loader):
     if u["unit_type"] not in loader.unit_lookup.unit_index_map:
         return False
@@ -903,23 +1121,36 @@ def movementUnitStates(rawUnits, loader, playerID, map_size, minimap_size, mirro
         assert unit["is_alive"]
         assert unit["display_type"] == 1
         assert not unit["is_blip"]
-        assert result.shape == (2 + 2 * minimap_size,)
+        assert result.shape == (2 + 4 * minimap_size,)
         health = (unit["health"] + unit["shield"]) / (unit["health_max"] + unit["shield_max"])
         result[0] = loader.unit_lookup.unit_index_map[unit["unit_type"]]
         coords = transform_coord_minimap(unit["pos"], map_size, minimap_size, mirror)
+
+        target_coord = unitDestination(unit)
+        target_coord = transform_coord_minimap(target_coord, map_size, minimap_size, mirror)
+
         resultCoords[0] = coords[0]
         resultCoords[1] = coords[1]
 
         # X, Y
-        result[1 + coords[0]] = 1
-        result[1 + minimap_size + coords[1]] = 1
+        offset = 1
+        result[offset + coords[0]] = 1
+        offset += minimap_size
+        result[offset + coords[1]] = 1
+        offset += minimap_size
 
-        offset = 1 + minimap_size + minimap_size
         # result[offset] = unit["owner"] * 2 - 3  # Convert owner (1|2) to -1 or 1
         # if mirror:
         #     result[9] *= -1
         # assert result[9] == -1 or result[9] == 1
         result[offset] = health
+        offset += 1
+
+        result[offset + target_coord[0]] = 1
+        offset += minimap_size
+        result[offset + target_coord[1]] = 1
+        offset += minimap_size
+
         return result
 
     valid_units = []
@@ -941,7 +1172,7 @@ def movementUnitStates(rawUnits, loader, playerID, map_size, minimap_size, mirro
     # # plt.show()
     # plt.pause(0.001)
 
-    allUnits = np.zeros((len(valid_units), 2 + 2 * minimap_size), dtype=np.float32)
+    allUnits = np.zeros((len(valid_units), 2 + 4 * minimap_size), dtype=np.float32)
     unitCoordinates = np.zeros((len(valid_units), 2), dtype=np.long)
 
     for i, unit in enumerate(valid_units):

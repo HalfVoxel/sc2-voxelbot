@@ -2,7 +2,7 @@ print("0")
 import os
 import json
 import common
-from common import count_parameters, load_all, PadSequence, training_loop
+from common import count_parameters, load_all, PadSequence, training_loop, TensorBoardWrapper
 import numpy as np
 import torch
 import torch.nn as nn
@@ -32,7 +32,7 @@ class Net(nn.Module):
     def __init__(self, num_unit_types):
         super().__init__()
 
-        self.unit_size = 22
+        self.unit_size = 22 + 20
         self.global_state_size = 97
         self.minimap_size = 10
         self.minimap_layers = 10
@@ -87,6 +87,15 @@ class Net(nn.Module):
         self.lin_c2g = nn.Linear(self.minimap_size * self.minimap_size * self.conv3.out_channels, self.lin3.out_features)
         self.lin_c2u = nn.Linear(self.conv3.out_channels, self.lin_u2_2.in_features)
 
+        self.conv_c2g_1 = nn.Conv2d(in_channels=6, out_channels=6, kernel_size=3, padding=1)
+        self.conv_c2g_2 = nn.MaxPool2d(kernel_size=2)
+        self.conv_c2g_3 = nn.Conv2d(in_channels=6, out_channels=24, kernel_size=3, padding=1)
+        self.conv_c2g_4 = nn.MaxPool2d(kernel_size=5)
+        self.conv_c2g_5 = nn.Conv2d(in_channels=24, out_channels=self.lin3.out_features, kernel_size=1, padding=0)
+        self.act_c2g_1 = nn.ReLU()
+        self.act_c2g_3 = nn.ReLU()
+        self.act_c2g_5 = nn.ReLU()
+
     def init_hidden_states(self, batch_size, device):
         return torch.zeros((batch_size, self.gru_hidden_size), device=device)
 
@@ -114,9 +123,17 @@ class Net(nn.Module):
         unitCoordinateIndices = unitCoordinateIndices.unsqueeze(-1).expand(-1, -1, m.size()[1])
         m2 = m.view(batch_size, -1, self.minimap_size * self.minimap_size).transpose(1, 2)
         minimapUnitInfo = m2.gather(index=unitCoordinateIndices, dim=1)
-        m3 = m.view(batch_size, -1)
+        # m3 = m.view(batch_size, -1)
 
-        x = self.act2(self.lin2(x) + self.lin_c2g(m3))
+        c2g = self.act_c2g_1(self.conv_c2g_1(m))
+        c2g = self.conv_c2g_2(c2g)
+        c2g = self.act_c2g_3(self.conv_c2g_3(c2g))
+        c2g = self.conv_c2g_4(c2g)
+        c2g = self.act_c2g_5(self.conv_c2g_5(c2g))
+        c2g = c2g.view(batch_size, 64)
+
+        # x = self.act2(self.lin2(x) + self.lin_c2g(m3))
+        x = self.act2(self.lin2(x) + c2g)
         x = self.act3(self.lin3(x))
         # x = self.act3(self.lin_gru(x))
         x = self.gru(x, hiddenState)
@@ -163,7 +180,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 small_input = False
 
 print("Loading")
-data_paths = ["training_data/replays/s2"]
+data_paths = ["training_data/replays/s3"]
 cache_dir = f"training_cache/{module_name}"
 
 # unit_lookup = UnitLookup(terranUnits + zergUnits + protossUnits)
@@ -185,12 +202,13 @@ current_step = 0
 
 training_losses = []
 test_losses = []
-trainer = TrainerRNN(model, optimizer, action_loss_weights=[1, 1], device=device, sampleClass=MovementTrace, stepperClass=MovementStepper, step_size=1)
+trainer = TrainerRNN(model, optimizer, action_loss_weights=[1, 8], device=device, sampleClass=MovementTrace, stepperClass=MovementStepper, step_size=1)
 learning_rate_decay = 200
 
 padding = PadSequence(MovementTrace(
     states='stack-timewise',
     movement='pad-timewise',
+    order_changed='pad-timewise',
     replay_path=None,
     minimap_states='stack-timewise',
     raw_unit_states='pad-timewise',
@@ -214,8 +232,13 @@ def visualize(epoch):
         sample = memory[sampleIndex]
         with gzip.open(sample.data_path, "rb") as f:
             session = pickle.load(f)
-        stepper = trainer.stepperClass(model, MovementTrace(*[[x] for x in sample]), device, 0, lambda a, b: 0, step_size=1)
-        map_size = game_state_loader.find_map_size(session)
+        stepper = trainer.stepperClass(model, padding([sample])[0], device, 0, lambda a, b: 0, step_size=1)
+        observationSession = {
+            "observations": session["observations"][sample.playerID - 1],
+            "gameInfo": session["gameInfo"],
+            "replayInfo": session["replayInfo"]
+        }
+        map_size = game_state_loader.find_map_size(observationSession, sample.playerID)
         while True:
             timestep = stepper.timestep
             res = stepper.step()
@@ -252,7 +275,7 @@ def visualize(epoch):
 
             plt.sca(axs[1, 0])
             plt.scatter(enemy_coords[:, 0], enemy_coords[:, 1], c="#e41a1c")
-            plt.scatter(coords[:, 0], coords[:, 1], c=sample.movement[timestep], cmap=plt.cm.viridis)
+            plt.scatter(coords[:, 0], coords[:, 1], c=sample.order_changed[timestep], cmap=plt.cm.viridis)
 
             plt.xlim((-0.1, 1.1))
             plt.ylim((-0.1, 1.1))
@@ -283,7 +306,7 @@ def cache_tensors():
                 torch.save(sample, f)
         game_state_loader.loadSessionMovement(s, buildOrderLoader, save_sample, None)
 
-    version = 0
+    version = 2
     common.cache_tenors(data_paths, cache_dir, small_input, load_state, version)
 
 
@@ -306,16 +329,15 @@ def save_tensorboard_graph(memory, tensorboard_writer):
 
 
 def train(comment):
-    from tensorboardX import SummaryWriter
     print(f"Parameters: {count_parameters(model)}")
 
     global training_losses_by_time, current_step
-    tensorboard_writer = SummaryWriter(log_dir=f"tensorboard/{module_name}/{datetime.now():%Y-%m-%d_%H:%M} {comment}")
+    tensorboard_writer = TensorBoardWrapper(log_dir=f"tensorboard/{module_name}/{datetime.now():%Y-%m-%d_%H:%M} {comment}")
     memory, test_memory = create_datasets(cache_dir, test_split)
     save_tensorboard_graph(test_memory, tensorboard_writer)
 
-    training_generator = torch.utils.data.DataLoader(memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=4, collate_fn=padding)
-    testing_generator = torch.utils.data.DataLoader(test_memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=2, collate_fn=padding)
+    training_generator = torch.utils.data.DataLoader(memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=3, collate_fn=padding)
+    testing_generator = torch.utils.data.DataLoader(test_memory, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=3, collate_fn=padding)
 
     for epoch, current_step in training_loop(training_generator, testing_generator, trainer, tensorboard_writer):
         for g in optimizer.param_groups:

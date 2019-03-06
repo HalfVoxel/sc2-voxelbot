@@ -13,7 +13,7 @@
 #include <pybind11/stl.h>
 
 const char* kReplayFolder = "/home/arong/learning/sc2-voxelbot/replays";
-const char* kReplayListProtoss = "/home/arong/learning/sc2-voxelbot/pvp.txt";
+const char* kReplayListProtoss = "/home/arong/learning/sc2-voxelbot/map_replays.txt";
 // Protoss:
 // e5242d0a121db241ccfca68150feea57deeb82b9d7000e7d00c84b5cba4e511e.SC2Replay
 using namespace std;

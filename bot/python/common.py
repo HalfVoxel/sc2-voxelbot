@@ -235,6 +235,36 @@ class PadSequence:
         return combined, lengths
 
 
+class TensorBoardWrapper:
+    def __init__(self, log_dir):
+        self.log_dir = log_dir
+        self.writer = None
+        self.scalars = []
+
+    def add_scalar(self, message, loss, step):
+        if self.writer is not None:
+            self.writer.add_scalar(message, loss, step)
+        else:
+            self.scalars.append((message, loss, step))
+
+    def add_embedding(self, **kwargs):
+        self.writer.add_embedding(**kwargs)
+
+    def init(self):
+        if self.writer is not None:
+            return
+
+        from tensorboardX import SummaryWriter
+        self.writer = SummaryWriter(log_dir=self.log_dir)
+        for s in self.scalars:
+            self.writer.add_scalar(*s)
+        self.scalars = None
+
+    def set_epoch(self, epoch):
+        if epoch >= 2:
+            self.init()
+
+
 def training_loop(training_generator, testing_generator, trainer, tensorboard_writer):
     step = 0
     epoch = 0
@@ -242,6 +272,9 @@ def training_loop(training_generator, testing_generator, trainer, tensorboard_wr
 
     while True:
         epoch += 1
+        if hasattr(tensorboard_writer, "set_epoch"):
+            tensorboard_writer.set_epoch(epoch)
+
         print(f"\rTraining Epoch {epoch}", end="")
         yield epoch, current_step
 

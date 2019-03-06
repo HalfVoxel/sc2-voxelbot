@@ -28,6 +28,7 @@ class MovementStepper:
             raw_unit_states=[x.to(device=self.device, non_blocking=non_blocking) for x in batch.raw_unit_states],
             raw_unit_coords=[x.to(device=self.device, non_blocking=non_blocking) for x in batch.raw_unit_coords],
             movement=[x.to(device=self.device, non_blocking=non_blocking) for x in batch.movement],
+            order_changed=[x.to(device=self.device, non_blocking=non_blocking) for x in batch.order_changed],
             minimap_states=[x.to(device=self.device, non_blocking=non_blocking) for x in batch.minimap_states],
             replay_path=batch.replay_path,
             data_path=batch.data_path,
@@ -43,7 +44,7 @@ class MovementStepper:
             states = self.batch.states[self.timestep]
             raw_unit_states = self.batch.raw_unit_states[self.timestep]
             raw_unit_coords = self.batch.raw_unit_coords[self.timestep]
-            movement = self.batch.movement[self.timestep] if len(self.batch.movement) > 0 else None
+            movement = self.batch.order_changed[self.timestep] if len(self.batch.order_changed) > 0 else None
             minimap_states = self.batch.minimap_states[self.timestep]
 
             in_progress_threshold = states.size()[0]
