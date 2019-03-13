@@ -14,10 +14,6 @@ using namespace sc2;
 
 static UnitTypes unitTypes;
 
-inline bool canBeAttackedByAirWeapons(UNIT_TYPEID type) {
-    return isFlying(type) || type == UNIT_TYPEID::PROTOSS_COLOSSUS;
-}
-
 float calculateDPS(const Weapon& weapon, UNIT_TYPEID target) {
     // canBeAttackedByAirWeapons is primarily for coloussus.
     if (weapon.type == Weapon::TargetType::Any || (weapon.type == Weapon::TargetType::Air ? canBeAttackedByAirWeapons(target) : !isFlying(target))) {
@@ -347,11 +343,30 @@ SurroundInfo maxSurround(float enemyGroundUnitArea, int enemyGroundUnits) {
     return { maxAttackersPerDefender, maxMeleeAttackers };
 }
 
+// Hash for combat input
+unsigned long long combatHash(const CombatState& state, bool badMicro, int defenderPlayer) {
+    unsigned long long h = 412371237L;
+    h = h ^ defenderPlayer;
+    h = h*7 ^ (int)badMicro;
+    for (auto& u : state.units) {
+        h = (h * 7) ^ ((int)((int)u.energy * 7) ^ (int)((int)u.health * 31) ^ (int)((int)u.shield * 57) ^ ((int)u.type * 71) ^ u.owner);
+    }
+    return h;
+}
+
+map<unsigned long long, CombatResult> seen_combats;
+
+int counter = 0;
+
 // Owner = 1 is the defender, Owner != 1 is an attacker
-CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool debug, bool badMicro, CombatRecording* recording) const {
-    // cout << "Predicting combat" << endl;
-    // Sort units by target score
-    // sides attack sqrt(n) units with highest score evenly
+CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool debug, bool badMicro, CombatRecording* recording, int defenderPlayer) const {
+    auto h = combatHash(inputState, badMicro, defenderPlayer);
+    counter++;
+    
+    // Determine if we have already seen this combat before, and if so, just return the previous outcome
+    if (seen_combats.find(h) != seen_combats.end()) {
+        return seen_combats[h];
+    }
 
     // Copy state
     CombatResult result;
@@ -373,12 +388,24 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool
 
     float maxRangeDefender = 0;
     float fastestAttackerSpeed = 0;
-    for (auto& u : units1) {
-        maxRangeDefender = max(maxRangeDefender, attackRange(u->type));
+    if (defenderPlayer == 1 || defenderPlayer == 2) {
+        // One player is the attacker and one is the defender
+        for (auto& u : (defenderPlayer == 1 ? units1 : units2)) {
+            maxRangeDefender = max(maxRangeDefender, attackRange(u->type));
+        }
+        for (auto& u : (defenderPlayer == 1 ? units2 : units1)) {
+            fastestAttackerSpeed = max(fastestAttackerSpeed, unitTypes[(int)u->type].movement_speed);
+        }
+    } else {
+        // Both players are attackers
+        for (auto& u : state.units) {
+            maxRangeDefender = max(maxRangeDefender, attackRange(u.type));
+        }
+        for (auto& u : state.units) {
+            fastestAttackerSpeed = max(fastestAttackerSpeed, unitTypes[(int)u.type].movement_speed);
+        }
     }
-    for (auto& u : units2) {
-        fastestAttackerSpeed = max(fastestAttackerSpeed, unitTypes[(int)u->type].movement_speed);
-    }
+    
 
     bool changed = true;
     // Note: required in case of healers on both sides to avoid inf loop
@@ -533,6 +560,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool
                     unit.energy -= dt;
                     if (unit.energy <= 0) {
                         unit.modifyHealth(-100000);
+                        // TODO: Remove from group
                         continue;
                     }
                 }
@@ -544,7 +572,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool
                 if (isUnitMelee && numMeleeUnitsUsed >= surround.maxMeleeAttackers)
                     continue;
 
-                if (group == 1) {
+                if (group + 1 != defenderPlayer) {
                     // Attacker (move until we are within range of enemy)
                     float distanceToEnemy = maxRangeDefender;
                     if (isUnitMelee) {
@@ -638,6 +666,17 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool
                     // Pick
                     auto dps = bestWeapon->getDPS(other.type) * min(1.0f, remainingSplash);
                     other.modifyHealth(-dps * dt);
+
+                    if (other.health == 0) {
+                        // Remove the unit from the group to avoid spending CPU cycles on it
+                        // Note that this invalidates the 'bestTarget' and 'other' variables
+                        g2[bestTargetIndex] = *g2.rbegin();
+                        meleeUnitAttackCount[bestTargetIndex] = *meleeUnitAttackCount.rbegin();
+                        g2.pop_back();
+                        meleeUnitAttackCount.pop_back();
+                        bestTarget = nullptr;
+                    }
+
                     // cout << "Picked target " << (-dps*dt) << " " << other.health << endl;
 
                     remainingSplash -= 1;
@@ -645,16 +684,27 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool
                     // or a non-melee unit does splash damage.
                     // If it is a melee unit, then splash is only applied to other melee units.
                     // TODO: Better rule: units only apply splash to other units that have a shorter range than themselves, or this unit has a higher movement speed than the other one
-                    if (remainingSplash > 0.001f && (!isUnitMelee || isMelee(other.type))) {
+                    if (remainingSplash > 0.001f && (!isUnitMelee || isMelee(other.type)) && g2.size() > 0) {
                         // Apply remaining splash to other random melee units
                         int offset = rand() % g2.size();
                         for (int j = 0; j < g2.size() && remainingSplash > 0.001f; j++) {
-                            auto* splashOther = g2[(j + offset) % g2.size()];
+                            int splashIndex = (j + offset) % g2.size();
+                            auto* splashOther = g2[splashIndex];
                             if (splashOther != bestTarget && splashOther->health > 0 && (!isUnitMelee || isMelee(splashOther->type))) {
                                 auto dps = bestWeapon->getDPS(splashOther->type) * min(1.0f, remainingSplash);
                                 if (dps > 0) {
                                     splashOther->modifyHealth(-dps * dt);
                                     remainingSplash -= 1.0f;
+
+                                    if (splashOther->health == 0) {
+                                        // Remove the unit from the group to avoid spending CPU cycles on it
+                                        g2[splashIndex] = *g2.rbegin();
+                                        meleeUnitAttackCount[splashIndex] = *meleeUnitAttackCount.rbegin();
+                                        g2.pop_back();
+                                        meleeUnitAttackCount.pop_back();
+                                        j--;
+                                        if (g2.size() == 0) break;
+                                    }
                                 }
                             }
                         }
@@ -672,6 +722,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool
     // Remove all temporary units
     assert(state.units.size() == inputState.units.size());
 
+    seen_combats[h] = result;
     return result;
 }
 

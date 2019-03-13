@@ -3,6 +3,10 @@
 #include "build_optimizer_nn.h"
 #include "BuildOptimizer.h"
 
+inline bool canBeAttackedByAirWeapons(sc2::UNIT_TYPEID type) {
+    return isFlying(type) || type == sc2::UNIT_TYPEID::PROTOSS_COLOSSUS;
+}
+
 struct CombatUnit {
 	int owner;
 	sc2::UNIT_TYPEID type;
@@ -33,7 +37,7 @@ struct CombatRecording;
 
 struct CombatPredictor {
 	void init();
-	CombatResult predict_engage(const CombatState& state, bool debug=false, bool badMicro=false, CombatRecording* recording=nullptr) const;
+	CombatResult predict_engage(const CombatState& state, bool debug=false, bool badMicro=false, CombatRecording* recording=nullptr, int defenderPlayer = 1) const;
 	void unitTest(const BuildOptimizerNN& buildTimePredictor) const;
 };
 
@@ -51,3 +55,6 @@ public:
 	void tick();
 	void finalize();
 };
+
+float calculateDPS(sc2::UNIT_TYPEID type, bool air);
+float calculateDPS(const std::vector<CombatUnit>& units, bool air);
