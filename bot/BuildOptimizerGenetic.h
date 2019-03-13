@@ -132,6 +132,13 @@ struct BaseInfo {
     }
 };
 
+struct BuildOrderState {
+    const std::vector<sc2::UNIT_TYPEID>& buildOrder;
+    int buildIndex = 0;
+
+    BuildOrderState (const std::vector<sc2::UNIT_TYPEID>& buildOrder) : buildOrder(buildOrder) {}
+};
+
 /** Represents all units, buildings and current build/train actions that are in progress for a given player */
 struct BuildState {
     /** Time in game time seconds at normal speed */
@@ -194,7 +201,8 @@ struct BuildState {
      * Note that the this is when the item starts to be executed, not when the item is finished.
      * The callback is called right after the action has been executed, but not necessarily completed.
      */
-    bool simulateBuildOrder(std::vector<sc2::UNIT_TYPEID> buildOrder, std::function<void(int)> = nullptr, bool waitUntilItemsFinished = true);
+    bool simulateBuildOrder(const std::vector<sc2::UNIT_TYPEID>& buildOrder, std::function<void(int)> = nullptr, bool waitUntilItemsFinished = true);
+    bool simulateBuildOrder(BuildOrderState& buildOrder, std::function<void(int)> callback, bool waitUntilItemsFinished, float maxTime = std::numeric_limits<float>::infinity());
 
     /** Food that is currently available.
      * Positive if there is a surplus of food.

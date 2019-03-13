@@ -295,13 +295,18 @@ void BuildState::simulate(float endTime) {
     }
 }
 
-bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<void(int)> callback, bool waitUntilItemsFinished) {
+bool BuildState::simulateBuildOrder(const vector<UNIT_TYPEID>& buildOrder, function<void(int)> callback, bool waitUntilItemsFinished) {
+    BuildOrderState state(buildOrder);
+    return simulateBuildOrder(state, callback, waitUntilItemsFinished);
+}
+
+bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, function<void(int)> callback, bool waitUntilItemsFinished, float maxTime) {
     float lastEventInBuildOrder = 0;
 
     // Loop through the build order
-    int buildIndex = -1;
-    for (auto unitType : buildOrder) {
-        buildIndex++;
+    for (; buildOrder.buildIndex < buildOrder.buildOrder.size(); buildOrder.buildIndex++) {
+        auto unitType = buildOrder.buildOrder[buildOrder.buildIndex];
+
         while (true) {
             float nextSignificantEvent = numeric_limits<float>::infinity();
             for (auto& ev : events) {
@@ -315,12 +320,12 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
 
             if ((unitData.tech_requirement != UNIT_TYPEID::INVALID && !unitData.require_attached && !hasEquivalentTech(unitData.tech_requirement)) || (unitData.food_required > 0 && foodAvailable() < unitData.food_required)) {
                 if (events.empty()) {
-                    cout << "No tech at index " << buildIndex << endl;
+                    cout << "No tech at index " << buildOrder.buildIndex << endl;
                     return false;
                     cout << "Requires " << UnitTypeToName(unitData.tech_requirement) << endl;
                     cout << foodAvailable() << " " << unitData.food_required << endl;
                     cout << UnitTypeToName(unitType) << endl;
-                    printBuildOrder(buildOrder);
+                    printBuildOrder(buildOrder.buildOrder);
                     cout << "Current unit counts:" << endl;
                     for (auto u : units) {
                         cout << UnitTypeToName(u.type) << " " << UnitTypeToName(u.addon) << " " << u.units << endl;
@@ -357,6 +362,11 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
                 simulate(nextSignificantEvent);
                 continue;
             }
+            
+            if (eventTime > maxTime) {
+                simulate(maxTime);
+                return true;
+            }
 
             ABILITY_ID ability = unitData.ability_id;
             // Make sure that some unit can cast this ability
@@ -391,7 +401,7 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
                 }
 
                 if (events.empty()) {
-                    printBuildOrder(buildOrder);
+                    printBuildOrder(buildOrder.buildOrder);
                     cout << "No possible caster " << UnitTypeToName(unitType) << endl;
                     for (auto& casterCandidate : units) {
                         cout << "Caster: " << UnitTypeToName(casterCandidate.type) << " " << casterCandidate.units << "/" << casterCandidate.availableUnits() << " " << UnitTypeToName(casterCandidate.addon) << endl;
@@ -446,7 +456,7 @@ bool BuildState::simulateBuildOrder(vector<UNIT_TYPEID> buildOrder, function<voi
             }
 
             if (callback != nullptr)
-                callback(buildIndex);
+                callback(buildOrder.buildIndex);
             break;
         }
     }
@@ -1128,7 +1138,7 @@ static vector<UNIT_TYPEID> unitTypesTerran = {
 vector<UNIT_TYPEID> unitTypesProtoss = {
     UNIT_TYPEID::PROTOSS_ADEPT,
     // UNIT_TYPEID::PROTOSS_ADEPTPHASESHIFT,
-    UNIT_TYPEID::PROTOSS_ARCHON,
+    // UNIT_TYPEID::PROTOSS_ARCHON, // TODO: Special case creation rule
     UNIT_TYPEID::PROTOSS_ASSIMILATOR,
     UNIT_TYPEID::PROTOSS_CARRIER,
     UNIT_TYPEID::PROTOSS_COLOSSUS,
