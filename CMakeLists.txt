@@ -6,7 +6,7 @@ project(bot)
 # This will make protoc easy to find.
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
-set(PYTHON_EXECUTABLE:FILEPATH "/home/arong/anaconda3/bin/python")
+set(PYTHON_EXECUTABLE "/Users/arong/anaconda3/bin/python")
 
 set(CMAKE_CONFIGURATION_TYPES, ${CMAKE_CONFIGURATION_TYPES} RelWithDebug)
 set(CMAKE_CXX_FLAGS_RELWITHDEBUG "-O2 -g -fPIC")
@@ -30,7 +30,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO ${PROJECT_BINARY_DIR}/bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${PROJECT_BINARY_DIR}/bin)
 
 # Build with c++14 support.
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 # Also compile the Starcraft 2 c++ API
 add_subdirectory("s2client-api")
@@ -109,6 +109,8 @@ create_executable(build_optimizer "" "bot/build_optimizer/main.cpp" "SDL2-static
 create_executable(optimizer_train "" "bot/optimizer_train/main.cpp" "SDL2-static")
 create_executable(build_order_train "" "bot/build_order_train/main.cpp" "SDL2-static")
 create_executable(combat_predictor_train "" "bot/combat_predictor_train/main.cpp" "SDL2-static")
+create_executable(mcts_test "" "bot/mcts/mcts_test.cpp" "SDL2-static")
+create_executable(test_simulator "" "bot/entrypoints/test_simulator.cpp" "SDL2-static")
 
 file (GLOB build_order_train_sources "s2client-api/examples/common/*.h" "bot/*.h" "bot/behaviortree/*.h" "bot/utilities/*.h" "bot/ml/*.h" "bot/generated/*.cpp" "bot/build_order_train/main.cpp")
 # pybind11_add_module(cppbot MODULE ${build_order_train_sources})
