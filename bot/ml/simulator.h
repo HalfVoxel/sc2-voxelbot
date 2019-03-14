@@ -78,6 +78,9 @@ struct SimulatorState {
 
     void filterDeadUnits();
     void filterDeadUnits(SimulatorUnitGroup* group);
+
+    void addUnit(int owner, sc2::UNIT_TYPEID unit_type);
+    void replaceUnit(int owner, sc2::UNIT_TYPEID unit_type, sc2::UNIT_TYPEID replacement);
 private:
     void simulateGroupMovement(Simulator& simulator, float endTime);
     void simulateGroupCombat(Simulator& simulator, float endTime);

@@ -1,4 +1,5 @@
 #include "simulator.h"
+#include "../utilities/predicates.h"
 #include <array>
 
 using namespace std;
@@ -7,7 +8,6 @@ using namespace sc2;
 int simulatorUnitIndexCounter = 0;
 
 Point2D SimulatorUnitGroup::futurePosition(float deltaTime) {
-
     if (order.type == SimulatorOrderType::Attack) {
         float dist = Distance2D(pos, order.target);
 
@@ -16,6 +16,8 @@ Point2D SimulatorUnitGroup::futurePosition(float deltaTime) {
             for (auto& u : units) {
                 minSpeed = min(minSpeed, getUnitData(u.combat.type).movement_speed);
             }
+
+            assert(minSpeed >= 0);
 
             float moveDist = minSpeed * deltaTime; // TODO: What unit is speed in?
             return pos + min(1.0f, moveDist / dist) * (order.target - pos);
@@ -38,6 +40,7 @@ void removeEmptyGroups(vector<SimulatorUnitGroup>& groups) {
 
 void SimulatorState::simulateGroupMovement(Simulator& simulator, float endTime) {
     float deltaTime = endTime - states[0].time;
+    assert(deltaTime >= 0);
     for (auto& group : groups) {
         group.previousPos = group.pos;
         group.pos = group.futurePosition(deltaTime);
@@ -50,9 +53,9 @@ void SimulatorState::simulateGroupCombat(Simulator& simulator, float endTime) {
     float combatThreshold = 8;
 
     for (auto& group1 : groups) {
-        if (group1.owner == 1) {
+        if (group1.owner == 1 && group1.units.size() > 0) {
             for (auto& group2 : groups) {
-                if (group2.owner == 2 && DistanceSquared2D(group1.pos, group2.pos) < combatThreshold*combatThreshold) {
+                if (group2.owner == 2 && group2.units.size() > 0 && DistanceSquared2D(group1.pos, group2.pos) < combatThreshold*combatThreshold) {
                     // Possible combat
                     // Collect all groups nearby
                     // Check if the groups can fight each other
@@ -60,7 +63,7 @@ void SimulatorState::simulateGroupCombat(Simulator& simulator, float endTime) {
                     auto mean = (group1.pos + group2.pos) * 0.5f;
                     vector<SimulatorUnitGroup*> nearbyGroups;
                     for (auto& group3 : groups) {
-                        if (DistanceSquared2D(mean, group3.pos) < combatThreshold*combatThreshold) {
+                        if (DistanceSquared2D(mean, group3.pos) < combatThreshold*combatThreshold && group3.units.size() > 0) {
                             nearbyGroups.push_back(&group3);
                         }
                     }
@@ -70,8 +73,6 @@ void SimulatorState::simulateGroupCombat(Simulator& simulator, float endTime) {
                     vector<vector<float>> dps (2, vector<float>(2));
                     vector<vector<bool>> hasAirGround(2, vector<bool>(2));
                     for (auto* group : nearbyGroups) {
-                        for (int air = 0; air <= 1; air++) {
-                        }
                         for (auto& unit : group->units) {
                             dps[group->owner - 1][0] += calculateDPS(unit.combat.type, false);
                             dps[group->owner - 1][1] += calculateDPS(unit.combat.type, true);
@@ -120,7 +121,6 @@ void SimulatorState::simulateGroupCombat(Simulator& simulator, float endTime) {
 
                             filterDeadUnits(group);
                         }
-                        removeEmptyGroups(groups);
                     }
                 }
             }
@@ -141,7 +141,7 @@ void SimulatorState::filterDeadUnits() {
                 remainingUnitIndex++;
             } else {
                 // TODO: Handle addons?
-                states[u.combat.owner - 1].addUnits(u.combat.type, -1);
+                states[u.combat.owner - 1].killUnits(u.combat.type, UNIT_TYPEID::INVALID, 1);
             }
         }
         group.units.erase(remainingUnitIndex, group.units.end());
@@ -158,7 +158,7 @@ void SimulatorState::filterDeadUnits(SimulatorUnitGroup* group) {
             remainingUnitIndex++;
         } else {
             // TODO: Handle addons?
-            states[u.combat.owner - 1].addUnits(u.combat.type, -1);
+            states[u.combat.owner - 1].killUnits(u.combat.type, UNIT_TYPEID::INVALID, 1);
         }
     }
     group->units.erase(remainingUnitIndex, group->units.end());
@@ -167,12 +167,44 @@ void SimulatorState::filterDeadUnits(SimulatorUnitGroup* group) {
 void SimulatorState::simulateBuildOrder (Simulator& simulator, float endTime) {
     int players = states.size();
     for (int i = 0; i < players; i++) {
-        states[i].simulateBuildOrder(buildOrders[i], nullptr, false, endTime);
+        int playerID = i + 1;
+        function<void(const BuildEvent&)> eventCallback = [&](const BuildEvent& event) {
+            switch (event.type) {
+                case FinishedUnit: {
+                    UNIT_TYPEID unit = abilityToUnit(event.ability);
+
+                    auto upgradedFromUnit = upgradedFrom(unit);
+                    if (upgradedFromUnit != UNIT_TYPEID::INVALID) {
+                        replaceUnit(playerID, upgradedFromUnit, simplifyUnitType(unit));
+                    } else {
+                        addUnit(playerID, simplifyUnitType(unit));
+                    }
+                    break;
+                }
+                case SpawnLarva: {
+                    break;
+                }
+                case MuleTimeout: {
+                    break;
+                }
+                case MakeUnitAvailable: {
+                    break;
+                }
+            }
+        };
+        states[i].simulateBuildOrder(buildOrders[i], nullptr, false, endTime, &eventCallback);
 
         // If the build order is finished, simulate until the end time anyway
-        if (states[i].time < endTime) states[i].simulate(endTime);
+        if (states[i].time < endTime) states[i].simulate(endTime, &eventCallback);
+        assert(states[i].time == endTime);
     }
 }
+
+/*
+
+void BuildEvent::apply(SimulatorState& state) const {
+    
+}*/
 
 bool similarOrders(const SimulatorUnitGroup& group1, const SimulatorUnitGroup& group2) {
     if (group1.order.type != group2.order.type) return false;
@@ -190,14 +222,14 @@ void SimulatorState::mergeGroups (Simulator& simulator) {
         auto& group1 = groups[i];
         if (group1.units.size() == 0) continue;
 
-        bool isBuilding1 = getUnitData(group1.units[0].combat.type).movement_speed == 0;
+        bool isBuilding1 = isStationary(group1.units[0].combat.type);
 
         for (int j = i + 1; j < groups.size(); j++) {
             auto& group2 = groups[j];
             if (group2.units.size() == 0) continue;
 
             if (group2.owner == group1.owner) {
-                bool isBuilding2 = getUnitData(group1.units[0].combat.type).movement_speed == 0;
+                bool isBuilding2 = isStationary(group2.units[0].combat.type);
                 if (isBuilding1 == isBuilding2 && DistanceSquared2D(group1.pos, group2.pos) < mergeDistance*mergeDistance && similarOrders(group1, group2)) {
                     // Merge groups
                     for (auto& u : group2.units) group1.units.push_back(u);
@@ -213,12 +245,13 @@ void SimulatorState::mergeGroups (Simulator& simulator) {
 }
 
 vector<SimulatorUnitGroup*> SimulatorState::select(int player, std::function<bool(const SimulatorUnitGroup&)>* groupFilter, std::function<bool(const SimulatorUnit&)>* unitFilter) {
-    vector<SimulatorUnitGroup*> matching;
+    // Note: keep track of indices instead of pointers since we are modifying the groups vector (possibly relocating it) inside the loop
+    vector<int> matchingIndices;
     for (int i = groups.size() - 1; i >= 0; i--) {
         auto& group = groups[i];
         if (group.owner == player && (groupFilter == nullptr || (*groupFilter)(group))) {
             if (unitFilter == nullptr) {
-                matching.push_back(&group);
+                matchingIndices.push_back(i);
             } else {
                 SimulatorUnitGroup newGroup;
                 for (int j = group.units.size() - 1; j >= 0; j--) {
@@ -235,19 +268,24 @@ vector<SimulatorUnitGroup*> SimulatorState::select(int player, std::function<boo
                     // Oops, all units in the group moved apparently.
                     // Just replace the group's order
                     group.units = move(newGroup.units);
-                    matching.push_back(&group);
+                    matchingIndices.push_back(i);
                 } else if (newGroup.units.size() > 0) {
                     // Some units should get the new order
                     newGroup.pos = group.pos;
                     newGroup.owner = group.owner;
                     groups.push_back(move(newGroup));
-                    matching.push_back(&*groups.rbegin());
+                    matchingIndices.push_back(groups.size() - 1);
                 }
             }
         }
     }
+    vector<SimulatorUnitGroup*> result(matchingIndices.size());
+    for (int i = 0; i < matchingIndices.size(); i++) {
+        result[i] = &groups[matchingIndices[i]];
+        assert(result[i]->owner == player);
+    }
 
-    return matching;
+    return result;
 }
 
 void SimulatorState::command(const vector<SimulatorUnitGroup*>& selection, SimulatorOrder order) {
@@ -262,8 +300,51 @@ bool SimulatorState::command(int player, std::function<bool(const SimulatorUnitG
     return matching.size() > 0;
 }
 
+void SimulatorState::addUnit(int owner, sc2::UNIT_TYPEID unit_type) {
+    // Add around some buildings
+    SimulatorUnitGroup* randomGroup = nullptr;
+    int weight = 0;
+
+    // Reservoir sampling
+    for (auto& g : groups) {
+        if (g.owner == owner && isStructure(g.units[0].combat.type)) {
+            // Yes! A structure group
+            weight++;
+            if ((rand() % weight) == 0) {
+                randomGroup = &g;
+            }
+        }
+    }
+
+    if (randomGroup == nullptr) {
+        // ???
+        // cerr << "Could not build unit " << UnitTypeToName(unit_type) << " because there are no buildings to built it around" << endl;
+    } else {
+        float dx = (rand() % 10000)/10000.0f - 0.5f;
+        float dy = (rand() % 10000)/10000.0f - 0.5f;
+        auto pos = randomGroup->pos + Point2D(dx * 5, dy * 5);
+        groups.push_back(SimulatorUnitGroup(pos, { SimulatorUnit(makeUnit(owner, unit_type)) }));
+    }
+}
+
+void SimulatorState::replaceUnit(int owner, sc2::UNIT_TYPEID unit_type, sc2::UNIT_TYPEID replacement) {
+    for (auto& g : groups) {
+        if (g.owner == owner) {
+            for (auto& u : g.units) {
+                if (u.combat.type == unit_type) {
+                    // TODO: Preserve health fraction
+                    u.combat = makeUnit(owner, replacement);
+                    return;
+                }
+            }
+        }
+    }
+
+    cerr << "Could not replace unit " << UnitTypeToName(unit_type) << " with " << UnitTypeToName(replacement) << " for player " << owner << endl;
+}
+
 void SimulatorState::simulate (Simulator& simulator, float endTime) {
-    if (endTime < states[0].time) throw std::out_of_range("endTime");
+    if (endTime < time()) throw std::out_of_range("endTime");
 
     // Move unit groups
     // Determine if any combat should happen
