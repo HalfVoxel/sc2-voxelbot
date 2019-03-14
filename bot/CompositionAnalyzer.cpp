@@ -215,7 +215,7 @@ void CompositionAnalyzer::Site::OnStep() {
             Attack();
         }
 
-        Point2D middle = (tileMn + tileMx) * 0.5;
+        // Point2D middle = (tileMn + tileMx) * 0.5;
         vector<int> unitCounts(2);
         bool inCombat = false;
         for (auto unit : units) {
@@ -251,7 +251,7 @@ void CompositionAnalyzer::Site::OnStep() {
         } else if (unitCounts[0] == 0 || unitCounts[1] == 0) {
             writeResult();
 
-            int winner = unitCounts[0] == 0 ? 1 : 0;
+            // int winner = unitCounts[0] == 0 ? 1 : 0;
             kill();
 
             state = 0;

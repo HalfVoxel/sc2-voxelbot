@@ -851,7 +851,6 @@ float mineralScore(const CombatState& initialState, const CombatResult& combatRe
 
         float healthDiff = unit2.health + unit2.shield;
         float damageTakenFraction = -healthDiff / (unit2.health_max + unit2.shield_max);
-        auto& unitTypeData = unitTypes[(int)unit2.type];
 
         // Unit is likely temporary, use a small cost
         float cost = 5;
