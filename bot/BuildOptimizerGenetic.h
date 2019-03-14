@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <cmath>
+#include <functional>
 #include "sc2api/sc2_interfaces.h"
 
 struct BuildState;
@@ -177,6 +178,7 @@ struct BuildState {
      * If this action could not be performed (e.g. there were no units that could be removed) then this function will panic.
      */
     void addUnits(sc2::UNIT_TYPEID type, sc2::UNIT_TYPEID addon, int delta);
+    void killUnits(sc2::UNIT_TYPEID type, sc2::UNIT_TYPEID addon, int count);
 
     /** Returns the current mining speed of (minerals,vespene gas) per second (at normal game speed) */
     MiningSpeed miningSpeed() const;
@@ -191,7 +193,7 @@ struct BuildState {
      * All actions up to and including the end time will have been completed after the function has been called.
      * This will update the current resources using the simulated mining speed.
      */
-    void simulate(float endTime);
+    void simulate(float endTime, std::function<void(const BuildEvent&)>* eventCallback = nullptr);
 
     /** Simulates the execution of a given build order.
      * The function will return false if the build order could not be performed.
@@ -202,7 +204,7 @@ struct BuildState {
      * The callback is called right after the action has been executed, but not necessarily completed.
      */
     bool simulateBuildOrder(const std::vector<sc2::UNIT_TYPEID>& buildOrder, std::function<void(int)> = nullptr, bool waitUntilItemsFinished = true);
-    bool simulateBuildOrder(BuildOrderState& buildOrder, std::function<void(int)> callback, bool waitUntilItemsFinished, float maxTime = std::numeric_limits<float>::infinity());
+    bool simulateBuildOrder(BuildOrderState& buildOrder, std::function<void(int)> callback, bool waitUntilItemsFinished, float maxTime = std::numeric_limits<float>::infinity(), std::function<void(const BuildEvent&)>* eventCallback = nullptr);
 
     /** Food that is currently available.
      * Positive if there is a surplus of food.

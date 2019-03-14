@@ -159,6 +159,48 @@ void BuildState::addUnits(UNIT_TYPEID type, UNIT_TYPEID addon, int delta) {
         assert(false);
 }
 
+void BuildState::killUnits(UNIT_TYPEID type, UNIT_TYPEID addon, int count) {
+    if (count == 0)
+        return;
+    
+    assert(count > 0);
+
+    for (auto& u : units) {
+        if (u.type == type && u.addon == addon) {
+            u.units -= count;
+            assert(u.units >= 0);
+            while(u.availableUnits() < 0) {
+                bool found = false;
+                for (int i = events.size() - 1; i >= 0; i--) {
+                    auto& ev = events[i];
+                    if (ev.caster == type && ev.casterAddon == addon && ev.type == (type == UNIT_TYPEID::PROTOSS_PROBE ? BuildEventType::MakeUnitAvailable : BuildEventType::FinishedUnit)) {
+                        // This event is guaranteed to keep a unit busy
+                        // Let's erase the event to free the unit for other work
+                        events.erase(events.begin() + i);
+                        u.busyUnits--;
+                        found = true;
+                        break;
+                    }
+                }
+
+                // TODO: Check if this happens oftens, if so it might be worth it to optimize this case
+                if (!found) {
+                    // Forcefully remove busy units.
+                    // Usually they are occupied with some event, but in some cases they are just marked as busy.
+                    // For example workers for a few seconds at the start of the game to simulate a delay.
+                    u.busyUnits--;
+                    cerr << "Forcefully removed busy unit" << endl;
+                    assert(false);
+                }
+            }
+            assert(u.availableUnits() >= 0);
+            return;
+        }
+    }
+
+    assert(false);
+}
+
 void MiningSpeed::simulateMining (BuildState& state, float dt) const {
     float totalWeight = 0;
     for (auto& base : state.baseInfos) {
@@ -261,7 +303,7 @@ void BuildState::addEvent(BuildEvent event) {
 }
 
 // All actions up to and including the end time will have been completed
-void BuildState::simulate(float endTime) {
+void BuildState::simulate(float endTime, function<void(const BuildEvent&)>* eventCallback) {
     if (endTime <= time)
         return;
 
@@ -284,6 +326,8 @@ void BuildState::simulate(float endTime) {
             // Ideally this would always hold, but when we simulate actual bases with mineral patches the approximations used are not entirely accurate and the mining rate may change even when there is no economically significant event
             assert(baseInfos.size() > 0 || currentMiningSpeed == miningSpeed());
         }
+
+        if (eventCallback != nullptr) (*eventCallback)(ev);
     }
 
     events.erase(events.begin(), events.begin() + eventIndex);
@@ -300,7 +344,7 @@ bool BuildState::simulateBuildOrder(const vector<UNIT_TYPEID>& buildOrder, funct
     return simulateBuildOrder(state, callback, waitUntilItemsFinished);
 }
 
-bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, function<void(int)> callback, bool waitUntilItemsFinished, float maxTime) {
+bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, function<void(int)> callback, bool waitUntilItemsFinished, float maxTime, function<void(const BuildEvent&)>* eventCallback) {
     float lastEventInBuildOrder = 0;
 
     // Loop through the build order
@@ -320,7 +364,7 @@ bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, function<void(i
 
             if ((unitData.tech_requirement != UNIT_TYPEID::INVALID && !unitData.require_attached && !hasEquivalentTech(unitData.tech_requirement)) || (unitData.food_required > 0 && foodAvailable() < unitData.food_required)) {
                 if (events.empty()) {
-                    cout << "No tech at index " << buildOrder.buildIndex << endl;
+                    // cout << "No tech at index " << buildOrder.buildIndex << endl;
                     return false;
                     cout << "Requires " << UnitTypeToName(unitData.tech_requirement) << endl;
                     cout << foodAvailable() << " " << unitData.food_required << endl;
@@ -335,7 +379,11 @@ bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, function<void(i
                     return false;
                 }
 
-                simulate(events[0].time);
+                if (events[0].time > maxTime) {
+                    simulate(maxTime, eventCallback);
+                    return true;
+                }
+                simulate(events[0].time, eventCallback);
                 continue;
             }
 
@@ -358,13 +406,13 @@ bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, function<void(i
             float eventTime = time + timeToGetResources(currentMiningSpeed, mineralCost, vespeneCost);
 
             // If it would be after the next economically significant event then the time estimate is likely not accurate (the mining speed might change in the middle)
-            if (eventTime > nextSignificantEvent) {
-                simulate(nextSignificantEvent);
+            if (eventTime > nextSignificantEvent && nextSignificantEvent <= maxTime) {
+                simulate(nextSignificantEvent, eventCallback);
                 continue;
             }
             
             if (eventTime > maxTime) {
-                simulate(maxTime);
+                simulate(maxTime, eventCallback);
                 return true;
             }
 
@@ -410,7 +458,11 @@ bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, function<void(i
                     return false;
                 }
 
-                simulate(events[0].time);
+                if (events[0].time > maxTime) {
+                    simulate(maxTime, eventCallback);
+                    return true;
+                }
+                simulate(events[0].time, eventCallback);
                 continue;
             }
 
@@ -421,7 +473,7 @@ bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, function<void(i
             }
 
             // Fast forward until we can pay for the item
-            simulate(eventTime);
+            simulate(eventTime, eventCallback);
 
             // The simulation may invalidate pointers, so find the caster again
             for (auto& casterCandidate : units) {
@@ -461,7 +513,7 @@ bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, function<void(i
         }
     }
 
-    if (waitUntilItemsFinished) simulate(lastEventInBuildOrder);
+    if (waitUntilItemsFinished) simulate(lastEventInBuildOrder, eventCallback);
     return true;
 }
 
