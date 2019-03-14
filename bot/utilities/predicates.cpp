@@ -134,8 +134,3 @@ bool isStructure(const UnitTypeData& unitType) {
     }
     return is_structure;
 }
-
-bool isStructure(UNIT_TYPEID type) {
-    // TODO: Cache in mappings?
-    return isStructure(getUnitData(type));
-}

@@ -19,6 +19,8 @@ vector<vector<UNIT_TYPEID>> mHasBeen;
 vector<vector<ABILITY_ID>> mUnitTypeHasAbilities;
 vector<UnitTypeData> mUnitTypes;
 vector<AbilityData> mAbilities;
+vector<bool> mIsStationary;
+vector<bool> mIsStructure;
 
 bool mappingInitialized = false;
 
@@ -230,6 +232,13 @@ void init() {
 
     // Hacky fix for build order optimizer not taking this into account
     mUnitTypes[(int)UNIT_TYPEID::PROTOSS_GATEWAY].tech_requirement = UNIT_TYPEID::PROTOSS_PYLON;
+
+    mIsStationary = vector<bool>(mUnitTypes.size());
+    mIsStructure = vector<bool>(mUnitTypes.size());
+    for (int i = 0; i < mUnitTypes.size(); i++) {
+        mIsStationary[i] = mUnitTypes[i].movement_speed <= 0.0f;
+        mIsStructure[i] = isStructure(getUnitData((UNIT_TYPEID)i));
+    }
 }
 
 void initMappings(const ObservationInterface* observation) {
@@ -244,6 +253,13 @@ void initMappings() {
     init();
 }
 
+bool isStructure(UNIT_TYPEID type) {
+    return mIsStructure[(int)type];
+}
+
+bool isStationary(UNIT_TYPEID type) {
+    return mIsStationary[(int)type];
+}
 
 vector<UNIT_TYPEID> emptyVector;
 

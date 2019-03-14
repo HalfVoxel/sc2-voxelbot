@@ -27,5 +27,3 @@ struct IsStructure {
 
 bool isArmy(sc2::UNIT_TYPEID type);
 bool isStructure(const sc2::UnitTypeData& unitType);
-
-bool isStructure(sc2::UNIT_TYPEID type);
