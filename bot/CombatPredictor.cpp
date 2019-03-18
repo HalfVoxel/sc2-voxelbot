@@ -837,7 +837,7 @@ float mineralScore(const CombatState& initialState, const CombatResult& combatRe
 
         float cost = unitTypeData.mineral_cost + 2 * unitTypeData.vespene_cost;
         if (unit1.owner == player) {
-            ourScore = cost * -(1 + damageTakenFraction);
+            ourScore += cost * -(1 + damageTakenFraction);
         } else {
             lossScore += cost * (-100 * (1 - damageTakenFraction));
             enemyScore += cost * (1 + damageTakenFraction);
