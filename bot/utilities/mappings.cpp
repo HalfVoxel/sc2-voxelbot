@@ -108,7 +108,11 @@ void init() {
     for (auto pair : unit_type_has_ability) {
         auto unit = (UNIT_TYPEID)pair.first;
         mUnitTypeHasAbilities[(int)unit].push_back((ABILITY_ID)pair.second);
-        mAbilityToCasterUnit[pair.second].push_back(unit);
+
+        // Avoid warpgate because the rest of the code cannot handle it at the moment (requires research)
+        if (unit != UNIT_TYPEID::PROTOSS_WARPGATE) {
+            mAbilityToCasterUnit[pair.second].push_back(unit);
+        }
     }
 
     // Addons are not really inferred correctly, so we need to correct the definitions here.

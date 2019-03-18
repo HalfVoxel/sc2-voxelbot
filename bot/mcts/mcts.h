@@ -31,7 +31,16 @@ struct State {
     void print(int padding=0, int maxDepth = 100000) const;
     State<A,T>* getChild(A action);
     nonstd::optional<std::pair<A, State<A,T>&>> bestAction() const;
+    ~State();
+    State(const State&) = delete;
 };
+
+template <class A, class T>
+State<A,T>::~State<A,T>() {
+    for (auto& c : children) {
+        delete c.state;
+    }
+}
 
 template <class A, class T>
 State<A,T>* State<A,T>::getChild(A action) {
@@ -85,6 +94,8 @@ State<A,T>& State<A,T>::select() {
                 bestAction = i;
             }
         }
+
+        assert(bestAction != -1);
 
         if (children[bestAction].state == nullptr) {
             // std::cout << "Exploring" << std::endl;

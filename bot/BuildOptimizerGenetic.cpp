@@ -94,6 +94,11 @@ BuildState::BuildState(const ObservationInterface* observation, Unit::Alliance a
 
                 // Make the caster busy first
                 makeUnitsBusy(event.caster, event.casterAddon, 1);
+                if (event.caster == UNIT_TYPEID::PROTOSS_PROBE) {
+                    // Probes are special cased as they are not busy for the whole duration of the build.
+                    // Assume the probe will be free in a few seconds
+                    addEvent(BuildEvent(BuildEventType::MakeUnitAvailable, time + min(remainingTime, 4.0f), event.caster, sc2::ABILITY_ID::INVALID));
+                }
                 addEvent(event);
             }
 

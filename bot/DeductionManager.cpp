@@ -11,18 +11,17 @@ using namespace std;
 using namespace sc2;
 
 map<Tag, set<UNIT_TYPEID>> aliasTypes;
-Race enemyRace;
 
-void DeductionManager::OnGameStart() {
+void DeductionManager::OnGameStart(int playerID) {
+    this->playerID = playerID;
     const auto& unitTypes = bot.Observation()->GetUnitTypeData();
 
     expectedObservations = vector<int>(unitTypes.size());
 
     auto playerInfos = bot.Observation()->GetGameInfo().player_info;
-    int ourID = bot.Observation()->GetPlayerID();
     for (auto& p : playerInfos) {
-        if (p.player_id != ourID) {
-            enemyRace = p.race_requested;
+        if (p.player_id == playerID) {
+            race = p.race_requested;
             startingResources = Spending(50, 0);
 
             // Set the initial units that the players start with
@@ -105,7 +104,7 @@ void DeductionManager::Observe(vector<const Unit*>& units) {
 
     // The enemy must have a way to get the remaining food, it must be using supply depots/corresponding or new bases, but don't assume that right now.
     UNIT_TYPEID supplyType;
-    switch (enemyRace) {
+    switch (race) {
         case Race::Terran:
             supplyType = UNIT_TYPEID::TERRAN_SUPPLYDEPOT;
             break;
@@ -116,7 +115,7 @@ void DeductionManager::Observe(vector<const Unit*>& units) {
             supplyType = UNIT_TYPEID::ZERG_OVERLORD;
             break;
         default:
-            throw std::invalid_argument("enemyRace");
+            throw std::invalid_argument("race");
     }
     const int foodPerSupplyUnit = 8;
     // Round up expected number of supply depots.
@@ -134,7 +133,7 @@ vector<pair<UNIT_TYPEID, int>> DeductionManager::ApproximateArmy(float scale) {
     for (int i = 0; i < unitTypes.size(); i++) {
         if (summary[i].total > 0) {
             if (isArmy((UNIT_TYPEID)i)) {
-                int expectedCount = (int)ceil((summary[i].alive+ summary[i].dead * 0.5f));
+                int expectedCount = (int)ceil((summary[i].alive + summary[i].dead * 0.5f));
                 result.emplace_back((UNIT_TYPEID)i, expectedCount);
                 totalCount += expectedCount;
             }
@@ -191,6 +190,90 @@ vector<pair<UNIT_TYPEID, int>> DeductionManager::ApproximateArmy(float scale) {
 
     return result;
 }
+
+std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPositions(float scale) {
+    vector<UnitTypeInfo> summary = Summary();
+
+    auto& unitTypes = getUnitTypes();
+    vector<int> alreadySeen (unitTypes.size());
+
+    // TODO: Use unspent minerals to get strength
+    vector<pair<CombatUnit, Point2D>> result;
+
+    // TODO: Not accurate if this is not an enemy, or if playing on a >2 player map
+    Point2D defaultPosition = agent.Observation()->GetGameInfo().enemy_start_locations[0];
+    int defaultPositionScore = -1;
+
+    for (const Unit* unit : observedUnitInstances) {
+        if (unit->is_alive) {
+            result.emplace_back(CombatUnit(*unit), unit->pos);
+            alreadySeen[(int)unit->unit_type]++;
+        }
+
+        int score = 10 * (int)unit->is_alive + (unit->health_max/100);
+        if (score > defaultPositionScore) {
+            defaultPosition = unit->pos;
+        }
+    }
+
+    for (int i = 0; i < unitTypes.size(); i++) {
+        if (summary[i].total > 0) {
+            int expectedCount;
+            if (isArmy((UNIT_TYPEID)i)) {
+                expectedCount = (int)ceil((summary[i].alive + summary[i].dead * 0.5f));
+            } else {
+                expectedCount = summary[i].alive;
+            }
+
+            expectedCount -= alreadySeen[i];
+            CombatUnit unit = makeUnit(playerID, (UNIT_TYPEID)i);
+            for (int j = 0; j < expectedCount; j++) {
+                result.emplace_back(unit, defaultPosition);
+            }
+        }
+    }
+
+    // Prior
+    int k = 0;
+    while(result.size() < 25) {
+        if (false) {
+            result.emplace_back(makeUnit(playerID, UNIT_TYPEID::ZERG_ROACH), defaultPosition);
+
+            result.emplace_back(makeUnit(playerID, UNIT_TYPEID::ZERG_ZERGLING), defaultPosition);
+
+            if ((k % 4) == 0) {
+                result.emplace_back(makeUnit(playerID, UNIT_TYPEID::ZERG_HYDRALISK), defaultPosition);
+            }
+            k++;
+        } else {
+            if ((k % 4) == 0) {
+                result.emplace_back(makeUnit(playerID, UNIT_TYPEID::PROTOSS_ZEALOT), defaultPosition);
+            }
+
+            if ((k % 4) == 1) {
+                result.emplace_back(makeUnit(playerID, UNIT_TYPEID::PROTOSS_STALKER), defaultPosition);
+            }
+
+
+            if ((k % 4) == 2) {
+                result.emplace_back(makeUnit(playerID, UNIT_TYPEID::PROTOSS_ADEPT), defaultPosition);
+            }
+
+            if ((k % 4) == 3) {
+                result.emplace_back(makeUnit(playerID, UNIT_TYPEID::PROTOSS_ZEALOT), defaultPosition);
+            }
+            k++;
+        }
+    }
+
+    assert(result.size() > 0);
+    if(result.size() < 25 * scale) {
+        result.push_back(result[rand() % result.size()]);
+    }
+
+    return result;
+}
+
 
 vector<UnitTypeInfo> DeductionManager::Summary() {
     const auto& unitTypes = bot.Observation()->GetUnitTypeData();
@@ -357,7 +440,6 @@ void DeductionManager::Observe(const Unit* unit) {
     }
 
     auto canonicalUnitType = canonicalize(unit->unit_type);
-    const auto& unitTypes = bot.Observation()->GetUnitTypeData();
 
     auto alreadyObservedType = observedUnits.find(unit->tag);
 
@@ -380,8 +462,6 @@ void DeductionManager::ExpectObservation(UNIT_TYPEID unitType, int count) {
 /** Observe the unit type, can be used to note that we know that the player has had at least one of the specified type */
 void DeductionManager::Observe(UNIT_TYPEID unitType) {
     unitType = canonicalize(unitType);
-
-    const auto& unitTypes = bot.Observation()->GetUnitTypeData();
 
     if (observedUnitTypes.find(unitType) != observedUnitTypes.end()) {
         // Already seen this one

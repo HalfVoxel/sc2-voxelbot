@@ -4,7 +4,12 @@
 #include <vector>
 #include <functional>
 
-extern int simulatorUnitIndexCounter;
+extern sc2::Tag simulatorUnitIndexCounter;
+
+inline bool isFakeTag (sc2::Tag tag) {
+    // No units tags seem to set any bits above bit 32 (which always seems to be set)
+    return tag & (1ULL << 40);
+}
 
 struct SimulatorUnit {
     CombatUnit combat;
@@ -37,7 +42,7 @@ struct SimulatorUnitGroup {
 
     SimulatorUnitGroup () = default;
 
-    SimulatorUnitGroup (sc2::Point2D pos, std::vector<SimulatorUnit> units) : units(units), pos(pos) {
+    SimulatorUnitGroup (sc2::Point2D pos, std::vector<SimulatorUnit> units) : units(units), pos(pos), previousPos(pos) {
         owner = units[0].combat.owner;
     }
 
@@ -51,8 +56,9 @@ struct SimulatorUnitGroup {
 struct Simulator {
     CombatPredictor* combatPredictor;
     float simulationStartTime = 0;
+    std::vector<sc2::Point2D> defaultPositions;
 
-    Simulator(CombatPredictor* combatPredictor) : combatPredictor(combatPredictor) {}
+    Simulator(CombatPredictor* combatPredictor, std::vector<sc2::Point2D> defaultPositions) : combatPredictor(combatPredictor), defaultPositions(defaultPositions) {}
 };
 
 struct SimulatorState {
@@ -74,13 +80,16 @@ struct SimulatorState {
 
     std::vector<SimulatorUnitGroup*> select(int player, std::function<bool(const SimulatorUnitGroup&)>* groupFilter, std::function<bool(const SimulatorUnit&)>* unitFilter);
     bool command(int player, std::function<bool(const SimulatorUnitGroup&)>* groupFilter, std::function<bool(const SimulatorUnit&)>* unitFilter, SimulatorOrder order);
-    void command(const std::vector<SimulatorUnitGroup*>& selection, SimulatorOrder order);
+    void command(const std::vector<SimulatorUnitGroup*>& selection, SimulatorOrder order, std::function<void(SimulatorUnitGroup&, SimulatorOrder)>* commandListener = nullptr);
 
     void filterDeadUnits();
     void filterDeadUnits(SimulatorUnitGroup* group);
 
+    void addUnit(const sc2::Unit* unit);
+    void addUnit(CombatUnit unit, sc2::Point2D pos);
     void addUnit(int owner, sc2::UNIT_TYPEID unit_type);
     void replaceUnit(int owner, sc2::UNIT_TYPEID unit_type, sc2::UNIT_TYPEID replacement);
+    void assertValidState();
 private:
     void simulateGroupMovement(Simulator& simulator, float endTime);
     void simulateGroupCombat(Simulator& simulator, float endTime);

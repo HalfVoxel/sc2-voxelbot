@@ -10,6 +10,7 @@
 using namespace sc2;
 using namespace BOT;
 
+
 const char* BelShirVestigeLE = "Ladder/(2)Bel'ShirVestigeLE (Void).SC2Map";
 const char* BackwaterLE = "Ladder/BackwaterLE.SC2Map";
 const char* BlackpinkLE = "Ladder/BlackpinkLE.SC2Map";
@@ -25,11 +26,14 @@ int main(int argc, char* argv[]) { /*
         return 0;
     }*/
 
+#if !DISABLE_PYTHON
     pybind11::scoped_interpreter guard{};
     pybind11::exec(R"(
         import sys
+        print(sys.path)
         sys.path.append("bot/python")
     )");
+#endif
 
     Coordinator coordinator;
     if (!coordinator.LoadSettings(argc, argv)) {
@@ -44,7 +48,7 @@ int main(int argc, char* argv[]) { /*
 
     coordinator.SetParticipants({
         CreateParticipant(Race::Protoss, &bot),
-        CreateComputer(Race::Zerg, Difficulty::VeryHard),
+        CreateComputer(Race::Protoss, Difficulty::HardVeryHard),
     });
 
     // Start the game.

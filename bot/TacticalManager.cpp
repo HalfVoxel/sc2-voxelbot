@@ -112,7 +112,7 @@ UnitGroup* TacticalManager::CreateGroup(GroupType type) {
         throw std::invalid_argument("type");
     }
 
-    armyTree->Add(group->behavior);
+    // armyTree->Add(group->behavior);
     groups.push_back(group);
     return group;
 }

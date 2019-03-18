@@ -12,12 +12,14 @@
 #include <limits>
 #include <map>
 #include <random>
+#include "ml/simulator.h"
 #include "utilities/profiler.h"
 #include "behaviortree/MicroNodes.h"
 #include "utilities/pathfinding.h"
 #include "utilities/predicates.h"
 #include "utilities/renderer.h"
 #include "SDL.h"
+#include "ml/mcts_sc2.h"
 #include "ScoutingManager.h"
 #include "behaviortree/TacticalNodes.h"
 #include "BuildingPlacement.h"
@@ -61,7 +63,9 @@ void Bot::OnGameStart() {
     // Debug()->DebugGiveAllTech();
     // Debug()->DebugGiveAllUpgrades();
 
+#if !DISABLE_PYTHON
     buildTimePredictor.init();
+#endif
     initMappings(Observation());
     deductionManager = DeductionManager();
 
@@ -70,10 +74,16 @@ void Bot::OnGameStart() {
     startLocation_ = Observation()->GetStartLocation();
     staging_location_ = startLocation_;
     dependencyAnalyzer.analyze();
-    deductionManager.OnGameStart();
-    ourDeductionManager.OnGameStart();
+    int ourID = Observation()->GetPlayerID();
+    int opponentID = 3 - ourID;
+    assert(opponentID == 1 || opponentID == 2);
+    deductionManager.OnGameStart(opponentID);
+    ourDeductionManager.OnGameStart(ourID);
     buildingPlacement.OnGameStart();
+    
+#if !DISABLE_PYTHON
     mlMovement.OnGameStart();
+#endif
 
     scoutingManager = new ScoutingManager();
 
@@ -119,10 +129,102 @@ set<BuffID> seenBuffs;
 uint32_t lastEffectID;
 std::future<tuple<vector<UNIT_TYPEID>, BuildState, float, vector<pair<UNIT_TYPEID,int>>>> currentBuildOrderFuture;
 vector<UNIT_TYPEID> currentBuildOrder;
+int currentBuildOrderIndex;
 vector<pair<UNIT_TYPEID,int>> lastCounter;
 float currentBuildOrderTime;
 BuildState lastStartingState;
 float enemyScaling = 1;
+vector<UNIT_TYPEID> emptyBO;
+
+SimulatorState createSimulatorState(Simulator& mctsSimulator) {
+    auto ourUnits = agent.Observation()->GetUnits(Unit::Alliance::Self);
+    auto enemyUnits = agent.Observation()->GetUnits(Unit::Alliance::Enemy);
+
+    vector<pair<CombatUnit, Point2D>> enemyUnitPositions = bot.deductionManager.SampleUnitPositions(1);
+
+    BuildState ourBuildState(agent.Observation(), Unit::Alliance::Self, Race::Protoss, BuildResources(agent.Observation()->GetMinerals(), agent.Observation()->GetVespene()), 0);
+    BuildState enemyBuildState;
+    for (auto& u : enemyUnitPositions) {
+        enemyBuildState.addUnits(u.first.type, 1);
+    }
+    enemyBuildState.time = ourBuildState.time;
+
+    BuildOrderState ourBO = BuildOrderState(currentBuildOrder);
+    BuildOrderState enemyBO = BuildOrderState(emptyBO);
+    ourBO.buildIndex = currentBuildOrderIndex;
+
+    assert(agent.Observation()->GetPlayerID() == 1); // Vector order
+    SimulatorState startState(mctsSimulator, { ourBuildState, enemyBuildState }, { ourBO, enemyBO });
+    for (auto& u : enemyUnitPositions) {
+        startState.addUnit(u.first, u.second);
+    }
+    // TODO blacklist projectiles and such
+    for (auto* u : ourUnits) {
+        if (isAddon(u->unit_type)) continue;
+        if (u->build_progress < 1) continue;
+
+        startState.addUnit(u);
+    }
+
+    for (int k = 1; k <= 2; k++) {
+        BuildState validation = k == 1 ? ourBuildState : enemyBuildState;
+        map<UNIT_TYPEID, int> unitCounts;
+        for (auto& g : startState.groups) {
+            if (g.owner == k) {
+                for (auto& u : g.units) {
+                    unitCounts[u.combat.type] += 1;
+                }
+            }
+        }
+
+        for (auto p : unitCounts) {
+            for (auto& u : validation.units) {
+                if (u.type == p.first) {
+                    if (u.units != p.second) {
+                        cerr << "Mismatch in unit counts " << UnitTypeToName(u.type) << " " << u.units << " " << p.second << endl;
+                        cerr << "For player " << k << endl;
+                        for (auto& u2 : validation.units) {
+                            cout << "Has " << UnitTypeToName(u2.type) << " " << u2.units << endl;
+                        }
+                        for (auto p : unitCounts) {
+                            cout << "Expected " << UnitTypeToName(p.first) << " " << p.second << endl;
+                        }
+                        exit(1);
+                    }
+                }
+            }
+        }
+    }
+
+    return startState;
+};
+
+void runMCTS () {
+    cout << "Running mcts..." << endl;
+    Point2D defaultEnemyPosition = agent.Observation()->GetGameInfo().enemy_start_locations[0];
+    Point2D ourDefaultPosition = agent.Observation()->GetStartLocation();
+    Simulator mctsSimulator(&bot.combatPredictor, { ourDefaultPosition, defaultEnemyPosition });
+    auto state = createSimulatorState(mctsSimulator);
+    std::unique_ptr<State<int, SimulatorMCTSState>> mctsState = findBestActions(state);
+    cout << "Executing mcts action..." << endl;
+    std::function<void(SimulatorUnitGroup&, SimulatorOrder)> listener = [&](SimulatorUnitGroup& group, SimulatorOrder order) {
+        vector<const Unit*> realUnits;
+        for (auto& u : group.units) {
+            if (!isFakeTag(u.tag)) {
+                const Unit* realUnit = agent.Observation()->GetUnit(u.tag);
+                if (realUnit != nullptr) {
+                    realUnits.push_back(realUnit);
+                } else {
+                    cerr << "Could not find unit with tag " << u.tag << endl;
+                }
+            }
+        }
+
+        agent.Actions()->UnitCommand(realUnits, ABILITY_ID::ATTACK, order.target);
+    };
+    mctsState->internalState.executeAction((MCTSAction)mctsState->bestAction().value().first, &listener);
+    cout << "MCTS done" << endl;
+}
 
 void Bot::OnStep() {
 
@@ -174,7 +276,7 @@ void Bot::OnStep() {
         //cout << "FPS: " << (int)(ticks/(double)(time(0) - t0)) << endl;
     }
 
-    mlMovement.Tick(Observation());
+    // mlMovement.Tick(Observation());
 
     if ((ticks % 200) == 1) {
     // if ((ticks == 1 || ticks == 2)) {
@@ -308,12 +410,16 @@ void Bot::OnStep() {
             Stopwatch watch;
             map<UNIT_TYPEID, int> targetUnitsCount2;
             for (auto u : targetUnitsCount) {
-                if (isArmy(u.first)) targetUnitsCount2[u.first] = u.second;
+                if (isArmy(u.first)) targetUnitsCount2[u.first] = u.second + u.second * 0.1f;
                 else targetUnitsCount2[u.first] = u.second;
             }
 
             cout << "Finding best composition" << endl;
-            auto bestCounter = findBestCompositionGenetic(combatPredictor, availableUnitTypesProtoss, startingState, &buildTimePredictor, &futureState, &lastCounter);
+            auto* buildTimePredictorPtr = &buildTimePredictor;
+#if DISABLE_PYTHON
+            buildTimePredictorPtr = nullptr;
+#endif
+            auto bestCounter = findBestCompositionGenetic(combatPredictor, availableUnitTypesProtoss, startingState, buildTimePredictorPtr, &futureState, &lastCounter);
             // auto bestCounter = findBestCompositionGenetic(combatPredictor, availableUnitTypesProtoss, startingState, nullptr, &futureState, &lastCounter);
             /*vector<pair<UNIT_TYPEID, int>> bestCounter = {
                 { UNIT_TYPEID::TERRAN_MARINE, 30 },
@@ -338,7 +444,9 @@ void Bot::OnStep() {
             watch.stop();
             cout << "Time " << watch.millis() << endl;
             return make_tuple(buildOrder, buildOrderStartingState, state2.time, bestCounter);
-        });        
+        });
+
+        runMCTS();
     }
 
     {
@@ -367,13 +475,16 @@ void Bot::OnStep() {
         int s = 0;
 
         int index = 0;
-        for (auto b : currentBuildOrder) {
+        currentBuildOrderIndex = 0;
+        for (int i = 0; i < currentBuildOrder.size(); i++) {
+            auto b = currentBuildOrder[i];
             // Skip the action if it is likely that we have already done it
             if (startingUnitsDelta[b] > 0) {
                 startingUnitsDelta[b]--;
                 continue;
             }
 
+            currentBuildOrderIndex = i;
             index++;
             if (index > 10) break;
 

@@ -1,11 +1,12 @@
 #include "simulator.h"
 #include "../utilities/predicates.h"
+#include "../utilities/profiler.h"
 #include <array>
 
 using namespace std;
 using namespace sc2;
 
-int simulatorUnitIndexCounter = 0;
+Tag simulatorUnitIndexCounter = (Tag)1 << 40;
 
 Point2D SimulatorUnitGroup::futurePosition(float deltaTime) {
     if (order.type == SimulatorOrderType::Attack) {
@@ -40,6 +41,9 @@ void removeEmptyGroups(vector<SimulatorUnitGroup>& groups) {
 
 void SimulatorState::simulateGroupMovement(Simulator& simulator, float endTime) {
     float deltaTime = endTime - states[0].time;
+    if (deltaTime < 0) {
+        cout << "Unexpected delta time " << deltaTime << " " << endTime << " " << states[0].time << " " << &simulator << " " << simulator.simulationStartTime << endl;
+    }
     assert(deltaTime >= 0);
     for (auto& group : groups) {
         group.previousPos = group.pos;
@@ -106,7 +110,7 @@ void SimulatorState::simulateGroupCombat(Simulator& simulator, float endTime) {
 
                         int defender = movementAmount[0] < movementAmount[1] ? 1 : 2;
 
-                        // TODO: Swap owners, it is assumed that owner == 1 is the defender
+                        // TODO: If both armies had a fight the previous time step as well, then they should already be in position (probably)
                         // TODO: What if the combat drags on longer than to endTime? (probably common in case of harassment, it takes some time for the player to start to defend)
                         // Add a max time to predict_engage and stop. Combat will resume next simulation step.
                         // Note: have to ensure that combat is resumed properly (without the attacker having to move into range and all that)
@@ -165,6 +169,8 @@ void SimulatorState::filterDeadUnits(SimulatorUnitGroup* group) {
 }
 
 void SimulatorState::simulateBuildOrder (Simulator& simulator, float endTime) {
+    assert(endTime < 100000);
+
     int players = states.size();
     for (int i = 0; i < players; i++) {
         int playerID = i + 1;
@@ -172,7 +178,7 @@ void SimulatorState::simulateBuildOrder (Simulator& simulator, float endTime) {
             switch (event.type) {
                 case FinishedUnit: {
                     UNIT_TYPEID unit = abilityToUnit(event.ability);
-
+                    // cout << "Got event " << UnitTypeToName(unit) << " " << UnitTypeToName(event.caster) << endl;
                     auto upgradedFromUnit = upgradedFrom(unit);
                     if (upgradedFromUnit != UNIT_TYPEID::INVALID) {
                         replaceUnit(playerID, upgradedFromUnit, simplifyUnitType(unit));
@@ -288,8 +294,9 @@ vector<SimulatorUnitGroup*> SimulatorState::select(int player, std::function<boo
     return result;
 }
 
-void SimulatorState::command(const vector<SimulatorUnitGroup*>& selection, SimulatorOrder order) {
+void SimulatorState::command(const vector<SimulatorUnitGroup*>& selection, SimulatorOrder order, std::function<void(SimulatorUnitGroup&, SimulatorOrder)>* commandListener) {
     for (auto* group : selection) {
+        if (commandListener != nullptr) (*commandListener)(*group, order);
         group->execute(order);
     }
 }
@@ -298,6 +305,21 @@ bool SimulatorState::command(int player, std::function<bool(const SimulatorUnitG
     auto matching = select(player, groupFilter, unitFilter);
     command(matching, order);
     return matching.size() > 0;
+}
+
+void SimulatorState::addUnit(const sc2::Unit* unit) {
+    groups.push_back(SimulatorUnitGroup(unit->pos, { SimulatorUnit(CombatUnit(*unit)) }));
+    auto& group = *groups.rbegin();
+    group.units[0].tag = unit->tag;
+
+    // TODO: Add order also when just attacking an enemy
+    if (unit->orders.size() > 0 && Point2D(0, 0) != unit->orders[0].target_pos) {
+        group.order = SimulatorOrder(SimulatorOrderType::Attack, unit->orders[0].target_pos);
+    }
+}
+
+void SimulatorState::addUnit(CombatUnit unit, sc2::Point2D pos) {
+    groups.push_back(SimulatorUnitGroup(pos, { SimulatorUnit(unit) }));
 }
 
 void SimulatorState::addUnit(int owner, sc2::UNIT_TYPEID unit_type) {
@@ -316,15 +338,10 @@ void SimulatorState::addUnit(int owner, sc2::UNIT_TYPEID unit_type) {
         }
     }
 
-    if (randomGroup == nullptr) {
-        // ???
-        // cerr << "Could not build unit " << UnitTypeToName(unit_type) << " because there are no buildings to built it around" << endl;
-    } else {
-        float dx = (rand() % 10000)/10000.0f - 0.5f;
-        float dy = (rand() % 10000)/10000.0f - 0.5f;
-        auto pos = randomGroup->pos + Point2D(dx * 5, dy * 5);
-        groups.push_back(SimulatorUnitGroup(pos, { SimulatorUnit(makeUnit(owner, unit_type)) }));
-    }
+    float dx = (rand() % 10000)/10000.0f - 0.5f;
+    float dy = (rand() % 10000)/10000.0f - 0.5f;
+    auto pos = (randomGroup != nullptr ? randomGroup->pos : simulator.defaultPositions[owner]) + Point2D(dx * 5, dy * 5);
+    addUnit(makeUnit(owner, unit_type), pos);
 }
 
 void SimulatorState::replaceUnit(int owner, sc2::UNIT_TYPEID unit_type, sc2::UNIT_TYPEID replacement) {
@@ -341,7 +358,16 @@ void SimulatorState::replaceUnit(int owner, sc2::UNIT_TYPEID unit_type, sc2::UNI
     }
 
     cerr << "Could not replace unit " << UnitTypeToName(unit_type) << " with " << UnitTypeToName(replacement) << " for player " << owner << endl;
+    assert(false);
 }
+
+Stopwatch w1(false);
+Stopwatch w2(false);
+Stopwatch w3(false);
+Stopwatch w4(false);
+float t1, t2, t3, t4;
+
+int c = 0;
 
 void SimulatorState::simulate (Simulator& simulator, float endTime) {
     if (endTime < time()) throw std::out_of_range("endTime");
@@ -353,18 +379,93 @@ void SimulatorState::simulate (Simulator& simulator, float endTime) {
     // Merge groups
     // Determine if any combat should happen
 
+    w1.start();
     float midTime = (time() + endTime) * 0.5f;
-    simulateGroupMovement(simulator, midTime);
-    simulateGroupCombat(simulator, midTime);
-    simulateBuildOrder(simulator, midTime);
 
-    simulateGroupMovement(simulator, endTime);
-    simulateGroupCombat(simulator, endTime);
+    w3.start();
+    simulateGroupMovement(simulator, midTime);
+    assertValidState();
+    w3.stop();
+    t3 += w3.millis();
+
+    w4.start();
+    simulateGroupCombat(simulator, midTime);
+    assertValidState();
+    w4.stop();
+    t4 += w4.millis();
+    
+    w2.start();
+    simulateBuildOrder(simulator, midTime);
+    w2.stop();
+    t2 += w2.millis();
+    assertValidState();
+
+    w3.start();
+    simulateGroupMovement(simulator, midTime);
+    assertValidState();
+    w3.stop();
+    t3 += w3.millis();
+
+    w4.start();
+    simulateGroupCombat(simulator, midTime);
+    assertValidState();
+    w4.stop();
+    t4 += w4.millis();
+
+    w2.start();
     simulateBuildOrder(simulator, endTime);
+    w2.stop();
+    t2 += w2.millis();
+    assertValidState();
 
     // New units?
 
     mergeGroups(simulator);
+    assertValidState();
+    w1.stop();
+    t1 += w1.millis();
 
     // Simulate group combat again
+    assert(time() == endTime);
+    c++;
+    if (c % 1000) {
+        cout << "Times " << t1 << " " << t2 << " " << t3 << " " << t4 << endl;
+    }
+}
+
+void SimulatorState::assertValidState () {
+    return;
+    for (int k = 0; k < 2; k++) {
+        BuildState& buildState = states[k];
+        map<UNIT_TYPEID, int> unitCounts;
+        map<UNIT_TYPEID, int> unitCounts2;
+        for (auto& g : groups) {
+            if (g.owner == k + 1) {
+                for (auto& u : g.units) {
+                    unitCounts[u.combat.type] += 1;
+                    unitCounts2[u.combat.type] += 0;
+                }
+            }
+        }
+        // Just make sure they are listed
+        for (auto& u : buildState.units) {
+            unitCounts[u.type] += 0;
+            unitCounts2[u.type] += u.units;
+        }
+
+        for (auto p : unitCounts) {
+            if (unitCounts2[p.first] != p.second) {
+                cerr << "Mismatch in unit counts " << UnitTypeToName(p.first) << " " << unitCounts2[p.first] << " " << p.second << endl;
+                cerr << "For player " << k << endl;
+                cerr << time() << endl;
+                for (auto p : unitCounts2) {
+                    cout << "Has " << UnitTypeToName(p.first) << " " << p.second << endl;
+                }
+                for (auto p : unitCounts) {
+                    cout << "Expected " << UnitTypeToName(p.first) << " " << p.second << endl;
+                }
+                assert(false);
+            }
+        }
+    }
 }

@@ -125,6 +125,19 @@ class CompositionAnalyzer2 : public sc2::Agent {
 
 int main(int argc, char* argv[]) {
     pybind11::scoped_interpreter guard{};
+    pybind11::exec(R"(
+        import sys
+        print(sys.path)
+        sys.path.append("bot/python")
+    )");
+
+    CombatPredictor predictor;
+    BuildOptimizerNN buildTimePredictor;
+    initMappings();
+    buildTimePredictor.init();
+    predictor.init();
+    predictor.unitTest(buildTimePredictor);
+    exit(0);
 
     Coordinator coordinator;
     if (!coordinator.LoadSettings(argc, argv)) {
