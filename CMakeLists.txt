@@ -111,6 +111,7 @@ create_executable(build_order_train "" "bot/build_order_train/main.cpp" "SDL2-st
 create_executable(combat_predictor_train "" "bot/combat_predictor_train/main.cpp" "SDL2-static")
 create_executable(mcts_test "" "bot/mcts/mcts_test.cpp" "SDL2-static")
 create_executable(test_simulator "" "bot/entrypoints/test_simulator.cpp" "SDL2-static")
+create_executable(mcts_cache_unit_tests "" "bot/entrypoints/mcts_cache_unit_tests.cpp" "SDL2-static")
 
 file (GLOB build_order_train_sources "s2client-api/examples/common/*.h" "bot/*.h" "bot/behaviortree/*.h" "bot/utilities/*.h" "bot/ml/*.h" "bot/generated/*.cpp" "bot/build_order_train/main.cpp")
 # pybind11_add_module(cppbot MODULE ${build_order_train_sources})

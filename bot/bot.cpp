@@ -13,6 +13,7 @@
 #include <map>
 #include <random>
 #include "ml/simulator.h"
+#include "ml/simulator_context.h"
 #include "utilities/profiler.h"
 #include "behaviortree/MicroNodes.h"
 #include "utilities/pathfinding.h"
@@ -136,7 +137,7 @@ BuildState lastStartingState;
 float enemyScaling = 1;
 vector<UNIT_TYPEID> emptyBO;
 
-SimulatorState createSimulatorState(Simulator& mctsSimulator) {
+SimulatorState createSimulatorState(SimulatorContext& mctsSimulator) {
     auto ourUnits = agent.Observation()->GetUnits(Unit::Alliance::Self);
     auto enemyUnits = agent.Observation()->GetUnits(Unit::Alliance::Enemy);
 
@@ -154,7 +155,7 @@ SimulatorState createSimulatorState(Simulator& mctsSimulator) {
     ourBO.buildIndex = currentBuildOrderIndex;
 
     assert(agent.Observation()->GetPlayerID() == 1); // Vector order
-    SimulatorState startState(mctsSimulator, { ourBuildState, enemyBuildState }, { ourBO, enemyBO });
+    SimulatorState startState(mctsSimulator, { mctsSimulator.cache.copyState(ourBuildState), mctsSimulator.cache.copyState(enemyBuildState) }, { ourBO, enemyBO });
     for (auto& u : enemyUnitPositions) {
         startState.addUnit(u.first, u.second);
     }
@@ -199,14 +200,28 @@ SimulatorState createSimulatorState(Simulator& mctsSimulator) {
     return startState;
 };
 
+float tmcts;
+float tmctsprep;
+
+float tRollout = 0;
+float tExpand = 0;
+float tSelect = 0;
+
+
 void runMCTS () {
     cout << "Running mcts..." << endl;
+    Stopwatch w1;
+    Stopwatch w2;
     Point2D defaultEnemyPosition = agent.Observation()->GetGameInfo().enemy_start_locations[0];
     Point2D ourDefaultPosition = agent.Observation()->GetStartLocation();
-    Simulator mctsSimulator(&bot.combatPredictor, { ourDefaultPosition, defaultEnemyPosition });
+    SimulatorContext mctsSimulator(&bot.combatPredictor, { ourDefaultPosition, defaultEnemyPosition });
     auto state = createSimulatorState(mctsSimulator);
+    w2.stop();
     std::unique_ptr<State<int, SimulatorMCTSState>> mctsState = findBestActions(state);
     cout << "Executing mcts action..." << endl;
+    w1.stop();
+    tmcts += w1.millis();
+    tmctsprep += w2.millis();
     std::function<void(SimulatorUnitGroup&, SimulatorOrder)> listener = [&](SimulatorUnitGroup& group, SimulatorOrder order) {
         vector<const Unit*> realUnits;
         for (auto& u : group.units) {
@@ -223,7 +238,7 @@ void runMCTS () {
         agent.Actions()->UnitCommand(realUnits, ABILITY_ID::ATTACK, order.target);
     };
     mctsState->internalState.executeAction((MCTSAction)mctsState->bestAction().value().first, &listener);
-    cout << "MCTS done" << endl;
+    cout << "MCTS done " << tmcts << " " << tmctsprep << endl;
 }
 
 void Bot::OnStep() {

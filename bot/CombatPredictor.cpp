@@ -345,11 +345,15 @@ SurroundInfo maxSurround(float enemyGroundUnitArea, int enemyGroundUnits) {
 
 // Hash for combat input
 unsigned long long combatHash(const CombatState& state, bool badMicro, int defenderPlayer) {
-    unsigned long long h = 412371237L;
+    unsigned long long h = 0L;
     h = h ^ defenderPlayer;
-    h = h*7 ^ (int)badMicro;
+    h = h*31 ^ (int)badMicro;
     for (auto& u : state.units) {
-        h = (h * 7) ^ ((int)((int)u.energy * 7) ^ (int)((int)u.health * 31) ^ (int)((int)u.shield * 57) ^ ((int)u.type * 71) ^ u.owner);
+        h = (h * 31) ^ (unsigned long long)u.energy;
+        h = (h * 31) ^ (unsigned long long)u.health;
+        h = (h * 31) ^ (unsigned long long)u.shield;
+        h = (h * 31) ^ (unsigned long long)u.type;
+        h = (h * 31) ^ (unsigned long long)u.owner;
     }
     return h;
 }
@@ -360,13 +364,24 @@ int counter = 0;
 
 // Owner = 1 is the defender, Owner != 1 is an attacker
 CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool debug, bool badMicro, CombatRecording* recording, int defenderPlayer) const {
+#if CACHE_COMBAT
     auto h = combatHash(inputState, badMicro, defenderPlayer);
     counter++;
     
     // Determine if we have already seen this combat before, and if so, just return the previous outcome
     if (seen_combats.find(h) != seen_combats.end()) {
+        auto& cachedResult = seen_combats[h];
+        assert(cachedResult.state.units.size() == inputState.units.size());
+        for (int i = 0; i < cachedResult.state.units.size(); i++) {
+            if (cachedResult.state.units[i].type != inputState.units[i].type) {
+                cerr << "Hash collision???" << endl;
+                cerr << UnitTypeToName(cachedResult.state.units[i].type) << " " << UnitTypeToName(inputState.units[i].type) << endl;
+                assert(false);
+            }
+        }
         return seen_combats[h];
     }
+#endif
 
     // Copy state
     CombatResult result;
@@ -722,7 +737,9 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool
     // Remove all temporary units
     assert(state.units.size() == inputState.units.size());
 
+#if CACHE_COMBAT
     seen_combats[h] = result;
+#endif
     return result;
 }
 

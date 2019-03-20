@@ -1,132 +1,33 @@
+#include "../ml/mcts_sc2.h"
 #include "../ml/simulator.h"
-#include "../utilities/predicates.h"
+#include "../ml/simulator_context.h"
+#include "../ml/mcts_cache.h"
+#include "../CombatPredictor.h"
 #include "../utilities/mappings.h"
-#include <functional>
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
-#include <random>
-#include <ctime>
-#include <sstream>
-#include <iostream>
-#include "../mcts/mcts.h"
-#include "../ml/mcts_sc2.h"
-#include "../ml/simulator_context.h"
 
 using namespace std;
 using namespace sc2;
 
-pybind11::object visualize_fn;
-pybind11::object visualize_bar_fn;
-
-
-void visualizeSimulator(SimulatorState& state) {
-    vector<vector<float>> units;
-    for (auto& group : state.groups) {
-        for (auto& u : group.units) {
-            units.push_back(vector<float> { group.pos.x, group.pos.y, (float)u.combat.owner, (float)u.tag, (float)u.combat.type, u.combat.health + u.combat.shield, u.combat.health_max + u.combat.shield_max });
-        }
-    }
-
-    visualize_fn(units, state.time(), healthFraction(state, 1), healthFraction(state, 2));
-}
-
-void stepSimulator(SimulatorState& state, SimulatorContext& simulator, float endTime) {
-    while(state.time() < endTime) {
-        state.simulate(simulator, state.time() + 1);
-        visualizeSimulator(state);
+void assertIdentical(SimulatorState& s1, SimulatorState& s2) {
+    assert(s1.time() == s2.time());
+    assert(s1.states[0] == s2.states[0]);
+    assert(s1.states[1] == s2.states[1]);
+    assert(s1.buildOrders[0].buildIndex == s2.buildOrders[0].buildIndex);
+    assert(s1.buildOrders[1].buildIndex == s2.buildOrders[1].buildIndex);
+    assert(s1.groups.size() == s2.groups.size());
+    for (int i = 0; i < s1.groups.size(); i++) {
+        auto& g1 = s1.groups[i];
+        auto& g2 = s1.groups[i];
+        assert(g1.order.type == g2.order.type);
+        assert(g1.order.target == g2.order.target);
+        assert(g1.units.size() == g2.units.size());
+        assert(g1.owner == g2.owner);
     }
 }
 
-void example_simulation(SimulatorContext& simulator, SimulatorState& state) {
-    assert(state.command(1, &idleGroup, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(100, 60))));
-    assert(state.groups[0].order.type == SimulatorOrderType::Attack);
-    assert(state.groups[0].order.target == Point2D(100, 60));
-
-    cout << "Frac: " << healthFraction(state, 1) << " " << healthFraction(state, 2) << endl;
-    visualizeSimulator(state);
-
-    stepSimulator(state, simulator, state.time() + 2);
-
-    assert(state.command(2, &idleGroup, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(40, 100))));
-
-    assert(state.command(1, &idleGroup, &notArmyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(10, 60))));
-    assert(state.groups[0].order.type == SimulatorOrderType::Attack);
-    assert(state.groups[0].order.target == Point2D(100, 60));
-
-    stepSimulator(state, simulator, state.time() + 6);
-
-    assert(state.command(1, nullptr, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(60, 60))));
-
-    stepSimulator(state, simulator, state.time() + 6);
-
-    assert(state.command(1, nullptr, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(100, 100))));
-    cout << "Frac: " << healthFraction(state, 1) << " " << healthFraction(state, 2) << endl;
-
-    stepSimulator(state, simulator, state.time() + 6);
-
-    assert(state.command(2, nullptr, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(100, 100))));
-
-    stepSimulator(state, simulator, state.time() + 50);
-    cout << "Frac: " << healthFraction(state, 1) << " " << healthFraction(state, 2) << endl;
-}
-
-void mcts(SimulatorContext& simulator, SimulatorState& startState) {
-    srand(time(0));
-
-    unique_ptr<State<int, SimulatorMCTSState>> state = make_unique<State<int, SimulatorMCTSState>>(SimulatorMCTSState(startState));
-    /*for (int i = 0; i < 100000; i++) {
-        mcts<int, SimulatorMCTSState>(*state);
-    }*/
-
-    // exit(0);
-
-    // state->getChild(6)->getChild(4)->getChild(0)->getChild(1)->getChild(4)->print(0, 2);
-    // state->getChild(4)->getChild(4)->print(0, 2);
-
-    auto* currentState = &*state;
-    visualizeSimulator(currentState->internalState.state);
-    int it = 0;
-    while(true) {
-        if (it % 2 == 0) {
-            state = make_unique<State<int, SimulatorMCTSState>>(SimulatorMCTSState(currentState->internalState.state));
-            simulator.simulationStartTime = state->internalState.state.time();
-
-            // vector<vector<int>> stats(200, vector<int>(14));
-            for (int i = 0; i < 20000; i++) {
-                mcts<int, SimulatorMCTSState>(*state);
-                /*for (auto& c : state->children) {
-                    assert(c.action < 14);
-                    stats[i/100][c.action] = c.state != nullptr ? c.state->visits : 0;
-                }*/
-            }
-            // visualize_bar_fn(stats);
-
-            if (it == 0) {
-                state->print(0, 3);
-            }
-            currentState = &*state;
-        }
-        //auto action = ((it % 2) == 1) ? (it == 1 || it == 3 || it == 5 ? nonstd::make_optional<pair<int, State<int, SimulatorMCTSState>&>>(4, *currentState->getChild(4)) : nonstd::make_optional<pair<int, State<int, SimulatorMCTSState>&>>(0, *currentState->getChild(0))) : currentState->bestAction();
-        auto action = currentState->bestAction();
-        it++;
-        if (action && currentState->getChild(action.value().first) != nullptr) {
-            cout << "Action " << action.value().first << endl;
-            currentState = &action.value().second;
-            for (auto& g : currentState->internalState.state.groups) {
-                cout << "Group action: " << g.order.type << " -> " << g.order.target.x << "," << g.order.target.y << " (player " << g.owner << " at " << g.pos.x << "," << g.pos.y << ")" << endl;
-            }
-            visualizeSimulator(currentState->internalState.state);
-        } else {
-            break;
-        }
-    }
-
-    while(true) {
-        stepSimulator(currentState->internalState.state, currentState->internalState.state.simulator, currentState->internalState.state.time() + 5);
-    }
-}
-
-void test_simulator() {
+void test() {
     CombatPredictor combatPredictor;
     combatPredictor.init();
 
@@ -188,6 +89,21 @@ void test_simulator() {
         SimulatorUnit(makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE)),
     }));
 
+    state.groups.push_back(SimulatorUnitGroup(Point2D(20, 10), {
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+    }));
+
     state.groups.push_back(SimulatorUnitGroup(Point2D(100, 100), {
         SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_ZEALOT)),
         SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_CARRIER)),
@@ -221,6 +137,7 @@ void test_simulator() {
 
     state.groups.push_back(SimulatorUnitGroup(Point2D(100, 100), {
         SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_NEXUS)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_STARGATE)),
         SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PHOTONCANNON)),
         SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PHOTONCANNON)),
         SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PHOTONCANNON)),
@@ -248,11 +165,53 @@ void test_simulator() {
         SimulatorUnit(makeUnit(1, UNIT_TYPEID::PROTOSS_PYLON)),
         SimulatorUnit(makeUnit(1, UNIT_TYPEID::PROTOSS_PYLON)),
     }));
+    
+    assert(state.command(1, &idleGroup, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(100, 60))));
+    assert(state.command(2, &idleGroup, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(40, 100))));
+    assert(state.command(1, &idleGroup, &notArmyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(10, 60))));
+    assert(state.command(1, nullptr, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(60, 60))));
+    assert(state.command(1, nullptr, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(100, 100))));
+    assert(state.command(2, nullptr, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(100, 100))));
 
-    mcts(simulator, state);
-    // example_simulation(simulator, state);
+
+    SimulatorState state2 = state;
+    SimulatorState state3 = state;
+    state3.command(1, nullptr, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(100, 0)));
+
+    state.simulate(simulator, 10);
+    assert(state.states[0] != state2.states[0]);
+    state2.simulate(simulator, 10);
+    state3.simulate(simulator, 10);
+
+    // Literally the same pointer
+    assertIdentical(state, state2);
+    assert(state.time() == 10);
+    assert(state2.time() == 10);
+    state.assertValidState();
+    state2.assertValidState();
+
+    cout << "Hashes " << state.states[0]->hash() << " " << state2.states[0]->hash() << endl;
+
+    // Should trigger a combat
+    cout << "S1" << endl;
+    state.simulate(simulator, 100);
+    cout << "S2" << endl;
+    state2.simulate(simulator, 100);
+    cout << "S3" << endl;
+    state3.simulate(simulator, 50);
+    assert(state3.command(1, nullptr, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(100, 100))));
+    cout << "S3" << endl;
+    state3.simulate(simulator, 100);
+    
+
+    assertIdentical(state, state2);
+    // assertIdentical(state, state3);
+    assert(state.buildOrders[0].buildIndex > 0);
+    assert(state.time() == 100);
+    assert(state2.time() == 100);
+    state.assertValidState();
+    state2.assertValidState();
 }
-
 
 int main(int argc, char* argv[]) {
     initMappings();
@@ -263,9 +222,5 @@ int main(int argc, char* argv[]) {
         sys.path.append("bot/python")
     )");
 
-    auto simulatorVisualizer = pybind11::module::import("simulator_visualizer");
-    visualize_fn = simulatorVisualizer.attr("visualize");
-    visualize_bar_fn = simulatorVisualizer.attr("visualize_bar");
-
-    test_simulator();
+    test();
 }

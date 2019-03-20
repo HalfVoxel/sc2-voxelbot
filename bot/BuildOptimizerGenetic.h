@@ -156,12 +156,59 @@ struct BuildState {
     /** Metadata (in particular resource info) about the bases that the player has */
     std::vector<BaseInfo> baseInfos;
 
+private:
+    mutable uint64_t cachedHash = 0;
+public:
+
     BuildState() {}
     BuildState(std::vector<std::pair<sc2::UNIT_TYPEID, int>> unitCounts) {
         for (auto u : unitCounts)
             addUnits(u.first, u.second);
     }
     BuildState(const sc2::ObservationInterface* observation, sc2::Unit::Alliance alliance, sc2::Race race, BuildResources resources, float time);
+
+    uint64_t hash() const {
+        cachedHash = 0;
+        return immutableHash();
+    }
+
+    void recalculateHash() {
+        cachedHash = 0;
+        immutableHash();
+    }
+
+    /** Returns the hash of the build state.
+     * Note: Assumes the object is immutable, the hash is cached the first time the method is called
+     */
+    uint64_t immutableHash() const {
+        if (cachedHash == 0) {
+            uint64_t h = 0;
+            h = h*31 ^ (int)(time * 1000);
+            h = h*31 ^ (int)(resources.minerals * 1000);
+            h = h*31 ^ (int)(resources.vespene * 1000);
+            h = h*31 ^ (int)(race);
+            for (auto& u : units) {
+                h = h*31 ^ (int)u.type;
+                h = h*31 ^ (int)u.addon;
+                h = h*31 ^ (int)u.busyUnits;
+                h = h*31 ^ (int)u.units;
+            }
+            for (auto& s : baseInfos) {
+                h = h*31 ^ ((int)s.remainingMinerals);
+                h = h*31 ^ ((int)s.remainingVespene1);
+                h = h*31 ^ ((int)s.remainingVespene2);
+            }
+            for (auto& e : events) {
+                h = h*31 ^ ((int)e.ability);
+                h = h*31 ^ ((int)e.caster);
+                h = h*31 ^ ((int)e.casterAddon);
+                h = h*31 ^ ((int)e.time);
+                h = h*31 ^ ((int)e.type); // Type is really implied by the ability, but oh well
+            }
+            cachedHash = h;
+        }
+        return cachedHash;
+    }
 
     /** Marks a number of units with the given type (and optionally addon) as being busy.
      * Delta may be negative to indicate that the units should be made available again after having been busy.
@@ -193,7 +240,7 @@ struct BuildState {
      * All actions up to and including the end time will have been completed after the function has been called.
      * This will update the current resources using the simulated mining speed.
      */
-    void simulate(float endTime, std::function<void(const BuildEvent&)>* eventCallback = nullptr);
+    void simulate(float endTime, const std::function<void(const BuildEvent&)>* eventCallback = nullptr);
 
     /** Simulates the execution of a given build order.
      * The function will return false if the build order could not be performed.
@@ -204,7 +251,7 @@ struct BuildState {
      * The callback is called right after the action has been executed, but not necessarily completed.
      */
     bool simulateBuildOrder(const std::vector<sc2::UNIT_TYPEID>& buildOrder, std::function<void(int)> = nullptr, bool waitUntilItemsFinished = true);
-    bool simulateBuildOrder(BuildOrderState& buildOrder, std::function<void(int)> callback, bool waitUntilItemsFinished, float maxTime = std::numeric_limits<float>::infinity(), std::function<void(const BuildEvent&)>* eventCallback = nullptr);
+    bool simulateBuildOrder(BuildOrderState& buildOrder, std::function<void(int)> callback, bool waitUntilItemsFinished, float maxTime = std::numeric_limits<float>::infinity(), const std::function<void(const BuildEvent&)>* eventCallback = nullptr);
 
     /** Food that is currently available.
      * Positive if there is a surplus of food.

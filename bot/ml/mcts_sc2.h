@@ -1,3 +1,4 @@
+#pragma once
 #include "simulator.h"
 #include "../mcts/mcts.h"
 #include<vector>

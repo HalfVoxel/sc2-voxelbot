@@ -308,7 +308,7 @@ void BuildState::addEvent(BuildEvent event) {
 }
 
 // All actions up to and including the end time will have been completed
-void BuildState::simulate(float endTime, function<void(const BuildEvent&)>* eventCallback) {
+void BuildState::simulate(float endTime, const function<void(const BuildEvent&)>* eventCallback) {
     if (endTime <= time)
         return;
 
@@ -349,7 +349,7 @@ bool BuildState::simulateBuildOrder(const vector<UNIT_TYPEID>& buildOrder, funct
     return simulateBuildOrder(state, callback, waitUntilItemsFinished);
 }
 
-bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, function<void(int)> callback, bool waitUntilItemsFinished, float maxTime, function<void(const BuildEvent&)>* eventCallback) {
+bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, function<void(int)> callback, bool waitUntilItemsFinished, float maxTime, const function<void(const BuildEvent&)>* eventCallback) {
     float lastEventInBuildOrder = 0;
 
     // Loop through the build order
@@ -454,8 +454,9 @@ bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, function<void(i
                 }
 
                 if (events.empty()) {
+                    // cout << "No possible caster " << UnitTypeToName(unitType) << endl;
+                    return false;
                     printBuildOrder(buildOrder.buildOrder);
-                    cout << "No possible caster " << UnitTypeToName(unitType) << endl;
                     for (auto& casterCandidate : units) {
                         cout << "Caster: " << UnitTypeToName(casterCandidate.type) << " " << casterCandidate.units << "/" << casterCandidate.availableUnits() << " " << UnitTypeToName(casterCandidate.addon) << endl;
                     }

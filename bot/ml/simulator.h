@@ -4,6 +4,7 @@
 #include <vector>
 #include <functional>
 
+struct SimulatorContext;
 extern sc2::Tag simulatorUnitIndexCounter;
 
 inline bool isFakeTag (sc2::Tag tag) {
@@ -53,30 +54,22 @@ struct SimulatorUnitGroup {
     sc2::Point2D futurePosition(float deltaTime);
 };
 
-struct Simulator {
-    CombatPredictor* combatPredictor;
-    float simulationStartTime = 0;
-    std::vector<sc2::Point2D> defaultPositions;
-
-    Simulator(CombatPredictor* combatPredictor, std::vector<sc2::Point2D> defaultPositions) : combatPredictor(combatPredictor), defaultPositions(defaultPositions) {}
-};
-
 struct SimulatorState {
-    Simulator& simulator;
-    std::vector<BuildState> states;
+    SimulatorContext& simulator;
+    std::vector<const BuildState*> states;
     std::vector<SimulatorUnitGroup> groups;
     std::vector<BuildOrderState> buildOrders;
     
     float time() {
-        return states[0].time;
+        return states[0]->time;
     }
 
-    SimulatorState (Simulator& simulator, std::vector<BuildState> states, std::vector<BuildOrderState> buildOrders) : simulator(simulator), states(states), buildOrders(buildOrders) {
+    SimulatorState (SimulatorContext& simulator, std::vector<const BuildState*> states, std::vector<BuildOrderState> buildOrders) : simulator(simulator), states(states), buildOrders(buildOrders) {
         assert(states.size() == 2);
         assert(buildOrders.size() == 2);
     }
 
-    void simulate (Simulator& simulator, float endTime);
+    void simulate (SimulatorContext& simulator, float endTime);
 
     std::vector<SimulatorUnitGroup*> select(int player, std::function<bool(const SimulatorUnitGroup&)>* groupFilter, std::function<bool(const SimulatorUnit&)>* unitFilter);
     bool command(int player, std::function<bool(const SimulatorUnitGroup&)>* groupFilter, std::function<bool(const SimulatorUnit&)>* unitFilter, SimulatorOrder order);
@@ -91,8 +84,8 @@ struct SimulatorState {
     void replaceUnit(int owner, sc2::UNIT_TYPEID unit_type, sc2::UNIT_TYPEID replacement);
     void assertValidState();
 private:
-    void simulateGroupMovement(Simulator& simulator, float endTime);
-    void simulateGroupCombat(Simulator& simulator, float endTime);
-    void simulateBuildOrder (Simulator& simulator, float endTime);
-    void mergeGroups (Simulator& simulator);
+    void simulateGroupMovement(SimulatorContext& simulator, float endTime);
+    void simulateGroupCombat(SimulatorContext& simulator, float endTime);
+    void simulateBuildOrder (SimulatorContext& simulator, float endTime);
+    void mergeGroups (SimulatorContext& simulator);
 };

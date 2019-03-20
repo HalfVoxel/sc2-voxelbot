@@ -2,6 +2,8 @@
 #include "../utilities/predicates.h"
 #include "../utilities/profiler.h"
 #include <array>
+#include <random>
+#include "simulator_context.h"
 
 using namespace std;
 using namespace sc2;
@@ -39,10 +41,10 @@ void removeEmptyGroups(vector<SimulatorUnitGroup>& groups) {
     groups.erase(remainingGroupIndex, groups.end());
 }
 
-void SimulatorState::simulateGroupMovement(Simulator& simulator, float endTime) {
-    float deltaTime = endTime - states[0].time;
+void SimulatorState::simulateGroupMovement(SimulatorContext& simulator, float endTime) {
+    float deltaTime = endTime - time();
     if (deltaTime < 0) {
-        cout << "Unexpected delta time " << deltaTime << " " << endTime << " " << states[0].time << " " << &simulator << " " << simulator.simulationStartTime << endl;
+        cout << "Unexpected delta time " << deltaTime << " " << endTime << " " << time() << " " << &simulator << " " << simulator.simulationStartTime << endl;
     }
     assert(deltaTime >= 0);
     for (auto& group : groups) {
@@ -52,7 +54,7 @@ void SimulatorState::simulateGroupMovement(Simulator& simulator, float endTime) 
     }
 }
 
-void SimulatorState::simulateGroupCombat(Simulator& simulator, float endTime) {
+void SimulatorState::simulateGroupCombat(SimulatorContext& simulator, float endTime) {
     // TODO: Vary depending on group sizes
     float combatThreshold = 8;
 
@@ -102,7 +104,7 @@ void SimulatorState::simulateGroupCombat(Simulator& simulator, float endTime) {
                                 movementAmount[group->owner-1] += movementDist * group->units.size();
                             }
                             movementWeight[group->owner-1] += group->units.size();
-                            for (auto& u : group->units) state.units.push_back(u.combat);
+                            // for (auto& u : group->units) state.units.push_back(u.combat);
                         }
 
                         if (movementWeight[0] > 0) movementAmount[0] /= movementWeight[0];
@@ -110,6 +112,8 @@ void SimulatorState::simulateGroupCombat(Simulator& simulator, float endTime) {
 
                         int defender = movementAmount[0] < movementAmount[1] ? 1 : 2;
 
+                        simulator.cache.handleCombat(*this, nearbyGroups, defender);
+                        #if FALSE
                         // TODO: If both armies had a fight the previous time step as well, then they should already be in position (probably)
                         // TODO: What if the combat drags on longer than to endTime? (probably common in case of harassment, it takes some time for the player to start to defend)
                         // Add a max time to predict_engage and stop. Combat will resume next simulation step.
@@ -125,6 +129,7 @@ void SimulatorState::simulateGroupCombat(Simulator& simulator, float endTime) {
 
                             filterDeadUnits(group);
                         }
+                        #endif
                     }
                 }
             }
@@ -136,6 +141,10 @@ void SimulatorState::simulateGroupCombat(Simulator& simulator, float endTime) {
 }
 
 void SimulatorState::filterDeadUnits() {
+    array<BuildState*, 2> newStates = {{ simulator.cache.copyState(*states[0]), simulator.cache.copyState(*states[1]) }};
+    states[0] = newStates[0];
+    states[1] = newStates[1];
+
     for (auto& group : groups) {
         // Filter out dead units from the group
         auto remainingUnitIndex = group.units.begin();
@@ -144,12 +153,14 @@ void SimulatorState::filterDeadUnits() {
                 if (&u != &*remainingUnitIndex) *remainingUnitIndex = u;
                 remainingUnitIndex++;
             } else {
-                // TODO: Handle addons?
-                states[u.combat.owner - 1].killUnits(u.combat.type, UNIT_TYPEID::INVALID, 1);
+                newStates[u.combat.owner - 1]->killUnits(u.combat.type, UNIT_TYPEID::INVALID, 1);
             }
         }
         group.units.erase(remainingUnitIndex, group.units.end());
     }
+
+    newStates[0]->recalculateHash();
+    newStates[1]->recalculateHash();
     removeEmptyGroups(groups);
 }
 
@@ -160,15 +171,12 @@ void SimulatorState::filterDeadUnits(SimulatorUnitGroup* group) {
         if (u.combat.health > 0) {
             if (&u != &*remainingUnitIndex) *remainingUnitIndex = u;
             remainingUnitIndex++;
-        } else {
-            // TODO: Handle addons?
-            states[u.combat.owner - 1].killUnits(u.combat.type, UNIT_TYPEID::INVALID, 1);
         }
     }
     group->units.erase(remainingUnitIndex, group->units.end());
 }
 
-void SimulatorState::simulateBuildOrder (Simulator& simulator, float endTime) {
+void SimulatorState::simulateBuildOrder (SimulatorContext& simulator, float endTime) {
     assert(endTime < 100000);
 
     int players = states.size();
@@ -198,11 +206,18 @@ void SimulatorState::simulateBuildOrder (Simulator& simulator, float endTime) {
                 }
             }
         };
-        states[i].simulateBuildOrder(buildOrders[i], nullptr, false, endTime, &eventCallback);
+
+        auto simRes = simulator.cache.simulateBuildOrder(*states[i], buildOrders[i], endTime, &eventCallback);
+        states[i] = simRes.first;
+        buildOrders[i].buildIndex = simRes.second.buildIndex;
+        assertValidState();
+        
+        /*states[i].simulateBuildOrder(buildOrders[i], nullptr, false, endTime, &eventCallback);
 
         // If the build order is finished, simulate until the end time anyway
         if (states[i].time < endTime) states[i].simulate(endTime, &eventCallback);
-        assert(states[i].time == endTime);
+        */
+        assert(states[i]->time == endTime);
     }
 }
 
@@ -221,7 +236,7 @@ bool similarOrders(const SimulatorUnitGroup& group1, const SimulatorUnitGroup& g
     return true;
 }
 
-void SimulatorState::mergeGroups (Simulator& simulator) {
+void SimulatorState::mergeGroups (SimulatorContext& simulator) {
     float mergeDistance = 6;
 
     for (int i = 0; i < groups.size(); i++) {
@@ -327,19 +342,27 @@ void SimulatorState::addUnit(int owner, sc2::UNIT_TYPEID unit_type) {
     SimulatorUnitGroup* randomGroup = nullptr;
     int weight = 0;
 
+    // Base the seed on some function of the state pointers
+    // This ensures that the simulation is deterministic (with caching)
+    // even when it includes randomness
+    uint64_t seed = (uint64_t)states[0] + (uint64_t)states[1];
+    default_random_engine rnd(seed);
+
     // Reservoir sampling
     for (auto& g : groups) {
         if (g.owner == owner && isStructure(g.units[0].combat.type)) {
             // Yes! A structure group
             weight++;
-            if ((rand() % weight) == 0) {
+            uniform_int_distribution<int> dist(0, weight - 1);
+            if (dist(rnd) == 0) {
                 randomGroup = &g;
             }
         }
     }
 
-    float dx = (rand() % 10000)/10000.0f - 0.5f;
-    float dy = (rand() % 10000)/10000.0f - 0.5f;
+    uniform_real_distribution<double> offsetDist(-0.5f, 0.5f);
+    float dx = offsetDist(rnd);
+    float dy = offsetDist(rnd);
     auto pos = (randomGroup != nullptr ? randomGroup->pos : simulator.defaultPositions[owner]) + Point2D(dx * 5, dy * 5);
     addUnit(makeUnit(owner, unit_type), pos);
 }
@@ -369,7 +392,7 @@ float t1, t2, t3, t4;
 
 int c = 0;
 
-void SimulatorState::simulate (Simulator& simulator, float endTime) {
+void SimulatorState::simulate (SimulatorContext& simulator, float endTime) {
     if (endTime < time()) throw std::out_of_range("endTime");
 
     // Move unit groups
@@ -401,13 +424,13 @@ void SimulatorState::simulate (Simulator& simulator, float endTime) {
     assertValidState();
 
     w3.start();
-    simulateGroupMovement(simulator, midTime);
+    simulateGroupMovement(simulator, endTime);
     assertValidState();
     w3.stop();
     t3 += w3.millis();
 
     w4.start();
-    simulateGroupCombat(simulator, midTime);
+    simulateGroupCombat(simulator, endTime);
     assertValidState();
     w4.stop();
     t4 += w4.millis();
@@ -428,7 +451,7 @@ void SimulatorState::simulate (Simulator& simulator, float endTime) {
     // Simulate group combat again
     assert(time() == endTime);
     c++;
-    if (c % 1000) {
+    if ((c % 10000) == 0) {
         cout << "Times " << t1 << " " << t2 << " " << t3 << " " << t4 << endl;
     }
 }
@@ -436,7 +459,7 @@ void SimulatorState::simulate (Simulator& simulator, float endTime) {
 void SimulatorState::assertValidState () {
     return;
     for (int k = 0; k < 2; k++) {
-        BuildState& buildState = states[k];
+        const BuildState& buildState = *states[k];
         map<UNIT_TYPEID, int> unitCounts;
         map<UNIT_TYPEID, int> unitCounts2;
         for (auto& g : groups) {

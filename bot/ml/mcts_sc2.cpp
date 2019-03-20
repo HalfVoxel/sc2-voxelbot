@@ -7,6 +7,7 @@
 #include <iostream>
 #include "../mcts/mcts.h"
 #include "../ml/mcts_sc2.h"
+#include "simulator_context.h"
 
 using namespace std;
 using namespace sc2;
