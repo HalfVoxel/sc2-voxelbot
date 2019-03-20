@@ -76,8 +76,9 @@ void SimulatorState::simulateGroupCombat(SimulatorContext& simulator, float endT
 
                     // TODO: Handle cloak
 
-                    vector<vector<float>> dps (2, vector<float>(2));
-                    vector<vector<bool>> hasAirGround(2, vector<bool>(2));
+                    array<array<float, 2>, 2> dps {{{{0, 0}}, {{0, 0}}}}; // (2, vector<float>(2));
+                    array<array<bool, 2>, 2> hasAirGround {{{{false, false}}, {{false, false}}}};
+                    // vector<vector<bool>> hasAirGround(2, vector<bool>(2));
                     for (auto* group : nearbyGroups) {
                         for (auto& unit : group->units) {
                             dps[group->owner - 1][0] += calculateDPS(unit.combat.type, false);
@@ -96,7 +97,6 @@ void SimulatorState::simulateGroupCombat(SimulatorContext& simulator, float endT
                         array<float, 2> movementAmount = {{0, 0}};
                         array<float, 2> movementWeight = {{0, 0}};
 
-                        CombatState state;
                         for (auto* group : nearbyGroups) {
                             if (group->order.type != SimulatorOrderType::None) {
                                 // Has target
@@ -104,7 +104,6 @@ void SimulatorState::simulateGroupCombat(SimulatorContext& simulator, float endT
                                 movementAmount[group->owner-1] += movementDist * group->units.size();
                             }
                             movementWeight[group->owner-1] += group->units.size();
-                            // for (auto& u : group->units) state.units.push_back(u.combat);
                         }
 
                         if (movementWeight[0] > 0) movementAmount[0] /= movementWeight[0];
@@ -247,17 +246,15 @@ void SimulatorState::mergeGroups (SimulatorContext& simulator) {
 
         for (int j = i + 1; j < groups.size(); j++) {
             auto& group2 = groups[j];
-            if (group2.units.size() == 0) continue;
+            if (group2.owner != group1.owner || group2.units.size() == 0) continue;
 
-            if (group2.owner == group1.owner) {
-                bool isBuilding2 = isStationary(group2.units[0].combat.type);
-                if (isBuilding1 == isBuilding2 && DistanceSquared2D(group1.pos, group2.pos) < mergeDistance*mergeDistance && similarOrders(group1, group2)) {
-                    // Merge groups
-                    for (auto& u : group2.units) group1.units.push_back(u);
-                    // Weighted average of the group positions
-                    group1.pos = (group1.pos * group1.units.size() + group2.pos * group2.units.size()) / (group1.units.size() + group2.units.size());
-                    group2.units.clear();
-                }
+            bool isBuilding2 = isStationary(group2.units[0].combat.type);
+            if (isBuilding1 == isBuilding2 && DistanceSquared2D(group1.pos, group2.pos) < mergeDistance*mergeDistance && similarOrders(group1, group2)) {
+                // Merge groups
+                for (auto& u : group2.units) group1.units.push_back(u);
+                // Weighted average of the group positions
+                group1.pos = (group1.pos * group1.units.size() + group2.pos * group2.units.size()) / (group1.units.size() + group2.units.size());
+                group2.units.clear();
             }
         }
     }
