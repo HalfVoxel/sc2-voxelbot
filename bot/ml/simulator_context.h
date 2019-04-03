@@ -1,3 +1,4 @@
+#pragma once
 #include "../CombatPredictor.h"
 #include "mcts_cache.h"
 #include "sc2lib/sc2_lib.h"
