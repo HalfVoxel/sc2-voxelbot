@@ -60,7 +60,7 @@ struct SimulatorState {
     std::vector<SimulatorUnitGroup> groups;
     std::vector<BuildOrderState> buildOrders;
     
-    float time() {
+    float time() const {
         return states[0]->time;
     }
 
