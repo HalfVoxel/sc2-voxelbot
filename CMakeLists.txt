@@ -48,9 +48,11 @@ add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 #   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=address -fsdfsdfe")
 # endif()
 
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -fsanitize=address -O1 -fno-omit-frame-pointer -DDISABLE_PYTHON=1")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -DDISABLE_PYTHON=1")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -D_GLIBCXX_DEBUG -fsanitize=address")
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -O0 -fsanitize=address")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -Wsometimes-uninitialized")
 
 # More dependencies
 include_directories(SYSTEM "${PROJECT_BINARY_DIR}/s2client-api/generated")
@@ -93,7 +95,7 @@ function (create_library project_name source_code extra_libs)
 endfunction ()
 
 # Note: trying to add SDL2-static as the extra_libs parameter here causes pybind11 modules to fail to link (for unknown reasons, maybe PIC related?)
-file (GLOB botlib_sources "bot/*.cpp" "bot/behaviortree/*.cpp" "bot/utilities/*.cpp" "bot/ml/*.cpp" "bot/generated/*.cpp" "s2client-api/examples/common/*.cc")
+file (GLOB botlib_sources "bot/*.cpp" "bot/behaviortree/*.cpp" "bot/utilities/*.cpp" "bot/ml/*.cpp" "bot/generated/*.cpp" "bot/mcts/*.cpp" "s2client-api/examples/common/*.cc")
 message(STATUS "${botlib_sources}")
 create_library(botlib "${botlib_sources}" "")
 
@@ -109,9 +111,12 @@ create_executable(build_optimizer "" "bot/build_optimizer/main.cpp" "SDL2-static
 create_executable(optimizer_train "" "bot/optimizer_train/main.cpp" "SDL2-static")
 create_executable(build_order_train "" "bot/build_order_train/main.cpp" "SDL2-static")
 create_executable(combat_predictor_train "" "bot/combat_predictor_train/main.cpp" "SDL2-static")
-create_executable(mcts_test "" "bot/mcts/mcts_test.cpp" "SDL2-static")
+create_executable(mcts_test "" "bot/entrypoints/mcts_test.cpp" "SDL2-static")
 create_executable(test_simulator "" "bot/entrypoints/test_simulator.cpp" "SDL2-static")
 create_executable(mcts_cache_unit_tests "" "bot/entrypoints/mcts_cache_unit_tests.cpp" "SDL2-static")
+create_executable(view_replay "" "bot/entrypoints/view_replay.cpp" "SDL2-static")
+create_executable(experiment_combat "" "bot/entrypoints/experiment_combat.cpp" "SDL2-static")
+create_executable(experiment_buildorder "" "bot/entrypoints/experiment_buildorder.cpp" "SDL2-static")
 
 file (GLOB build_order_train_sources "s2client-api/examples/common/*.h" "bot/*.h" "bot/behaviortree/*.h" "bot/utilities/*.h" "bot/ml/*.h" "bot/generated/*.cpp" "bot/build_order_train/main.cpp")
 # pybind11_add_module(cppbot MODULE ${build_order_train_sources})
