@@ -136,6 +136,24 @@ Status MicroOrbitalCommand::OnTick() {
     return Success;
 }
 
+Status MicroNexus::OnTick() {
+    // Note: incorrect ID in API
+    ABILITY_ID chronoboostAbility = (ABILITY_ID)3755;
+    auto unit = GetUnit();
+    auto ability = agent.Observation()->GetAbilityData()[(int)chronoboostAbility];
+    if (IsAbilityReady(unit, chronoboostAbility)) {
+        for (auto other : agent.Observation()->GetUnits(Unit::Alliance::Self)) {
+            if (other->owner == unit->owner && isStructure(other->unit_type) && other->build_progress == 1 && other->orders.size() > 0 && other->orders[0].progress < 0.2f && other->buffs.size() == 0) {
+                agent.Actions()->UnitCommand(unit, chronoboostAbility, other);
+                break;
+            }
+        }
+    }
+
+    return Success;
+}
+
+
 map<const Unit*, MicroNode*> microNodes;
 
 void TickMicro() {
@@ -157,6 +175,9 @@ void TickMicro() {
                     break;
                 case UNIT_TYPEID::TERRAN_SIEGETANK:
                     node = new MicroTank(unit);
+                    break;
+                case UNIT_TYPEID::PROTOSS_NEXUS:
+                    node = new MicroNexus(unit);
                     break;
                 default:
                     continue;
