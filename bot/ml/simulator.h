@@ -29,6 +29,7 @@ enum SimulatorOrderType {
 struct SimulatorOrder {
     SimulatorOrderType type = SimulatorOrderType::None;
     sc2::Point2D target;
+    int tick = 0;
 
     SimulatorOrder() = default;
     SimulatorOrder(SimulatorOrderType type, sc2::Point2D target) : type(type), target(target) {}
