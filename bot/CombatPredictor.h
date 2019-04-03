@@ -34,7 +34,16 @@ struct CombatResult {
 	CombatState state;
 };
 
-struct CombatRecording;
+struct CombatRecordingFrame {
+    int tick;
+    std::vector<std::tuple<sc2::UNIT_TYPEID, int, float>> healths;
+    void add(sc2::UNIT_TYPEID type, int owner, float health, float shield);
+};
+
+struct CombatRecording {
+	std::vector<CombatRecordingFrame> frames;
+	void writeCSV(std::string filename);
+};
 
 struct CombatPredictor {
 	void init();
@@ -44,8 +53,8 @@ struct CombatPredictor {
 
 CombatUnit makeUnit(int owner, sc2::UNIT_TYPEID type);
 
-extern std::vector<sc2::UNIT_TYPEID> availableUnitTypesTerran;
-extern std::vector<sc2::UNIT_TYPEID> availableUnitTypesProtoss;
+extern const std::vector<sc2::UNIT_TYPEID> availableUnitTypesTerran;
+extern const std::vector<sc2::UNIT_TYPEID> availableUnitTypesProtoss;
 
 std::vector<std::pair<sc2::UNIT_TYPEID,int>> findBestCompositionGenetic(const CombatPredictor& predictor, const std::vector<sc2::UNIT_TYPEID>& availableUnitTypes, const CombatState& opponent, const BuildOptimizerNN* buildTimePredictor = nullptr, const BuildState* startingBuildState = nullptr, std::vector<std::pair<sc2::UNIT_TYPEID,int>>* seedComposition = nullptr);
 
@@ -54,7 +63,7 @@ private:
 	std::vector<std::pair<float, std::vector<sc2::Unit>>> frames;
 public:
 	void tick();
-	void finalize();
+	void finalize(std::string filename="recording.csv");
 };
 
 float calculateDPS(sc2::UNIT_TYPEID type, bool air);
