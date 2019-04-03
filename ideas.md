@@ -68,6 +68,39 @@ MCTS
 		Can even be used for policies like how many units to produce.
 			Extract from replays state at T and T + dt and check how many units were produced of each type in between, set that as a policy goal.
 			Use GAN to sample this space and MCTS to evaluate the different actions
+	
+
+	Action space
+		Move to
+			Unit subsets
+				All army units
+				All ground units
+				All flying units
+				3
+			Possible regions are limited:
+				bases: 3
+				enemy bases: 3
+				outside enemy bases: 3
+				enemy mineral lines: 3
+				enemy position
+				12
+
+		Action groups "Transpositions and Move Groups in Monte Carlo Tree Search"
+			E.g split up the action "attack base 3" to two actions attack -> base 3.
+			This means the bot can discover that 'attack' is good before it has a good idea about which base to attack
+			Can this be generalized? Similarity between actions.
+			E.g. all actions with base 1 as target are similar, all actions that attack are similar.
+	
+	Optimization note
+		Since most groups are probably not going to change every step, one way to reduce memory usage and reduce amount of memory that is copied is to make groups
+		represent a state as a function of time (e.g. position is as a function of time, etc.)
+		When creating a new simulation state, a pointer to the old group is kept. If the group needs to be changed in any way a copy is made however.
+
+NN for refining the destinations
+	Input
+		Small region around the destination ± some noise
+	Output
+		Actual destination
 
 State examples
 	1. Beginning of game, 12 workers and one command center
