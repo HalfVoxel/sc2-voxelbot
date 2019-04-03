@@ -4,46 +4,50 @@
 #include <iostream>
 #include <iomanip>
 #include "optional.hpp"
+#include "../utilities/profiler.h"
 
 template <class A, class T>
-struct State;
+struct MCTSState;
 
 template <class A, class T>
-struct Child {
+struct MCTSChild {
     A action;
     float prior;
-    State<A,T>* state;
+    MCTSState<A,T>* state;
 };
 
 template <class A, class T>
-struct State {
+struct MCTSState {
     T internalState;
-    std::vector<Child<A,T>> children;
+    std::vector<MCTSChild<A,T>> children;
     int visits = 0;
     float wins = 0;
+    int raveVisits = 0;
+    float raveWins = 0;
 
-    State (const T& state) : internalState(state) {
+    MCTSState (const T& state) : internalState(state) {
     }
 
-    State& select();
+    MCTSChild<A,T>& select();
+    bool instantiateAction(int actionIndex);
     void expand();
     float rollout() const;
     void print(int padding=0, int maxDepth = 100000) const;
-    State<A,T>* getChild(A action);
-    nonstd::optional<std::pair<A, State<A,T>&>> bestAction() const;
-    ~State();
-    State(const State&) = delete;
+    MCTSState<A,T>* getChild(A action);
+    nonstd::optional<std::pair<A, MCTSState<A,T>&>> bestAction() const;
+    ~MCTSState();
+    MCTSState(const MCTSState&) = delete;
 };
 
 template <class A, class T>
-State<A,T>::~State<A,T>() {
+MCTSState<A,T>::~MCTSState<A,T>() {
     for (auto& c : children) {
         delete c.state;
     }
 }
 
 template <class A, class T>
-State<A,T>* State<A,T>::getChild(A action) {
+MCTSState<A,T>* MCTSState<A,T>::getChild(A action) {
     for (auto& c : children) {
         if (c.action == action) return c.state;
     }
@@ -51,7 +55,7 @@ State<A,T>* State<A,T>::getChild(A action) {
 }
 
 template <class A, class T>
-void State<A,T>::print(int padding, int maxDepth) const {
+void MCTSState<A,T>::print(int padding, int maxDepth) const {
 
     for (int i = 0; i < padding; i++) std::cout << "|\t";
     auto p = std::cout.precision();
@@ -67,11 +71,12 @@ void State<A,T>::print(int padding, int maxDepth) const {
 }
 
 template <class A, class T>
-State<A,T>& State<A,T>::select() {
+MCTSChild<A,T>& MCTSState<A,T>::select() {
     while(true) {
         const float c = 1;
         // float exploration = c * sqrt(visits);
         float exploration = c * sqrt(log(visits));
+        float raveExploration = c * sqrt(log(raveVisits));
         float bestScore = -1000;
         int bestAction = -1;
         for (int i = 0; i < children.size(); i++) {
@@ -83,9 +88,15 @@ State<A,T>& State<A,T>::select() {
             } else {
                 float priorStrength = 4;
                 float r = (child.state->wins + (1 - child.prior) * priorStrength) / (child.state->visits + priorStrength);
+                float raveR = (child.state->raveWins + ( 1 - child.prior) * priorStrength) / (child.state->raveVisits + priorStrength);
                 // score = (1 - r) + child.prior * exploration / sqrt(1 + child.state->visits);
                 // score = (1 - r) + exploration / sqrt(1 + child.state->visits);
-                score = (1 - r) + exploration / sqrt(1 + child.state->visits);
+                
+                float UCTScore = (1 - r) + exploration / sqrt(1 + child.state->visits);
+                float RaveScore = (1 - raveR) + raveExploration / sqrt(1 + child.state->raveVisits);
+
+                float alpha = 5000/(5000 + child.state->visits);
+                score = (1 - alpha) * UCTScore + alpha * RaveScore;
                 // std::cout << "B " << score << std::endl;
             }
 
@@ -98,74 +109,119 @@ State<A,T>& State<A,T>::select() {
         assert(bestAction != -1);
 
         if (children[bestAction].state == nullptr) {
-            // std::cout << "Exploring" << std::endl;
-            auto ret = internalState.step(children[bestAction].action);
-            if (ret.second) {
-                children[bestAction].state = new State(std::move(ret.first));
-            } else {
-                // Invalid action, remove this child node
-                children[bestAction] = std::move(*children.rbegin());
-                children.pop_back();
-                continue;
-            }
+            if (!instantiateAction(bestAction)) continue;
         }
 
-        return *children[bestAction].state;
+        return children[bestAction];
     }
 }
 
 template <class A, class T>
-void State<A, T>::expand() {
+bool MCTSState<A,T>::instantiateAction(int actionIndex) {
+    // std::cout << "Exploring" << std::endl;
+    auto ret = internalState.step(children[actionIndex].action);
+    if (ret.second) {
+        children[actionIndex].state = new MCTSState(std::move(ret.first));
+        return true;
+    } else {
+        // Invalid action, remove this child node
+        children[actionIndex] = std::move(*children.rbegin());
+        children.pop_back();
+        return false;
+    }
+}
+
+template <class A, class T>
+void MCTSState<A, T>::expand() {
     std::vector<std::pair<A, float>> moves = internalState.generateMoves();
     if (moves.size() == 0) {
         // throw std::exception();
         return;
     }
-    children = std::vector<Child<A, T>>(moves.size());
+    children = std::vector<MCTSChild<A, T>>(moves.size());
     for (int i = 0; i < children.size(); i++) {
         children[i] = { moves[i].first, moves[i].second, nullptr };
     }
 }
 
 template <class A, class T>
-float State<A, T>::rollout() const {
+float MCTSState<A, T>::rollout() const {
     return internalState.rollout();
 }
 
+extern float tRollout;
+extern float tExpand;
+extern float tSelect;
+
+struct MCTSPropagationResult {
+    float wins = 0;
+    int rollouts = 0;
+    std::vector<bool> usedActions;
+};
+
 // TODO: needlessly evals root note
 template <class A, class T>
-std::pair<float, int> mcts(State<A,T>& node) {
-    std::pair<float, int> result;
+MCTSPropagationResult mcts(MCTSState<A,T>& node) {
+    MCTSPropagationResult result;
     if (node.visits == 0) {
-        float wins = 0;
-        int rollouts = 3;
-        for (int i = 0; i < rollouts; i++) {
-            wins += node.rollout();
+        Stopwatch w;
+        result.rollouts = 2;
+        result.usedActions = std::vector<bool>(10);
+        for (int i = 0; i < result.rollouts; i++) {
+            result.wins += node.rollout();
         }
         // std::cout << "Evald " << node.internalState.to_string() << ": " << wins << " of " << rollouts << std::endl;
-        result = std::make_pair(wins, rollouts);
+        w.stop();
+        tRollout += w.millis();
     } else {
         if (node.children.size() == 0) {
+            Stopwatch w;
             node.expand();
+            w.stop();
+            tExpand += w.millis();
         }
 
         if (node.children.size() == 0) {
             // Terminal node
-            result = std::make_pair(node.rollout(), 1);
+            result.rollouts = 1;
+            result.wins = node.rollout();
+            result.usedActions = std::vector<bool>(10);
         } else {
+            Stopwatch w;
             // std::cout << node.internalState.to_string() << " -> ";
-            result = mcts(node.select());
-            result = std::make_pair(result.second - result.first, result.second);
+            auto& child = node.select();
+            w.stop();
+            tSelect += w.millis();
+            result = mcts(*child.state);
+            result.wins = result.rollouts - result.wins;
+            result.usedActions[child.action] = true;
         }
     }
 
-    node.wins += result.first;
-    node.visits += result.second;
+    node.wins += result.wins;
+    node.visits += result.rollouts;
+    node.raveWins += result.wins;
+    node.raveVisits += result.rollouts;
+    for (int i = node.children.size() - 1; i >= 0; i--) {
+        auto& c = node.children[i];
+        if (result.usedActions[c.action]) {
+            if (c.state == nullptr) {
+                if (!node.instantiateAction(i)) continue;
+            }
+
+            c.state->raveWins += result.wins;
+            c.state->raveVisits += result.rollouts;
+        }
+    }
+
+    if ((node.visits % (8*1000)) == 0) {
+        std::cout << "MCTS timings " << tRollout << " " << tExpand << " " << tSelect << std::endl;
+    }
     return result;
 }
 
 template <class A, class T>
-nonstd::optional<std::pair<A, State<A,T>&>> State<A, T>::bestAction() const {
+nonstd::optional<std::pair<A, MCTSState<A,T>&>> MCTSState<A, T>::bestAction() const {
     int bestAction = -1;
     int bestScore = -1000;
     for (int i = 0; i < children.size(); i++) {
@@ -182,5 +238,5 @@ nonstd::optional<std::pair<A, State<A,T>&>> State<A, T>::bestAction() const {
     if (bestAction == -1) {
         return {};
     }
-    return nonstd::make_optional<std::pair<A, State<A,T>&>> (children[bestAction].action, *children[bestAction].state);
+    return nonstd::make_optional<std::pair<A, MCTSState<A,T>&>> (children[bestAction].action, *children[bestAction].state);
 }

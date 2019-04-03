@@ -298,7 +298,7 @@ void setUnitIndexMapping(map<int, int> unitTypes, map<int,int> economicUnitTypes
 struct EnvironmentState {
     BuildState startState;
     BuildState state;
-    vector<UNIT_TYPEID> buildOrder;
+    BuildOrder buildOrder;
     vector<int> goal;
 
     EnvironmentState() {
@@ -325,7 +325,7 @@ struct EnvironmentState {
         startState.race = Race::Terran;
         startState.baseInfos = { BaseInfo(10800, 1000, 1000) };
         state = startState;
-        buildOrder.clear();
+        buildOrder.items.clear();
     }
 
     void resetToGameStartConfig () {
@@ -338,14 +338,14 @@ struct EnvironmentState {
 
         startState.baseInfos = { BaseInfo(10800, 1000, 1000) };
         state = startState;
-        buildOrder.clear();
+        buildOrder.items.clear();
     }
 
     void step(UNIT_TYPEID action) {
         action = canonicalize(action);
-        buildOrder.push_back(action);
+        buildOrder.items.push_back(BuildOrderItem(action));
 
-        vector<UNIT_TYPEID> expandedBuildOrder;
+        BuildOrder expandedBuildOrder;
         vector<bool> isPartOfOriginalBuildOrder;
         tie(expandedBuildOrder, isPartOfOriginalBuildOrder) = expandBuildOrderWithImplicitSteps(state, { action });
 
@@ -379,7 +379,7 @@ struct EnvironmentState {
     }
 
     void print() {
-        vector<UNIT_TYPEID> expandedBuildOrder;
+        BuildOrder expandedBuildOrder;
         vector<bool> isPartOfOriginalBuildOrder;
         tie(expandedBuildOrder, isPartOfOriginalBuildOrder) = expandBuildOrderWithImplicitSteps(startState, buildOrder);
 
@@ -589,8 +589,8 @@ pybind11::object predictFunction;
 pybind11::object loadSessionFunction;
 pybind11::object rewardFunction;
 
-vector<UNIT_TYPEID> predictBuildOrder (const BuildState& startState, vector<pair<UNIT_TYPEID, int>> goal) {
-    vector<UNIT_TYPEID> buildOrder;
+BuildOrder predictBuildOrder (const BuildState& startState, vector<pair<UNIT_TYPEID, int>> goal) {
+    BuildOrder buildOrder;
     vector<UnitCount> serializedGoal;
     for (auto u : goal) serializedGoal.push_back({ u.first, u.second });
 
@@ -615,17 +615,17 @@ vector<UNIT_TYPEID> predictBuildOrder (const BuildState& startState, vector<pair
         float stateValue = res.second;
 
         unitType = canonicalize(unitType);
-        buildOrder.push_back(unitType);
+        buildOrder.items.push_back(BuildOrderItem(unitType));
         stateValues.push_back(stateValue);
 
-        vector<UNIT_TYPEID> expandedBuildOrder2;
+        BuildOrder expandedBuildOrder2;
         vector<bool> isPartOfOriginalBuildOrder2;
         tie(expandedBuildOrder2, isPartOfOriginalBuildOrder2) = expandBuildOrderWithImplicitSteps(startState, buildOrder);
         state = startState;
         state.simulateBuildOrder(expandedBuildOrder2, nullptr, false);
     }
 
-    vector<UNIT_TYPEID> expandedBuildOrder;
+    BuildOrder expandedBuildOrder;
     vector<bool> isPartOfOriginalBuildOrder;
     tie(expandedBuildOrder, isPartOfOriginalBuildOrder) = expandBuildOrderWithImplicitSteps(startState, buildOrder);
     printBuildOrderDetailed(startState, expandedBuildOrder, &isPartOfOriginalBuildOrder);
@@ -637,7 +637,7 @@ vector<UNIT_TYPEID> predictBuildOrder (const BuildState& startState, vector<pair
     }
     vector<float> rewards = rewardFunction(json2.str()).cast<vector<float>>();
     for (int i = 0; i < buildOrder.size(); i++) {
-        cout << "State value for " << UnitTypeToName(buildOrder[i]) << ": " << stateValues[i] << " reward: " << (i > 0 ? rewards[i-1] : 0) << endl;
+        cout << "State value for " << buildOrder[i].name() << ": " << stateValues[i] << " reward: " << (i > 0 ? rewards[i-1] : 0) << endl;
     }
 
     return expandedBuildOrder;
@@ -674,7 +674,7 @@ void generateTrainingData(default_random_engine& rnd) {
         session.goal.push_back({ u.first, u.second });
     }
 
-    vector<UNIT_TYPEID> originalBuildOrder;
+    BuildOrder originalBuildOrder;
     
     auto tempState = startState;
     for (int i = 0; i < 60; i++) {
@@ -691,9 +691,9 @@ void generateTrainingData(default_random_engine& rnd) {
         float stateValue = res.second;
 
         unitType = canonicalize(unitType);
-        originalBuildOrder.push_back(unitType);
+        originalBuildOrder.items.push_back(BuildOrderItem(unitType));
 
-        vector<UNIT_TYPEID> expandedBuildOrder2;
+        BuildOrder expandedBuildOrder2;
         vector<bool> isPartOfOriginalBuildOrder2;
         tie(expandedBuildOrder2, isPartOfOriginalBuildOrder2) = expandBuildOrderWithImplicitSteps(startState, originalBuildOrder);
         tempState = startState;
@@ -704,7 +704,7 @@ void generateTrainingData(default_random_engine& rnd) {
         originalBuildOrder.push_back(unitTypesTerran5[uniform_int_distribution<int>(0, unitTypesTerran5.size()-1)(rnd)]);
     }*/
 
-    vector<UNIT_TYPEID> expandedBuildOrder;
+    BuildOrder expandedBuildOrder;
     vector<bool> partOfOriginalBuildOrder;
     tie(expandedBuildOrder, partOfOriginalBuildOrder) = expandBuildOrderWithImplicitSteps (startState, originalBuildOrder);
 
@@ -726,12 +726,12 @@ void generateTrainingData(default_random_engine& rnd) {
     bool success = state.simulateBuildOrder(expandedBuildOrder, [&](int index) {
         if (partOfOriginalBuildOrder[index]) {
             lastSuccessfullAction = index;
-            session.actions.push_back(expandedBuildOrder[index]);
+            session.actions.push_back(expandedBuildOrder[index].typeID());
             session.states.push_back(SerializedState(state));
         }
     });
     if (!success) {
-        session.actions.push_back(expandedBuildOrder[lastSuccessfullAction+1]);
+        session.actions.push_back(expandedBuildOrder[lastSuccessfullAction+1].typeID());
         session.states.push_back(SerializedState(state));
         session.failed = true;
     }
@@ -789,17 +789,17 @@ void generateBuildOrderTrainingData() {
             session.goal.push_back({ u.first, u.second });
         }
 
-        vector<UNIT_TYPEID> originalBuildOrder;
+        BuildOrder originalBuildOrder;
 
         if (false) {
             for (int i = 0; i < 20; i++) {
-                originalBuildOrder.push_back(unitTypesTerran5[uniform_int_distribution<int>(0, unitTypesTerran5.size()-1)(rnd)]);
+                originalBuildOrder.items.push_back(BuildOrderItem(unitTypesTerran5[uniform_int_distribution<int>(0, unitTypesTerran5.size()-1)(rnd)]));
             }
         } else {
             originalBuildOrder = findBestBuildOrderGenetic(startState, targetUnits, nullptr);
         }
 
-        vector<UNIT_TYPEID> expandedBuildOrder;
+        BuildOrder expandedBuildOrder;
         vector<bool> partOfOriginalBuildOrder;
         tie(expandedBuildOrder, partOfOriginalBuildOrder) = expandBuildOrderWithImplicitSteps (startState, originalBuildOrder);
 
@@ -820,12 +820,12 @@ void generateBuildOrderTrainingData() {
         bool success = state.simulateBuildOrder(expandedBuildOrder, [&](int index) {
             if (partOfOriginalBuildOrder[index]) {
                 lastSuccessfullAction = index;
-                session.actions.push_back(expandedBuildOrder[index]);
+                session.actions.push_back(expandedBuildOrder[index].typeID());
                 session.states.push_back(SerializedState(state));
             }
         });
         if (!success) {
-            session.actions.push_back(expandedBuildOrder[lastSuccessfullAction+1]);
+            session.actions.push_back(expandedBuildOrder[lastSuccessfullAction+1].typeID());
             session.states.push_back(SerializedState(state));
             session.failed = true;
         }

@@ -28,6 +28,7 @@
 #include <cereal/types/string.hpp>
 #include <fstream>
 #include "cereal/cereal.hpp"
+#include "mcts/mcts_debugger.h"
 
 using Clock = std::chrono::high_resolution_clock;
 
@@ -39,6 +40,7 @@ Bot bot = Bot();
 Agent& agent = bot;
 map<const Unit*, AvailableAbilities> availableAbilities;
 map<const Unit*, AvailableAbilities> availableAbilitiesExcludingCosts;
+bool mctsDebug = false;
 
 // TODO: Should move this to a better place
 bool IsAbilityReady(const Unit* unit, ABILITY_ID ability) {
@@ -56,6 +58,8 @@ bool IsAbilityReadyExcludingCosts(const Unit* unit, ABILITY_ID ability) {
     }
     return false;
 }
+
+void runMCTS();
 
 // clang-format off
 void Bot::OnGameStart() {
@@ -85,7 +89,6 @@ void Bot::OnGameStart() {
 #if !DISABLE_PYTHON
     mlMovement.OnGameStart();
 #endif
-
     scoutingManager = new ScoutingManager();
 
     influenceManager.Init();
@@ -103,11 +106,11 @@ void Bot::OnGameStart() {
 
 time_t t0;
 
-void DebugBuildOrder(vector<UNIT_TYPEID> buildOrder, float buildOrderTime) {
+void DebugBuildOrder(BuildOrder buildOrder, float buildOrderTime) {
     stringstream ss;
     ss << "Time: " << (int)round(buildOrderTime) << endl;
-    for (auto b : buildOrder) {
-        ss << getUnitData(b).name << endl;
+    for (auto b : buildOrder.items) {
+        ss << b.name() << endl;
     }
     bot.Debug()->DebugTextOut(ss.str(), Point2D(0.05, 0.05), Colors::Purple);
 }
@@ -120,7 +123,7 @@ void DebugUnitPositions() {
 }
 
 void Bot::OnGameLoading() {
-    InitializeRenderer("Starcraft II Bot", 50, 50, 256 * 3 + 20, 256 * 4 + 30);
+    // InitializeRenderer("Starcraft II Bot", 50, 50, 256 * 3 + 20, 256 * 4 + 30);
     Render();
 }
 
@@ -128,14 +131,14 @@ int ticks = 0;
 bool test = false;
 set<BuffID> seenBuffs;
 uint32_t lastEffectID;
-std::future<tuple<vector<UNIT_TYPEID>, BuildState, float, vector<pair<UNIT_TYPEID,int>>>> currentBuildOrderFuture;
-vector<UNIT_TYPEID> currentBuildOrder;
+std::future<tuple<BuildOrder, BuildState, float, vector<pair<UNIT_TYPEID,int>>>> currentBuildOrderFuture;
+BuildOrder currentBuildOrder;
 int currentBuildOrderIndex;
 vector<pair<UNIT_TYPEID,int>> lastCounter;
 float currentBuildOrderTime;
 BuildState lastStartingState;
 float enemyScaling = 1;
-vector<UNIT_TYPEID> emptyBO;
+BuildOrder emptyBO;
 
 SimulatorState createSimulatorState(SimulatorContext& mctsSimulator) {
     auto ourUnits = agent.Observation()->GetUnits(Unit::Alliance::Self);
@@ -207,6 +210,7 @@ float tRollout = 0;
 float tExpand = 0;
 float tSelect = 0;
 
+MCTSDebugger* debugger;
 
 void runMCTS () {
     cout << "Running mcts..." << endl;
@@ -217,7 +221,7 @@ void runMCTS () {
     SimulatorContext mctsSimulator(&bot.combatPredictor, { ourDefaultPosition, defaultEnemyPosition });
     auto state = createSimulatorState(mctsSimulator);
     w2.stop();
-    std::unique_ptr<State<int, SimulatorMCTSState>> mctsState = findBestActions(state);
+    std::unique_ptr<MCTSState<int, SimulatorMCTSState>> mctsState = findBestActions(state);
     cout << "Executing mcts action..." << endl;
     w1.stop();
     tmcts += w1.millis();
@@ -239,10 +243,17 @@ void runMCTS () {
     };
     mctsState->internalState.executeAction((MCTSAction)mctsState->bestAction().value().first, &listener);
     cout << "MCTS done " << tmcts << " " << tmctsprep << endl;
+
+    if (debugger == nullptr) debugger = new MCTSDebugger();
+
+    if (mctsDebug) {
+        debugger->debugInteractive(&*mctsState);
+    } else {
+        debugger->visualize(mctsState->internalState.state);
+    }
 }
 
 void Bot::OnStep() {
-
     auto ourUnits = agent.Observation()->GetUnits(Unit::Alliance::Self);
     auto enemyUnits = agent.Observation()->GetUnits(Unit::Alliance::Enemy);
     auto abilities = agent.Query()->GetAbilitiesForUnits(ourUnits, false);
@@ -282,6 +293,12 @@ void Bot::OnStep() {
     availableAbilitiesExcludingCosts.clear();
     for (int i = 0; i < ourUnits.size(); i++) {
         availableAbilitiesExcludingCosts[ourUnits[i]] = abilities[i];
+    }
+
+    for (auto& msg : agent.Observation()->GetChatMessages()) {
+        if (msg.message == "mcts") {
+            mctsDebug = !mctsDebug;
+        }
     }
 
     if (ticks == 0)
@@ -492,35 +509,53 @@ void Bot::OnStep() {
         int index = 0;
         currentBuildOrderIndex = 0;
         for (int i = 0; i < currentBuildOrder.size(); i++) {
-            auto b = currentBuildOrder[i];
-            // Skip the action if it is likely that we have already done it
-            if (startingUnitsDelta[b] > 0) {
-                startingUnitsDelta[b]--;
-                continue;
-            }
-
-            currentBuildOrderIndex = i;
-            index++;
-            if (index > 10) break;
-
-            s -= 1;
             shared_ptr<TreeNode> node = nullptr;
-            if (isVespeneHarvester(b)) {
-                node = make_shared<BuildGas>(b, [=](auto) { return s; });
-            } else if (isAddon(b)) {
-                auto ability = getUnitData(b).ability_id;
-                node = make_shared<Addon>(ability, abilityToCasterUnit(ability), [=](auto) { return s; });
-            } else if (isTownHall(b)) {
-                node = make_shared<Expand>(b, [=](auto) { return s; });
-            } else if (isStructure(getUnitData(b))) {
-                node = make_shared<Construct>(b, [=](auto) { return s; });
+            Cost cost;
+            if (currentBuildOrder[i].isUnitType()) {
+                auto b = currentBuildOrder[i].typeID();
+                // Skip the action if it is likely that we have already done it
+                if (startingUnitsDelta[b] > 0) {
+                    startingUnitsDelta[b]--;
+                    continue;
+                }
+
+                currentBuildOrderIndex = i;
+                index++;
+                if (index > 10) break;
+
+                s -= 1;
+                if (isVespeneHarvester(b)) {
+                    node = make_shared<BuildGas>(b, [=](auto) { return s; });
+                } else if (isAddon(b)) {
+                    auto ability = getUnitData(b).ability_id;
+                    node = make_shared<Addon>(ability, abilityToCasterUnit(ability), [=](auto) { return s; });
+                } else if (isTownHall(b)) {
+                    node = make_shared<Expand>(b, [=](auto) { return s; });
+                } else if (isStructure(getUnitData(b))) {
+                    node = make_shared<Construct>(b, [=](auto) { return s; });
+                } else {
+                    node = make_shared<Build>(b, [=](auto) { return s; });
+                }
+
+                cost = CostOfUnit(b);
             } else {
-                node = make_shared<Build>(b, [=](auto) { return s; });
+                UpgradeID upgrade = currentBuildOrder[i].upgradeID();
+                auto hasAlready = HasUpgrade(upgrade).Tick();
+                if (hasAlready == Status::Success || hasAlready == Status::Running) continue;
+
+                currentBuildOrderIndex = i;
+                index++;
+                if (index > 10) break;
+
+                s -= 1;
+                node = make_shared<Research>(upgrade, [=](auto) { return s; });
+
+                cost = { (int)getUpgradeData(upgrade).mineral_cost, (int)getUpgradeData(upgrade).vespene_cost, 0, UNIT_TYPEID::INVALID };
             }
 
             // If the action failed, ensure that we reserve the cost for it anyway
             if (node->Tick() == Status::Failure) {
-                spendingManager.AddAction(s, CostOfUnit(b), []() {}, true);
+                spendingManager.AddAction(s, cost, []() {}, true);
             }
         }
     }
@@ -547,6 +582,7 @@ void Bot::OnStep() {
 }
 
 void Bot::OnGameEnd() {
+    bot.Control()->SaveReplay("saved_replays/latest.SC2Replay");
     auto ourUnits = Observation()->GetUnits(Unit::Alliance::Self, IsStructure(Observation()));
     auto enemyUnits = Observation()->GetUnits(Unit::Alliance::Enemy, IsStructure(Observation()));
     if (ourUnits.size() > enemyUnits.size()) {

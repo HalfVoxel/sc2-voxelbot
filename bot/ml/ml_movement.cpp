@@ -51,7 +51,7 @@ void MLMovement::OnGameStart() {
 
 	cout << "Loading weights" << endl;
 	modMovement.attr("load_weights")("models/movement_10.weights");
-    modMovementTarget.attr("load_weights")("models/movement_target_13.weights");
+    modMovementTarget.attr("load_weights")("models/movement_target_16.weights");
 }
 
 bool isMovableUnit(UNIT_TYPEID type) {
@@ -66,7 +66,7 @@ void MLMovement::Tick(const ObservationInterface* observation) {
     auto playerID = observation->GetPlayerID();
     auto ourUnits = observation->GetUnits(Unit::Alliance::Self);
 
-    if ((ticks % 25) == 1) {
+    if ((ticks % 50) == 1) {
         // Create state
         // Serialize state
         // Predict
@@ -111,7 +111,7 @@ void MLMovement::Tick(const ObservationInterface* observation) {
             }
         }
 
-        for (int k = 0; k < 4; k++) {
+        for (int k = 0; k < 2; k++) {
             // Reservoir sampling
             int armyFilter = 1;
             float totalWeight = 0;
@@ -146,13 +146,14 @@ void MLMovement::Tick(const ObservationInterface* observation) {
             if (sampledTags.size() > 0) {
                 vector<float> targetCoord;
                 bool shouldKeepOrder;
-                tie(targetCoord, shouldKeepOrder) = stepperTarget.attr("step")(sessionString, sampledTags, playerID).cast<tuple<vector<float>, bool>>();
+                bool isAttackOrder;
+                tie(targetCoord, shouldKeepOrder, isAttackOrder) = stepperTarget.attr("step")(sessionString, sampledTags, playerID).cast<tuple<vector<float>, bool, bool>>();
 
                 if (!shouldKeepOrder) {
                     Point2D coord = Point2D(targetCoord[0], targetCoord[1]);
 
                     for (auto* u : sampledUnits) {
-                        bot.Actions()->UnitCommand(u, ABILITY_ID::ATTACK, coord);
+                        bot.Actions()->UnitCommand(u, isAttackOrder ? ABILITY_ID::ATTACK : ABILITY_ID::MOVE, coord);
                         bot.Debug()->DebugLineOut(u->pos, Point3D(coord.x, coord.y, u->pos.z));
                     }
                 }

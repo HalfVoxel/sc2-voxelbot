@@ -32,8 +32,9 @@ class CompositionAnalyzer2 : public sc2::Agent {
     }
 
     void OnGameStart() override {
-        BuildOptimizerNN buildTimePredictor;
         initMappings();
+        BuildOptimizerNN buildTimePredictor;
+        buildTimePredictor.init();
         predictor.init();
         predictor.unitTest(buildTimePredictor);
         Debug()->DebugEnemyControl();
@@ -131,13 +132,13 @@ int main(int argc, char* argv[]) {
         sys.path.append("bot/python")
     )");
 
-    CombatPredictor predictor;
-    BuildOptimizerNN buildTimePredictor;
-    initMappings();
-    buildTimePredictor.init();
-    predictor.init();
-    predictor.unitTest(buildTimePredictor);
-    exit(0);
+    // CombatPredictor predictor;
+    // BuildOptimizerNN buildTimePredictor;
+    // initMappings();
+    // buildTimePredictor.init();
+    // predictor.init();
+    // predictor.unitTest(buildTimePredictor);
+    // exit(0);
 
     Coordinator coordinator;
     if (!coordinator.LoadSettings(argc, argv)) {
@@ -152,7 +153,7 @@ int main(int argc, char* argv[]) {
 
     // Start the game.
 
-    coordinator.SetRealtime(false);
+    coordinator.SetRealtime(true);
     coordinator.LaunchStarcraft();
     bool do_break = false;
 

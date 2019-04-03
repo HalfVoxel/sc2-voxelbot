@@ -40,7 +40,12 @@ def plot_owner(owner, ax, title, tmax):
 fig, axs = plt.subplots(3, 2, figsize=(12, 12), sharex=True, sharey='col')
 
 tmax = 40
+prefix = "recording"
+
+if len(sys.argv) > 1:
+    prefix = sys.argv[1]
+
 plot("recording.csv", axs[0,:], "Ground Truth", tmax)
-plot("recording2.csv", axs[1,:], "Simulated", tmax)
-plot("recording3.csv", axs[2,:], "Simulated (bad micro)", tmax)
+plot(prefix + "2.csv", axs[1,:], "Simulated", tmax)
+plot(prefix + "3.csv", axs[2,:], "Simulated (bad micro)", tmax)
 plt.show()

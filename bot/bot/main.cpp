@@ -30,8 +30,9 @@ int main(int argc, char* argv[]) { /*
     pybind11::scoped_interpreter guard{};
     pybind11::exec(R"(
         import sys
-        print(sys.path)
+        import os
         sys.path.append("bot/python")
+        os.environ["MPLBACKEND"] = "TkAgg"
     )");
 #endif
 
@@ -62,9 +63,9 @@ int main(int argc, char* argv[]) { /*
         coordinator.StartGame(ParaSiteLE);
 
         while (coordinator.Update() && !do_break) {
-            if (PollKeyPress()) {
-                do_break = true;
-            }
+            // if (PollKeyPress()) {
+            //     do_break = true;
+            // }
         }
     }
 

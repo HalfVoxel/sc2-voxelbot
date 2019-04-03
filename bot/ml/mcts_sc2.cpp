@@ -58,7 +58,9 @@ float healthFraction (const SimulatorState& state, int owner) {
         float h = 0;
         for (auto& u : g.units) {
             assert(u.combat.owner == g.owner);
-            h += u.combat.health + u.combat.shield;
+            // h += u.combat.health + u.combat.shield;
+            auto& data = getUnitData(u.combat.type);
+            h += (data.mineral_cost + data.vespene_cost) * (u.combat.health + u.combat.shield) / (maxHealth(u.combat.type) + maxShield(u.combat.type));
         }
         if (g.owner == owner) health += h;
         totalHealth += h;
@@ -66,6 +68,9 @@ float healthFraction (const SimulatorState& state, int owner) {
 
     float healthFraction = totalHealth > 0 ? health / totalHealth : 0.5f;
     healthFraction = smoothestStep(healthFraction);
+
+    float mult = 100 / (100 + state.time());
+    healthFraction = (healthFraction - 0.5f) * mult + 0.5f;
     return healthFraction;
 }
 
@@ -101,6 +106,47 @@ pair<SimulatorMCTSState, bool> SimulatorMCTSState::step(int action) {
     return make_pair(move(res), validAcion);
 }
 
+bool isValidDestination (vector<SimulatorUnitGroup*> groups, Point2D dest, int currentTick) {
+    int yes = 0;
+    int totalVotes = 0;
+    for (auto* g : groups) {
+        int numUnits = g->units.size();
+        totalVotes += numUnits;
+
+        if (g->order.tick < currentTick - 2) {
+            yes += numUnits;
+            continue;
+        }
+
+        if (Point2D(0,0) == g->order.target) {
+            yes += numUnits;
+            continue;
+        }
+
+        float r1 = DistanceSquared2D(g->order.target, g->pos);
+
+        // Veeery close to the destination, treat the order as finished
+        if (r1 <= 3*3) {
+            yes += numUnits;
+            continue;
+        }
+
+        // Ok if the destination is sort of in the same direction as the current destination
+        if (DistanceSquared2D(g->order.target, dest) <= r1) {
+            yes += numUnits;
+            continue;
+        }
+
+        // Also ok if the destination is very close to the group (note: 0.25 = 0.5^2)
+        if (DistanceSquared2D(g->pos, dest) <= r1 * 0.25f) {
+            yes += numUnits;
+            continue;
+        }
+    }
+
+    return yes*2 >= totalVotes;
+}
+
 bool SimulatorMCTSState::executeAction(MCTSAction action, std::function<void(SimulatorUnitGroup&, SimulatorOrder)>* commandListener) {
     int opponentID = (1 - player) + 1;
     int playerID = player + 1;
@@ -121,7 +167,9 @@ bool SimulatorMCTSState::executeAction(MCTSAction action, std::function<void(Sim
                 auto avgPos = averagePos(groups);
 
                 if (action == MCTSAction::ArmyMoveC1 || action == MCTSAction::ArmyMoveC2) {
-                    state.command(groups, SimulatorOrder(SimulatorOrderType::Attack, action == MCTSAction::ArmyMoveC1 ? Point2D(10, 90) : Point2D(90, 10)), commandListener);
+                    Point2D destination = action == MCTSAction::ArmyMoveC1 ? Point2D(168/2, 168/2) : Point2D(168/2, 160);
+                    if (!isValidDestination(groups, destination, state.tick)) return false;
+                    state.command(groups, SimulatorOrder(SimulatorOrderType::Attack, destination), commandListener);
                 } else {
                     bool toOwnBase = action == MCTSAction::ArmyMoveBase || action == MCTSAction::NonArmyMoveBase;
                     CanAttackGroup canAttack(groups);
@@ -131,6 +179,8 @@ bool SimulatorMCTSState::executeAction(MCTSAction action, std::function<void(Sim
 
                     // TODO: Should the units get a stop order if there are no enemies?
                     if (closestEnemy != nullptr) {
+                        if (!isValidDestination(groups, closestEnemy->pos, state.tick)) return false;
+
                         state.command(groups, SimulatorOrder(SimulatorOrderType::Attack, closestEnemy->pos), commandListener);
                     } else {
                         return false;
@@ -148,6 +198,7 @@ bool SimulatorMCTSState::executeAction(MCTSAction action, std::function<void(Sim
             vector<SimulatorUnitGroup*> groups = state.select(playerID, groupFilter, unitFilter);
             if (groups.size() == 0) return false;
             auto avgPos = averagePos(groups);
+            if (!isValidDestination(groups, avgPos, state.tick)) return false;
             state.command(groups, SimulatorOrder(SimulatorOrderType::Attack, avgPos), commandListener);
             break;
         }
@@ -173,8 +224,18 @@ bool SimulatorMCTSState::executeAction(MCTSAction action, std::function<void(Sim
     return true;
 }
 
+static float t1, t2, t3, t4, t5;
+static int counter = 0;
+
 bool SimulatorMCTSState::internalStep(int action, bool ignoreUnintentionalNOOP) {
-    if (!executeAction((MCTSAction)action)) return false;
+    Stopwatch w1;
+    if (!executeAction((MCTSAction)action)) {
+        w1.stop();
+        t5 += w1.millis();
+        return false;
+    }
+    w1.stop();
+    t5 += w1.millis();
 
     // state.simulate(state.simulator, state.time() + max(5.0f, 0.2f * state.time()));
     assert(state.time() >= state.simulator.simulationStartTime);
@@ -218,7 +279,7 @@ vector<pair<int, float>> SimulatorMCTSState::generateMoves() {
     vector<pair<int, float>> moves;
     if (isWin() != 0) return moves;
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 9; i++) {
         // moves.push_back({ i, min(1.0f, (i/45.0f) * 0.1f + 0.9f * 1/10.0f + 0.01f * (rand() % 10))});
         moves.push_back({ i, 0.5f });
     }
@@ -226,16 +287,23 @@ vector<pair<int, float>> SimulatorMCTSState::generateMoves() {
 }
 
 float SimulatorMCTSState::rollout() const {
+    Stopwatch w1;
     int w = isWin();
+    w1.stop();
+    t1 += w1.millis();
     if (w == -1) return 0.5f;
     if (w != 0) return player + 1 == w ? 1 : 0;
 
+    Stopwatch w2;
     // cout << state << endl;
     SimulatorMCTSState res = *this;
     res.count = 0;
+    w2.stop();
+    t2 += w2.millis();
     /*while(res.count < 2) {
         res.internalStep((rand() % 7));
     }*/
+    Stopwatch w3;
     for (int i = 0; i < 6; i++) {
         if (i == 3) {
             res.internalStep((rand() % 9));
@@ -249,7 +317,18 @@ float SimulatorMCTSState::rollout() const {
             res.state.simulate(res.state.simulator, newEndTime);
         }
     }
+    w3.stop();
+    t3 += w3.millis();
+
+    Stopwatch w4;
     float frac = healthFraction(res.state, player + 1);
+    w4.stop();
+    t4 += w4.millis();
+
+    counter++;
+    if ((counter % 10000) == 0) {
+        cout << "Rollout stats " << t1 << " " << t2 << " " << t3 << " " << t4 << " " << t5 << endl;
+    }
     // cout << "Simulated to " << res.state.time() << endl;
     // float frac = healthFraction(res.state, 1);
     // cout << "Eval " << player+1 << " -> " << frac << endl;
@@ -262,11 +341,11 @@ string SimulatorMCTSState::to_string() const {
     return ss.str();
 }
 
-unique_ptr<State<int, SimulatorMCTSState>> findBestActions(SimulatorState& startState) {
-    unique_ptr<State<int, SimulatorMCTSState>> state = make_unique<State<int, SimulatorMCTSState>>(SimulatorMCTSState(startState));
+unique_ptr<MCTSState<int, SimulatorMCTSState>> findBestActions(SimulatorState& startState) {
+    unique_ptr<MCTSState<int, SimulatorMCTSState>> state = make_unique<MCTSState<int, SimulatorMCTSState>>(SimulatorMCTSState(startState));
     startState.simulator.simulationStartTime = startState.time();
 
-    for (int i = 0; i < 30000; i++) {
+    for (int i = 0; i < 45000; i++) {
         mcts<int, SimulatorMCTSState>(*state);
     }
 

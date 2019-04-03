@@ -18,11 +18,46 @@ enum class MCTSAction {
     None,
     ArmyMoveBase,
     ArmyAttackBase,
+
+    
     ArmySuicide,
     IdleNonArmyAttackClosestEnemy,
     NonArmyAttackClosestEnemy,
     NonArmyMoveBase,
 };
+
+inline std::string MCTSActionName(MCTSAction action) {
+    switch(action) {
+        case MCTSAction::ArmyAttackClosestEnemy:
+            return "ArmyAttackClosestEnemy";
+        case MCTSAction::IdleArmyAttackClosestEnemy:
+            return "IdleArmyAttackClosestEnemy";
+        case MCTSAction::ArmyConsolidate:
+            return "ArmyConsolidate";
+        case MCTSAction::IdleArmyConsolidate:
+            return "IdleArmyConsolidate";
+        case MCTSAction::ArmyMoveC1:
+            return "ArmyMoveC1";
+        case MCTSAction::ArmyMoveC2:
+            return "ArmyMoveC2";
+        case MCTSAction::None:
+            return "None";
+        case MCTSAction::ArmyMoveBase:
+            return "ArmyMoveBase";
+        case MCTSAction::ArmyAttackBase:
+            return "ArmyAttackBase";
+        case MCTSAction::ArmySuicide:
+            return "ArmySuicide";
+        case MCTSAction::IdleNonArmyAttackClosestEnemy:
+            return "IdleNonArmyAttackClosestEnemy";
+        case MCTSAction::NonArmyAttackClosestEnemy:
+            return "NonArmyAttackClosestEnemy";
+        case MCTSAction::NonArmyMoveBase:
+            return "NonArmyMoveBase";
+        default:
+            return "Invalid";
+    }
+}
 
 extern std::function<bool(const SimulatorUnitGroup&)> idleGroup;
 extern std::function<bool(const SimulatorUnitGroup&)> structureGroup;
@@ -51,4 +86,4 @@ struct SimulatorMCTSState {
     std::string to_string() const;
 };
 
-std::unique_ptr<State<int, SimulatorMCTSState>> findBestActions(SimulatorState& startState);
+std::unique_ptr<MCTSState<int, SimulatorMCTSState>> findBestActions(SimulatorState& startState);

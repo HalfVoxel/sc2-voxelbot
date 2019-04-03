@@ -59,6 +59,7 @@ struct SimulatorState {
     std::vector<const BuildState*> states;
     std::vector<SimulatorUnitGroup> groups;
     std::vector<BuildOrderState> buildOrders;
+    int tick = 0;
     
     float time() const {
         return states[0]->time;

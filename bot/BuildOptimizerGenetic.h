@@ -26,9 +26,6 @@ struct MiningSpeed {
     }
 };
 
-const std::vector<sc2::UNIT_TYPEID>& getAvailableUnitTypesForRace (sc2::Race race);
-const std::vector<sc2::UNIT_TYPEID>& getEconomicUnitTypesForRace (sc2::Race race);
-
 struct BuildUnitInfo {
     /** Type of the unit */
     sc2::UNIT_TYPEID type;
@@ -66,6 +63,7 @@ enum BuildEventType {
     SpawnLarva,
     MuleTimeout,
     MakeUnitAvailable,  // Un-busy unit
+    FinishedUpgrade,
 };
 
 struct BuildEvent {
@@ -79,6 +77,7 @@ struct BuildEvent {
     sc2::UNIT_TYPEID casterAddon;
     /** Time at which this event will happen */
     float time;
+    float chronoEndTime = 0;
 
     BuildEvent(BuildEventType type, float time, sc2::UNIT_TYPEID caster, sc2::ABILITY_ID ability)
         : type(type), ability(ability), caster(caster), casterAddon(sc2::UNIT_TYPEID::INVALID), time(time) {}
@@ -94,20 +93,136 @@ struct BuildEvent {
     }
 };
 
+struct GeneUnitType {
+    int type = -1;
+    bool chronoBoosted = false;
+
+    GeneUnitType() {}
+    GeneUnitType(int type) : type(type), chronoBoosted(false) {}
+    GeneUnitType(int type, bool chronoBoosted) : type(type), chronoBoosted(chronoBoosted) {}
+
+    bool operator==(const GeneUnitType& other) const {
+        return type == other.type && chronoBoosted == other.chronoBoosted;
+    }
+
+    bool operator!=(const GeneUnitType& other) const {
+        return type != other.type || chronoBoosted != other.chronoBoosted;
+    }
+};
+
+static const int UPGRADE_ID_OFFSET = 1000000;
+struct BuildOrderItem {
+  private:
+    // union ish. It is assumed that unit type ids are pretty small (which they are)
+    sc2::UNIT_TYPEID internalType = sc2::UNIT_TYPEID::INVALID;
+  public:
+    bool chronoBoosted = false;
+
+    bool isUnitType() const {
+        return (int)internalType < UPGRADE_ID_OFFSET;
+    }
+
+    sc2::UNIT_TYPEID rawType() const {
+        return internalType;
+    }
+
+    sc2::UNIT_TYPEID typeID() const {
+        assert((int)internalType < UPGRADE_ID_OFFSET);
+        return internalType;
+    }
+
+    sc2::UPGRADE_ID upgradeID() const {
+        return (sc2::UPGRADE_ID)((int)internalType - UPGRADE_ID_OFFSET);
+    }
+
+    BuildOrderItem() {}
+    BuildOrderItem(sc2::UPGRADE_ID upgrade, bool chronoBoosted = false) : internalType((sc2::UNIT_TYPEID)((int)upgrade + UPGRADE_ID_OFFSET)), chronoBoosted(chronoBoosted) {}
+    BuildOrderItem(sc2::UNIT_TYPEID type) : internalType(type), chronoBoosted(false) {}
+    BuildOrderItem(sc2::UNIT_TYPEID type, bool chronoBoosted) : internalType(type), chronoBoosted(chronoBoosted) {}
+
+    bool operator==(const BuildOrderItem& other) const {
+        return internalType == other.internalType && chronoBoosted == other.chronoBoosted;
+    }
+
+    bool operator!=(const BuildOrderItem& other) const {
+        return internalType != other.internalType || chronoBoosted != other.chronoBoosted;
+    }
+
+    std::string name() const {
+        if (isUnitType()) return sc2::UnitTypeToName(typeID());
+        else return sc2::UpgradeIDToName(upgradeID());
+    }
+};
+
+struct BuildOrder {
+    std::vector<BuildOrderItem> items;
+
+    BuildOrder() {}
+
+    BuildOrder(std::initializer_list<BuildOrderItem> order) {
+        for (auto tp : order) {
+            items.push_back(tp);
+        }
+    }
+    
+    BuildOrder(std::initializer_list<sc2::UNIT_TYPEID> order) {
+        for (auto tp : order) {
+            items.push_back(BuildOrderItem(tp));
+        }
+    }
+
+    explicit BuildOrder (const std::vector<sc2::UNIT_TYPEID>& order) : items(order.size()) {
+        for (int i = 0; i < order.size(); i++) {
+            items[i] = BuildOrderItem(order[i]);
+        }
+    }
+
+    inline size_t size() const noexcept {
+        return items.size();
+    }
+
+    inline BuildOrderItem& operator[] (int index) {
+        return items[index];
+    }
+
+    inline const BuildOrderItem& operator[] (int index) const {
+        return items[index];
+    }
+};
+
 struct BuildOrderFitness {
     static const BuildOrderFitness ReallyBad;
 
     float time;
     BuildResources resources;
     MiningSpeed miningSpeed;
+    MiningSpeed miningSpeedPerSecond;
 
-    BuildOrderFitness () : time(0), resources(0,0), miningSpeed({0,0}) {}
-    BuildOrderFitness (float time, BuildResources resources, MiningSpeed miningSpeed) : time(time), resources(resources), miningSpeed(miningSpeed) {}
+    BuildOrderFitness () : time(0), resources(0,0), miningSpeed({0,0}), miningSpeedPerSecond({0, 0}) {}
+    BuildOrderFitness (float time, BuildResources resources, MiningSpeed miningSpeed, MiningSpeed miningSpeedPerSecond) : time(time), resources(resources), miningSpeed(miningSpeed), miningSpeedPerSecond(miningSpeedPerSecond) {}
 
     float score() const;
 
     bool operator<(const BuildOrderFitness& other) const {
-        return score() < other.score();
+        if(false) return score() < other.score();
+
+        auto& a = time < other.time ? *this : other;
+        auto& b = time < other.time ? other : *this;
+
+        float resourcesPerSecond = a.miningSpeed.mineralsPerSecond + a.miningSpeed.vespenePerSecond;
+        float dt = b.time - a.time;
+
+        // Manual bias factor
+        dt *= 3;
+
+        float estimatedResourcesPerSecond = resourcesPerSecond + (miningSpeedPerSecond.mineralsPerSecond + miningSpeedPerSecond.vespenePerSecond) * dt;
+        float otherResourcesPerSecond = b.miningSpeed.mineralsPerSecond + b.miningSpeed.vespenePerSecond;
+
+        return (estimatedResourcesPerSecond < otherResourcesPerSecond) ^ (time >= other.time);
+        // float s = -fmax(time, 2 * 60.0f);
+        // s += ((resources.minerals + 2 * resources.vespene) + (miningSpeed.mineralsPerSecond + 2 * miningSpeed.vespenePerSecond) * 60) * 0.001f;
+        // s = log(s) - time/400.0f;
+        // return s;
     }
 };
 
@@ -134,10 +249,34 @@ struct BaseInfo {
 };
 
 struct BuildOrderState {
-    const std::vector<sc2::UNIT_TYPEID>& buildOrder;
+    const BuildOrder& buildOrder;
     int buildIndex = 0;
+    sc2::UNIT_TYPEID lastChronoUnit = sc2::UNIT_TYPEID::INVALID;
 
-    BuildOrderState (const std::vector<sc2::UNIT_TYPEID>& buildOrder) : buildOrder(buildOrder) {}
+    BuildOrderState (const BuildOrder& buildOrder) : buildOrder(buildOrder) {}
+};
+
+const float NexusEnergyPerSecond = 1;
+const float ChronoBoostEnergy = 50;
+const float NexusInitialEnergy = 50;
+const float ChronoBoostDuration = 20;
+
+
+struct ChronoBoostInfo {
+    std::vector<float> energyOffsets;
+    std::vector<std::pair<sc2::UNIT_TYPEID, float>> chronoEndTimes;
+
+    std::pair<bool, float> getChronoBoostEndTime(sc2::UNIT_TYPEID caster, float currentTime);
+
+    std::pair<bool, float> useChronoBoost(float time);
+
+    void addRemainingChronoBoost(sc2::UNIT_TYPEID caster, float endTime) {
+        chronoEndTimes.emplace_back(caster, endTime);
+    }
+
+    void addNexusWithEnergy(float currentTime, float energy) {
+        energyOffsets.push_back(energy - currentTime * NexusEnergyPerSecond);
+    }
 };
 
 /** Represents all units, buildings and current build/train actions that are in progress for a given player */
@@ -155,6 +294,9 @@ struct BuildState {
     BuildResources resources = BuildResources(0,0);
     /** Metadata (in particular resource info) about the bases that the player has */
     std::vector<BaseInfo> baseInfos;
+
+    ChronoBoostInfo chronoInfo;
+    bool hasWarpgateResearch = false;
 
 private:
     mutable uint64_t cachedHash = 0;
@@ -176,6 +318,8 @@ public:
         cachedHash = 0;
         immutableHash();
     }
+
+    void transitionToWarpgates();
 
     /** Returns the hash of the build state.
      * Note: Assumes the object is immutable, the hash is cached the first time the method is called
@@ -250,8 +394,10 @@ public:
      * Note that the this is when the item starts to be executed, not when the item is finished.
      * The callback is called right after the action has been executed, but not necessarily completed.
      */
-    bool simulateBuildOrder(const std::vector<sc2::UNIT_TYPEID>& buildOrder, std::function<void(int)> = nullptr, bool waitUntilItemsFinished = true);
-    bool simulateBuildOrder(BuildOrderState& buildOrder, std::function<void(int)> callback, bool waitUntilItemsFinished, float maxTime = std::numeric_limits<float>::infinity(), const std::function<void(const BuildEvent&)>* eventCallback = nullptr);
+    bool simulateBuildOrder(const BuildOrder& buildOrder, const std::function<void(int)> = nullptr, bool waitUntilItemsFinished = true);
+    bool simulateBuildOrder(BuildOrderState& buildOrder, const std::function<void(int)> callback, bool waitUntilItemsFinished, float maxTime = std::numeric_limits<float>::infinity(), const std::function<void(const BuildEvent&)>* eventCallback = nullptr);
+
+    float foodCap() const;
 
     /** Food that is currently available.
      * Positive if there is a surplus of food.
@@ -260,13 +406,102 @@ public:
      */
     float foodAvailable() const;
 
+    /** Food that will be available when following the currents event into the future */
+    float foodAvailableInFuture() const;
+
     /** True if the state contains the given unit type or which is equivalent to the given unit type for tech purposes */
     bool hasEquivalentTech(sc2::UNIT_TYPEID type) const;
 };
 
-std::pair<std::vector<sc2::UNIT_TYPEID>, std::vector<bool>> expandBuildOrderWithImplicitSteps (const BuildState& startState, std::vector<sc2::UNIT_TYPEID> buildOrder);
+struct BuildOptimizerParams {
+    int genePoolSize = 25;
+    int iterations = 512;
+    float mutationRateAddRemove = 0.05f;
+    float mutationRateMove = 0.025f;
+    float varianceBias = 0;
+};
 
-std::vector<sc2::UNIT_TYPEID> findBestBuildOrderGenetic(const std::vector<std::pair<sc2::UNIT_TYPEID, int>>& startingUnits, const std::vector<std::pair<sc2::UNIT_TYPEID, int>>& target);
-std::vector<sc2::UNIT_TYPEID> findBestBuildOrderGenetic(const BuildState& startState, const std::vector<std::pair<sc2::UNIT_TYPEID, int>>& target, const std::vector<sc2::UNIT_TYPEID>* seed = nullptr);
+struct AvailableUnitTypes {
+    std::vector<BuildOrderItem> index2item;
+    std::vector<int> type2index;
+    std::map<int, int> arbitraryType2index;
+  private:
+    std::vector<sc2::UNIT_TYPEID> unitTypes;
+  public:
+
+    size_t size() const {
+        return index2item.size();
+    }
+
+    const std::vector<sc2::UNIT_TYPEID>& getUnitTypes() const {
+        return unitTypes;
+    }
+
+
+    AvailableUnitTypes(std::initializer_list<BuildOrderItem> types) {
+        int maxIndex = 0;
+        for (auto item : types) {
+            index2item.push_back(item);
+            if (item.isUnitType()) {
+                maxIndex = std::max(maxIndex, (int)item.typeID());
+                unitTypes.push_back(item.typeID());
+            }
+        }
+
+        type2index = std::vector<int>(maxIndex + 1, -1);
+        for (int i = 0; i < index2item.size(); i++) {
+            if (index2item[i].isUnitType()) {
+                type2index[(int)index2item[i].typeID()] = i;
+            }
+            arbitraryType2index[(int)index2item[i].rawType()] = i;
+        }
+    }
+
+    int getIndex (sc2::UNIT_TYPEID unit) const {
+        assert((int)unit < type2index.size());
+        auto res = type2index[(int)unit];
+        assert(res != -1);
+        return res;
+    }
+
+    int getIndexMaybe (sc2::UNIT_TYPEID unit) const {
+        if ((int)unit < type2index.size()) {
+            return type2index[(int)unit];
+        }
+        return -1;
+    }
+
+    sc2::UNIT_TYPEID getUnitType(int index) const {
+        assert(index < index2item.size());
+        if (!index2item[index].isUnitType()) return sc2::UNIT_TYPEID::INVALID;
+        return index2item[index].typeID();
+    }
+
+    bool canBeChronoBoosted (int index) const;
+
+    BuildOrderItem getBuildOrderItem (int index) const {
+        assert(index < index2item.size());
+        return index2item[index];
+    }
+
+    BuildOrderItem getBuildOrderItem (const GeneUnitType item) const {
+        auto itm = index2item[item.type];
+        itm.chronoBoosted = item.chronoBoosted;
+        return itm;
+    }
+
+    GeneUnitType getGeneItem (const BuildOrderItem item) const {
+        return GeneUnitType(arbitraryType2index.at((int)item.rawType()), item.chronoBoosted);
+    }
+};
+
+const AvailableUnitTypes& getAvailableUnitsForRace (sc2::Race race);
+const std::vector<sc2::UNIT_TYPEID>& getEconomicUnitTypesForRace (sc2::Race race);
+
+std::pair<BuildOrder, std::vector<bool>> expandBuildOrderWithImplicitSteps (const BuildState& startState, BuildOrder buildOrder);
+
+BuildOrder findBestBuildOrderGenetic(const std::vector<std::pair<sc2::UNIT_TYPEID, int>>& startingUnits, const std::vector<std::pair<sc2::UNIT_TYPEID, int>>& target);
+BuildOrder findBestBuildOrderGenetic(const BuildState& startState, const std::vector<std::pair<sc2::UNIT_TYPEID, int>>& target, const BuildOrder* seed = nullptr);
+std::pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& startState, const std::vector<std::pair<sc2::UNIT_TYPEID, int>>& target, const BuildOrder* seed, BuildOptimizerParams params);
 void unitTestBuildOptimizer();
-void printBuildOrderDetailed(const BuildState& startState, std::vector<sc2::UNIT_TYPEID> buildOrder, const std::vector<bool>* highlight = nullptr);
+void printBuildOrderDetailed(const BuildState& startState, const BuildOrder& buildOrder, const std::vector<bool>* highlight = nullptr);

@@ -1,4 +1,4 @@
-#include "mcts.h"
+#include "../mcts/mcts.h"
 #include <vector>
 #include <random>
 #include <sstream>
@@ -172,7 +172,7 @@ struct TicTacToeState {
 int main () {
     srand(time(0));
 
-    State<int, TicTacToeState> state((TicTacToeState()));
+    MCTSState<int, TicTacToeState> state((TicTacToeState()));
     for (int i = 0; i < 10000; i++) {
         mcts<int, TicTacToeState>(state);
     }

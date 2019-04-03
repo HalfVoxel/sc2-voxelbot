@@ -134,15 +134,20 @@ vector<pair<UNIT_TYPEID, int>> DeductionManager::ApproximateArmy(float scale) {
         if (summary[i].total > 0) {
             if (isArmy((UNIT_TYPEID)i)) {
                 int expectedCount = (int)ceil((summary[i].alive + summary[i].dead * 0.5f));
-                result.emplace_back((UNIT_TYPEID)i, expectedCount);
-                totalCount += expectedCount;
+                if (expectedCount > 0) {
+                    result.emplace_back((UNIT_TYPEID)i, expectedCount);
+                    totalCount += expectedCount;
+                }
             }
         }
     }
 
     // Prior
+    float priorCount = 25 * (200 / (200 + ticksToSeconds(agent.Observation()->GetGameLoop())));
+    
+    priorCount *= scale;
     int k = 0;
-    while(totalCount < 25) {
+    while(totalCount < min((int)priorCount, 10)) {
         if (false) {
             result.emplace_back(UNIT_TYPEID::ZERG_ROACH, 1);
             totalCount += 1;
@@ -175,17 +180,19 @@ vector<pair<UNIT_TYPEID, int>> DeductionManager::ApproximateArmy(float scale) {
             }
 
             if ((k % 4) == 3) {
-                result.emplace_back(UNIT_TYPEID::PROTOSS_ZEALOT, 1);
+                result.emplace_back(UNIT_TYPEID::PROTOSS_STALKER, 1);
                 totalCount += 1;
             }
             k++;
         }
     }
 
-    if(totalCount < 25 * scale) {
-        for (auto& p : result) {
-            p = make_pair(p.first, (int)round(p.second*scale));
-        }
+    while(totalCount < priorCount) {
+        result.push_back(make_pair(result[rand() % result.size()].first, 1));
+        totalCount++;
+        // for (auto& p : result) {
+        //     p = make_pair(p.first, (int)round(p.second*scale));
+        // }
     }
 
     return result;
@@ -202,17 +209,17 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
 
     // TODO: Not accurate if this is not an enemy, or if playing on a >2 player map
     Point2D defaultPosition = agent.Observation()->GetGameInfo().enemy_start_locations[0];
-    int defaultPositionScore = -1;
+    int defaultPositionScore = 12;
 
     for (const Unit* unit : observedUnitInstances) {
         if (unit->is_alive) {
             result.emplace_back(CombatUnit(*unit), unit->pos);
             alreadySeen[(int)unit->unit_type]++;
-        }
 
-        int score = 10 * (int)unit->is_alive + (unit->health_max/100);
-        if (score > defaultPositionScore) {
-            defaultPosition = unit->pos;
+            int score = 10 * (int)unit->is_alive + (unit->health_max/100);
+            if (score > defaultPositionScore && isStructure(unit->unit_type)) {
+                defaultPosition = unit->pos;
+            }
         }
     }
 

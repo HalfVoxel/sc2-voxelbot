@@ -20,10 +20,10 @@ pybind11::object visualize_bar_fn;
 
 
 void visualizeSimulator(SimulatorState& state) {
-    vector<vector<float>> units;
+    vector<vector<double>> units;
     for (auto& group : state.groups) {
         for (auto& u : group.units) {
-            units.push_back(vector<float> { group.pos.x, group.pos.y, (float)u.combat.owner, (float)u.tag, (float)u.combat.type, u.combat.health + u.combat.shield, u.combat.health_max + u.combat.shield_max });
+            units.push_back(vector<double> { group.pos.x, group.pos.y, (double)u.combat.owner, (double)u.tag, (double)u.combat.type, u.combat.health + u.combat.shield, u.combat.health_max + u.combat.shield_max });
         }
     }
 
@@ -73,7 +73,7 @@ void example_simulation(SimulatorContext& simulator, SimulatorState& state) {
 void mcts(SimulatorContext& simulator, SimulatorState& startState) {
     srand(time(0));
 
-    unique_ptr<State<int, SimulatorMCTSState>> state = make_unique<State<int, SimulatorMCTSState>>(SimulatorMCTSState(startState));
+    unique_ptr<MCTSState<int, SimulatorMCTSState>> state = make_unique<MCTSState<int, SimulatorMCTSState>>(SimulatorMCTSState(startState));
     /*for (int i = 0; i < 100000; i++) {
         mcts<int, SimulatorMCTSState>(*state);
     }*/
@@ -88,18 +88,22 @@ void mcts(SimulatorContext& simulator, SimulatorState& startState) {
     int it = 0;
     while(true) {
         if (it % 2 == 0) {
-            state = make_unique<State<int, SimulatorMCTSState>>(SimulatorMCTSState(currentState->internalState.state));
+            state = make_unique<MCTSState<int, SimulatorMCTSState>>(SimulatorMCTSState(currentState->internalState.state));
             simulator.simulationStartTime = state->internalState.state.time();
 
-            // vector<vector<int>> stats(200, vector<int>(14));
+            vector<vector<float>> stats(200, vector<float>(14));
+            vector<vector<float>> statsRave(200, vector<float>(14));
             for (int i = 0; i < 20000; i++) {
                 mcts<int, SimulatorMCTSState>(*state);
-                /*for (auto& c : state->children) {
+                for (auto& c : state->children) {
                     assert(c.action < 14);
+                    // stats[i/100][c.action] = c.state != nullptr ? c.state->wins / (0.01f + c.state->visits) : 0;
+                    // statsRave[i/100][c.action] = c.state != nullptr ? c.state->raveWins / (0.01f + c.state->raveVisits) : 0;
                     stats[i/100][c.action] = c.state != nullptr ? c.state->visits : 0;
-                }*/
+                    statsRave[i/100][c.action] = c.state != nullptr ? c.state->raveVisits : 0;
+                }
             }
-            // visualize_bar_fn(stats);
+            // visualize_bar_fn(stats, statsRave);
 
             if (it == 0) {
                 state->print(0, 3);
@@ -131,7 +135,7 @@ void test_simulator() {
     combatPredictor.init();
 
     SimulatorContext simulator(&combatPredictor, { Point2D(0,0), Point2D(100, 100) });
-    vector<UNIT_TYPEID> bo1 = { UNIT_TYPEID::PROTOSS_PROBE, UNIT_TYPEID::PROTOSS_PYLON, UNIT_TYPEID::PROTOSS_PYLON, UNIT_TYPEID::PROTOSS_GATEWAY, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT,
+    BuildOrder bo1 = { UNIT_TYPEID::PROTOSS_PROBE, UNIT_TYPEID::PROTOSS_PYLON, UNIT_TYPEID::PROTOSS_PYLON, UNIT_TYPEID::PROTOSS_GATEWAY, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT,
         UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_PYLON,
         UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_PYLON,
         UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_PYLON,
@@ -139,7 +143,7 @@ void test_simulator() {
         UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_PYLON,
         UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_PYLON,
     };
-    vector<UNIT_TYPEID> bo2 = { UNIT_TYPEID::PROTOSS_PROBE, UNIT_TYPEID::PROTOSS_PYLON, UNIT_TYPEID::PROTOSS_PYLON, UNIT_TYPEID::PROTOSS_GATEWAY, UNIT_TYPEID::PROTOSS_ZEALOT,
+    BuildOrder bo2 = { UNIT_TYPEID::PROTOSS_PROBE, UNIT_TYPEID::PROTOSS_PYLON, UNIT_TYPEID::PROTOSS_PYLON, UNIT_TYPEID::PROTOSS_GATEWAY, UNIT_TYPEID::PROTOSS_ZEALOT,
         UNIT_TYPEID::PROTOSS_VOIDRAY, UNIT_TYPEID::PROTOSS_VOIDRAY, UNIT_TYPEID::PROTOSS_PYLON,
         UNIT_TYPEID::PROTOSS_VOIDRAY, UNIT_TYPEID::PROTOSS_VOIDRAY, UNIT_TYPEID::PROTOSS_PYLON,
         UNIT_TYPEID::PROTOSS_VOIDRAY, UNIT_TYPEID::PROTOSS_VOIDRAY, UNIT_TYPEID::PROTOSS_PYLON,
@@ -188,6 +192,21 @@ void test_simulator() {
         SimulatorUnit(makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE)),
     }));
 
+    state.groups.push_back(SimulatorUnitGroup(Point2D(20, 10), {
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PROBE)),
+    }));
+
     state.groups.push_back(SimulatorUnitGroup(Point2D(100, 100), {
         SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_ZEALOT)),
         SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_CARRIER)),
@@ -221,6 +240,7 @@ void test_simulator() {
 
     state.groups.push_back(SimulatorUnitGroup(Point2D(100, 100), {
         SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_NEXUS)),
+        SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_STARGATE)),
         SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PHOTONCANNON)),
         SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PHOTONCANNON)),
         SimulatorUnit(makeUnit(2, UNIT_TYPEID::PROTOSS_PHOTONCANNON)),
