@@ -189,6 +189,7 @@ class CachingBot : public sc2::Agent {
             unit_lookup2.close();
 
             save_ability_data(Observation()->GetAbilityData());
+            save_upgrade_data(Observation()->GetUpgradeData());
         } else {
             cerr << "Note: run program again with 'pass2' as an argument on the commandline to get the correct output" << endl;
 
@@ -235,6 +236,10 @@ class CachingBot : public sc2::Agent {
                     is_flying[(int)ourUnits[i]->unit_type] = ourUnits[i]->is_flying;
                     radii[(int)ourUnits[i]->unit_type] = ourUnits[i]->radius;
                 }
+
+                // Fix marine health, DebugGiveAllTech will make marines get 10 extra hp
+                initial_health[(int)UNIT_TYPEID::TERRAN_MARINE] = make_pair(45, 0);
+
                 results << "std::vector<std::pair<float,float>> unit_type_initial_health = {" << endl;
                 for (int i = 0; i < initial_health.size(); i++) {
                     results << "\t{" << initial_health[i].first << ", " << initial_health[i].second << "},\n";

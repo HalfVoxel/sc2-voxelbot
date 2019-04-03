@@ -1,4 +1,5 @@
 #include "unit_data_caching.h"
+#include "sc2_serialization.h"
 #include <string>
 #include <cereal/archives/binary.hpp>
 #include <cereal/types/string.hpp>
@@ -301,4 +302,24 @@ std::vector<sc2::AbilityData> load_ability_data() {
     }
 
     return abilities;
+}
+
+void save_upgrade_data(vector<UpgradeData> upgrades) {
+    std::ofstream file("bot/generated/upgrades.bin", std::ios::binary);
+    {
+        cereal::BinaryOutputArchive archive(file);
+        archive(upgrades);
+    }
+    file.close();
+}
+
+std::vector<sc2::UpgradeData> load_upgrade_data() {
+    std::ifstream file("bot/generated/upgrades.bin", std::ios::binary);
+    vector<sc2::UpgradeData> upgrades;
+    {
+        cereal::BinaryInputArchive archive(file);
+        archive(upgrades);
+    }
+    file.close();
+    return upgrades;
 }

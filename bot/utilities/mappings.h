@@ -6,6 +6,7 @@ void initMappings();
 const sc2::UnitTypeData& getUnitData(sc2::UNIT_TYPEID type);
 const std::vector<sc2::UnitTypeData>& getUnitTypes();
 const sc2::AbilityData& getAbilityData(sc2::ABILITY_ID ability);
+const sc2::UpgradeData& getUpgradeData(sc2::UPGRADE_ID upgrade);
 sc2::UNIT_TYPEID canonicalize(sc2::UNIT_TYPEID unitType);
 const std::vector<sc2::UNIT_TYPEID>& abilityToCasterUnit(sc2::ABILITY_ID ability);
 sc2::UNIT_TYPEID abilityToUnit(sc2::ABILITY_ID ability);

@@ -7,4 +7,6 @@ const std::string UNIT_DATA_CACHE_PATH = "bot/generated/units.data";
 void save_unit_data(const std::vector<sc2::UnitTypeData>& unit_types, std::string path=UNIT_DATA_CACHE_PATH);
 std::vector<sc2::UnitTypeData> load_unit_data();
 void save_ability_data(std::vector<sc2::AbilityData> abilities);
+void save_upgrade_data(std::vector<sc2::UpgradeData> upgrades);
 std::vector<sc2::AbilityData> load_ability_data();
+std::vector<sc2::UpgradeData> load_upgrade_data();

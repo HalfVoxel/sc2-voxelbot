@@ -171,4 +171,31 @@ namespace sc2 {
         unit.buffs.clear();
         for (auto b : buffs) unit.buffs.push_back(b);
     }
+
+    template <class Archive>
+    void save(Archive& archive, const UpgradeData& u) {
+        ABILITY_ID ability_id = u.ability_id;
+        archive(
+            cereal::make_nvp("upgrade_id", u.upgrade_id),
+            cereal::make_nvp("name", u.name),
+            cereal::make_nvp("mineral_cost", u.mineral_cost),
+            cereal::make_nvp("vespene_cost", u.vespene_cost),
+            cereal::make_nvp("ability_id", ability_id),
+            cereal::make_nvp("research_time", u.research_time)
+        );
+    }
+
+    template <class Archive>
+    void load(Archive& archive, UpgradeData& u) {
+        ABILITY_ID ability_id;
+        archive(
+            cereal::make_nvp("upgrade_id", u.upgrade_id),
+            cereal::make_nvp("name", u.name),
+            cereal::make_nvp("mineral_cost", u.mineral_cost),
+            cereal::make_nvp("vespene_cost", u.vespene_cost),
+            cereal::make_nvp("ability_id", ability_id),
+            cereal::make_nvp("research_time", u.research_time)
+        );
+        u.ability_id = ability_id;
+    }
 };

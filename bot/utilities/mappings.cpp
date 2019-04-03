@@ -19,6 +19,7 @@ vector<vector<UNIT_TYPEID>> mHasBeen;
 vector<vector<ABILITY_ID>> mUnitTypeHasAbilities;
 vector<UnitTypeData> mUnitTypes;
 vector<AbilityData> mAbilities;
+vector<UpgradeData> mUpgrades;
 vector<bool> mIsStationary;
 vector<bool> mIsStructure;
 
@@ -84,6 +85,10 @@ const sc2::AbilityData& getAbilityData(sc2::ABILITY_ID ability) {
     return mAbilities[(int)ability];
 }
 
+const sc2::UpgradeData& getUpgradeData(sc2::UPGRADE_ID upgrade) {
+    return mUpgrades[(int)upgrade];
+}
+
 void init() {
     if (mappingInitialized)
         return;
@@ -124,6 +129,14 @@ void init() {
     mAbilityToCasterUnit[(int)ABILITY_ID::BUILD_REACTOR_BARRACKS] = { UNIT_TYPEID::TERRAN_BARRACKS };
     mAbilityToCasterUnit[(int)ABILITY_ID::BUILD_REACTOR_FACTORY] = { UNIT_TYPEID::TERRAN_FACTORY };
     mAbilityToCasterUnit[(int)ABILITY_ID::BUILD_REACTOR_STARPORT] = { UNIT_TYPEID::TERRAN_STARPORT };
+
+    // Not technically correct, but it makes the build order optimizer simpler
+    mAbilityToCasterUnit[(int)ABILITY_ID::TRAIN_ZEALOT].push_back(UNIT_TYPEID::PROTOSS_WARPGATE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::TRAIN_SENTRY].push_back(UNIT_TYPEID::PROTOSS_WARPGATE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::TRAIN_STALKER].push_back(UNIT_TYPEID::PROTOSS_WARPGATE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::TRAIN_ADEPT].push_back(UNIT_TYPEID::PROTOSS_WARPGATE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::TRAIN_HIGHTEMPLAR].push_back(UNIT_TYPEID::PROTOSS_WARPGATE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::TRAIN_DARKTEMPLAR].push_back(UNIT_TYPEID::PROTOSS_WARPGATE);
 
     mCanBecome = vector<vector<UNIT_TYPEID>>(unitTypes.size());
     mHasBeen = vector<vector<UNIT_TYPEID>>(unitTypes.size());
@@ -248,12 +261,14 @@ void init() {
 void initMappings(const ObservationInterface* observation) {
     mUnitTypes = observation->GetUnitTypeData();
     mAbilities = observation->GetAbilityData();
+    mUpgrades = observation->GetUpgradeData();
     init();
 }
 
 void initMappings() {
     mUnitTypes = load_unit_data();
     mAbilities = load_ability_data();
+    mUpgrades = load_upgrade_data();
     init();
 }
 
