@@ -12,10 +12,7 @@ from collections import namedtuple
 import numpy as np
 import math
 import random
-import matplotlib
-import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde as kde
-from matplotlib import cm
 import time
 import mappings
 
@@ -307,7 +304,6 @@ def predict(startingUnits, resources, targetUnitsList):
     startingUnits2 = (startingUnitsTensor == 1).to(dtype=torch.float)
 
     startingUnitsTensor = torch.cat([startingUnitsTensor, startingUnits1, startingUnits2])
-    
     targetUnitTensors = []
     metas = []
     for targetUnits in targetUnitsList:
@@ -337,7 +333,6 @@ def predict(startingUnits, resources, targetUnitsList):
     assert metaTensors.shape == (numInstances, META_SIZE)
     assert startingUnitsTensor.shape == (numInstances, STARTING_UNIT_TENSOR_SIZE)
     assert targetUnitsTensor.shape == (numInstances, TARGET_UNIT_TENSOR_SIZE)
-    
     with torch.no_grad():
         net.eval()
         result = net(startingUnitsTensor, targetUnitsTensor, metaTensors).numpy()
@@ -566,7 +561,6 @@ def optimize_model():
             # print(f"Actual: {targetTime}, Predicted: {outputs.item()/score_scale}")
 
 
-plt.ioff()
 episode = 0
 
 epss = []
@@ -676,6 +670,14 @@ def optimize(steps: int):
 
 
 if __name__ == "__main__":
+    # Only import matplotlib when in training mode
+    # (can mess things up if matplotlib is imported multiple times from C++)
+    import matplotlib
+    matplotlib.use('TkAgg')
+    import matplotlib.pyplot as plt
+    from matplotlib import cm
+    plt.ioff()
+
     load_all()
     for i in range(50):
         optimize(1)
