@@ -127,6 +127,10 @@ BuildState::BuildState(const ObservationInterface* observation, Unit::Alliance a
         if (isTownHall(u->unit_type)) {
             basePositions.push_back(u->pos);
             baseInfos.push_back(BaseInfo(0, 0, 0));
+
+            if (u->unit_type == UNIT_TYPEID::PROTOSS_NEXUS) {
+                chronoInfo.addNexusWithEnergy(time, u->energy);
+            }
         }
     }
     auto neutralUnits = observation->GetUnits(Unit::Alliance::Neutral);
@@ -142,7 +146,7 @@ BuildState::BuildState(const ObservationInterface* observation, Unit::Alliance a
     }
 }
 
-void BuildState::transitionToWarpgates () {
+void BuildState::transitionToWarpgates (const function<void(const BuildEvent&)>* eventCallback) {
     assert(hasWarpgateResearch);
     const float WarpGateTransitionTime = 7;
     for (auto& u : units) {
@@ -152,6 +156,13 @@ void BuildState::transitionToWarpgates () {
             addUnits(UNIT_TYPEID::PROTOSS_WARPGATE, delta);
             makeUnitsBusy(UNIT_TYPEID::PROTOSS_WARPGATE, UNIT_TYPEID::INVALID, delta);
             addEvent(BuildEvent(BuildEventType::MakeUnitAvailable, time + WarpGateTransitionTime, UNIT_TYPEID::PROTOSS_WARPGATE, ABILITY_ID::MORPH_WARPGATE));
+
+            // Note: event not actually used in the simulator, only used for the callback
+            if (eventCallback != nullptr) {
+                for(int i = 0; i < delta; i++) {
+                    (*eventCallback)(BuildEvent(BuildEventType::WarpGateTransition, time, UNIT_TYPEID::PROTOSS_GATEWAY, ABILITY_ID::MORPH_WARPGATE));
+                }
+            }
             // Note: important to break as the addUnits call may invalidate the iterator
             break;
         }
@@ -213,9 +224,10 @@ void BuildState::killUnits(UNIT_TYPEID type, UNIT_TYPEID addon, int count) {
                 bool found = false;
                 for (int i = events.size() - 1; i >= 0; i--) {
                     auto& ev = events[i];
-                    if (ev.caster == type && ev.casterAddon == addon && ev.type == (type == UNIT_TYPEID::PROTOSS_PROBE ? BuildEventType::MakeUnitAvailable : BuildEventType::FinishedUnit)) {
+                    if (ev.caster == type && ev.casterAddon == addon && (ev.type == BuildEventType::MakeUnitAvailable || (ev.type == BuildEventType::FinishedUnit && type != UNIT_TYPEID::PROTOSS_PROBE) || ev.type == BuildEventType::FinishedUpgrade)) {
                         // This event is guaranteed to keep a unit busy
                         // Let's erase the event to free the unit for other work
+                        // Note that FinishedUnit events with caster==Probe do not keep the probe busy: there will be a second MakeUnitAvailable event that marks the probe as busy for a shorter time
                         events.erase(events.begin() + i);
                         u.busyUnits--;
                         found = true;
@@ -229,7 +241,7 @@ void BuildState::killUnits(UNIT_TYPEID type, UNIT_TYPEID addon, int count) {
                     // Usually they are occupied with some event, but in some cases they are just marked as busy.
                     // For example workers for a few seconds at the start of the game to simulate a delay.
                     u.busyUnits--;
-                    cerr << "Forcefully removed busy unit" << endl;
+                    cerr << "Forcefully removed busy unit " << UnitTypeToName(u.type) << " " << u.units << " " << u.busyUnits << endl;
                     assert(false);
                 }
             }
@@ -419,7 +431,7 @@ void BuildState::simulate(float endTime, const function<void(const BuildEvent&)>
         if (eventCallback != nullptr) (*eventCallback)(ev);
         
         // TODO: Maybe a bit slow...
-        if (hasWarpgateResearch) transitionToWarpgates();
+        if (hasWarpgateResearch) transitionToWarpgates(eventCallback);
     }
 
     // events.erase(events.begin(), events.begin() + eventIndex);
@@ -790,6 +802,10 @@ void BuildEvent::apply(BuildState& state) const {
         }
         case MakeUnitAvailable: {
             state.makeUnitsBusy(caster, casterAddon, -1);
+            break;
+        }
+        case WarpGateTransition: {
+            assert(false);
             break;
         }
     }
@@ -2693,4 +2709,26 @@ void unitTestBuildOptimizer() {
     // optimizer.calculate_build_order(Race::Terran, { { UNIT_TYPEID::TERRAN_COMMANDCENTER, 1 }, { UNIT_TYPEID::TERRAN_SCV, 1 } }, { { UNIT_TYPEID::TERRAN_SCV, 5 } });
     // logBuildOrder(optimizer.calculate_build_order();
     // logBuildOrder(optimizer.calculate_build_order(Race::Terran, { { UNIT_TYPEID::TERRAN_COMMANDCENTER, 1 }, { UNIT_TYPEID::TERRAN_SCV, 12 } }, { { UNIT_TYPEID::TERRAN_MARINE, 5 } }));
+}
+
+bool BuildOrderFitness::operator<(const BuildOrderFitness& other) const {
+    if(false) return score() < other.score();
+
+    auto& a = time < other.time ? *this : other;
+    auto& b = time < other.time ? other : *this;
+
+    float resourcesPerSecond = a.miningSpeed.mineralsPerSecond + a.miningSpeed.vespenePerSecond;
+    float dt = b.time - a.time;
+
+    // Manual bias factor
+    dt *= 10;
+
+    float estimatedResourcesPerSecond = resourcesPerSecond + (miningSpeedPerSecond.mineralsPerSecond + miningSpeedPerSecond.vespenePerSecond) * dt;
+    float otherResourcesPerSecond = b.miningSpeed.mineralsPerSecond + b.miningSpeed.vespenePerSecond;
+
+    return (estimatedResourcesPerSecond < otherResourcesPerSecond) ^ (time >= other.time);
+    // float s = -fmax(time, 2 * 60.0f);
+    // s += ((resources.minerals + 2 * resources.vespene) + (miningSpeed.mineralsPerSecond + 2 * miningSpeed.vespenePerSecond) * 60) * 0.001f;
+    // s = log(s) - time/400.0f;
+    // return s;
 }

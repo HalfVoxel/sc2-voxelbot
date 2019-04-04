@@ -64,6 +64,7 @@ enum BuildEventType {
     MuleTimeout,
     MakeUnitAvailable,  // Un-busy unit
     FinishedUpgrade,
+    WarpGateTransition,
 };
 
 struct BuildEvent {
@@ -203,27 +204,7 @@ struct BuildOrderFitness {
 
     float score() const;
 
-    bool operator<(const BuildOrderFitness& other) const {
-        if(false) return score() < other.score();
-
-        auto& a = time < other.time ? *this : other;
-        auto& b = time < other.time ? other : *this;
-
-        float resourcesPerSecond = a.miningSpeed.mineralsPerSecond + a.miningSpeed.vespenePerSecond;
-        float dt = b.time - a.time;
-
-        // Manual bias factor
-        dt *= 3;
-
-        float estimatedResourcesPerSecond = resourcesPerSecond + (miningSpeedPerSecond.mineralsPerSecond + miningSpeedPerSecond.vespenePerSecond) * dt;
-        float otherResourcesPerSecond = b.miningSpeed.mineralsPerSecond + b.miningSpeed.vespenePerSecond;
-
-        return (estimatedResourcesPerSecond < otherResourcesPerSecond) ^ (time >= other.time);
-        // float s = -fmax(time, 2 * 60.0f);
-        // s += ((resources.minerals + 2 * resources.vespene) + (miningSpeed.mineralsPerSecond + 2 * miningSpeed.vespenePerSecond) * 60) * 0.001f;
-        // s = log(s) - time/400.0f;
-        // return s;
-    }
+    bool operator<(const BuildOrderFitness& other) const;
 };
 
 struct BaseInfo {
@@ -319,7 +300,7 @@ public:
         immutableHash();
     }
 
-    void transitionToWarpgates();
+    void transitionToWarpgates (const std::function<void(const BuildEvent&)>* eventCallback);
 
     /** Returns the hash of the build state.
      * Note: Assumes the object is immutable, the hash is cached the first time the method is called

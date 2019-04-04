@@ -203,6 +203,13 @@ void SimulatorState::simulateBuildOrder (SimulatorContext& simulator, float endT
                 case MakeUnitAvailable: {
                     break;
                 }
+                case FinishedUpgrade: {
+                    break;
+                }
+                case WarpGateTransition: {
+                    replaceUnit(playerID, UNIT_TYPEID::PROTOSS_GATEWAY, UNIT_TYPEID::PROTOSS_WARPGATE);
+                    break;
+                }
             }
         };
 
