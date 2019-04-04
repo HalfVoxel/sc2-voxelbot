@@ -106,15 +106,6 @@ void Bot::OnGameStart() {
 
 time_t t0;
 
-void DebugBuildOrder(BuildOrder buildOrder, float buildOrderTime) {
-    stringstream ss;
-    ss << "Time: " << (int)round(buildOrderTime) << endl;
-    for (auto b : buildOrder.items) {
-        ss << b.name() << endl;
-    }
-    bot.Debug()->DebugTextOut(ss.str(), Point2D(0.05, 0.05), Colors::Purple);
-}
-
 void DebugUnitPositions() {
     Units units = bot.Observation()->GetUnits(Unit::Alliance::Self);
     for (auto unit : units) {
@@ -129,9 +120,9 @@ void Bot::OnGameLoading() {
 
 int ticks = 0;
 bool test = false;
-set<BuffID> seenBuffs;
 uint32_t lastEffectID;
 std::future<tuple<BuildOrder, BuildState, float, vector<pair<UNIT_TYPEID,int>>>> currentBuildOrderFuture;
+int currentBuildOrderFutureTick;
 BuildOrder currentBuildOrder;
 int currentBuildOrderIndex;
 vector<pair<UNIT_TYPEID,int>> lastCounter;
@@ -139,6 +130,18 @@ float currentBuildOrderTime;
 BuildState lastStartingState;
 float enemyScaling = 1;
 BuildOrder emptyBO;
+
+void DebugBuildOrder(BuildOrder buildOrder, float buildOrderTime) {
+    stringstream ss;
+    ss << "Time: " << (int)round(buildOrderTime) << endl;
+    for (int i = 0; i < buildOrder.items.size(); i++) {
+        auto b = buildOrder.items[i];
+        ss << b.name();
+        if (i < currentBuildOrderIndex) ss << " (done)";
+        ss << endl;
+    }
+    bot.Debug()->DebugTextOut(ss.str(), Point2D(0.05, 0.05), Colors::Purple);
+}
 
 SimulatorState createSimulatorState(SimulatorContext& mctsSimulator) {
     auto ourUnits = agent.Observation()->GetUnits(Unit::Alliance::Self);
@@ -249,7 +252,7 @@ void runMCTS () {
     if (mctsDebug) {
         debugger->debugInteractive(&*mctsState);
     } else {
-        debugger->visualize(mctsState->internalState.state);
+        // debugger->visualize(mctsState->internalState.state);
     }
 }
 
@@ -290,79 +293,79 @@ void Bot::OnStep() {
     }
 
     // mlMovement.Tick(Observation());
+    bool shouldRecalculateBuildOrder = (ticks % 20000) == 1 || ((ticks % 200) == 1 && currentBuildOrderIndex > currentBuildOrder.size() * 0.8f);
+    if ((ticks >= currentBuildOrderFutureTick || shouldRecalculateBuildOrder) && currentBuildOrderFuture.valid()) {
+        currentBuildOrderFutureTick = 100000000;
+        cout << "Updating build order" << endl;
+        currentBuildOrderFuture.wait();
+        float buildOrderTime;
+        tie(currentBuildOrder, lastStartingState, buildOrderTime, lastCounter) = currentBuildOrderFuture.get();
+        currentBuildOrderTime = buildOrderTime;
 
-    if ((ticks % 200) == 1) {
-    // if ((ticks == 1 || ticks == 2)) {
-        if (currentBuildOrderFuture.valid()) {
-            currentBuildOrderFuture.wait();
-            float buildOrderTime;
-            tie(currentBuildOrder, lastStartingState, buildOrderTime, lastCounter) = currentBuildOrderFuture.get();
-            currentBuildOrderTime = buildOrderTime;
-
-            if (buildOrderTime < 120) {
-                enemyScaling = min(10.0f, enemyScaling * 1.2f);
-            } else if (buildOrderTime > 400) {
-                enemyScaling = max(1.0f, enemyScaling * 0.9f);
-            }
-
-            if (currentBuildOrder.size() < 5) {
-                enemyScaling = min(10.0f, enemyScaling * 1.2f);
-            } else if (currentBuildOrder.size() > 20) {
-                enemyScaling = max(1.0f, enemyScaling * 0.9f);
-            }
-            cout << "Enemy scaling " << enemyScaling << endl;
-            
-            /*currentBuildOrder = {
-                UNIT_TYPEID::PROTOSS_PROBE,
-                UNIT_TYPEID::PROTOSS_PYLON,
-                UNIT_TYPEID::PROTOSS_PROBE,
-                UNIT_TYPEID::PROTOSS_GATEWAY,
-                UNIT_TYPEID::PROTOSS_PROBE,
-                UNIT_TYPEID::PROTOSS_PROBE,
-                UNIT_TYPEID::PROTOSS_GATEWAY,
-                UNIT_TYPEID::PROTOSS_CYBERNETICSCORE,
-                UNIT_TYPEID::PROTOSS_ZEALOT,
-                UNIT_TYPEID::PROTOSS_PROBE,
-                UNIT_TYPEID::PROTOSS_ASSIMILATOR,
-                UNIT_TYPEID::PROTOSS_PYLON,
-                UNIT_TYPEID::PROTOSS_PROBE,
-                UNIT_TYPEID::PROTOSS_ZEALOT,
-                UNIT_TYPEID::PROTOSS_PROBE,
-                UNIT_TYPEID::PROTOSS_ZEALOT,
-                UNIT_TYPEID::PROTOSS_PROBE,
-                UNIT_TYPEID::PROTOSS_ZEALOT,
-                UNIT_TYPEID::PROTOSS_PYLON,
-                UNIT_TYPEID::PROTOSS_ZEALOT,
-                UNIT_TYPEID::PROTOSS_ZEALOT,
-                UNIT_TYPEID::PROTOSS_PYLON,
-                UNIT_TYPEID::PROTOSS_PROBE,
-                UNIT_TYPEID::PROTOSS_ZEALOT,
-                UNIT_TYPEID::PROTOSS_STARGATE,
-                UNIT_TYPEID::PROTOSS_PYLON,
-                UNIT_TYPEID::PROTOSS_ASSIMILATOR,
-                UNIT_TYPEID::PROTOSS_ZEALOT,
-                UNIT_TYPEID::PROTOSS_ZEALOT,
-                UNIT_TYPEID::PROTOSS_PHOENIX,
-                UNIT_TYPEID::PROTOSS_ZEALOT,
-                UNIT_TYPEID::PROTOSS_ZEALOT,
-                UNIT_TYPEID::PROTOSS_PYLON,
-                UNIT_TYPEID::PROTOSS_PHOENIX,
-                UNIT_TYPEID::PROTOSS_ZEALOT,
-                UNIT_TYPEID::PROTOSS_ZEALOT,
-                UNIT_TYPEID::PROTOSS_PHOENIX,
-                UNIT_TYPEID::PROTOSS_ZEALOT,
-                UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY,
-                UNIT_TYPEID::PROTOSS_ZEALOT,
-                UNIT_TYPEID::PROTOSS_FLEETBEACON,
-                UNIT_TYPEID::PROTOSS_PYLON,
-                UNIT_TYPEID::PROTOSS_OBSERVER,
-                UNIT_TYPEID::PROTOSS_CARRIER,
-                UNIT_TYPEID::PROTOSS_IMMORTAL,
-            };*/
-
-            
+        if (buildOrderTime < 120) {
+            enemyScaling = min(10.0f, enemyScaling * 1.2f);
+        } else if (buildOrderTime > 400) {
+            enemyScaling = max(1.0f, enemyScaling * 0.9f);
         }
 
+        if (currentBuildOrder.size() < 5) {
+            enemyScaling = min(10.0f, enemyScaling * 1.2f);
+        } else if (currentBuildOrder.size() > 20) {
+            enemyScaling = max(1.0f, enemyScaling * 0.9f);
+        }
+        cout << "Enemy scaling " << enemyScaling << endl;
+        
+        /*currentBuildOrder = {
+            UNIT_TYPEID::PROTOSS_PROBE,
+            UNIT_TYPEID::PROTOSS_PYLON,
+            UNIT_TYPEID::PROTOSS_PROBE,
+            UNIT_TYPEID::PROTOSS_GATEWAY,
+            UNIT_TYPEID::PROTOSS_PROBE,
+            UNIT_TYPEID::PROTOSS_PROBE,
+            UNIT_TYPEID::PROTOSS_GATEWAY,
+            UNIT_TYPEID::PROTOSS_CYBERNETICSCORE,
+            UNIT_TYPEID::PROTOSS_ZEALOT,
+            UNIT_TYPEID::PROTOSS_PROBE,
+            UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+            UNIT_TYPEID::PROTOSS_PYLON,
+            UNIT_TYPEID::PROTOSS_PROBE,
+            UNIT_TYPEID::PROTOSS_ZEALOT,
+            UNIT_TYPEID::PROTOSS_PROBE,
+            UNIT_TYPEID::PROTOSS_ZEALOT,
+            UNIT_TYPEID::PROTOSS_PROBE,
+            UNIT_TYPEID::PROTOSS_ZEALOT,
+            UNIT_TYPEID::PROTOSS_PYLON,
+            UNIT_TYPEID::PROTOSS_ZEALOT,
+            UNIT_TYPEID::PROTOSS_ZEALOT,
+            UNIT_TYPEID::PROTOSS_PYLON,
+            UNIT_TYPEID::PROTOSS_PROBE,
+            UNIT_TYPEID::PROTOSS_ZEALOT,
+            UNIT_TYPEID::PROTOSS_STARGATE,
+            UNIT_TYPEID::PROTOSS_PYLON,
+            UNIT_TYPEID::PROTOSS_ASSIMILATOR,
+            UNIT_TYPEID::PROTOSS_ZEALOT,
+            UNIT_TYPEID::PROTOSS_ZEALOT,
+            UNIT_TYPEID::PROTOSS_PHOENIX,
+            UNIT_TYPEID::PROTOSS_ZEALOT,
+            UNIT_TYPEID::PROTOSS_ZEALOT,
+            UNIT_TYPEID::PROTOSS_PYLON,
+            UNIT_TYPEID::PROTOSS_PHOENIX,
+            UNIT_TYPEID::PROTOSS_ZEALOT,
+            UNIT_TYPEID::PROTOSS_ZEALOT,
+            UNIT_TYPEID::PROTOSS_PHOENIX,
+            UNIT_TYPEID::PROTOSS_ZEALOT,
+            UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY,
+            UNIT_TYPEID::PROTOSS_ZEALOT,
+            UNIT_TYPEID::PROTOSS_FLEETBEACON,
+            UNIT_TYPEID::PROTOSS_PYLON,
+            UNIT_TYPEID::PROTOSS_OBSERVER,
+            UNIT_TYPEID::PROTOSS_CARRIER,
+            UNIT_TYPEID::PROTOSS_IMMORTAL,
+        };*/
+    }
+
+    if (shouldRecalculateBuildOrder) {
+    // if ((ticks == 1 || ticks == 2)) {
         CombatState startingState;
         for (auto u : deductionManager.ApproximateArmy(1.5f)) {
             cout << "Expected enemy unit: " << UnitTypeToName(u.first) << " " << u.second << endl;
@@ -411,6 +414,7 @@ void Bot::OnStep() {
             cout << "Base minerals " << b.remainingMinerals << endl;
         }
 
+        currentBuildOrderFutureTick = ticks;
         currentBuildOrderFuture = std::async(std::launch::async, [=]{
             // return make_tuple(vector<UNIT_TYPEID>(0), buildOrderStartingState, 0.0f, vector<pair<UNIT_TYPEID,int>>(0));
             // Make sure most buildings are built even though they are currently under construction.
@@ -458,7 +462,9 @@ void Bot::OnStep() {
             cout << "Time " << watch.millis() << endl;
             return make_tuple(buildOrder, buildOrderStartingState, state2.time, bestCounter);
         });
+    }
 
+    if ((ticks % 200) == 1) {
         runMCTS();
     }
 
@@ -489,7 +495,14 @@ void Bot::OnStep() {
 
         int index = 0;
         currentBuildOrderIndex = 0;
+
+        int totalMinerals = Observation()->GetMinerals();
+                
         for (int i = 0; i < currentBuildOrder.size(); i++) {
+            // Everything requires minerals
+            // If we have already reserved all the minerals we have then skip evaluating the rest of the nodes for performance
+            if (totalMinerals <= 0) break;
+
             shared_ptr<TreeNode> node = nullptr;
             Cost cost;
             if (currentBuildOrder[i].isUnitType()) {
@@ -497,12 +510,12 @@ void Bot::OnStep() {
                 // Skip the action if it is likely that we have already done it
                 if (startingUnitsDelta[b] > 0) {
                     startingUnitsDelta[b]--;
+                    currentBuildOrderIndex = i + 1;
                     continue;
                 }
 
-                currentBuildOrderIndex = i;
                 index++;
-                if (index > 10) break;
+                // if (index > 10) break;
 
                 s -= 1;
                 if (isVespeneHarvester(b)) {
@@ -522,11 +535,13 @@ void Bot::OnStep() {
             } else {
                 UpgradeID upgrade = currentBuildOrder[i].upgradeID();
                 auto hasAlready = HasUpgrade(upgrade).Tick();
-                if (hasAlready == Status::Success || hasAlready == Status::Running) continue;
+                if (hasAlready == Status::Success || hasAlready == Status::Running) {
+                    currentBuildOrderIndex = i + 1;
+                    continue;
+                }
 
-                currentBuildOrderIndex = i;
                 index++;
-                if (index > 10) break;
+                // if (index > 10) break;
 
                 s -= 1;
                 node = make_shared<Research>(upgrade, [=](auto) { return s; });
@@ -534,6 +549,8 @@ void Bot::OnStep() {
                 cost = { (int)getUpgradeData(upgrade).mineral_cost, (int)getUpgradeData(upgrade).vespene_cost, 0, UNIT_TYPEID::INVALID };
             }
 
+            totalMinerals -= cost.minerals;
+            
             // If the action failed, ensure that we reserve the cost for it anyway
             if (node->Tick() == Status::Failure) {
                 spendingManager.AddAction(s, cost, []() {}, true);
@@ -549,7 +566,7 @@ void Bot::OnStep() {
     }
 
     spendingManager.OnStep();
-    // DebugBuildOrder(currentBuildOrder, currentBuildOrderTime);
+    DebugBuildOrder(currentBuildOrder, currentBuildOrderTime);
     influenceManager.OnStep();
     // scoutingManager->OnStep();
     // tacticalManager->OnStep();
