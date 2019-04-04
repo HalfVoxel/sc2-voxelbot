@@ -311,7 +311,7 @@ float SimulatorMCTSState::rollout() const {
             assert(res.state.time() >= state.simulator.simulationStartTime);
             float newEndTime = res.state.time() + 3 + 0.2f * (res.state.time() - state.simulator.simulationStartTime);
             if (newEndTime > 10000) {
-                cerr << "Too large time2 " << res.state.time() << " " << res.state.simulator.simulationStartTime << endl;
+                cerr << "Too large time2 " << res.state.time() << " " << res.state.simulator.simulationStartTime << " " << res.state.tick << endl;
                 assert(false);
             }
             res.state.simulate(res.state.simulator, newEndTime);
