@@ -10,7 +10,7 @@ using namespace sc2;
 
 bool GetRandomUnit(const Unit*& unit_out, const ObservationInterface* observation,
                    UnitTypeID unit_type) {
-    Units my_units = observation->GetUnits(Unit::Alliance::Self);
+    auto my_units = bot.ourUnits();
     std::random_shuffle(my_units.begin(), my_units.end());  // Doesn't work, or doesn't work well.
     for (const auto unit : my_units) {
         if (unit->unit_type == unit_type) {
@@ -19,6 +19,25 @@ bool GetRandomUnit(const Unit*& unit_out, const ObservationInterface* observatio
         }
     }
     return false;
+}
+
+ABILITY_ID getWarpGateAbility(ABILITY_ID ability) {
+    switch(ability) {
+        case ABILITY_ID::TRAIN_ADEPT:
+            return ABILITY_ID::TRAINWARP_ADEPT;
+        case ABILITY_ID::TRAIN_DARKTEMPLAR:
+            return ABILITY_ID::TRAINWARP_DARKTEMPLAR;
+        case ABILITY_ID::TRAIN_HIGHTEMPLAR:
+            return ABILITY_ID::TRAINWARP_HIGHTEMPLAR;
+        case ABILITY_ID::TRAIN_SENTRY:
+            return ABILITY_ID::TRAINWARP_SENTRY;
+        case ABILITY_ID::TRAIN_STALKER:
+            return ABILITY_ID::TRAINWARP_STALKER;
+        case ABILITY_ID::TRAIN_ZEALOT:
+            return ABILITY_ID::TRAINWARP_ZEALOT;
+        default:
+            assert(false);
+    }
 }
 
 Status Build::OnTick() {
@@ -59,13 +78,26 @@ Status Build::OnTick() {
             continue;
         }
 
-        if (!IsAbilityReadyExcludingCosts(unit, abilityType)) {
-            continue;
-        }
+        if (unit->unit_type == UNIT_TYPEID::PROTOSS_WARPGATE) {
+            auto warpAbility = getWarpGateAbility(abilityType);
 
-        bot.spendingManager.AddAction(score(unitType), CostOfUnit(unitType), [=]() {
-            bot.Actions()->UnitCommand(unit, abilityType);
-        });
+            if (!IsAbilityReadyExcludingCosts(unit, warpAbility)) {
+                continue;
+            }
+
+            bot.spendingManager.AddAction(score(unitType), CostOfUnit(unitType), [=]() {
+                auto point = bot.buildingPlacement.GetReasonablePlacement(unitType, warpAbility);
+                bot.Actions()->UnitCommand(unit, warpAbility, point);
+            });
+        } else {
+            if (!IsAbilityReadyExcludingCosts(unit, abilityType)) {
+                continue;
+            }
+
+            bot.spendingManager.AddAction(score(unitType), CostOfUnit(unitType), [=]() {
+                bot.Actions()->UnitCommand(unit, abilityType);
+            });
+        }
 
         return Status::Running;
     }
@@ -164,7 +196,32 @@ Status Construct::PlaceBuilding(UnitTypeID unitType, Point2D location, bool isEx
 Status Construct::PlaceBuilding(UnitTypeID unitType, Tag loc) {
     const ObservationInterface* observation = bot.Observation();
 
-    const UnitTypeData& unitTypeData = observation->GetUnitTypeData(false)[unitType];
+    const UnitTypeData& unitTypeData = getUnitData(unitType);
+    auto& units = bot.ourUnits();
+
+    // Check if the tech requirement is available
+    if (unitTypeData.tech_requirement != UNIT_TYPEID::INVALID) {
+        auto req = unitTypeData.tech_requirement;
+        bool hasRequirement = false;
+        for (const auto& unit : units) {
+            if (unit->build_progress < 1) continue;
+
+            if (unit->unit_type == req) {
+                hasRequirement = true;
+                break;
+            }
+            for (auto t : getUnitData(unit->unit_type).tech_alias) {
+                if (t == req) {
+                    hasRequirement = true;
+                    break;
+                }
+            }
+        }
+
+        if (!hasRequirement) {
+            return Status::Failure;
+        }
+    }
 
     auto ability = unitTypeData.ability_id;
     auto builderUnitType = abilityToCasterUnit(unitTypeData.ability_id);
@@ -172,7 +229,6 @@ Status Construct::PlaceBuilding(UnitTypeID unitType, Tag loc) {
     // If a unit already is building a supply structure of this type, do nothing.
     // Also get an scv to build the structure.
     const Unit* builderUnit = nullptr;
-    Units units = observation->GetUnits(Unit::Alliance::Self);
     for (const auto& unit : units) {
         for (const auto& order : unit->orders) {
             if (order.ability_id == ability) {
@@ -221,7 +277,7 @@ Status Construct::OnTick() {
 }
 
 int countUnits(std::function<bool(const Unit*)> predicate) {
-    Units units = bot.Observation()->GetUnits(Unit::Alliance::Self);
+    auto& units = bot.ourUnits();
     return count_if(units.begin(), units.end(), predicate);
 }
 
@@ -243,7 +299,7 @@ Status ShouldBuildSupply::OnTick() {
     int expectedAdditionalSupply = 0;
     const int SUPPLY_DEPOT_SUPPLY = 8;
     const int COMMAND_CENTER_SUPPLY = 1;
-    for (auto unit : bot.Observation()->GetUnits(Unit::Alliance::Self)) {
+    for (auto unit : bot.ourUnits()) {
         for (auto order : unit->orders) {
             if (order.ability_id == ABILITY_ID::BUILD_SUPPLYDEPOT) {
                 expectedAdditionalSupply += SUPPLY_DEPOT_SUPPLY;
@@ -265,7 +321,7 @@ Status ShouldBuildSupply::OnTick() {
 Status ShouldExpand::OnTick() {
     const ObservationInterface* observation = bot.Observation();
     int commsBuilding = 0;
-    for (auto unit : bot.Observation()->GetUnits(Unit::Alliance::Self)) {
+    for (auto unit : bot.ourUnits()) {
         for (auto order : unit->orders) {
             if (order.ability_id == ABILITY_ID::BUILD_COMMANDCENTER) {
                 commsBuilding += 1;
@@ -321,20 +377,27 @@ Status BuildGas::OnTick() {
     if (bases.empty())
         return Failure;
 
-    auto abilityType = observation->GetUnitTypeData(false)[unitType].ability_id;
+    auto abilityType = getUnitData(unitType).ability_id;
 
-    auto baseLocation = bases[0]->pos;
     Units geysers = observation->GetUnits(Unit::Alliance::Neutral, IsVespeneGeyser());
 
     // Only search within this radius
-    float minimumDistance = 15.0f;
+    const float distanceThreshold = 15.0f;
+    float minimumDistance = distanceThreshold;
     Tag closestGeyser = NullTag;
-    for (const auto& geyser : geysers) {
-        float current_distance = Distance2D(baseLocation, geyser->pos);
-        if (current_distance < minimumDistance) {
-            if (bot.Query()->Placement(abilityType, geyser->pos)) {
-                minimumDistance = current_distance;
-                closestGeyser = geyser->tag;
+    for (const auto* base : bases) {
+        auto baseLocation = base->pos;
+        for (const auto& geyser : geysers) {
+            float current_distance = Distance2D(baseLocation, geyser->pos);
+
+            // Discourage building near bases that are not yet finished
+            if (base->build_progress < 1) current_distance = max(current_distance, distanceThreshold - 0.01f);
+
+            if (current_distance < minimumDistance) {
+                if (bot.Query()->Placement(abilityType, geyser->pos)) {
+                    minimumDistance = current_distance;
+                    closestGeyser = geyser->tag;
+                }
             }
         }
     }

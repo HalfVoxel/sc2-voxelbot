@@ -77,11 +77,11 @@ void BuildingPlacement::FindWallPlacements(Point3D startLocation_) {
     }
 }
 
-Point2D BuildingPlacement::GetReasonablePlacement(sc2::UnitTypeID unitType) {
+Point2D BuildingPlacement::GetReasonablePlacement(sc2::UnitTypeID unitType, sc2::ABILITY_ID abilityType) {
     auto observation = bot.Observation();
     auto query = bot.Query();
 
-    auto abilityType = observation->GetUnitTypeData(false)[unitType].ability_id;
+    if (abilityType == sc2::ABILITY_ID::INVALID) abilityType = getUnitData(unitType).ability_id;
 
     auto& queue = locationQueues[unitType];
     for (auto p : queue) {

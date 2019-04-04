@@ -76,7 +76,7 @@ void log () {
     }*/
 }
 
-void DeductionManager::Observe(vector<const Unit*>& units) {
+void DeductionManager::Observe(const vector<const Unit*>& units) {
     const auto& unitTypes = bot.Observation()->GetUnitTypeData();
 
     for (const Unit* unit : units) {

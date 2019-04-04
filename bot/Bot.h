@@ -56,6 +56,24 @@ public:
     };
     std::vector<sc2::Point2D> wallPlacements;
 
+private:
+    std::vector<const sc2::Unit*> mOurUnits;
+    std::vector<const sc2::Unit*> mNeutralUnits;
+    std::vector<const sc2::Unit*> mEnemyUnits;
+public:
+    const std::vector<const sc2::Unit*> ourUnits() const {
+        return mOurUnits;
+    }
+
+    const std::vector<const sc2::Unit*> neutralUnits() const {
+        return mNeutralUnits;
+    }
+
+    const std::vector<const sc2::Unit*> enemyUnits() const {
+        return mEnemyUnits;
+    }
+
+
     SpendingManager spendingManager;
     CameraController cameraController;
     TacticalManager* tacticalManager;

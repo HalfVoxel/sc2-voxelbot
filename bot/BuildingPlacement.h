@@ -13,7 +13,7 @@ class BuildingPlacement {
 public:
 	void OnGameStart();
 	void OnStep();
-	sc2::Point2D GetReasonablePlacement(sc2::UnitTypeID structureType);
+	sc2::Point2D GetReasonablePlacement(sc2::UnitTypeID structureType, sc2::ABILITY_ID abilityType = sc2::ABILITY_ID::INVALID);
     sc2::Point2D wallPlacement;
 };
 

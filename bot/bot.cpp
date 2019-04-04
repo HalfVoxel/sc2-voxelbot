@@ -254,9 +254,13 @@ void runMCTS () {
 }
 
 void Bot::OnStep() {
-    auto ourUnits = agent.Observation()->GetUnits(Unit::Alliance::Self);
-    auto enemyUnits = agent.Observation()->GetUnits(Unit::Alliance::Enemy);
+    mOurUnits = move(agent.Observation()->GetUnits(Unit::Alliance::Self));
+    mNeutralUnits = move(agent.Observation()->GetUnits(Unit::Alliance::Neutral));
+    mEnemyUnits = move(agent.Observation()->GetUnits(Unit::Alliance::Enemy));
+    auto& ourUnits = this->ourUnits();
+    auto& enemyUnits = this->enemyUnits();
     auto abilities = agent.Query()->GetAbilitiesForUnits(ourUnits, false);
+
 
     deductionManager.Observe(enemyUnits);
     ourDeductionManager.Observe(ourUnits);
@@ -264,29 +268,6 @@ void Bot::OnStep() {
     availableAbilities.clear();
     for (int i = 0; i < ourUnits.size(); i++) {
         availableAbilities[ourUnits[i]] = abilities[i];
-    }
-
-    for (int i = 0; i < enemyUnits.size(); i++) {
-        vector<BuffID> buffs = enemyUnits[i]->buffs;
-        for (auto buff : buffs) {
-            if (seenBuffs.find(buff) == seenBuffs.end()) {
-                seenBuffs.insert(buff);
-                cout << "Observed buff: " << BuffIDToName(buff) << endl;
-            }
-        }
-
-        if (enemyUnits[i]->is_burrowed) {
-            cout << "Found out an enemy is burrowed!!!" << endl;
-        }
-    }
-
-    const auto& effectDatas = agent.Observation()->GetEffectData();
-    for (auto& eff : agent.Observation()->GetEffects()) {
-        if (lastEffectID != eff.effect_id) {
-            lastEffectID = eff.effect_id;
-            const EffectData& effectData = effectDatas[eff.effect_id];
-            cout << "Seen effect: " << effectData.friendly_name << endl;
-        }
     }
 
     abilities = agent.Query()->GetAbilitiesForUnits(ourUnits, true);
