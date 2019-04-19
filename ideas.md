@@ -166,3 +166,118 @@ Reinforcement Learning Build Order
 
 RNN
 	Output army composition to RL build order
+
+
+
+
+Policies
+	Overall plan
+		Items[]:
+			Delay
+			Action
+			Mode
+				Direct
+				Avoid enemy
+				Find enemy
+	Reactions:
+		If attacked [small, med, large]
+			Pull [nothing, nearby, 10%, 50%, 100%]
+		If encounter enemy [small, med, large]
+			Pull back/engage
+	
+
+	Modes
+		Find enemy + Avoid engage = Scout
+		Find enemy + Engage = Attack
+		Avoid enemy + Engage = Defend?
+		Avoid enemy + Avoid engage = Flee
+	
+	Genetic algorithm
+		Mutate
+			Whatever
+
+			Try to find defining differences between successes and failures and try to branch on those
+		Cross
+			Given two policies
+			Evaluate over all enemy policies
+			Find observation differences given that policy A was better than policy B
+			Create new policy which is
+				A if [observation feature] otherwise B
+				A if [random] else B
+				A if [random feature] else B
+				A if [time>C] otherwise B
+				Try to split groups in half (50% does policy A, 50% does policy B)
+		
+		Multi objective selection
+			Most damage to enemy
+			Least damage to self
+			Most economic damage
+			Least economic damage to self
+			Etc.
+
+
+	Sample program
+		g1:
+			flying units
+		g2:
+			army units
+		g3:
+			single probe
+
+		p1: Using [g1] [repeatable?]
+			Go to top left corner of map WHILE avoiding enemy
+			Attack enemy base
+		p2: Using [g2]
+			Go to some point (e.g. outside of base)
+		p3: Using [g2]
+			Attack closest enemy
+		p4: Using [g3]
+			Go to base 3
+		p5: Using [g1] [repeatable? false]
+			Go to left corner of map
+		
+		Specificness:
+			0: Army units: 1 bit
+			1: Army + Flying units: 2 bits
+			2: 1 probe: log(N unit types) + log(1) bits
+
+		Default:
+			p1
+			p2
+			p4
+		If enemies attacking [g2]
+			default+
+			p3
+		If enemies attacking [g1]
+			p5
+	
+	Sample program (scout and attack bases)
+		g1:
+			single probe
+		g2:
+			single probe
+		g3:
+			army units
+		
+		p1: using g1
+			Go to base 3
+			Go to base 4
+		p2: using g2
+			Go to base 2
+			Go to base 5
+		p3: using g3
+			Go to base 2
+		p4: using g3
+			Go to closest enemy base
+
+		Default:
+			p1
+			p2
+		If enemy has base at 3
+			p4
+		If enemy has base at 2
+			p3
+		If enemy has base at 4
+			p3
+		If enemy has base at 5
+			p3

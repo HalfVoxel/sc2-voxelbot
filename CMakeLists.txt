@@ -30,7 +30,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO ${PROJECT_BINARY_DIR}/bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${PROJECT_BINARY_DIR}/bin)
 
 # Build with c++14 support.
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 
 # Also compile the Starcraft 2 c++ API
 add_subdirectory("s2client-api")
@@ -48,7 +48,7 @@ add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 #   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=address -fsdfsdfe")
 # endif()
 
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -fsanitize=address -O1 -fno-omit-frame-pointer -DDISABLE_PYTHON=1")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -O1 -fno-omit-frame-pointer -DDISABLE_PYTHON=1")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -DDISABLE_PYTHON=1")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -D_GLIBCXX_DEBUG -fsanitize=address")
 
@@ -117,6 +117,7 @@ create_executable(mcts_cache_unit_tests "" "bot/entrypoints/mcts_cache_unit_test
 create_executable(view_replay "" "bot/entrypoints/view_replay.cpp" "SDL2-static")
 create_executable(experiment_combat "" "bot/entrypoints/experiment_combat.cpp" "SDL2-static")
 create_executable(experiment_buildorder "" "bot/entrypoints/experiment_buildorder.cpp" "SDL2-static")
+create_executable(experiment_buildorder_sim "" "bot/entrypoints/experiment_buildorder_sim.cpp" "SDL2-static")
 
 file (GLOB build_order_train_sources "s2client-api/examples/common/*.h" "bot/*.h" "bot/behaviortree/*.h" "bot/utilities/*.h" "bot/ml/*.h" "bot/generated/*.cpp" "bot/build_order_train/main.cpp")
 # pybind11_add_module(cppbot MODULE ${build_order_train_sources})
@@ -130,6 +131,6 @@ target_link_libraries(testmod PUBLIC pybind11::module sc2api sc2lib sc2utils bot
 # message(STATUS ${OUT})
 
 pybind11_add_module(botlib_bindings MODULE "bot/python_bindings/bindings.cpp")
-target_link_libraries(botlib_bindings PUBLIC pybind11::module sc2api sc2lib sc2utils botlib)
+target_link_libraries(botlib_bindings PUBLIC pybind11::module sc2api sc2lib sc2utils botlib SDL2-static)
 
 include_directories("s2client-api/contrib/SDL-mirror/include")

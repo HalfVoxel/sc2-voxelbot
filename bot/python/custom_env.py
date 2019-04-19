@@ -111,12 +111,16 @@ class CustomEnv(gym.Env):
 
         return self._observation_model(self.internal_state), reward, done, {'r': reward}
 
-    def reset(self):
+    def reset(self, randomState=True):
         """Resets the state of the environment and returns an initial observation.
         Returns: observation (object): the initial observation of the
             space.
         """
         self.internal_state = [0, random.randrange(5), random.randrange(5), random.randrange(5), random.randrange(5)]
+        if not randomState:
+            for i in range(len(self.internal_state)):
+                self.internal_state[i] = 0
+
         self.ticks = 0
         self.did_tick_time = True
         return self._observation_model(self.internal_state)

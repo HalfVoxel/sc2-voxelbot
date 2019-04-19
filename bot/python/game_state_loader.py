@@ -576,7 +576,6 @@ def loadSessionMovement2(observationSession, playerID, loader: BuildOrderLoader,
         playerID=playerID,
     )
 
-
 def loadSessionMovementTarget(session, loader: BuildOrderLoader, store_fn, statistics):
     if not filterSession(session, loader):
         return
@@ -651,6 +650,7 @@ def loadSessionMovementTarget2(observationSession, playerID, loader: BuildOrderL
         player1movementMinimap = torch.tensor(player1movementMinimap).unsqueeze(0)
         unit_type_counts = torch.tensor(unit_type_counts).unsqueeze(0)
         fractionSimilarOrders = torch.tensor(fractionSimilarOrders, dtype=torch.float32).unsqueeze(0)
+        attack_order = torch.tensor(attack_order, dtype=torch.float32).unsqueeze(0)
 
     player1minimap = torch.cat([player1minimap, player1movementMinimap], dim=1)
 
@@ -895,7 +895,7 @@ def unitOrderDestination(unit, rawUnits):
 
 
 def unitDestination(unit, rawUnits):
-    orderDest = unitOrderDestination(unit)
+    orderDest = unitOrderDestination(unit, rawUnits)
     if orderDest is not None:
         return orderDest
 

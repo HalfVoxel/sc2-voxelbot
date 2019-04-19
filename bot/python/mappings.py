@@ -2,6 +2,7 @@ import numpy as np
 from typing import List
 from generated_mappings import terranUnits, zergUnits, protossUnits, Unit
 
+allUnits = terranUnits + zergUnits + protossUnits
 ignoredUnits = {
     1942,  # ParasiticBombRelayDummy
     830,  # TERRAN_KD8CHARGE
@@ -137,5 +138,18 @@ class UnitLookup:
             if u[0] in nonMilitaryUnits:
                 self.movable_units_mask[i] = 1
     
+    def findByName(self, name):
+        for u in self.units:
+            if u.name == name:
+                return u
+        
+        return None
+
+    def __contains__(self, index):
+        return index in self.unit_index_map
+
     def __getitem__(self, index):
         return self.units[self.unit_index_map[index]]
+    
+    def __len__(self):
+        return len(self.units)

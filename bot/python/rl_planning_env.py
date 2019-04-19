@@ -1,21 +1,40 @@
 import numpy as np
 import gym
-import json
-from build_order_loader import BuildOrderLoader, TENSOR_INPUT_SIZE, NUM_UNITS, reverseUnitIndexMap
+import mappings
 import sys
+import os
+import gzip
 sys.path.append("build/bin")
-from cppbot import EnvironmentState
-from build_order_loader import BuildOrderLoader
+import botlib_bindings
+import simulator_visualizer
 
-NUM_ACTIONS = NUM_UNITS
+NUM_ACTIONS = 13
+NUM_MINIMAPS = 5
+MINIMAP_SIZE = 16
+TENSOR_INPUT_SIZE = MINIMAP_SIZE*MINIMAP_SIZE*NUM_MINIMAPS + 5 * 5 + 6 + 35*5*2
 print("Imported??")
 
-class BuildOrderEnv(gym.Env):
+def observeRLPlanningState(internalState):
+    features = internalState.observe()
+    result = np.concatenate([x.flatten() for x in features])
+    assert result.shape == (TENSOR_INPUT_SIZE,), (result.shape, TENSOR_INPUT_SIZE)
+    return result
+
+
+def loadGzip(filepath):
+    with gzip.open(filepath, 'rb') as f:
+        return f.read()
+
+binaryReplaysPath = "training_data/replays/b1"
+binaryReplays = [os.path.join(binaryReplaysPath, x) for x in os.listdir(binaryReplaysPath)]
+env_manager = botlib_bindings.RLEnvManager(simulator_visualizer, loadGzip, binaryReplays)
+
+class RLPlanningEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self):
         
-        super(BuildOrderEnv, self).__init__()
+        super(RLPlanningEnv, self).__init__()
 
         self.action_space = gym.spaces.discrete.Discrete(NUM_ACTIONS)
         # self.observation_space = gym.spaces.multi_discrete.MultiDiscrete([1 for _ in range(ACTIONS)] + [30])
@@ -23,10 +42,12 @@ class BuildOrderEnv(gym.Env):
 
         self.observation_space = gym.spaces.box.Box(low=np.array([0] * TENSOR_INPUT_SIZE), high=np.array([1] * TENSOR_INPUT_SIZE), dtype=np.float32)
 
-        self.internal_state = EnvironmentState()
-        self.loader = BuildOrderLoader(gamma_per_second=0.99)
+        self.internal_state = None
         self.steps = 0
         self.reset()
+    
+    def action_name(self, action):
+        return self.internal_state.actionName(action)
 
     def step(self, action):
         """Run one timestep of the environment's dynamics. When end of
@@ -43,19 +64,13 @@ class BuildOrderEnv(gym.Env):
         """
 
         self.steps += 1
-        t1 = self.loader.createState(json.loads(self.internal_state.getState()))
-        time1 = self.internal_state.getTime()
-        unit_type = reverseUnitIndexMap[action]
-        self.internal_state.step(unit_type)
-        t2 = self.loader.createState(json.loads(self.internal_state.getState()))
-        time2 = self.internal_state.getTime()
-        goal = self.loader.createGoalTensor(json.loads(self.internal_state.getGoal()))
+        reward, done = self.internal_state.step(action)
+        reward /= 100.0
 
-        reward = self.loader.calculate_reward(t1, t2, goal, time2 - time1)
-        observation = self.loader.combineStateAndGoal(t2, goal)
-        done = time2 > 60*6 or self.steps > 60
+        if self.steps > 800:
+            done = True
 
-        return observation, reward, done, {}
+        return observeRLPlanningState(self.internal_state), reward, done, {}
 
     def reset(self, gameStartConfig=False):
         """Resets the state of the environment and returns an initial observation.
@@ -63,16 +78,16 @@ class BuildOrderEnv(gym.Env):
             space.
         """
         if gameStartConfig:
-            self.internal_state.resetToGameStartConfig()
+            assert False
         else:
-            self.internal_state.reset()
+            self.internal_state = env_manager.getEnv()
         
         self.steps = 0
-        state = self.loader.createState(json.loads(self.internal_state.getState()))
-        goal = self.loader.createGoalTensor(json.loads(self.internal_state.getGoal()))
-        observation = self.loader.combineStateAndGoal(state, goal)
-        return observation
+        return observeRLPlanningState(self.internal_state)
 
     def render(self, mode='human', close=False):
         self.internal_state.print()
         return ""
+    
+    def visualization_info(self):
+        return self.internal_state.visualizationInfo()

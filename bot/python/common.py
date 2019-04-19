@@ -116,7 +116,7 @@ def save_git(comment):
         print("Git commit failed")
         exit(1)
 
-    hash = subprocess.check_output(["git", "describe", "--always"]).decode('utf-8').strip()
+    hash = subprocess.check_output(["git", "rev-parse", "--short=6", "HEAD"]).decode('utf-8').strip()
 
     if subprocess.call(["git", "reset", orig_hash]) != 0:
         print("Git reset failed")

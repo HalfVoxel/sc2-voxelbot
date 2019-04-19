@@ -33,7 +33,7 @@ def convert():
             bl.load(load(replays_dir + "/" + replay), dest)
 
 def convert2():
-    replays_dir = "training_data/replays/s3"
+    replays_dir = "training_data/replays/6"
     paths = os.listdir(replays_dir)
     random.shuffle(paths)
     for i, replay in enumerate(paths):
