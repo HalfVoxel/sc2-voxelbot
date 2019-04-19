@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
     coordinator.SetMultithreaded(true);
 
     CompositionAnalyzer bot;
-    agent = bot;
+    agent = &bot;
     coordinator.SetParticipants({ CreateParticipant(Race::Terran, &bot) });
 
     // Start the game.

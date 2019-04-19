@@ -30,7 +30,7 @@ struct CombatState {
 };
 
 struct CombatResult {
-	float time;
+	float time = 0;
 	CombatState state;
 };
 
@@ -45,9 +45,20 @@ struct CombatRecording {
 	void writeCSV(std::string filename);
 };
 
+struct CombatSettings {
+    bool badMicro = false;
+	bool debug = false;
+    bool enableSplash = true;
+    bool enableTimingAdjustment = true;
+    bool enableSurroundLimits = true;
+    bool enableMeleeBlocking = true;
+	bool assumeReasonablePositioning = true;
+};
+
 struct CombatPredictor {
 	void init();
 	CombatResult predict_engage(const CombatState& state, bool debug=false, bool badMicro=false, CombatRecording* recording=nullptr, int defenderPlayer = 1) const;
+	CombatResult predict_engage(const CombatState& state, CombatSettings settings, CombatRecording* recording=nullptr, int defenderPlayer = 1) const;
 	void unitTest(const BuildOptimizerNN& buildTimePredictor) const;
 };
 

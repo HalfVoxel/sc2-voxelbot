@@ -31,7 +31,7 @@ void test() {
     CombatPredictor combatPredictor;
     combatPredictor.init();
 
-    SimulatorContext simulator(&combatPredictor, { Point2D(0,0), Point2D(100, 100) });
+    auto simulator = make_shared<SimulatorContext>(&combatPredictor, vector<Point2D>{ Point2D(0,0), Point2D(100, 100) });
     BuildOrder bo1 = { UNIT_TYPEID::PROTOSS_PROBE, UNIT_TYPEID::PROTOSS_PYLON, UNIT_TYPEID::PROTOSS_PYLON, UNIT_TYPEID::PROTOSS_GATEWAY, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT,
         UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_PYLON,
         UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_PYLON,
@@ -47,12 +47,12 @@ void test() {
         UNIT_TYPEID::PROTOSS_VOIDRAY, UNIT_TYPEID::PROTOSS_VOIDRAY, UNIT_TYPEID::PROTOSS_PYLON,
      };
     SimulatorState state(simulator, {
-        simulator.cache.copyState(BuildState({ { UNIT_TYPEID::PROTOSS_NEXUS, 1 }, { UNIT_TYPEID::PROTOSS_PYLON, 6 }, { UNIT_TYPEID::PROTOSS_PROBE, 12 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 0 }, { UNIT_TYPEID::PROTOSS_STALKER, 2 }, { UNIT_TYPEID::PROTOSS_PHOENIX, 9 }, { UNIT_TYPEID::PROTOSS_IMMORTAL, 4 }})),
-        simulator.cache.copyState(BuildState({ { UNIT_TYPEID::PROTOSS_NEXUS, 2 }, { UNIT_TYPEID::PROTOSS_PYLON, 6 }, { UNIT_TYPEID::PROTOSS_PROBE, 12 }, { UNIT_TYPEID::PROTOSS_CARRIER, 2 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 1+2 }, { UNIT_TYPEID::PROTOSS_COLOSSUS, 2 }, { UNIT_TYPEID::PROTOSS_VOIDRAY, 2 }, { UNIT_TYPEID::PROTOSS_PHOTONCANNON, 6 }, { UNIT_TYPEID::PROTOSS_STARGATE, 1 } })),
+        simulator->cache.copyState(BuildState({ { UNIT_TYPEID::PROTOSS_NEXUS, 1 }, { UNIT_TYPEID::PROTOSS_PYLON, 6 }, { UNIT_TYPEID::PROTOSS_PROBE, 12 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 0 }, { UNIT_TYPEID::PROTOSS_STALKER, 2 }, { UNIT_TYPEID::PROTOSS_PHOENIX, 9 }, { UNIT_TYPEID::PROTOSS_IMMORTAL, 4 }})),
+        simulator->cache.copyState(BuildState({ { UNIT_TYPEID::PROTOSS_NEXUS, 2 }, { UNIT_TYPEID::PROTOSS_PYLON, 6 }, { UNIT_TYPEID::PROTOSS_PROBE, 12 }, { UNIT_TYPEID::PROTOSS_CARRIER, 2 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 1+2 }, { UNIT_TYPEID::PROTOSS_COLOSSUS, 2 }, { UNIT_TYPEID::PROTOSS_VOIDRAY, 2 }, { UNIT_TYPEID::PROTOSS_PHOTONCANNON, 6 }, { UNIT_TYPEID::PROTOSS_STARGATE, 1 } })),
     },
     {
-        BuildOrderState(bo1),
-        BuildOrderState(bo2),
+        BuildOrderState(make_shared<BuildOrder>(bo1)),
+        BuildOrderState(make_shared<BuildOrder>(bo2)),
     });
     // state.states[1]->resources.minerals = 10000;
     // state.states[1]->resources.vespene = 10000;
@@ -178,10 +178,10 @@ void test() {
     SimulatorState state3 = state;
     state3.command(1, nullptr, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(100, 0)));
 
-    state.simulate(simulator, 10);
+    state.simulate(10);
     assert(state.states[0] != state2.states[0]);
-    state2.simulate(simulator, 10);
-    state3.simulate(simulator, 10);
+    state2.simulate(10);
+    state3.simulate(10);
 
     // Literally the same pointer
     assertIdentical(state, state2);
@@ -194,14 +194,14 @@ void test() {
 
     // Should trigger a combat
     cout << "S1" << endl;
-    state.simulate(simulator, 100);
+    state.simulate(100);
     cout << "S2" << endl;
-    state2.simulate(simulator, 100);
+    state2.simulate(100);
     cout << "S3" << endl;
-    state3.simulate(simulator, 50);
+    state3.simulate(50);
     assert(state3.command(1, nullptr, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(100, 100))));
     cout << "S3" << endl;
-    state3.simulate(simulator, 100);
+    state3.simulate(100);
     
 
     assertIdentical(state, state2);

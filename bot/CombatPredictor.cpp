@@ -157,10 +157,10 @@ void CombatRecording::writeCSV(string filename) {
 
 void CombatRecorder::tick() {
     vector<Unit> units;
-    for (auto u : agent.Observation()->GetUnits()) {
+    for (auto u : agent->Observation()->GetUnits()) {
         units.push_back(*u);
     }
-    frames.push_back(make_pair(agent.Observation()->GetGameLoop(), units));
+    frames.push_back(make_pair(agent->Observation()->GetGameLoop(), units));
 }
 
 void CombatRecorder::finalize(string filename) {
@@ -359,6 +359,13 @@ int counter = 0;
 
 // Owner = 1 is the defender, Owner != 1 is an attacker
 CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool debug, bool badMicro, CombatRecording* recording, int defenderPlayer) const {
+    CombatSettings settings;
+    settings.badMicro = badMicro;
+    settings.debug = debug;
+    return predict_engage(inputState, settings, recording, defenderPlayer);
+}
+
+CombatResult CombatPredictor::predict_engage(const CombatState& inputState, CombatSettings settings, CombatRecording* recording, int defenderPlayer) const {
 #if CACHE_COMBAT
     auto h = combatHash(inputState, badMicro, defenderPlayer);
     counter++;
@@ -377,7 +384,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool
         return seen_combats[h];
     }
 #endif
-
+    bool debug = settings.debug;
     // Copy state
     CombatResult result;
     result.state = inputState;
@@ -579,27 +586,29 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool
                     continue;
 
                 bool isUnitMelee = isMelee(unit.type);
-                if (isUnitMelee && numMeleeUnitsUsed >= surround.maxMeleeAttackers)
+                if (isUnitMelee && numMeleeUnitsUsed >= surround.maxMeleeAttackers && settings.enableSurroundLimits)
                     continue;
-
-                if (group + 1 != defenderPlayer) {
-                    // Attacker (move until we are within range of enemy)
-                    float distanceToEnemy = maxRangeDefender;
-                    if (isUnitMelee) {
-                        // Make later melee units take longer to reach the enemy.
-                        distanceToEnemy += maxExtraMeleeDistance * (i / (float)g1.size());
-                    }
-                    float timeToReachEnemy = unitTypeData.movement_speed > 0 ? max(0.0f, distanceToEnemy - attackRange(unit.type)) / unitTypeData.movement_speed : 100000;
-                    if (time < timeToReachEnemy) {
-                        changed = true;
-                        continue;
-                    }
-                } else {
-                    // Defender (stay put until attacker comes within range)
-                    float timeToReachEnemy = fastestAttackerSpeed > 0 ? (maxRangeDefender - attackRange(unit.type)) / fastestAttackerSpeed : 100000;
-                    if (time < timeToReachEnemy) {
-                        changed = true;
-                        continue;
+                
+                if (settings.enableTimingAdjustment) {
+                    if (group + 1 != defenderPlayer) {
+                        // Attacker (move until we are within range of enemy)
+                        float distanceToEnemy = maxRangeDefender;
+                        if (isUnitMelee) {
+                            // Make later melee units take longer to reach the enemy.
+                            distanceToEnemy += maxExtraMeleeDistance * (i / (float)g1.size());
+                        }
+                        float timeToReachEnemy = unitTypeData.movement_speed > 0 ? max(0.0f, distanceToEnemy - attackRange(unit.type)) / unitTypeData.movement_speed : 100000;
+                        if (time < timeToReachEnemy) {
+                            changed = true;
+                            continue;
+                        }
+                    } else {
+                        // Defender (stay put until attacker comes within range)
+                        float timeToReachEnemy = fastestAttackerSpeed > 0 ? (maxRangeDefender - attackRange(unit.type)) / fastestAttackerSpeed : 100000;
+                        if (time < timeToReachEnemy) {
+                            changed = true;
+                            continue;
+                        }
                     }
                 }
 
@@ -624,25 +633,25 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool
 
                         auto dps = max(groundDPS2, airDPS2);
                         float score = dps * targetScore(other, group == 0 ? hasGround1 : hasGround2, group == 0 ? hasAir1 : hasAir2);
-                        if (group == 1 && badMicro)
+                        if (group == 1 && settings.badMicro)
                             score = -score;
 
                         if (isUnitMelee) {
-                            if (meleeUnitAttackCount[j] >= surround.maxAttackersPerDefender) {
+                            if (settings.enableSurroundLimits && meleeUnitAttackCount[j] >= surround.maxAttackersPerDefender) {
                                 // Can't attack this unit, too many melee units are attacking it already
                                 continue;
                             }
 
                             // Assume the enemy has positioned its units in the most annoying way possible
                             // so that we have to attack the ones we really do not want to attack first.
-                            if (!badMicro)
+                            if (!settings.badMicro && settings.assumeReasonablePositioning)
                                 score = -score;
 
                             // Melee units should attack other melee units first, and have no splash against ranged units (assume reasonable micro)
-                            if (isMelee(other.type))
+                            if (settings.enableMeleeBlocking && isMelee(other.type))
                                 score += 1000;
                             // Check for kiting, hard to attack units with a higher movement speed
-                            else if (unitTypeData.movement_speed < 1.05f * otherData.movement_speed)
+                            else if (settings.enableMeleeBlocking && unitTypeData.movement_speed < 1.05f * otherData.movement_speed)
                                 score -= 500;
                         }
 
@@ -705,7 +714,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool
                     // or a non-melee unit does splash damage.
                     // If it is a melee unit, then splash is only applied to other melee units.
                     // TODO: Better rule: units only apply splash to other units that have a shorter range than themselves, or this unit has a higher movement speed than the other one
-                    if (remainingSplash > 0.001f && (!isUnitMelee || isMelee(other.type)) && g2.size() > 0) {
+                    if (settings.enableSplash && remainingSplash > 0.001f && (!isUnitMelee || isMelee(other.type)) && g2.size() > 0) {
                         // Apply remaining splash to other random melee units
                         int offset = rand() % g2.size();
                         for (int j = 0; j < g2.size() && remainingSplash > 0.001f; j++) {
@@ -739,6 +748,8 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool
 
         time += dt;
     }
+
+    result.time = time;
 
     // Remove all temporary units
     assert(state.units.size() == inputState.units.size());
@@ -841,7 +852,8 @@ const vector<UNIT_TYPEID> availableUnitTypesZerg = {
     UNIT_TYPEID::ZERG_ZERGLING,
 };
 
-float mineralScore(const CombatState& initialState, const CombatResult& combatResult, int player, float timeToProduceUnits) {
+float mineralScore(const CombatState& initialState, const CombatResult& combatResult, int player, const vector<float>& timeToProduceUnits) {
+    assert(timeToProduceUnits.size() == 3);
     // The combat result may contain more units due to temporary units spawning (e.g. infested terran, etc.) however never fewer.
     // The first N units correspond to all the N units in the initial state.
     assert(combatResult.state.units.size() >= initialState.units.size());
@@ -877,17 +889,39 @@ float mineralScore(const CombatState& initialState, const CombatResult& combatRe
 
         // Unit is likely temporary, use a small cost
         float cost = 5;
-        if (unit2.owner == player) {
+        if (unit2.owner != player) {
             lossScore += cost * (-100 * (1 - damageTakenFraction));
             enemyScore += cost * (1 + damageTakenFraction);
         }
     }
 
+    // cout << "Extra cost " << -ourScore << " " << (timeToProduceUnits[1] + 1.2f * timeToProduceUnits[1]) << endl;
+    // TODO: Add pylon costs
+    ourScore -= timeToProduceUnits[1] + 1.2f * timeToProduceUnits[2];
+
     // float timeScore = -100 * (pow(timeToProduceUnits/(1*60), 2));
     // float timeMult = 2 * 30/(30 + timeToProduceUnits);
-    float timeMult = min(1.0f, 2 * 30/(30 + timeToProduceUnits));
-    // totalScore = ourScore + enemyScore*timeMult + lossScore;
-    totalScore = -timeToProduceUnits + lossScore;
+    float timeMult = min(1.0f, 2 * 30/(30 + timeToProduceUnits[0]));
+    float timeMult2 = min(1.0f, 2 * 10/(10 + combatResult.time));
+    totalScore = ourScore + enemyScore*timeMult*timeMult2 + lossScore;
+
+    if (combatResult.time > 20) {
+        bool hasAnyGroundUnits = false;
+        for (int i = 0; i < initialState.units.size(); i++) {
+            if (combatResult.state.units[i].owner == player && combatResult.state.units[i].health > 0 && !combatResult.state.units[i].is_flying) {
+                hasAnyGroundUnits = true;
+            }
+        }
+
+        cout << "Estimated time to produce units: " << timeToProduceUnits[0] << " and to beat enemy " << combatResult.time << " " << hasAnyGroundUnits << endl;
+
+        if (!hasAnyGroundUnits) {
+            totalScore -= 1000 * (combatResult.time - 20)/20.0f;
+        }
+    }
+
+    // totalScore += -1000 * max(0.0f, 1 - ourScore/1000.0f);
+    // totalScore = -timeToProduceUnits[0] + lossScore;
 
     // f(a,ta) < f(b,tb) => f(a,ta - x) < f(b, tb - x)
     // g(t-x) > g(t) : x > 0
@@ -921,7 +955,7 @@ CombatUnit makeUnit(int owner, UNIT_TYPEID type) {
 
 void createState(const CombatState& state, float offset = 0) {
     for (auto& u : state.units) {
-        agent.Debug()->DebugCreateUnit(u.type, Point2D(40 + 20 * (u.owner == 1 ? -1 : 1), 20 + offset), u.owner);
+        agent->Debug()->DebugCreateUnit(u.type, Point2D(40 + 20 * (u.owner == 1 ? -1 : 1), 20 + offset), u.owner);
     }
 }
 
@@ -1023,9 +1057,9 @@ void findBestComposition(const CombatPredictor& predictor, const CombatState& st
         CombatResult newResult1 = predictor.predict_engage(newState);
         CombatResult newResult2 = predictor.predict_engage(newState);
         CombatResult newResult3 = predictor.predict_engage(newState);
-        float score1 = mineralScore(newState, newResult1, 2, 0);
-        float score2 = mineralScore(newState, newResult2, 2, 0);
-        float score3 = mineralScore(newState, newResult3, 2, 0);
+        float score1 = mineralScore(newState, newResult1, 2, { 0, 0, 0 });
+        float score2 = mineralScore(newState, newResult2, 2, { 0, 0, 0 });
+        float score3 = mineralScore(newState, newResult3, 2, { 0, 0, 0 });
 
         float newScore = (score1 + score2 + score3) / 3.0f;
         cout << (int)score1 << " " << (int)score2 << " " << (int)score3 << endl;
@@ -1173,7 +1207,7 @@ void scaleUntilWinning(const CombatPredictor& predictor, const CombatState& oppo
     }
 }
 
-float calculateFitness(const CombatPredictor& predictor, const CombatState& opponent, const vector<UNIT_TYPEID>& availableUnitTypes, CompositionGene& gene, float timeToProduceUnits) {
+float calculateFitness(const CombatPredictor& predictor, const CombatState& opponent, const vector<UNIT_TYPEID>& availableUnitTypes, CompositionGene& gene, const vector<float>& timeToProduceUnits) {
     CombatState state = opponent;
     gene.addToState(state, availableUnitTypes, 2);
     return mineralScore(state, predictor.predict_engage(state, false, false), 2, timeToProduceUnits);  // + mineralScore(state, predictor.predict_engage(state, false, true), 2)) * 0.5f;
@@ -1232,7 +1266,7 @@ vector<pair<UNIT_TYPEID,int>> findBestCompositionGenetic(const CombatPredictor& 
             targetUnitsNN[j] = generation[j].getUnitsUntyped(availableUnitTypes);
         }
 
-        vector<float> timesToProduceUnits = startingBuildState != nullptr && buildTimePredictor != nullptr ? buildTimePredictor->predictTimeToBuild(startingUnitsNN, startingBuildState->resources, targetUnitsNN) : vector<float>(generation.size());
+        vector<vector<float>> timesToProduceUnits = startingBuildState != nullptr && buildTimePredictor != nullptr ? buildTimePredictor->predictTimeToBuild(startingUnitsNN, startingBuildState->resources, targetUnitsNN) : vector<vector<float>>(generation.size(), vector<float>(3));
 
         for (int j = 0; j < generation.size(); j++) {
             indices[j] = j;
@@ -1627,7 +1661,7 @@ void CombatPredictor::unitTest(const BuildOptimizerNN& buildTimePredictor) const
             { UNIT_TYPEID::PROTOSS_PROBE, 24 },
             { UNIT_TYPEID::PROTOSS_ASSIMILATOR, 2 },
             { UNIT_TYPEID::PROTOSS_PYLON, 3 },
-            { UNIT_TYPEID::PROTOSS_STARGATE, 2 },
+            // { UNIT_TYPEID::PROTOSS_STARGATE, 2 },
             { UNIT_TYPEID::PROTOSS_GATEWAY, 2 },
             // { UNIT_TYPEID::TERRAN_STARPORT, 1 },
         });
@@ -1656,6 +1690,35 @@ void CombatPredictor::unitTest(const BuildOptimizerNN& buildTimePredictor) const
             makeUnit(1, UNIT_TYPEID::PROTOSS_STALKER),
             makeUnit(1, UNIT_TYPEID::PROTOSS_SENTRY),
             makeUnit(1, UNIT_TYPEID::PROTOSS_SENTRY),
+
+
+
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
 		} };
 
         CombatState otherUnits = { {
@@ -1731,6 +1794,10 @@ void CombatPredictor::unitTest(const BuildOptimizerNN& buildTimePredictor) const
 
 		auto res = findBestCompositionGenetic(*this, availableUnitTypesProtoss, opponentUnits, &buildTimePredictor, &startingBuildState);
 
+        CombatState resState = opponentUnits;
+        for (auto u : res) for (int i = 0; i < u.second; i++) resState.units.push_back(makeUnit(2, u.first));
+        // createState(resState);
+
         cout << "Counter" << endl;
         for (auto u : res) {
             cout << UnitTypeToName(u.first) << " " << u.second << endl;
@@ -1744,7 +1811,7 @@ void CombatPredictor::unitTest(const BuildOptimizerNN& buildTimePredictor) const
         
         CombatResult newResult = predict_engage(otherUnits, false, false, nullptr);
 
-        logRecordings(otherUnits, *this, 20, "alt_recording");
+        logRecordings(resState, *this, 0, "alt_recording");
 
         /*CombatState ourUnits1 = { {
             makeUnit(2, UNIT_TYPEID::PROTOSS_CARRIER),

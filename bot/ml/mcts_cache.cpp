@@ -5,14 +5,14 @@
 using namespace std;
 using namespace sc2;
 
-BuildState* MCTSCache::copyState(const BuildState& state) {
-    auto* newState = new BuildState(state);
+shared_ptr<BuildState> MCTSCache::copyState(const BuildState& state) {
+    auto newState = make_shared<BuildState>(state);
     cachedStates.push_back(newState);
     return newState;
 }
 
 void MCTSCache::applyCombatOutcome(SimulatorState& state, const vector<SimulatorUnitGroup*>& groups, const CombatResult& outcome) {
-    array<BuildState*, 2> newStates = {{ copyState(*state.states[0]), copyState(*state.states[1]) }};
+    array<std::shared_ptr<BuildState>, 2> newStates = {{ copyState(*state.states[0]), copyState(*state.states[1]) }};
     state.states[0] = newStates[0];
     state.states[1] = newStates[1];
 
@@ -45,7 +45,7 @@ int combatTot;
 
 const bool debugMCTSCache = false;
 
-pair<const BuildState*, BuildOrderState> MCTSCache::simulateBuildOrder(const BuildState& state, const BuildOrderState& buildOrder, float endTime, const std::function<void(const BuildEvent&)>* listener) {
+pair<shared_ptr<const BuildState>, BuildOrderState> MCTSCache::simulateBuildOrder(const BuildState& state, const BuildOrderState& buildOrder, float endTime, const std::function<void(const BuildEvent&)>* listener) {
     uint64_t hash = state.immutableHash();
     hash = hash*31 ^ ((int)(endTime*1000));
     hash = hash*31 ^ buildOrder.buildIndex;
@@ -53,7 +53,7 @@ pair<const BuildState*, BuildOrderState> MCTSCache::simulateBuildOrder(const Bui
     // cout << "Simulating " << state.immutableHash() << " to " << endTime << endl;
     simTot++;
     if (simTot % 5000 == 0) {
-        cout << "Stats " << simHits << "/" << simTot << " " << combatHits << "/" << combatTot << endl;
+        // cout << "Stats " << simHits << "/" << simTot << " " << combatHits << "/" << combatTot << endl;
     }
 
     auto ptr = simulationCache.find(hash);
@@ -106,6 +106,7 @@ void MCTSCache::handleCombat(SimulatorState& state, const vector<SimulatorUnitGr
         const CombatResult& outcome = combatIt->second;
 
         auto transitionIt = stateCombatTransitions.find(stateCombatTransitionHash);
+        
         if (transitionIt != stateCombatTransitions.end()) {
             // cout << "Combat transition cached" << endl;
             // Both the combat outcome and the new simulation states are cached
@@ -149,7 +150,7 @@ void MCTSCache::handleCombat(SimulatorState& state, const vector<SimulatorUnitGr
         // TODO: What if the combat drags on longer than to endTime? (probably common in case of harassment, it takes some time for the player to start to defend)
         // Add a max time to predict_engage and stop. Combat will resume next simulation step.
         // Note: have to ensure that combat is resumed properly (without the attacker having to move into range and all that)
-        CombatResult combatResult = state.simulator.combatPredictor->predict_engage(combatState, false, badMicro, nullptr, defender);
+        CombatResult combatResult = state.simulator->combatPredictor->predict_engage(combatState, false, badMicro, nullptr, defender);
         applyCombatOutcome(state, groups, combatResult);
 
         combatResults[combatHasher.hash] = combatResult;

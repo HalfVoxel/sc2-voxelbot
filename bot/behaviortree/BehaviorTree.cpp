@@ -10,7 +10,8 @@ void ControlFlowNode::Add(shared_ptr<TreeNode> node) {
 }
 
 void ControlFlowNode::Remove(std::shared_ptr<TreeNode> node) {
-    children.erase(find(children.begin(), children.end(), node));
+    auto it = find(children.begin(), children.end(), node);
+    if (it != children.end()) children.erase(it);
 }
 
 int depth = 0;

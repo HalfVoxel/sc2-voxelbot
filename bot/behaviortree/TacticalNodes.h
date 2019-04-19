@@ -75,3 +75,16 @@ public:
         }) {
     }
 };
+
+class MCTSGroupBehavior : public BOT::SelectorNode {
+public:
+    MCTSGroupBehavior(BOT::Context* group)
+        : BOT::SelectorNode({
+            new BOT::SequenceNode{
+                new InCombat(group),
+                new GroupAttackMove(group)
+            },
+            new TacticalMove(group)
+        }) {
+    }
+};

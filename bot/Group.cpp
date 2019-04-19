@@ -14,7 +14,7 @@ bool UnitGroup::IsDestroyed() const {
 }
 
 bool UnitGroup::IsFunctional() const {
-    return units.empty();
+    return !units.empty();
 }
 
 void UnitGroup::AddUnit(const sc2::Unit* unit) {
@@ -75,4 +75,9 @@ ScoutGroup::ScoutGroup(const Unit* unit)
 StrikeGroup::StrikeGroup()
     : UnitGroup(GroupType::Strike) {
     behavior = std::make_shared<StrikeGroupBehavior>(this);
+}
+
+MCTSGroup::MCTSGroup()
+    : UnitGroup(GroupType::MCTS) {
+    behavior = std::make_shared<MCTSGroupBehavior>(this);
 }

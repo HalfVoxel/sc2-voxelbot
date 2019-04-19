@@ -56,8 +56,8 @@ struct SimulatorUnitGroup {
 };
 
 struct SimulatorState {
-    SimulatorContext& simulator;
-    std::vector<const BuildState*> states;
+    std::shared_ptr<SimulatorContext> simulator;
+    std::vector<std::shared_ptr<const BuildState>> states;
     std::vector<SimulatorUnitGroup> groups;
     std::vector<BuildOrderState> buildOrders;
     int tick = 0;
@@ -66,12 +66,12 @@ struct SimulatorState {
         return states[0]->time;
     }
 
-    SimulatorState (SimulatorContext& simulator, std::vector<const BuildState*> states, std::vector<BuildOrderState> buildOrders) : simulator(simulator), states(states), buildOrders(buildOrders) {
+    SimulatorState (std::shared_ptr<SimulatorContext> simulator, std::vector<std::shared_ptr<const BuildState>> states, std::vector<BuildOrderState> buildOrders) : simulator(simulator), states(states), buildOrders(buildOrders) {
         assert(states.size() == 2);
         assert(buildOrders.size() == 2);
     }
 
-    void simulate (SimulatorContext& simulator, float endTime);
+    void simulate (float endTime);
 
     std::vector<SimulatorUnitGroup*> select(int player, std::function<bool(const SimulatorUnitGroup&)>* groupFilter, std::function<bool(const SimulatorUnit&)>* unitFilter);
     bool command(int player, std::function<bool(const SimulatorUnitGroup&)>* groupFilter, std::function<bool(const SimulatorUnit&)>* unitFilter, SimulatorOrder order);
@@ -85,9 +85,9 @@ struct SimulatorState {
     void addUnit(int owner, sc2::UNIT_TYPEID unit_type);
     void replaceUnit(int owner, sc2::UNIT_TYPEID unit_type, sc2::UNIT_TYPEID replacement);
     void assertValidState();
+    void mergeGroups ();
 private:
-    void simulateGroupMovement(SimulatorContext& simulator, float endTime);
-    void simulateGroupCombat(SimulatorContext& simulator, float endTime);
-    void simulateBuildOrder (SimulatorContext& simulator, float endTime);
-    void mergeGroups (SimulatorContext& simulator);
+    void simulateGroupMovement(float endTime);
+    void simulateGroupCombat(float endTime);
+    void simulateBuildOrder (float endTime);
 };

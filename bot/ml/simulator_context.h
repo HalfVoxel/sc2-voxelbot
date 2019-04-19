@@ -3,6 +3,7 @@
 #include "mcts_cache.h"
 #include "sc2lib/sc2_lib.h"
 
+#include<functional>
 #include <vector>
 
 struct SimulatorContext {

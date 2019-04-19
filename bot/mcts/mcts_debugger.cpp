@@ -16,9 +16,21 @@ using namespace sc2;
 MCTSDebugger::MCTSDebugger() {
     lock_guard<mutex> lock(python_thread_mutex);
 #if !DISABLE_PYTHON
+    pybind11::exec(R"(
+        import sys
+        if "bot/python" not in sys.path:
+            sys.path.append("bot/python")
+    )");
     auto simulatorVisualizer = pybind11::module::import("simulator_visualizer");
     visualize_fn = simulatorVisualizer.attr("visualize");
     visualize_bar_fn = simulatorVisualizer.attr("visualize_bar");
+#endif
+}
+
+MCTSDebugger::MCTSDebugger(pybind11::object simulatorVisualizerModule) {
+#if !DISABLE_PYTHON
+    visualize_fn = simulatorVisualizerModule.attr("visualize");
+    visualize_bar_fn = simulatorVisualizerModule.attr("visualize_bar");
 #endif
 }
 

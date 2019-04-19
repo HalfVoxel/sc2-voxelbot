@@ -44,6 +44,7 @@ ObserverSession collectState(const ObservationInterface* obs) {
 
 
 void MLMovement::OnGameStart() {
+    return;
 	pybind11::module modMovement = pybind11::module::import("predictor_movement");
     pybind11::module modMovementTarget = pybind11::module::import("predictor_movement_target");
 	stepper = modMovement.attr("Stepper")();
@@ -153,8 +154,8 @@ void MLMovement::Tick(const ObservationInterface* observation) {
                     Point2D coord = Point2D(targetCoord[0], targetCoord[1]);
 
                     for (auto* u : sampledUnits) {
-                        bot.Actions()->UnitCommand(u, isAttackOrder ? ABILITY_ID::ATTACK : ABILITY_ID::MOVE, coord);
-                        bot.Debug()->DebugLineOut(u->pos, Point3D(coord.x, coord.y, u->pos.z));
+                        agent->Actions()->UnitCommand(u, isAttackOrder ? ABILITY_ID::ATTACK : ABILITY_ID::MOVE, coord);
+                        agent->Debug()->DebugLineOut(u->pos, Point3D(coord.x, coord.y, u->pos.z));
                     }
                 }
             }
@@ -162,7 +163,7 @@ void MLMovement::Tick(const ObservationInterface* observation) {
     }
 
     for (int i = 0; i < lastMovedUnits.size(); i++) {
-        bot.Debug()->DebugSphereOut(lastMovedUnits[i]->pos, min(lastMoveProbs[i], 0.5f) * 3, lastMoveProbs[i] > 0.5 ? Colors::Yellow : (lastMoveProbs[i] > 0.2 ? Colors::Red : Colors::Blue));
+        agent->Debug()->DebugSphereOut(lastMovedUnits[i]->pos, min(lastMoveProbs[i], 0.5f) * 3, lastMoveProbs[i] > 0.5 ? Colors::Yellow : (lastMoveProbs[i] > 0.2 ? Colors::Red : Colors::Blue));
     }
 
     for (const Unit*& u : ourUnits) {
@@ -170,7 +171,7 @@ void MLMovement::Tick(const ObservationInterface* observation) {
             if (u->orders.size() > 0) {
                 auto& order = u->orders[0];
                 if (Point2D(0.0f, 0.0f) != order.target_pos) {
-                    bot.Debug()->DebugLineOut(u->pos, Point3D(order.target_pos.x, order.target_pos.y, u->pos.z), Colors::Red);
+                    agent->Debug()->DebugLineOut(u->pos, Point3D(order.target_pos.x, order.target_pos.y, u->pos.z), Colors::Red);
                 }
 
                 if (u->orders.size() > 1) {

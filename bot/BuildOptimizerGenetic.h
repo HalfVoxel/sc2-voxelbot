@@ -230,11 +230,11 @@ struct BaseInfo {
 };
 
 struct BuildOrderState {
-    const BuildOrder& buildOrder;
+    std::shared_ptr<const BuildOrder> buildOrder;
     int buildIndex = 0;
     sc2::UNIT_TYPEID lastChronoUnit = sc2::UNIT_TYPEID::INVALID;
 
-    BuildOrderState (const BuildOrder& buildOrder) : buildOrder(buildOrder) {}
+    BuildOrderState (std::shared_ptr<const BuildOrder> buildOrder) : buildOrder(buildOrder) {}
 };
 
 const float NexusEnergyPerSecond = 1;
@@ -285,9 +285,15 @@ public:
 
     BuildState() {}
     BuildState(std::vector<std::pair<sc2::UNIT_TYPEID, int>> unitCounts) {
-        for (auto u : unitCounts)
+        for (auto u : unitCounts) {
             addUnits(u.first, u.second);
+            if (u.first == sc2::UNIT_TYPEID::PROTOSS_NEXUS) {
+                // Add a nexus with some dummy energy
+                for (int i = 0; i < u.second; i++) chronoInfo.addNexusWithEnergy(time, 25);
+            }
+        }
     }
+
     BuildState(const sc2::ObservationInterface* observation, sc2::Unit::Alliance alliance, sc2::Race race, BuildResources resources, float time);
 
     uint64_t hash() const {
@@ -400,6 +406,7 @@ struct BuildOptimizerParams {
     float mutationRateAddRemove = 0.05f;
     float mutationRateMove = 0.025f;
     float varianceBias = 0;
+    bool allowChronoBoost = true;
 };
 
 struct AvailableUnitTypes {
@@ -450,6 +457,11 @@ struct AvailableUnitTypes {
             return type2index[(int)unit];
         }
         return -1;
+    }
+
+    // Note: does not work for upgrades
+    bool contains (sc2::UNIT_TYPEID unit) const {
+        return getIndexMaybe(unit) != -1;
     }
 
     sc2::UNIT_TYPEID getUnitType(int index) const {

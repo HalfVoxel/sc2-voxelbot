@@ -15,7 +15,7 @@
 #include "build_optimizer_nn.h"
 #include "CombatPredictor.h"
 #include "ml/ml_movement.h"
-
+#include "behaviortree/StrategicNodes.h"
 extern int ticks;
 
 bool IsAbilityReady (const sc2::Unit* unit, sc2::ABILITY_ID ability);
@@ -60,6 +60,9 @@ private:
     std::vector<const sc2::Unit*> mOurUnits;
     std::vector<const sc2::Unit*> mNeutralUnits;
     std::vector<const sc2::Unit*> mEnemyUnits;
+    
+    // Includes historic ones or ones that are currently hidden (e.g. in refineries)
+    std::set<const sc2::Unit*> mAllOurUnits;
 public:
     const std::vector<const sc2::Unit*> ourUnits() const {
         return mOurUnits;
@@ -73,7 +76,18 @@ public:
         return mEnemyUnits;
     }
 
+    void refreshUnits() {
+        mOurUnits = Observation()->GetUnits(sc2::Unit::Alliance::Self);
+        mNeutralUnits = Observation()->GetUnits(sc2::Unit::Alliance::Neutral);
+        mEnemyUnits = Observation()->GetUnits(sc2::Unit::Alliance::Enemy);
+        for (auto* u : mOurUnits) mAllOurUnits.insert(u);
+    }
+    void refreshAbilities();
 
+    void clearFields();
+
+    std::vector<ConstructionPreparationMovement> constructionPreparation;
+    
     SpendingManager spendingManager;
     CameraController cameraController;
     TacticalManager* tacticalManager;
@@ -101,11 +115,11 @@ public:
     sc2::Point2D GetMapCoordinate(int i);
     int ManhattanDistance(sc2::Point2D p1, sc2::Point2D p2);
     void OnGameLoading();
-    void OnGameStart() override final;
+    void OnGameStart() override;
 
-    void OnStep() override final;
+    void OnStep() override;
 
-    void OnGameEnd() override final;
+    void OnGameEnd() override;
 
     void OnUnitDestroyed(const sc2::Unit* unit) override final;
 
@@ -118,7 +132,7 @@ public:
     void OnUnitEnterVision(const sc2::Unit* unit) override final;
 
     sc2::Point2D* Rotate(sc2::Point2D p, float degrees);
-private:
+protected:
     std::unique_ptr<TreeNode> tree;
 
     std::shared_ptr<ControlFlowNode> armyTree;
@@ -127,5 +141,5 @@ private:
 
 };  // namespace BOT
 
-extern BOT::Bot bot;
-extern sc2::Agent& agent;
+extern BOT::Bot* bot;
+extern sc2::Agent* agent;

@@ -6,9 +6,11 @@
 #include "bot_examples.h"
 #include "sc2api/sc2_api.h"
 #include "sc2utils/sc2_manage_process.h"
+#include "../utilities/ladder_interface.h"
 
 using namespace sc2;
 using namespace BOT;
+using namespace std;
 
 
 const char* BelShirVestigeLE = "Ladder/(2)Bel'ShirVestigeLE (Void).SC2Map";
@@ -19,13 +21,7 @@ const char* EastwatchLE = "Ladder/EastwatchLE.SC2Map";
 const char* NeonVioletSquareLE = "Ladder/NeonVioletSquareLE.SC2Map";
 const char* ParaSiteLE = "Ladder/ParaSiteLE.SC2Map";
 
-int main(int argc, char* argv[]) { /*
-    std::cout << argc << " " << (std::string(argv[1]) == "--composition") << std::endl;
-    if (argc >= 2 && std::string(argv[1]) == "--composition") {
-        RunCompositionAnalyzer(argc-1, argv);
-        return 0;
-    }*/
-
+int main(int argc, char* argv[]) {
 #if !DISABLE_PYTHON
     pybind11::scoped_interpreter guard{};
     pybind11::exec(R"(
@@ -35,6 +31,19 @@ int main(int argc, char* argv[]) { /*
         os.environ["MPLBACKEND"] = "TkAgg"
     )");
 #endif
+
+    bot = new Bot();
+    agent = bot;
+
+    RunBot(argc, argv, agent, Race::Protoss);
+    return 0;
+
+    /*
+    std::cout << argc << " " << (std::string(argv[1]) == "--composition") << std::endl;
+    if (argc >= 2 && std::string(argv[1]) == "--composition") {
+        RunCompositionAnalyzer(argc-1, argv);
+        return 0;
+    }*/
 
     Coordinator coordinator;
     if (!coordinator.LoadSettings(argc, argv)) {
@@ -48,8 +57,9 @@ int main(int argc, char* argv[]) { /*
     coordinator.SetMultithreaded(true);
 
     coordinator.SetParticipants({
-        CreateParticipant(Race::Protoss, &bot),
-        CreateComputer(Race::Protoss, Difficulty::HardVeryHard),
+        CreateParticipant(Race::Protoss, bot),
+        // CreateComputer(Race::Protoss, Difficulty::HardVeryHard),
+        CreateComputer(Race::Protoss, Difficulty::VeryHard),
     });
 
     // Start the game.
@@ -59,7 +69,7 @@ int main(int argc, char* argv[]) { /*
     bool do_break = false;
 
     for (; !do_break;) {
-        bot.OnGameLoading();
+        bot->OnGameLoading();
         coordinator.StartGame(ParaSiteLE);
 
         while (coordinator.Update() && !do_break) {

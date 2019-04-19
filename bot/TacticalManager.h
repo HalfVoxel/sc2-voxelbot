@@ -39,4 +39,7 @@ public:
 
     TacticalManager(std::shared_ptr<BOT::ControlFlowNode> armyTree, sc2::Point2D wallPlacement);
     void OnStep();
+    void TransferUnits(std::vector<const sc2::Unit*> units, UnitGroup* group);
+
+    void CleanGroups();
 };

@@ -11,19 +11,19 @@ InfluenceMap distanceCache;
 
 void InfluenceManager::Init() {
     // 1 at traversable cells, 0 at walls
-    pathing_grid = InfluenceMap(bot.game_info_.pathing_grid);
+    pathing_grid = InfluenceMap(bot->game_info_.pathing_grid);
 
     // Remove the original command center/nexus/hatchery from the pathfinding map
     // (it is marked as blocked at the start of the game, we don't want that)
     vector<vector<double>> square5x5 = { { 0, 1, 1, 1, 0 }, { 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1 }, { 1, 1, 1, 1, 1 }, { 0, 1, 1, 1, 0 } };
-    pathing_grid.addInfluence(square5x5, bot.startLocation_ - Point2D(0.5, 0.5));
-    for (auto p : bot.game_info_.enemy_start_locations) {
+    pathing_grid.addInfluence(square5x5, bot->startLocation_ - Point2D(0.5, 0.5));
+    for (auto p : bot->game_info_.enemy_start_locations) {
         pathing_grid.addInfluence(square5x5, p - Point2D(0.5, 0.5));
     }
 
     pathing_cost = (pathing_grid - 1).replace_nonzero(numeric_limits<double>::infinity()) + 1;
 
-    placement_grid = InfluenceMap(bot.game_info_.placement_grid);
+    placement_grid = InfluenceMap(bot->game_info_.placement_grid);
     enemyDensity = InfluenceMap(pathing_grid.w, pathing_grid.h);
     valueMap = InfluenceMap(pathing_grid.w, pathing_grid.h);
     safeBuildingMap = InfluenceMap(pathing_grid.w, pathing_grid.h);
@@ -42,7 +42,7 @@ void InfluenceManager::OnStep() {
     if ((ticks % InfluenceFrameInterval) == 0) {
         double scoutingUncertainty = 0.005;
         double spread = 5;
-        auto observation = bot.Observation();
+        auto observation = bot->Observation();
         for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
             if (IsStructure(observation)(*unit)) {
                 valueMap.addInfluence(1.0 / spread, unit->pos);
@@ -55,23 +55,33 @@ void InfluenceManager::OnStep() {
         // Normalize
         valueMap *= 1.0 / (0.0001 + valueMap.maxFinite());
 
-        for (auto unit : observation->GetUnits(Unit::Alliance::Enemy)) {
-            if (IsStructure(observation)(*unit)) {
+        /*for (auto unit : bot->enemyUnits()) {
+            if (isStructure(unit->unit_type)) {
                 enemyDensity.addInfluence(1, unit->pos);
                 scoutingMap.addInfluence(scoutingUncertainty, unit->pos);
-            } else if (IsArmy(observation)(*unit)) {
+            } else if (isArmy(unit->unit_type)) {
                 enemyDensity.addInfluence(0.8, unit->pos);
             } else {
                 enemyDensity.addInfluence(0.2, unit->pos);
             }
+        }*/
+        for (auto unit : bot->deductionManager.SampleUnitPositions(1)) {
+            if (isStructure(unit.first.type)) {
+                enemyDensity.addInfluence(1, unit.second);
+                scoutingMap.addInfluence(scoutingUncertainty, unit.second);
+            } else if (isArmy(unit.first.type)) {
+                enemyDensity.addInfluence(0.8, unit.second);
+            } else {
+                enemyDensity.addInfluence(0.2, unit.second);
+            }
         }
 
-        for (auto p : bot.game_info_.enemy_start_locations) {
+        for (auto p : bot->game_info_.enemy_start_locations) {
             // enemyDensity.addInfluence(1, p);
             scoutingMap.addInfluence(scoutingUncertainty * 1.5, p);
         }
 
-        for (auto p : bot.expansions_) {
+        for (auto p : bot->expansions_) {
             scoutingMap.addInfluence(scoutingUncertainty, p);
         }
 
@@ -109,14 +119,37 @@ void InfluenceManager::OnStep() {
             // Find the best spot to defend
             // TODO: Send different squads to different positions
             auto best = defensivePotential.argmax();
-            if (bot.tacticalManager != nullptr) bot.tacticalManager->preferredArmyPosition = Point2D(best.x, best.y);
+            if (bot->tacticalManager != nullptr) bot->tacticalManager->preferredArmyPosition = Point2D(best.x, best.y);
 
             // Make it good to build buildings as far away from the enemy as possible
             // preferably behind other buildings and defences.
+            // Also avoid including infinities
+            // safeBuildingMap = distances.replace(numeric_limits<double>::infinity(), 1000);
             safeBuildingMap = distances;
 
             defensivePotential *= 1.0 / defensivePotential.max();
-            defensivePotential.renderNormalized(1, 2);
+
+            auto g = placement_grid;
+            g.threshold(1);
+            auto g2 = (g * -1) + 1;
+            g.propagateMax(0.0, 1.0, g2);
+            g.propagateMax(0.0, 1.0, g2);
+            g.propagateMax(0.0, 1.0, g2);
+
+            // Invert
+            g.max(valueMap);
+            g.render(1, 2);
+
+            g *= -1;
+            g += 1;
+
+            safeBuildingMap *= g;
+
+            // Normalize
+            safeBuildingMap *= 1.0 / safeBuildingMap.maxFinite();
+            safeBuildingMap = safeBuildingMap.replace_nan(numeric_limits<double>::infinity());
+            
+            // defensivePotential.renderNormalized(1, 2);
         }
 
         // Render all maps for debugging
@@ -124,11 +157,13 @@ void InfluenceManager::OnStep() {
         auto d2 = distanceCache;
         d2 *= 1.0 / d2.maxFinite();
         d2.renderNormalized(0, 0);
-        enemyDensity.render(0, 1);
-        valueMap.renderNormalized(0, 2);
-        scoutingMap.render(1, 0);
+        // enemyDensity.render(0, 1);
+        // valueMap.renderNormalized(0, 2);
+        // scoutingMap.render(1, 0);
         // flood.render(1, 1);
-        scanningMap.render(1, 1);
+        // scanningMap.render(1, 1);
+        placement_grid.render(0, 1);
+        safeBuildingMap.renderNormalized(0, 2);
 
         Render();
     }

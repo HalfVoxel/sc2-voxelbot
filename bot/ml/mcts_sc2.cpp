@@ -238,12 +238,12 @@ bool SimulatorMCTSState::internalStep(int action, bool ignoreUnintentionalNOOP) 
     t5 += w1.millis();
 
     // state.simulate(state.simulator, state.time() + max(5.0f, 0.2f * state.time()));
-    assert(state.time() >= state.simulator.simulationStartTime);
-    if ((state.time() + 3 + 0.2f * (state.time() - state.simulator.simulationStartTime)) > 10000) {
-        cerr << "Too large time " << state.time() << " " << state.simulator.simulationStartTime << endl;
-        assert(false);
+    assert(state.time() >= state.simulator->simulationStartTime);
+    if ((state.time() + 3 + 0.2f * (state.time() - state.simulator->simulationStartTime)) > 10000) {
+        // cerr << "Too large time " << state.time() << " " << state.simulator.simulationStartTime << endl;
+        // assert(false);
     }
-    state.simulate(state.simulator, state.time() + 3 + 0.2f * (state.time() - state.simulator.simulationStartTime));
+    state.simulate(state.time() + 3 + 0.2f * (state.time() - state.simulator->simulationStartTime));
 
     player = 1 - player;
     // if (action == 0) state += 100;
@@ -308,13 +308,13 @@ float SimulatorMCTSState::rollout() const {
         if (i == 3) {
             res.internalStep((rand() % 9));
         } else {
-            assert(res.state.time() >= state.simulator.simulationStartTime);
-            float newEndTime = res.state.time() + 3 + 0.2f * (res.state.time() - state.simulator.simulationStartTime);
+            assert(res.state.time() >= state.simulator->simulationStartTime);
+            float newEndTime = res.state.time() + 3 + 0.2f * (res.state.time() - state.simulator->simulationStartTime);
             if (newEndTime > 10000) {
-                cerr << "Too large time2 " << res.state.time() << " " << res.state.simulator.simulationStartTime << " " << res.state.tick << endl;
-                assert(false);
+                // cerr << "Too large time2 " << res.state.time() << " " << res.state.simulator.simulationStartTime << " " << res.state.tick << endl;
+                // assert(false);
             }
-            res.state.simulate(res.state.simulator, newEndTime);
+            res.state.simulate(newEndTime);
         }
     }
     w3.stop();
@@ -327,7 +327,7 @@ float SimulatorMCTSState::rollout() const {
 
     counter++;
     if ((counter % 10000) == 0) {
-        cout << "Rollout stats " << t1 << " " << t2 << " " << t3 << " " << t4 << " " << t5 << endl;
+        // cout << "Rollout stats " << t1 << " " << t2 << " " << t3 << " " << t4 << " " << t5 << endl;
     }
     // cout << "Simulated to " << res.state.time() << endl;
     // float frac = healthFraction(res.state, 1);
@@ -341,9 +341,10 @@ string SimulatorMCTSState::to_string() const {
     return ss.str();
 }
 
-unique_ptr<MCTSState<int, SimulatorMCTSState>> findBestActions(SimulatorState& startState) {
-    unique_ptr<MCTSState<int, SimulatorMCTSState>> state = make_unique<MCTSState<int, SimulatorMCTSState>>(SimulatorMCTSState(startState));
-    startState.simulator.simulationStartTime = startState.time();
+unique_ptr<MCTSState<int, SimulatorMCTSState>> findBestActions(SimulatorState& startState, int startingPlayerIndex) {
+    assert(startingPlayerIndex == 0 || startingPlayerIndex == 1);
+    unique_ptr<MCTSState<int, SimulatorMCTSState>> state = make_unique<MCTSState<int, SimulatorMCTSState>>(SimulatorMCTSState(startState, startingPlayerIndex));
+    startState.simulator->simulationStartTime = startState.time();
 
     for (int i = 0; i < 45000; i++) {
         mcts<int, SimulatorMCTSState>(*state);
@@ -359,6 +360,6 @@ unique_ptr<MCTSState<int, SimulatorMCTSState>> findBestActions(SimulatorState& s
         }
         depth++;
     }
-    cout << "SEARCH DEPTH " << depth << endl;
+    // cout << "SEARCH DEPTH " << depth << endl;
     return state;
 }

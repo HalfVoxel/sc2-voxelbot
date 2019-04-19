@@ -11,6 +11,7 @@
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
 #include "../utilities/profiler.h"
+#include "../ml/rl_planning_env.h"
 
 using namespace std;
 using namespace sc2;
@@ -76,17 +77,6 @@ ReplaySession load_replay2(string jsonData, pybind11::object output) {
     return session;
 }
 
-ReplaySession load_binary(string filepath) {
-    ReplaySession session;
-    {
-        ifstream json3(filepath);
-        cereal::BinaryInputArchive archive3(json3);
-        session.serialize(archive3);
-        json3.close();
-    }
-    return session;
-}
-
 ReplaySession load_binary2(std::string f) {
     Stopwatch w;
     ReplaySession session;
@@ -108,7 +98,7 @@ PYBIND11_MODULE(botlib_bindings, m) {
     pybind11::bind_vector<vector<Unit>>(m, "VectorUnit");
 
     m.def("load", &load_replay2);
-    m.def("load_binary", &load_binary2);
+    // m.def("load_binary", &loadReplayBinary);
 
     pybind11::class_<Example>(m, "Example")
         .def(pybind11::init())
@@ -248,5 +238,18 @@ PYBIND11_MODULE(botlib_bindings, m) {
         .def_readwrite("lowYieldMineralSlots", &SerializedState::lowYieldMineralSlots)
         .def_readwrite("version", &SerializedState::version)
         .def_readwrite("upgrades", &SerializedState::upgrades)
+    ;
+
+    pybind11::class_<RLPlanningEnv>(m, "RLPlanningEnv")
+        .def("step", &RLPlanningEnv::step)
+        .def("observe", &RLPlanningEnv::observe, pybind11::return_value_policy::move)
+        .def("print", &RLPlanningEnv::print)
+        .def("actionName", &RLPlanningEnv::actionName)
+        .def("visualizationInfo", &RLPlanningEnv::visualizationInfo)
+    ;
+
+    pybind11::class_<RLEnvManager>(m, "RLEnvManager")
+        .def(pybind11::init<pybind11::object, pybind11::object, vector<string>>())
+        .def("getEnv", &RLEnvManager::getEnv)
     ;
 }

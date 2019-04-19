@@ -9,6 +9,7 @@ struct InfluenceManager {
 	InfluenceMap valueMap;
 	InfluenceMap scoutingMap;
 	InfluenceMap scanningMap;
+	InfluenceMap safeBuildingMap;
 
 	void Init();
 	void OnStep();

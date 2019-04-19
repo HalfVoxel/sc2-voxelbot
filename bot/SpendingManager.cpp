@@ -22,7 +22,7 @@ vector<pair<UNIT_TYPEID, double>> unitComposition = {
 };
 
 double SCVScore(UNIT_TYPEID unitType) {
-    auto units = bot.Observation()->GetUnits(Unit::Alliance::Self);
+    auto units = bot->Observation()->GetUnits(Unit::Alliance::Self);
     int ideal = 0;
     int assigned = 0;
     for (auto unit : units) {
@@ -50,7 +50,7 @@ double SpendingManager::GetUnitProportion(UNIT_TYPEID unitType) {
 }
 
 double DefaultScore(UNIT_TYPEID unitType) {
-    auto units = bot.Observation()->GetUnits(Unit::Alliance::Self);
+    auto units = bot->Observation()->GetUnits(Unit::Alliance::Self);
 
     double matching = 0;
     double total = 0;
@@ -86,7 +86,7 @@ double DefaultScore(UNIT_TYPEID unitType) {
 }
 
 Cost CostOfUpgrade(UpgradeID upgrade) {
-    auto& data = bot.Observation()->GetUpgradeData()[upgrade];
+    auto& data = bot->Observation()->GetUpgradeData()[upgrade];
     Cost result = {
         (int)data.mineral_cost,
         (int)data.vespene_cost,
@@ -98,7 +98,7 @@ Cost CostOfUpgrade(UpgradeID upgrade) {
 }
 
 Cost CostOfUnit(UnitTypeID unit) {
-    auto& unitData = bot.Observation()->GetUnitTypeData()[unit];
+    auto& unitData = bot->Observation()->GetUnitTypeData()[unit];
 
     Cost result = {
         unitData.mineral_cost,
@@ -122,13 +122,15 @@ bool HasTechFor(UnitTypeID unitType) {
         return true;
     }
 
-    auto unitData = bot.Observation()->GetUnitTypeData();
+    auto unitData = bot->Observation()->GetUnitTypeData();
     auto required = unitData[unitType].tech_requirement;
     if (required == UNIT_TYPEID::INVALID) {
         return true;
     }
 
-    for (auto unit : bot.Observation()->GetUnits(Unit::Alliance::Self)) {
+    for (auto unit : bot->Observation()->GetUnits(Unit::Alliance::Self)) {
+        if (unit->build_progress < 1) continue;
+
         if (unit->unit_type == required || simplifyUnitType(unit->unit_type) == required) {
             return true;
         }
@@ -143,36 +145,62 @@ bool HasTechFor(UnitTypeID unitType) {
 }
 
 void SpendingManager::AddAction(double score, Cost cost, std::function<void()> action, bool reserveResourcesOnly) {
-    actions.push_back(make_tuple(score, cost, action, reserveResourcesOnly));
+    SpendingItem item;
+    item.score = score;
+    item.cost = cost;
+    item.action = action;
+    item.preparationTime = -1;
+    item.preparationAction = nullptr;
+    item.reserveResourcesOnly = reserveResourcesOnly;
+    actions.push_back(item);
+}
+
+void SpendingManager::AddAction(double score, Cost cost, std::function<void()> action, float preparationTime, std::function<void()> preparationCallback) {
+    SpendingItem item;
+    item.score = score;
+    item.cost = cost;
+    item.action = action;
+    item.preparationTime = preparationTime;
+    item.preparationAction = preparationCallback;
+    item.reserveResourcesOnly = false;
+    actions.push_back(item);
 }
 
 vector<string> latestActions;
 
-void SpendingManager::OnStep() {
+void SpendingManager::OnStep(const BuildState& buildState) {
+    // Some actions take two frames to show up in the actual game (e.g. produce unit orders do not show up until after 2 frames)
+    // so make sure we never execute actions more often than once every 2 frames
+    if (agent->Observation()->GetGameLoop() - lastActionFrame < 2) {
+        actions.clear();
+        return;
+    }
+
     sort(actions.begin(), actions.end(), [](const auto& a, const auto& b) -> bool {
-        return get<0>(b) < get<0>(a);
+        return b.score < a.score;
     });
 
-    auto observation = bot.Observation();
+    auto observation = bot->Observation();
     int totalMinerals = observation->GetMinerals();
     int totalGas = observation->GetVespene();
     int supply = observation->GetFoodCap() - observation->GetFoodUsed();
 
     stringstream ss;
 
-    for (auto action : actions) {
-        double score;
-        Cost cost;
-        function<void()> callback;
-        bool reserveResourcesOnly;
-        tie(score, cost, callback, reserveResourcesOnly) = action;
+    for (auto item : actions) {
+        double score = item.score;
+        Cost cost = item.cost;
+        function<void()> callback = item.action;
+        bool reserveResourcesOnly = item.reserveResourcesOnly;
 
         // ss << setw(4) << setprecision(2) << score << setw(22) << getUnitData(cost.unit_type).name << " min: " << setw(3) << cost.minerals << " gas: " << setw(3) << cost.gas << " food: " << cost.supply;
         ss << setw(4) << setprecision(2) << score << setw(22) << getUnitData(cost.unit_type).name;
         // Ignore any actions for which we don't have the required tech for yet
-        if (!HasTechFor(cost.unit_type)) {
+
+        bool hasTech = HasTechFor(cost.unit_type);
+        if (!hasTech) {
             ss << " (no tech)" << endl;
-            continue;
+            // continue;
         }
 
         totalMinerals -= cost.minerals;
@@ -186,7 +214,7 @@ void SpendingManager::OnStep() {
 
         ss << endl;
 
-        if ((cost.minerals == 0 || totalMinerals >= 0) && (cost.gas == 0 || totalGas >= 0) && (cost.supply == 0 || supply >= 0)) {
+        if ((cost.minerals == 0 || totalMinerals >= 0) && (cost.gas == 0 || totalGas >= 0) && (cost.supply == 0 || supply >= 0) && hasTech) {
             stringstream ss2;
             ss2 << setw(4) << setprecision(2) << score << setw(22) << getUnitData(cost.unit_type).name << " min: " << setw(3) << cost.minerals << " gas: " << setw(3) << cost.gas << " food: " << cost.supply;
             latestActions.push_back(ss2.str());
@@ -195,11 +223,25 @@ void SpendingManager::OnStep() {
 
             // Ok, we can use this ability
             callback();
+            lastActionFrame = agent->Observation()->GetGameLoop();
 
             // Only process a single action per tick.
             // Technically it would work without a break, but then some bad things *may* happen, like a single SCV being assigned
             // two different build orders in the same turn, and that could lead to weird and hard to debug issues.
             break;
+        }
+
+        if (item.preparationAction != nullptr) {
+            BuildState state = buildState;
+            state.resources.minerals = totalMinerals + cost.minerals;
+            state.resources.vespene = totalGas + cost.gas;
+            // Note: no buildings require supply, and currently prep is only done for buildings. So we don't have to care that the supply might be inaccurate
+            if (state.simulateBuildOrder({ item.cost.unit_type }, nullptr, false)) {
+                if (buildState.time + item.preparationTime > state.time) {
+                    // We estimate that we will be able to build this item soon
+                    item.preparationAction();
+                }
+            }
         }
 
         // Note that it falls through here to the next action
@@ -210,11 +252,11 @@ void SpendingManager::OnStep() {
         // down the priority list.
     }
 
-    bot.Debug()->DebugTextOut(ss.str(), bot.startLocation_);
+    bot->Debug()->DebugTextOut(ss.str(), bot->startLocation_);
     stringstream ss3;
     for (int i = latestActions.size() - 1; i >= 0; i--) {
         ss3 << latestActions[i] << endl;
     }
-    bot.Debug()->DebugTextOut(ss3.str(), bot.startLocation_ + Point3D(10, 0, 0), Colors::Green);
+    bot->Debug()->DebugTextOut(ss3.str(), bot->startLocation_ + Point3D(10, 0, 0), Colors::Green);
     actions.clear();
 }

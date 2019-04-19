@@ -24,6 +24,9 @@ enum class MCTSAction {
     IdleNonArmyAttackClosestEnemy,
     NonArmyAttackClosestEnemy,
     NonArmyMoveBase,
+
+    // Not an action, just a size indicator
+    Count
 };
 
 inline std::string MCTSActionName(MCTSAction action) {
@@ -66,13 +69,14 @@ extern std::function<bool(const SimulatorUnit&)> notArmyUnit;
 extern std::function<bool(const SimulatorUnit&)> structureUnit;
 
 float healthFraction(const SimulatorState& state, int owner);
+sc2::Point2D averagePos(std::vector<SimulatorUnitGroup*> groups);
 
 struct SimulatorMCTSState {
-    int player = 0;
     SimulatorState state;
+    int player = 0;
     int count = 0;
 
-    SimulatorMCTSState (SimulatorState state) : state(state) {}
+    SimulatorMCTSState (SimulatorState state, int player = 0) : state(state), player(player) {}
 
     std::pair<SimulatorMCTSState, bool> step(int action);
 
@@ -86,4 +90,4 @@ struct SimulatorMCTSState {
     std::string to_string() const;
 };
 
-std::unique_ptr<MCTSState<int, SimulatorMCTSState>> findBestActions(SimulatorState& startState);
+std::unique_ptr<MCTSState<int, SimulatorMCTSState>> findBestActions(SimulatorState& startState, int startingPlayerIndex);

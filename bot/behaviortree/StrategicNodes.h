@@ -3,14 +3,27 @@
 #include "sc2api/sc2_api.h"
 #include <functional>
 #include "../utilities/mappings.h"
-#include "../Bot.h"
+
+struct ConstructionPreparationMovement {
+    const sc2::Unit* worker;
+    sc2::ABILITY_ID target;
+    sc2::Point2D constructionSpot;
+
+    // Max age is approximately 10 seconds
+    int tickStarted;
+
+    ConstructionPreparationMovement(const sc2::Unit* worker, sc2::ABILITY_ID target, sc2::Point2D constructionSpot);
+    bool isValid();
+};
+
 
 class Build : public BOT::ActionNode {
 	sc2::UnitTypeID unitType;
 	std::function<double(sc2::UNIT_TYPEID)> score;
+    bool tryToUseChronoBoost = false;
 
 public:
-	Build(sc2::UnitTypeID unit, std::function<double(sc2::UNIT_TYPEID)> score) : unitType(unit), score(score) {}
+	Build(sc2::UnitTypeID unit, std::function<double(sc2::UNIT_TYPEID)> score, bool tryToUseChronoBoost = false) : unitType(unit), score(score), tryToUseChronoBoost(tryToUseChronoBoost) {}
 	BOT::Status OnTick() override;
 };
 
@@ -82,7 +95,7 @@ public:
     BOT::Status MineIdleWorkers(const sc2::Unit* worker, sc2::AbilityID worker_gather_command, sc2::UnitTypeID vespene_building_type);
     BOT::Status ManageWorkers(sc2::UNIT_TYPEID worker_type, sc2::AbilityID worker_gather_command, sc2::UNIT_TYPEID vespene_building_type);
     AssignHarvesters(sc2::UnitTypeID workerUnitType,   sc2::AbilityID abilityType,  sc2::UNIT_TYPEID gasBuildingType) : workerUnitType(workerUnitType), abilityType(abilityType), gasBuildingType(gasBuildingType) {}
-    const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
+    const sc2::Unit* FindNearestMineralPatch(sc2::Point2D start, sc2::Point2D workerPosition);
 };
 
 class Addon: public BOT::ActionNode{

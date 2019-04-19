@@ -199,13 +199,51 @@ vector<UNIT_TYPEID> unitTypesProtossAll = {
     UNIT_TYPEID::PROTOSS_ZEALOT,
 };
 
+vector<pair<UNIT_TYPEID, int>> sampleTargetUnitConfig (default_random_engine& rnd) {
+    // auto& pool = guaranteeFood ? unitTypesTerran2 : unitTypesTerran3;
+    auto& pool = unitTypesProtossMilitary;
+    Race race = Race::Protoss;
+
+    exponential_distribution<float> numUnitsDist;
+    if (bernoulli_distribution(0.2)(rnd)) {
+        numUnitsDist = exponential_distribution<float>(1.0/1);
+    } else if (bernoulli_distribution(0.05)(rnd)) {
+        numUnitsDist = exponential_distribution<float>(1.0/10.0);
+    } else {
+        numUnitsDist = exponential_distribution<float>(1.0/5.0);
+    }
+    int numUnits = min((int)round(numUnitsDist(rnd)+1), (int)pool.size());
+    // if (!guaranteeFood) numUnits = numUnits;
+    vector<pair<UNIT_TYPEID, int>> result;
+    for (int i = 0; i < numUnits; i++) {
+        uniform_int_distribution<int> typeDist(0, pool.size()-1);
+        UNIT_TYPEID type = pool[typeDist(rnd)];
+        exponential_distribution<double> countDist;
+
+        if (bernoulli_distribution(0.05)(rnd)) {
+            countDist = exponential_distribution<double>(1.0/20.0);
+        } else {
+            countDist = exponential_distribution<double>(1.0/2.0);
+        }
+
+        int cnt = (int)round(countDist(rnd));
+        if (cnt > 0) {
+            result.push_back(make_pair(type, min(100, cnt)));
+        }
+    }
+
+    return result;
+}
+
 vector<pair<UNIT_TYPEID, int>> sampleUnitConfig (default_random_engine& rnd, bool guaranteeFood) {
     // auto& pool = guaranteeFood ? unitTypesTerran2 : unitTypesTerran3;
     auto& pool = guaranteeFood ? unitTypesProtossAll : unitTypesProtossMilitary;
     Race race = Race::Protoss;
 
     exponential_distribution<float> numUnitsDist;
-    if (bernoulli_distribution(0.05)(rnd)) {
+    if (bernoulli_distribution(0.1)(rnd) && !guaranteeFood) {
+        numUnitsDist = exponential_distribution<float>(1.0/1);
+    } else if (bernoulli_distribution(0.05)(rnd)) {
         numUnitsDist = exponential_distribution<float>(1.0/10.0);
     } else {
         numUnitsDist = exponential_distribution<float>(1.0/8.0);
@@ -215,6 +253,7 @@ vector<pair<UNIT_TYPEID, int>> sampleUnitConfig (default_random_engine& rnd, boo
     vector<pair<UNIT_TYPEID, int>> result;
     bool hasSCV = false;
     bool hasCMD = false;
+    bool hasGas = false;
     for (int i = 0; i < numUnits; i++) {
         uniform_int_distribution<int> typeDist(0, pool.size()-1);
         UNIT_TYPEID type = pool[typeDist(rnd)];
@@ -237,19 +276,27 @@ vector<pair<UNIT_TYPEID, int>> sampleUnitConfig (default_random_engine& rnd, boo
         }
 
         int cnt = (int)round(countDist(rnd));
+
+        // Avoid states with very few harvesters as that is not likely in actual games
+        if (isBasicHarvester(type) && bernoulli_distribution(0.9)(rnd)) {
+            cnt = cnt + 10;
+        }
+
         if (cnt > 0) {
             result.push_back(make_pair(type, min(100, cnt)));
 
             hasCMD |= isTownHall(type);
             hasSCV |= isBasicHarvester(type);
+            hasGas |= isVespeneHarvester(type);
         }
     }
 
     if (guaranteeFood) {
-        exponential_distribution<float> numSCVDist(1.0/15.0);
-        if (!hasSCV) result.push_back({ getHarvesterUnitForRace(race), 1+(int)round(numSCVDist(rnd))});
+        exponential_distribution<float> numSCVDist(1.0/40.0);
+        if (!hasSCV) result.push_back({ getHarvesterUnitForRace(race), 5+(int)round(numSCVDist(rnd))});
         exponential_distribution<float> numCMDDist(1.0/1.0);
         if (!hasCMD) result.push_back({ getTownHallForRace(race), 1 + (int)round(numCMDDist(rnd))});
+        if (!hasGas && bernoulli_distribution(0.5)(rnd)) result.push_back({ getVespeneHarvesterForRace(race), 1 + (int)round(exponential_distribution<double>(1.0/1.0)(rnd)) });
     }
 
     if (guaranteeFood) {
@@ -440,9 +487,17 @@ int main() {
         BuildOrderInstance inst;
         inst.race = Race::Protoss;
         auto startingUnits = sampleUnitConfig(rnd, true);
-        auto targetUnits = sampleUnitConfig(rnd, false);
-        for (auto p : targetUnits) inst.targetUnits.push_back({ p.first, p.second });
-        for (auto p : startingUnits) inst.startingUnits.push_back({ p.first, p.second });
+        auto targetUnits = sampleTargetUnitConfig(rnd);
+        auto targetUnitState = targetUnits;
+        for (auto p : targetUnits) {
+            inst.targetUnits.push_back({ p.first, p.second });
+        }
+        for (auto p : startingUnits) {
+            inst.startingUnits.push_back({ p.first, p.second });
+            // Starting units are added on top of the target units.
+            // The target units are always "what units do we want *in addition* to the ones we already have"
+            targetUnitState.push_back({ p.first, p.second });
+        }
         inst.startingMinerals = mineralDist(rnd);
         inst.startingVespene = vespeneDist(rnd);
 
@@ -450,19 +505,30 @@ int main() {
         startState.resources.minerals = inst.startingMinerals;
         startState.resources.minerals = inst.startingVespene;
         startState.race = inst.race;
+        for (auto u : startingUnits) {
+            if (u.first == UNIT_TYPEID::PROTOSS_WARPGATE && u.second > 0) startState.hasWarpgateResearch = true;
+        }
 
         inst.buildOrderTime = 1000000000;
-        inst.version = 5;
-        
-        for (int k = 0; k < 4; k++) {
-            auto buildOrder = findBestBuildOrderGenetic(startState, targetUnits);
+        inst.version = 6;
+        cout << endl << endl;
+        for (int k = 0; k < 3; k++) {
+            auto buildOrder = findBestBuildOrderGenetic(startState, targetUnitState);
             auto state2 = startState;
             state2.simulateBuildOrder(buildOrder);
+            cout << state2.time << endl;
             if (state2.time < inst.buildOrderTime) {
-                inst.buildOrder = buildOrder;
+                inst.buildOrder.clear();
+                for (auto item : buildOrder.items) {
+                    if (item.isUnitType()) inst.buildOrder.push_back(item.typeID());
+                }
                 inst.buildOrderTime = state2.time;
             }
         }
+
+        // for (auto u : inst.startingUnits) cout << "Has " << getUnitData(u.type).name << " " << u.count << endl;
+        // for (auto u : inst.targetUnits) cout << "Wants " << getUnitData(u.type).name << " " << u.count << endl;
+        // for (auto u : inst.buildOrder) cout << "Order " << getUnitData(u).name << endl;
 
         // vector<pair<int,int>> startingUnitsList;
         // vector<vector<pair<int,int>>> targetUnitsList(25);
@@ -484,7 +550,7 @@ int main() {
 
         if (session.instances.size() > 20) {
             stringstream ss;
-            ss << "training_data/buildorders_time/1/chunk_" << rand() << ".json";
+            ss << "training_data/buildorders_time/3/chunk_" << rand() << ".json";
             ofstream json(ss.str());
             {
                 cereal::JSONOutputArchive archive(json);

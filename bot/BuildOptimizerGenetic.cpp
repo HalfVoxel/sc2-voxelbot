@@ -13,6 +13,7 @@
 
 using namespace std;
 using namespace sc2;
+using namespace pybind11::literals;
 
 const BuildOrderFitness BuildOrderFitness::ReallyBad = { 100000, BuildResources(0,0), { 0, 0 }, { 0, 0 } };
 
@@ -114,13 +115,25 @@ BuildState::BuildState(const ObservationInterface* observation, Unit::Alliance a
                     // Assume the probe will be free in a few seconds
                     addEvent(BuildEvent(BuildEventType::MakeUnitAvailable, time + min(remainingTime, 4.0f), event.caster, sc2::ABILITY_ID::INVALID));
                 }
-                addEvent(event);
+                if (event.ability == ABILITY_ID::MORPH_WARPGATE) {
+                    // Warpgate transition is a bit weird. The unit will have the warpgate type from right when it starts, in contrast to most other cases where the unit changes type as it completes.
+                    // (I think?, maybe this needs to be investigated?)
+                    // Just make the unit busy instead otherwise the simulator will crash when it cannot find a gateway to remove when the ability is finished
+                    addEvent(BuildEvent(BuildEventType::MakeUnitAvailable, event.time, event.caster, sc2::ABILITY_ID::INVALID));
+                } else {
+                    addEvent(event);
+                }
             }
 
             // Only process the first order (this bot should never have more than one anyway)
             break;
         }
     }
+
+    auto hasUpgrade = HasUpgrade(sc2::UPGRADE_ID::WARPGATERESEARCH).Tick();
+    // Note: slightly incorrect. Assumes warpgate research is already done when it may actually be in progress.
+    // But since the proper event for upgrades is not added above, this is better than nothing.
+    hasWarpgateResearch = hasUpgrade == BOT::Status::Running || BOT::Status::Success;
 
     vector<Point2D> basePositions;
     for (auto u : ourUnits) {
@@ -153,9 +166,12 @@ void BuildState::transitionToWarpgates (const function<void(const BuildEvent&)>*
         if (u.type == UNIT_TYPEID::PROTOSS_GATEWAY && u.busyUnits < u.units) {
             int delta = u.units - u.busyUnits;
             u.units -= delta;
+            assert(u.units >= 0);
             addUnits(UNIT_TYPEID::PROTOSS_WARPGATE, delta);
             makeUnitsBusy(UNIT_TYPEID::PROTOSS_WARPGATE, UNIT_TYPEID::INVALID, delta);
-            addEvent(BuildEvent(BuildEventType::MakeUnitAvailable, time + WarpGateTransitionTime, UNIT_TYPEID::PROTOSS_WARPGATE, ABILITY_ID::MORPH_WARPGATE));
+            for (int i = 0; i < delta; i++) {
+                addEvent(BuildEvent(BuildEventType::MakeUnitAvailable, time + WarpGateTransitionTime, UNIT_TYPEID::PROTOSS_WARPGATE, ABILITY_ID::MORPH_WARPGATE));
+            }
 
             // Note: event not actually used in the simulator, only used for the callback
             if (eventCallback != nullptr) {
@@ -241,7 +257,14 @@ void BuildState::killUnits(UNIT_TYPEID type, UNIT_TYPEID addon, int count) {
                     // Usually they are occupied with some event, but in some cases they are just marked as busy.
                     // For example workers for a few seconds at the start of the game to simulate a delay.
                     u.busyUnits--;
-                    cerr << "Forcefully removed busy unit " << UnitTypeToName(u.type) << " " << u.units << " " << u.busyUnits << endl;
+                    cerr << "Forcefully removed busy unit " << UnitTypeToName(u.type) << " " << u.units << " " << u.busyUnits << " " << count << endl;
+                    for (auto u : units) {
+                        cerr << "Unit " << UnitTypeToName(u.type) << " " << u.units << "(-" << u.busyUnits << ")" << endl;
+                    }
+                    cerr << "Event count: " << events.size() << endl;
+                    for (auto e : events) {
+                        cerr << "Event " << e.time << " " << e.type << " " << UnitTypeToName(e.caster) << endl;
+                    }
                     assert(false);
                 }
             }
@@ -444,7 +467,7 @@ void BuildState::simulate(float endTime, const function<void(const BuildEvent&)>
 }
 
 bool BuildState::simulateBuildOrder(const BuildOrder& buildOrder, const function<void(int)> callback, bool waitUntilItemsFinished) {
-    BuildOrderState state(buildOrder);
+    BuildOrderState state(make_shared<BuildOrder>(buildOrder));
     return simulateBuildOrder(state, callback, waitUntilItemsFinished);
 }
 
@@ -474,8 +497,8 @@ bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, const function<
     float lastEventInBuildOrder = 0;
 
     // Loop through the build order
-    for (; buildOrder.buildIndex < buildOrder.buildOrder.size(); buildOrder.buildIndex++) {
-        auto item = buildOrder.buildOrder[buildOrder.buildIndex];
+    for (; buildOrder.buildIndex < buildOrder.buildOrder->size(); buildOrder.buildIndex++) {
+        auto item = (*buildOrder.buildOrder)[buildOrder.buildIndex];
         if (item.chronoBoosted) buildOrder.lastChronoUnit = item.rawType();
 
         while (true) {
@@ -505,7 +528,7 @@ bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, const function<
                         cout << "Requires " << UnitTypeToName(unitData.tech_requirement) << endl;
                         cout << foodAvailable() << " " << unitData.food_required << endl;
                         cout << UnitTypeToName(unitType) << endl;
-                        printBuildOrder(buildOrder.buildOrder);
+                        printBuildOrder(*buildOrder.buildOrder);
                         cout << "Current unit counts:" << endl;
                         for (auto u : units) {
                             cout << UnitTypeToName(u.type) << " " << UnitTypeToName(u.addon) << " " << u.units << endl;
@@ -578,7 +601,10 @@ bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, const function<
             simulate(eventTime, eventCallback);
 
             // Make sure that some unit can cast this ability
-            assert(abilityToCasterUnit(ability).size() > 0);
+            if (abilityToCasterUnit(ability).size() == 0) {
+                cerr << "No known caster of the ability " << AbilityTypeToName(ability) << " for unit " << UnitTypeToName(item.rawType()) << endl;
+                assert(false);
+            }
 
             // Find an appropriate caster for this ability
             BuildUnitInfo* casterUnit = nullptr;
@@ -611,7 +637,7 @@ bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, const function<
                 if (events.empty()) {
                     // cout << "No possible caster " << UnitTypeToName(unitType) << endl;
                     return false;
-                    printBuildOrder(buildOrder.buildOrder);
+                    printBuildOrder(*buildOrder.buildOrder);
                     for (auto& casterCandidate : units) {
                         cout << "Caster: " << UnitTypeToName(casterCandidate.type) << " " << casterCandidate.units << "/" << casterCandidate.availableUnits() << " " << UnitTypeToName(casterCandidate.addon) << endl;
                     }
@@ -790,6 +816,8 @@ void BuildEvent::apply(BuildState& state) const {
             if (ability == ABILITY_ID::RESEARCH_WARPGATE) {
                 state.hasWarpgateResearch = true;
             }
+            // Make the caster unit available again
+            state.makeUnitsBusy(caster, casterAddon, -1);
             break;
         }
         case SpawnLarva: {
@@ -1057,7 +1085,7 @@ struct BuildOrderGene {
      * 
      * The action requirements is a list as long as availableUnitTypes that specifies for each unit type how many that the build order should train/build.
      */
-    void mutateAddRemove(float amount, default_random_engine& seed, const vector<int>& actionRequirements, const vector<int>& addableUnits, const AvailableUnitTypes& availableUnitTypes) {
+    void mutateAddRemove(float amount, default_random_engine& seed, const vector<int>& actionRequirements, const vector<int>& addableUnits, const AvailableUnitTypes& availableUnitTypes, bool allowChronoBoost) {
         vector<int> remainingRequirements = actionRequirements;
         for (int i = 0; i < buildOrder.size(); i++) {
             remainingRequirements[buildOrder[i].type]--;
@@ -1085,9 +1113,13 @@ struct BuildOrderGene {
                 buildOrder.insert(buildOrder.begin() + i, GeneUnitType(addableUnits[dist(seed)]));
             }
 
-            if (shouldChrono(seed) && availableUnitTypes.canBeChronoBoosted(buildOrder[i].type)) {
-                buildOrder[i].chronoBoosted = true;
-            } else if (buildOrder[i].chronoBoosted && shouldRemoveChrono(seed)) {
+            if (allowChronoBoost) {
+                if (shouldChrono(seed) && availableUnitTypes.canBeChronoBoosted(buildOrder[i].type)) {
+                    buildOrder[i].chronoBoosted = true;
+                } else if (buildOrder[i].chronoBoosted && shouldRemoveChrono(seed)) {
+                    buildOrder[i].chronoBoosted = false;
+                }
+            } else {
                 buildOrder[i].chronoBoosted = false;
             }
         }
@@ -1173,6 +1205,7 @@ struct BuildOrderGene {
     }
 };
 
+int miningSpeedFutureColor = 0;
 void printMiningSpeedFuture(const BuildState& startState);
 
 void printBuildOrderDetailed(const BuildState& startState, const BuildOrder& buildOrder, const vector<bool>* highlight) {
@@ -1206,7 +1239,7 @@ void printBuildOrderDetailed(const BuildState& startState, const BuildOrder& bui
     cout << (success ? "Finished at " : "Failed at ");
     cout << (int)(state.time / 60.0f) << ":" << (int)(fmod(state.time, 60.0f)) << " resources: " << state.resources.minerals << "+" << state.resources.vespene << " mining speed: " << (int)round(state.miningSpeed().mineralsPerSecond*60) << "/min + " << (int)round(state.miningSpeed().vespenePerSecond*60) << "/min" << endl;
 
-    printMiningSpeedFuture(state);
+    if (success) printMiningSpeedFuture(state);
 }
 
 void printBuildOrder(const vector<UNIT_TYPEID>& buildOrder) {
@@ -1291,19 +1324,52 @@ void printMiningSpeedFuture(const BuildState& startState) {
     vector<float> minerals;
     vector<float> vespene;
     while(state.time < et) {
+        minerals.push_back(2 * (state.miningSpeed().mineralsPerSecond + state.miningSpeed().vespenePerSecond - startState.miningSpeed().mineralsPerSecond - startState.miningSpeed().vespenePerSecond) + startState.miningSpeed().mineralsPerSecond + startState.miningSpeed().vespenePerSecond);
+        times.push_back(state.time);
         if (state.foodAvailableInFuture() <= 2) {
             if (!state.simulateBuildOrder({ UNIT_TYPEID::PROTOSS_PYLON }, nullptr, false)) break;
         } else {
             if (!state.simulateBuildOrder({ UNIT_TYPEID::PROTOSS_PROBE }, nullptr, false)) break;
         }
         // cout << "[" << state.time << ", " << state.miningSpeed().mineralsPerSecond << " " << state.miningSpeed().vespenePerSecond << "]," << endl;
-        times.push_back(state.time);
-        minerals.push_back(state.miningSpeed().mineralsPerSecond);
         vespene.push_back(state.miningSpeed().vespenePerSecond);
+        // break;
     }
 
-    pybind11::module::import("matplotlib.pyplot").attr("plot")(times, minerals);
-    pybind11::module::import("matplotlib.pyplot").attr("plot")(times, vespene);
+    vector<string> colors = {
+        "#E50021",
+        "#E30032",
+        "#E20043",
+        "#E10053",
+        "#DF0063",
+        "#DE0073",
+        "#DD0083",
+        "#DB0093",
+        "#DA00A2",
+        "#D900B1",
+        "#D700C0",
+        "#D600CF",
+        "#CC00D5",
+        "#BB00D3",
+        "#AA00D2",
+        "#9900D1",
+        "#8900D0",
+        "#7800CE",
+        "#6800CD",
+        "#5900CC",
+        "#4900CA",
+        "#3900C9",
+        "#2A00C8",
+        "#1B00C6",
+        "#0C00C5",
+        "#0002C4",
+        "#0010C2",
+        "#001EC1",
+        "#002DC0",
+        "#003ABF",
+    };
+    pybind11::module::import("matplotlib.pyplot").attr("plot")(times, minerals, "color"_a=colors[miningSpeedFutureColor % colors.size()]);
+    // pybind11::module::import("matplotlib.pyplot").attr("scatter")(times, vespene);
 }
 
 /** Try really hard to do optimize the gene.
@@ -1866,7 +1932,8 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
                 fitness[j] = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, generation[j]);
             }
 
-            sortByValueDescending<int, BuildOrderFitness>(indices, [=](int index) { return fitness[index]; });
+            sortByValueDescending<int, float>(indices, [=](int index) { return -fitness[index].time; });
+            sortByValueDescendingBubble<int, BuildOrderFitness>(indices, [=](int index) { return fitness[index]; });
             // Add the N best performing genes
             for (int j = 0; j < min(5, params.genePoolSize); j++) {
                 nextGeneration.push_back(generation[indices[j]]);
@@ -1935,7 +2002,7 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
         bernoulli_distribution moveMutation(0.5);
         for (int i = 1; i < nextGeneration.size(); i++) {
             nextGeneration[i].mutateMove(params.mutationRateMove, actionRequirements, rnd);
-            nextGeneration[i].mutateAddRemove(params.mutationRateAddRemove, rnd, actionRequirements, economicUnits, availableUnitTypes);
+            nextGeneration[i].mutateAddRemove(params.mutationRateAddRemove, rnd, actionRequirements, economicUnits, availableUnitTypes, params.allowChronoBoost);
         }
 
         swap(generation, nextGeneration);
@@ -1952,6 +2019,33 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
     
     generation[0] = locallyOptimizeGene(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, actionRequirements, generation[0]);
 
+    if (false) {
+        auto indices = vector<int>(generation.size());
+        auto fitness = vector<BuildOrderFitness>(generation.size());
+        for (int j = 0; j < generation.size(); j++) {
+            indices[j] = j;
+            fitness[j] = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, generation[j]);
+        }
+
+        sortByValueDescending<int, float>(indices, [=](int index) { return -fitness[index].time; });
+        for (auto index : indices) {
+            cout << index << " " << fitness[index].time << endl;
+        }
+        cout << endl;
+        sortByValueDescendingBubble<int, BuildOrderFitness>(indices, [=](int index) { return fitness[index]; });
+        for (auto index : indices) {
+            cout << index << " " << fitness[index].time << endl;
+        }
+        
+        miningSpeedFutureColor = 0;
+        assert(indices[0] == 0);
+        for (auto index : indices) {
+            auto bo = generation[index].constructBuildOrder(startState.race, startState.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes);
+            printBuildOrderDetailed(startState, bo);
+            miningSpeedFutureColor++;
+        }
+        pybind11::module::import("matplotlib.pyplot").attr("show")();
+    }
     // cout << "Best fitness " << calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, generation[0]) << endl;
     // printBuildOrder(generation[0].constructBuildOrder(startState.foodAvailable(), startingUnitCounts, availableUnitTypes));
     // printBuildOrderDetailed(startState, generation[0].constructBuildOrder(startState.race, startState.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes));
@@ -2176,7 +2270,7 @@ void unitTestBuildOptimizer() {
     // assert(BuildState({{ UNIT_TYPEID::ZERG_HATCHERY, 1 }, { UNIT_TYPEID::ZERG_DRONE, 12 }}).simulateBuildOrder({ UNIT_TYPEID::ZERG_SPAWNINGPOOL, UNIT_TYPEID::ZERG_ZERGLING }));
 
     // findBestBuildOrderGenetic({ { UNIT_TYPEID::ZERG_HATCHERY, 1 }, { UNIT_TYPEID::ZERG_DRONE, 12 } }, { { UNIT_TYPEID::ZERG_HATCHERY, 1 }, { UNIT_TYPEID::ZERG_ZERGLING, 12 }, { UNIT_TYPEID::ZERG_MUTALISK, 20 }, { UNIT_TYPEID::ZERG_INFESTOR, 1 } });
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 0; i++) {
         // BuildState startState({ { UNIT_TYPEID::TERRAN_COMMANDCENTER, 1 }, { UNIT_TYPEID::TERRAN_SCV, 12 } });
         // startState.resources.minerals = 50;
         // startState.race = Race::Terran;
@@ -2298,32 +2392,17 @@ void unitTestBuildOptimizer() {
             // findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ZEALOT, 20 }, { UNIT_TYPEID::PROTOSS_STALKER, 30 }, { UNIT_TYPEID::PROTOSS_ADEPT, 12 }, { UNIT_TYPEID::PROTOSS_COLOSSUS, 2 } });
             // auto bo = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_PHOENIX, 3 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 15 }, { UNIT_TYPEID::PROTOSS_CARRIER, 1 }, { UNIT_TYPEID::PROTOSS_OBSERVER, 1 }, { UNIT_TYPEID::PROTOSS_IMMORTAL, 1 } });
             BuildOptimizerParams params;
-            params.iterations = 256;
+            params.iterations = 1024;
             // auto boTuple = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ADEPT, 23 }, { UNIT_TYPEID::PROTOSS_PROBE, 31 }, { UNIT_TYPEID::PROTOSS_NEXUS, 2 }, { UNIT_TYPEID::PROTOSS_GATEWAY, 4 } }, nullptr, params);
             auto boTuple = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ADEPT, 23 } }, nullptr, params);
             auto bo = boTuple.first;
             printBuildOrderDetailed(startState, bo);
             cout << "Build order score " << boTuple.second.score() << endl;
 
-
-            params.iterations = 512;
-            // auto boTuple = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ADEPT, 23 }, { UNIT_TYPEID::PROTOSS_PROBE, 31 }, { UNIT_TYPEID::PROTOSS_NEXUS, 2 }, { UNIT_TYPEID::PROTOSS_GATEWAY, 4 } }, nullptr, params);
-            boTuple = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ADEPT, 23 } }, nullptr, params);
-            bo = boTuple.first;
-            printBuildOrderDetailed(startState, bo);
-            cout << "Build order score " << boTuple.second.score() << endl;
-
-            params.iterations = 1024;
-            // auto boTuple = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ADEPT, 23 }, { UNIT_TYPEID::PROTOSS_PROBE, 31 }, { UNIT_TYPEID::PROTOSS_NEXUS, 2 }, { UNIT_TYPEID::PROTOSS_GATEWAY, 4 } }, nullptr, params);
-            boTuple = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ADEPT, 23 } }, nullptr, params);
-            bo = boTuple.first;
-            printBuildOrderDetailed(startState, bo);
-            cout << "Build order score " << boTuple.second.score() << endl;
-
             
             printBuildOrderDetailed(startState, buildOrderProBO3);
-            for (auto& item : buildOrderProBO3.items) item.chronoBoosted = false;
-            printBuildOrderDetailed(startState, buildOrderProBO3);
+            // for (auto& item : buildOrderProBO3.items) item.chronoBoosted = false;
+            // printBuildOrderDetailed(startState, buildOrderProBO3);
 
             pybind11::module::import("matplotlib.pyplot").attr("show")();
             /*vector<UNIT_TYPEID> bo = {
@@ -2704,6 +2783,150 @@ void unitTestBuildOptimizer() {
         }
     }
 
+    if (false) {
+        // BuildState startState({ { UNIT_TYPEID::PROTOSS_NEXUS, 2 }, { UNIT_TYPEID::PROTOSS_PROBE, 22 }, { UNIT_TYPEID::PROTOSS_PYLON, 2 }, { UNIT_TYPEID::PROTOSS_ASSIMILATOR, 2 }, { UNIT_TYPEID::PROTOSS_GATEWAY, 2 }, { UNIT_TYPEID::PROTOSS_ADEPT, 1 } });
+        // startState.resources.minerals = 362;
+        // startState.resources.vespene = 808;
+        // startState.chronoInfo.addNexusWithEnergy(startState.time, 25);
+        BuildState startState({ { UNIT_TYPEID::PROTOSS_NEXUS, 1 }, { UNIT_TYPEID::PROTOSS_PROBE, 12 } });
+        startState.resources.minerals = 50;
+        startState.resources.vespene = 0;
+        
+        startState.race = Race::Protoss;
+        startState.chronoInfo.addNexusWithEnergy(startState.time, 50);
+        // Initial delay before harvesters start mining properly
+        // startState.makeUnitsBusy(UNIT_TYPEID::PROTOSS_PROBE, UNIT_TYPEID::INVALID, 12);
+        // for (int i = 0; i < 12; i++) startState.addEvent(BuildEvent(BuildEventType::MakeUnitAvailable, 4, UNIT_TYPEID::PROTOSS_PROBE, ABILITY_ID::INVALID));
+
+        // startState.baseInfos = { BaseInfo(10800, 1000, 1000) };
+        for (int i = 1; i < 5; i++) {
+            BuildOptimizerParams params;
+            params.iterations = i*100;
+            auto boTuple = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_VOIDRAY, 1 } }, nullptr, params);
+            auto bo = boTuple.first;
+            printBuildOrderDetailed(startState, bo);
+            // cout << "Build order score " << boTuple.second.score() << endl;
+        }
+        exit(0);
+
+        BuildOrder primBo = {
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PYLON, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_GATEWAY, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_GATEWAY, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_GATEWAY, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_GATEWAY, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_GATEWAY, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, true),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, true),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT, true),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, true),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT, true),
+        };
+
+        BuildOrder altBo = {
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PYLON, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_GATEWAY, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_GATEWAY, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_GATEWAY, false),
+            // BuildOrderItem(UNIT_TYPEID::PROTOSS_GATEWAY, false),
+            // BuildOrderItem(UNIT_TYPEID::PROTOSS_GATEWAY, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, true),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, true),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT, true),
+        };
+
+        printBuildOrderDetailed(startState, primBo);
+        printBuildOrderDetailed(startState, altBo);
+        
+        // Start unit  PROTOSS_ADEPT 1
+        // Start unit  PROTOSS_PROBE 22
+        // Start unit  PROTOSS_NEXUS 2
+        // Start unit  PROTOSS_ASSIMILATOR 2
+        // Target unit  PROTOSS_ZEALOT 5
+        // Additional cost for PROTOSS_GATEWAY 150 0
+        // Additional cost for PROTOSS_GATEWAY 150 0
+        // Additional cost for PROTOSS_GATEWAY 150 0
+        // Additional cost for PROTOSS_GATEWAY 150 0
+        // Additional cost for PROTOSS_GATEWAY 150 0
+    }
+
+    if (true) {
+        BuildState startState({ { UNIT_TYPEID::PROTOSS_NEXUS, 1 }, { UNIT_TYPEID::PROTOSS_PROBE, 20 }, { UNIT_TYPEID::PROTOSS_CYBERNETICSCORE, 6 }, { UNIT_TYPEID::PROTOSS_GATEWAY, 3 } });
+        startState.resources.minerals = 300;
+        startState.resources.vespene = 200;
+        startState.race = Race::Protoss;
+        startState.chronoInfo.addNexusWithEnergy(startState.time, 50);
+        // Initial delay before harvesters start mining properly
+        // startState.makeUnitsBusy(UNIT_TYPEID::PROTOSS_PROBE, UNIT_TYPEID::INVALID, 12);
+        // for (int i = 0; i < 12; i++) startState.addEvent(BuildEvent(BuildEventType::MakeUnitAvailable, 4, UNIT_TYPEID::PROTOSS_PROBE, ABILITY_ID::INVALID));
+
+        // startState.baseInfos = { BaseInfo(10800, 1000, 1000) };
+        BuildOptimizerParams params;
+        params.iterations = 1024;
+        auto boTuple = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_VOIDRAY, 1 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 5 } }, nullptr, params);
+        auto bo = boTuple.first;
+        printBuildOrderDetailed(startState, bo);
+        // cout << "Build order score " << boTuple.second.score() << endl;
+
+        BuildOrder primBo = {
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PYLON, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_GATEWAY, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, true),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, true),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_ASSIMILATOR, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_ASSIMILATOR, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_CYBERNETICSCORE, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_STARGATE, true),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_VOIDRAY, true),
+        };
+
+        BuildOrder altBo = {
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PYLON, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_GATEWAY, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_GATEWAY, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_GATEWAY, false),
+            // BuildOrderItem(UNIT_TYPEID::PROTOSS_GATEWAY, false),
+            // BuildOrderItem(UNIT_TYPEID::PROTOSS_GATEWAY, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, true),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, true),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, false),
+            BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT, true),
+        };
+
+        // printBuildOrderDetailed(startState, primBo);
+        // printBuildOrderDetailed(startState, altBo);
+        
+        // Start unit  PROTOSS_ADEPT 1
+        // Start unit  PROTOSS_PROBE 22
+        // Start unit  PROTOSS_NEXUS 2
+        // Start unit  PROTOSS_ASSIMILATOR 2
+        // Target unit  PROTOSS_ZEALOT 5
+        // Additional cost for PROTOSS_GATEWAY 150 0
+        // Additional cost for PROTOSS_GATEWAY 150 0
+        // Additional cost for PROTOSS_GATEWAY 150 0
+        // Additional cost for PROTOSS_GATEWAY 150 0
+        // Additional cost for PROTOSS_GATEWAY 150 0
+    }
     // optimizer.calculate_build_order(Race::Terran, { { UNIT_TYPEID::TERRAN_COMMANDCENTER, 1 }, { UNIT_TYPEID::TERRAN_SCV, 1 } }, { { UNIT_TYPEID::TERRAN_SCV, 1 } });
     // optimizer.calculate_build_order(Race::Terran, { { UNIT_TYPEID::TERRAN_COMMANDCENTER, 1 }, { UNIT_TYPEID::TERRAN_SCV, 1 } }, { { UNIT_TYPEID::TERRAN_SCV, 2 } });
     // optimizer.calculate_build_order(Race::Terran, { { UNIT_TYPEID::TERRAN_COMMANDCENTER, 1 }, { UNIT_TYPEID::TERRAN_SCV, 1 } }, { { UNIT_TYPEID::TERRAN_SCV, 5 } });
@@ -2713,20 +2936,36 @@ void unitTestBuildOptimizer() {
 
 bool BuildOrderFitness::operator<(const BuildOrderFitness& other) const {
     if(false) return score() < other.score();
+    
+    float t = time;
+    float otherTime = other.time;
+    const float weight = 0.5f;
+    t -= weight * 0.5f * ((resources.minerals / (1 + miningSpeed.mineralsPerSecond)) + (resources.vespene / (1 + miningSpeed.vespenePerSecond)));
+    otherTime -= weight * 0.5f * ((other.resources.minerals / (1 + other.miningSpeed.mineralsPerSecond)) + (other.resources.vespene / (1 + other.miningSpeed.vespenePerSecond)));
 
-    auto& a = time < other.time ? *this : other;
-    auto& b = time < other.time ? other : *this;
+    if (otherTime < t) return !(other < *this);
 
-    float resourcesPerSecond = a.miningSpeed.mineralsPerSecond + a.miningSpeed.vespenePerSecond;
-    float dt = b.time - a.time;
+    if (time >= ReallyBad.time) return false;
+
+    float resourcesPerSecond = miningSpeed.mineralsPerSecond + miningSpeed.vespenePerSecond;
+    float dt = otherTime - t;
 
     // Manual bias factor
     dt *= 10;
 
     float estimatedResourcesPerSecond = resourcesPerSecond + (miningSpeedPerSecond.mineralsPerSecond + miningSpeedPerSecond.vespenePerSecond) * dt;
-    float otherResourcesPerSecond = b.miningSpeed.mineralsPerSecond + b.miningSpeed.vespenePerSecond;
+    float otherResourcesPerSecond = other.miningSpeed.mineralsPerSecond + other.miningSpeed.vespenePerSecond;
 
-    return (estimatedResourcesPerSecond < otherResourcesPerSecond) ^ (time >= other.time);
+    // MS_a + MSS_a * (t_b - t_a) > MS_b
+    // MS_a + MSS_a * 0.5 * (t_b - t_a) > MS_b - MSS_b * 0.5 * (t_b - t_a)
+    // (t_b - t_a) > 2*(MS_b - MS_a)/(MSS_a - MSS_b)
+
+    // (t_b - t_a) > 2*(MS_b - MS_a)/(MSS_a - MSS_b)
+    
+    // t_a - MS_a/MSS_a < t_b - MS_b/MSS_b
+
+    return estimatedResourcesPerSecond < otherResourcesPerSecond;
+    // return time > other.time;
     // float s = -fmax(time, 2 * 60.0f);
     // s += ((resources.minerals + 2 * resources.vespene) + (miningSpeed.mineralsPerSecond + 2 * miningSpeed.vespenePerSecond) * 60) * 0.001f;
     // s = log(s) - time/400.0f;

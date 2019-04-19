@@ -20,7 +20,7 @@ double hysterisisBonus = 0;
 Point2D position;
 Point2D targetPoint;
 void CameraController::OnStep() {
-    auto observation = bot.Observation();
+    auto observation = bot->Observation();
     if (position == Point2D(0, 0)) {
         targetPoint = position = observation->GetCameraPos();
     }
@@ -129,7 +129,7 @@ void CameraController::OnStep() {
     double alpha = 0.96;
 
     position = position * alpha + targetPoint * (1 - alpha);
-    bot.Debug()->DebugMoveCamera(position);
+    bot->Debug()->DebugMoveCamera(position);
 
     if (get<2>(target) != lastTag) {
         hysterisisBonus = 10;

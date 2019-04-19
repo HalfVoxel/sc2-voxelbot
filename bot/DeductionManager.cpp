@@ -14,11 +14,11 @@ map<Tag, set<UNIT_TYPEID>> aliasTypes;
 
 void DeductionManager::OnGameStart(int playerID) {
     this->playerID = playerID;
-    const auto& unitTypes = bot.Observation()->GetUnitTypeData();
+    const auto& unitTypes = bot->Observation()->GetUnitTypeData();
 
     expectedObservations = vector<int>(unitTypes.size());
 
-    auto playerInfos = bot.Observation()->GetGameInfo().player_info;
+    auto playerInfos = bot->Observation()->GetGameInfo().player_info;
     for (auto& p : playerInfos) {
         if (p.player_id == playerID) {
             race = p.race_requested;
@@ -77,7 +77,7 @@ void log () {
 }
 
 void DeductionManager::Observe(const vector<const Unit*>& units) {
-    const auto& unitTypes = bot.Observation()->GetUnitTypeData();
+    const auto& unitTypes = bot->Observation()->GetUnitTypeData();
 
     for (const Unit* unit : units) {
         Observe(unit);
@@ -143,12 +143,17 @@ vector<pair<UNIT_TYPEID, int>> DeductionManager::ApproximateArmy(float scale) {
     }
 
     // Prior
-    float priorCount = 25 * (200 / (200 + ticksToSeconds(agent.Observation()->GetGameLoop())));
+    float priorCount = 25 * (200 / (200 + ticksToSeconds(agent->Observation()->GetGameLoop())));
     
     priorCount *= scale;
     int k = 0;
     while(totalCount < min((int)priorCount, 10)) {
-        if (false) {
+        if (race == Race::Zerg) {
+            if ((k % 4) == 0) {
+                result.emplace_back(UNIT_TYPEID::ZERG_QUEEN, 1);
+                totalCount += 1;
+            }
+
             result.emplace_back(UNIT_TYPEID::ZERG_ROACH, 1);
             totalCount += 1;
 
@@ -168,7 +173,7 @@ vector<pair<UNIT_TYPEID, int>> DeductionManager::ApproximateArmy(float scale) {
                 totalCount += 1;
             }
 
-            if ((k % 4) == 1) {
+            if ((k % 4) == 1 || (k % 4) == 2 || (k % 4) == 3) {
                 result.emplace_back(UNIT_TYPEID::PROTOSS_STALKER, 1);
                 totalCount += 1;
             }
@@ -208,7 +213,7 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
     vector<pair<CombatUnit, Point2D>> result;
 
     // TODO: Not accurate if this is not an enemy, or if playing on a >2 player map
-    Point2D defaultPosition = agent.Observation()->GetGameInfo().enemy_start_locations[0];
+    Point2D defaultPosition = agent->Observation()->GetGameInfo().enemy_start_locations[0];
     int defaultPositionScore = 12;
 
     for (const Unit* unit : observedUnitInstances) {
@@ -223,11 +228,14 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
         }
     }
 
+    int numDeadTotal = 0;
+
     for (int i = 0; i < unitTypes.size(); i++) {
+        numDeadTotal += summary[i].dead;
         if (summary[i].total > 0) {
             int expectedCount;
             if (isArmy((UNIT_TYPEID)i)) {
-                expectedCount = (int)ceil((summary[i].alive + summary[i].dead * 0.5f));
+                expectedCount = (int)ceil((summary[i].alive + summary[i].dead * 0.1f));
             } else {
                 expectedCount = summary[i].alive;
             }
@@ -240,9 +248,14 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
         }
     }
 
+    // Reduce prior as we kill more units
+    int priorCount = 13 + min(30, (int)(1 + pow(ticksToSeconds(agent->Observation()->GetGameLoop())/60.0f, 2)));
+    priorCount -= numDeadTotal/2;
+    cout << priorCount << endl;
+
     // Prior
     int k = 0;
-    while(result.size() < 25) {
+    while(result.size() < priorCount) {
         if (false) {
             result.emplace_back(makeUnit(playerID, UNIT_TYPEID::ZERG_ROACH), defaultPosition);
 
@@ -274,7 +287,7 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
     }
 
     assert(result.size() > 0);
-    if(result.size() < 25 * scale) {
+    if(result.size() < priorCount * scale) {
         result.push_back(result[rand() % result.size()]);
     }
 
@@ -283,10 +296,10 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
 
 
 vector<UnitTypeInfo> DeductionManager::Summary() {
-    const auto& unitTypes = bot.Observation()->GetUnitTypeData();
+    const auto& unitTypes = bot->Observation()->GetUnitTypeData();
     spending.spentMinerals = 0;
     spending.spentGas = 0;
-    uint32_t gameLoop = bot.Observation()->GetGameLoop();
+    uint32_t gameLoop = bot->Observation()->GetGameLoop();
 
     vector<UNIT_TYPEID> observedUnitTypes(observedUnitInstances.size());
     vector<int> currentExpectedObservations = expectedObservations;
@@ -482,7 +495,7 @@ void DeductionManager::Observe(UNIT_TYPEID unitType) {
 
     cout << "Observed type " << UnitTypeToName(unitType) << endl;
 
-    for (auto u : bot.dependencyAnalyzer.allUnitDependencies[(int)unitType]) {
+    for (auto u : bot->dependencyAnalyzer.allUnitDependencies[(int)unitType]) {
         // Observe dependencies (unless they are just earlier upgrades of the same building type)
         if (!contains(earlierBuildingUpgrades, u)) {
             // Observe the unit type

@@ -43,12 +43,12 @@ double SumUnits(function<double(const Unit*)> score, Point2D around, double rang
 
 Status MicroTank::OnTick() {
     auto unit = GetUnit();
-    auto ability = agent.Observation()->GetAbilityData()[(int)ABILITY_ID::EFFECT_YAMATOGUN];
+    auto ability = agent->Observation()->GetAbilityData()[(int)ABILITY_ID::EFFECT_YAMATOGUN];
     if (IsAbilityReady(unit, ABILITY_ID::MORPH_SIEGEMODE)) {
         auto target = BestTarget([&](auto u) { return u->is_flying ? 0 : 1; }, unit->pos, 13.0, 0);
 
         if (target != nullptr) {
-            agent.Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SIEGEMODE);
+            agent->Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SIEGEMODE);
         }
     }
 
@@ -56,7 +56,7 @@ Status MicroTank::OnTick() {
         auto target = BestTarget([&](auto u) { return u->is_flying ? 0 : 1; }, unit->pos, 13.0, 0);
 
         if (target == nullptr) {
-            agent.Actions()->UnitCommand(unit, ABILITY_ID::MORPH_UNSIEGE);
+            agent->Actions()->UnitCommand(unit, ABILITY_ID::MORPH_UNSIEGE);
         }
     }
 
@@ -65,7 +65,7 @@ Status MicroTank::OnTick() {
 
 Status MicroBattleCruiser::OnTick() {
     auto unit = GetUnit();
-    auto ability = agent.Observation()->GetAbilityData()[(int)ABILITY_ID::EFFECT_YAMATOGUN];
+    auto ability = agent->Observation()->GetAbilityData()[(int)ABILITY_ID::EFFECT_YAMATOGUN];
     if (IsAbilityReady(unit, ABILITY_ID::EFFECT_YAMATOGUN)) {
         const double damage = 300;
         // Find the enemy unit which we can deal the most damage to.
@@ -73,7 +73,7 @@ Status MicroBattleCruiser::OnTick() {
         // For example we don't want to use it on a zergling.
         auto target = BestTarget([&](auto u) { return u->health - max(u->health - damage, 0.0); }, unit->pos, ability.cast_range, 0.5 * damage);
         if (target != nullptr) {
-            agent.Actions()->UnitCommand(unit, ABILITY_ID::EFFECT_YAMATOGUN, target);
+            agent->Actions()->UnitCommand(unit, ABILITY_ID::EFFECT_YAMATOGUN, target);
         }
     }
 
@@ -83,7 +83,7 @@ Status MicroBattleCruiser::OnTick() {
 Status MicroLiberator::OnTick() {
     const double defender_radius = 5;
     auto unit = GetUnit();
-    auto observation = agent.Observation();
+    auto observation = agent->Observation();
     if (IsAbilityReady(unit, ABILITY_ID::MORPH_LIBERATORAGMODE)) {
         auto ability = observation->GetAbilityData()[(int)ABILITY_ID::MORPH_LIBERATORAGMODE];
         // Center the defender circle on a unit such that the total health of all units in the circle
@@ -92,13 +92,13 @@ Status MicroLiberator::OnTick() {
 
         if (target != nullptr) {
             defensive_point = target->pos;
-            agent.Actions()->UnitCommand(unit, ABILITY_ID::MORPH_LIBERATORAGMODE, defensive_point);
+            agent->Actions()->UnitCommand(unit, ABILITY_ID::MORPH_LIBERATORAGMODE, defensive_point);
         }
     } else if (IsAbilityReady(unit, ABILITY_ID::MORPH_LIBERATORAAMODE)) {
         // If there are no units in our current defender circle, then go to anti-air mode instead.
         double score = SumUnits([&](auto u2) { return u2->is_flying || IsStructure(observation)(*u2) ? 0.0 : u2->health; }, defensive_point, defender_radius);
         if (score == 0) {
-            agent.Actions()->UnitCommand(unit, ABILITY_ID::MORPH_LIBERATORAAMODE);
+            agent->Actions()->UnitCommand(unit, ABILITY_ID::MORPH_LIBERATORAAMODE);
         }
     }
 
@@ -109,27 +109,27 @@ vector<UNIT_TYPEID> mineral_fields = { UNIT_TYPEID::NEUTRAL_BATTLESTATIONMINERAL
 
 Status MicroOrbitalCommand::OnTick() {
     auto unit = GetUnit();
-    auto ability = agent.Observation()->GetAbilityData()[(int)ABILITY_ID::EFFECT_SCAN];
+    auto ability = agent->Observation()->GetAbilityData()[(int)ABILITY_ID::EFFECT_SCAN];
     if (IsAbilityReady(unit, ABILITY_ID::EFFECT_SCAN) && unit->energy > 125) {
-        auto p = bot.influenceManager.scanningMap.argmax();
-        if (bot.influenceManager.scanningMap(p) > 0.5) {
+        auto p = bot->influenceManager.scanningMap.argmax();
+        if (bot->influenceManager.scanningMap(p) > 0.5) {
             // Scan!
             Point2D p2D = Point2D(p.x, p.y);
-            agent.Actions()->UnitCommand(unit, ABILITY_ID::EFFECT_SCAN, p2D);
-            bot.influenceManager.scanningMap.setInfluenceInCircle(0, 13, p2D);
+            agent->Actions()->UnitCommand(unit, ABILITY_ID::EFFECT_SCAN, p2D);
+            bot->influenceManager.scanningMap.setInfluenceInCircle(0, 13, p2D);
         }
     }
 
     if (IsAbilityReady(unit, ABILITY_ID::EFFECT_CALLDOWNMULE) && unit->energy > 100 && unit->assigned_harvesters < unit->ideal_harvesters - 2) {
         const Unit* closestMinerals = nullptr;
-        for (auto other : bot.Observation()->GetUnits(Unit::Alliance::Neutral)) {
+        for (auto other : bot->Observation()->GetUnits(Unit::Alliance::Neutral)) {
             if (find(mineral_fields.begin(), mineral_fields.end(), other->unit_type) != mineral_fields.end() && (closestMinerals == nullptr || Distance2D(unit->pos, other->pos) < Distance2D(unit->pos, closestMinerals->pos))) {
                 closestMinerals = other;
             }
         }
 
         if (closestMinerals != nullptr) {
-            agent.Actions()->UnitCommand(unit, ABILITY_ID::EFFECT_CALLDOWNMULE, closestMinerals);
+            agent->Actions()->UnitCommand(unit, ABILITY_ID::EFFECT_CALLDOWNMULE, closestMinerals);
         }
     }
 
@@ -140,11 +140,11 @@ Status MicroNexus::OnTick() {
     // Note: incorrect ID in API
     ABILITY_ID chronoboostAbility = (ABILITY_ID)3755;
     auto unit = GetUnit();
-    auto ability = agent.Observation()->GetAbilityData()[(int)chronoboostAbility];
+    auto ability = agent->Observation()->GetAbilityData()[(int)chronoboostAbility];
     if (IsAbilityReady(unit, chronoboostAbility)) {
-        for (auto other : agent.Observation()->GetUnits(Unit::Alliance::Self)) {
+        for (auto other : agent->Observation()->GetUnits(Unit::Alliance::Self)) {
             if (other->owner == unit->owner && isStructure(other->unit_type) && other->build_progress == 1 && other->orders.size() > 0 && other->orders[0].progress < 0.2f && other->buffs.size() == 0) {
-                agent.Actions()->UnitCommand(unit, chronoboostAbility, other);
+                agent->Actions()->UnitCommand(unit, chronoboostAbility, other);
                 break;
             }
         }
@@ -158,9 +158,9 @@ map<const Unit*, MicroNode*> microNodes;
 
 void TickMicro() {
     // Cache for performance reasons
-    enemyUnits = agent.Observation()->GetUnits(Unit::Alliance::Enemy);
+    enemyUnits = agent->Observation()->GetUnits(Unit::Alliance::Enemy);
 
-    for (auto* unit : agent.Observation()->GetUnits(Unit::Alliance::Self)) {
+    for (auto* unit : agent->Observation()->GetUnits(Unit::Alliance::Self)) {
         auto& node = microNodes[unit];
         if (node == nullptr) {
             switch (simplifyUnitType(unit->unit_type)) {

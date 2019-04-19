@@ -30,9 +30,9 @@ void visualizeSimulator(SimulatorState& state) {
     visualize_fn(units, state.time(), healthFraction(state, 1), healthFraction(state, 2));
 }
 
-void stepSimulator(SimulatorState& state, SimulatorContext& simulator, float endTime) {
+void stepSimulator(SimulatorState& state, float endTime) {
     while(state.time() < endTime) {
-        state.simulate(simulator, state.time() + 1);
+        state.simulate(state.time() + 1);
         visualizeSimulator(state);
     }
 }
@@ -45,7 +45,7 @@ void example_simulation(SimulatorContext& simulator, SimulatorState& state) {
     cout << "Frac: " << healthFraction(state, 1) << " " << healthFraction(state, 2) << endl;
     visualizeSimulator(state);
 
-    stepSimulator(state, simulator, state.time() + 2);
+    stepSimulator(state, state.time() + 2);
 
     assert(state.command(2, &idleGroup, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(40, 100))));
 
@@ -53,24 +53,24 @@ void example_simulation(SimulatorContext& simulator, SimulatorState& state) {
     assert(state.groups[0].order.type == SimulatorOrderType::Attack);
     assert(state.groups[0].order.target == Point2D(100, 60));
 
-    stepSimulator(state, simulator, state.time() + 6);
+    stepSimulator(state, state.time() + 6);
 
     assert(state.command(1, nullptr, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(60, 60))));
 
-    stepSimulator(state, simulator, state.time() + 6);
+    stepSimulator(state, state.time() + 6);
 
     assert(state.command(1, nullptr, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(100, 100))));
     cout << "Frac: " << healthFraction(state, 1) << " " << healthFraction(state, 2) << endl;
 
-    stepSimulator(state, simulator, state.time() + 6);
+    stepSimulator(state, state.time() + 6);
 
     assert(state.command(2, nullptr, &armyUnit, SimulatorOrder(SimulatorOrderType::Attack, Point2D(100, 100))));
 
-    stepSimulator(state, simulator, state.time() + 50);
+    stepSimulator(state, state.time() + 50);
     cout << "Frac: " << healthFraction(state, 1) << " " << healthFraction(state, 2) << endl;
 }
 
-void mcts(SimulatorContext& simulator, SimulatorState& startState) {
+void mcts(SimulatorState& startState) {
     srand(time(0));
 
     unique_ptr<MCTSState<int, SimulatorMCTSState>> state = make_unique<MCTSState<int, SimulatorMCTSState>>(SimulatorMCTSState(startState));
@@ -89,7 +89,7 @@ void mcts(SimulatorContext& simulator, SimulatorState& startState) {
     while(true) {
         if (it % 2 == 0) {
             state = make_unique<MCTSState<int, SimulatorMCTSState>>(SimulatorMCTSState(currentState->internalState.state));
-            simulator.simulationStartTime = state->internalState.state.time();
+            state->internalState.state.simulator->simulationStartTime = state->internalState.state.time();
 
             vector<vector<float>> stats(200, vector<float>(14));
             vector<vector<float>> statsRave(200, vector<float>(14));
@@ -126,7 +126,7 @@ void mcts(SimulatorContext& simulator, SimulatorState& startState) {
     }
 
     while(true) {
-        stepSimulator(currentState->internalState.state, currentState->internalState.state.simulator, currentState->internalState.state.time() + 5);
+        stepSimulator(currentState->internalState.state, currentState->internalState.state.time() + 5);
     }
 }
 
@@ -134,7 +134,7 @@ void test_simulator() {
     CombatPredictor combatPredictor;
     combatPredictor.init();
 
-    SimulatorContext simulator(&combatPredictor, { Point2D(0,0), Point2D(100, 100) });
+    auto simulator = make_shared<SimulatorContext>(&combatPredictor, vector<Point2D>{ Point2D(0,0), Point2D(100, 100) });
     BuildOrder bo1 = { UNIT_TYPEID::PROTOSS_PROBE, UNIT_TYPEID::PROTOSS_PYLON, UNIT_TYPEID::PROTOSS_PYLON, UNIT_TYPEID::PROTOSS_GATEWAY, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT,
         UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_PYLON,
         UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_PYLON,
@@ -150,12 +150,12 @@ void test_simulator() {
         UNIT_TYPEID::PROTOSS_VOIDRAY, UNIT_TYPEID::PROTOSS_VOIDRAY, UNIT_TYPEID::PROTOSS_PYLON,
      };
     SimulatorState state(simulator, {
-        simulator.cache.copyState(BuildState({ { UNIT_TYPEID::PROTOSS_NEXUS, 1 }, { UNIT_TYPEID::PROTOSS_PYLON, 6 }, { UNIT_TYPEID::PROTOSS_PROBE, 12 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 0 }, { UNIT_TYPEID::PROTOSS_STALKER, 2 }, { UNIT_TYPEID::PROTOSS_PHOENIX, 9 }, { UNIT_TYPEID::PROTOSS_IMMORTAL, 4 }})),
-        simulator.cache.copyState(BuildState({ { UNIT_TYPEID::PROTOSS_NEXUS, 2 }, { UNIT_TYPEID::PROTOSS_PYLON, 6 }, { UNIT_TYPEID::PROTOSS_PROBE, 12 }, { UNIT_TYPEID::PROTOSS_CARRIER, 2 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 1+2 }, { UNIT_TYPEID::PROTOSS_COLOSSUS, 2 }, { UNIT_TYPEID::PROTOSS_VOIDRAY, 2 }, { UNIT_TYPEID::PROTOSS_PHOTONCANNON, 6 }, { UNIT_TYPEID::PROTOSS_STARGATE, 1 } })),
+        simulator->cache.copyState(BuildState({ { UNIT_TYPEID::PROTOSS_NEXUS, 1 }, { UNIT_TYPEID::PROTOSS_PYLON, 6 }, { UNIT_TYPEID::PROTOSS_PROBE, 12 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 0 }, { UNIT_TYPEID::PROTOSS_STALKER, 2 }, { UNIT_TYPEID::PROTOSS_PHOENIX, 9 }, { UNIT_TYPEID::PROTOSS_IMMORTAL, 4 }})),
+        simulator->cache.copyState(BuildState({ { UNIT_TYPEID::PROTOSS_NEXUS, 2 }, { UNIT_TYPEID::PROTOSS_PYLON, 6 }, { UNIT_TYPEID::PROTOSS_PROBE, 12 }, { UNIT_TYPEID::PROTOSS_CARRIER, 2 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 1+2 }, { UNIT_TYPEID::PROTOSS_COLOSSUS, 2 }, { UNIT_TYPEID::PROTOSS_VOIDRAY, 2 }, { UNIT_TYPEID::PROTOSS_PHOTONCANNON, 6 }, { UNIT_TYPEID::PROTOSS_STARGATE, 1 } })),
     },
     {
-        BuildOrderState(bo1),
-        BuildOrderState(bo2),
+        BuildOrderState(make_shared<BuildOrder>(bo1)),
+        BuildOrderState(make_shared<BuildOrder>(bo2)),
     });
     // state.states[1]->resources.minerals = 10000;
     // state.states[1]->resources.vespene = 10000;
@@ -269,7 +269,7 @@ void test_simulator() {
         SimulatorUnit(makeUnit(1, UNIT_TYPEID::PROTOSS_PYLON)),
     }));
 
-    mcts(simulator, state);
+    mcts(state);
     // example_simulation(simulator, state);
 }
 

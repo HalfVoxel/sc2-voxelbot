@@ -20,13 +20,13 @@ void BuildOptimizerNN::init() {
 #endif
 }
 
-vector<float> BuildOptimizerNN::predictTimeToBuild(const vector<pair<int, int>>& startingState, const BuildResources& startingResources, const vector < vector<pair<int, int>>>& targets) const {
+vector<vector<float>> BuildOptimizerNN::predictTimeToBuild(const vector<pair<int, int>>& startingState, const BuildResources& startingResources, const vector < vector<pair<int, int>>>& targets) const {
 #if !DISABLE_PYTHON
     lock_guard<mutex> lock(python_thread_mutex);
     auto res = predictFunction(startingState, tuple<int,int>(startingResources.minerals, startingResources.vespene), targets);
-    return res.cast<std::vector<float>>();
+    return res.cast<vector<vector<float>>>();
     // return vector<float>();
 #else
-    return vector<float>(targets.size());
+    return vector<vector<float>>(targets.size(), vector<float>(3));
 #endif
 }

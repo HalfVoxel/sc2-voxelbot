@@ -49,13 +49,13 @@ class Replay : public sc2::ReplayObserver {
         return playerID;
     }
 
-    virtual bool IgnoreReplay(const std::string& filepath) override {
-        if (isReplayAlreadySavedFunction(replaySavePath(filepath, saveDir)).cast<bool>()) {
-            cerr << "Skipping already processed replay" << endl;
-            return true;
-        }
-        return false;
-    }
+    // virtual bool IgnoreReplay(const std::string& filepath) override {
+    //     if (isReplayAlreadySavedFunction(replaySavePath(filepath, saveDir)).cast<bool>()) {
+    //         cerr << "Skipping already processed replay" << endl;
+    //         return true;
+    //     }
+    //     return false;
+    // }
 
     virtual bool IgnoreReplay(const ReplayInfo& replay_info, uint32_t& player_id) override {
         bool version_match = replay_info.base_build == Control()->Proto().GetBaseBuild() && replay_info.data_version == Control()->Proto().GetDataVersion();

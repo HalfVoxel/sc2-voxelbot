@@ -23,28 +23,24 @@ struct CombatHasher {
 };
 
 struct SimulationCacheItem {
-    BuildState* buildState;
+    std::shared_ptr<BuildState> buildState;
     BuildOrderState buildOrder;
     std::vector<BuildEvent> buildEvents;
 
-    SimulationCacheItem (BuildState* buildState, BuildOrderState buildOrder, std::vector<BuildEvent> buildEvents) : buildState(buildState), buildOrder(buildOrder), buildEvents(buildEvents) {}
+    SimulationCacheItem (std::shared_ptr<BuildState> buildState, BuildOrderState buildOrder, std::vector<BuildEvent> buildEvents) : buildState(buildState), buildOrder(buildOrder), buildEvents(buildEvents) {}
 };
 
 struct MCTSCache {
     std::map<uint64_t, CombatResult> combatResults;
     std::map<uint64_t, SimulationCacheItem> simulationCache;
-    std::map<uint64_t, std::pair<const BuildState*, const BuildState*>> stateCombatTransitions;
-    std::vector<BuildState*> cachedStates;
+    std::map<uint64_t, std::pair<std::shared_ptr<const BuildState>, std::shared_ptr<const BuildState>>> stateCombatTransitions;
+    std::vector<std::shared_ptr<BuildState>> cachedStates;
 
-    ~MCTSCache () {
-        for (auto* s : cachedStates) delete s;
-    }
-    
-    BuildState* copyState(const BuildState& state);
+    std::shared_ptr<BuildState> copyState(const BuildState& state);
 
     void applyCombatOutcome(SimulatorState& state, const std::vector<SimulatorUnitGroup*>& groups, const CombatResult& outcome);
 
     /** Simulate a build state with a given build order, but return an existing cached state if possible */
-    std::pair<const BuildState*, BuildOrderState> simulateBuildOrder(const BuildState& state, const BuildOrderState& buildOrder, float endTime, const std::function<void(const BuildEvent&)>* listener);
+    std::pair<std::shared_ptr<const BuildState>, BuildOrderState> simulateBuildOrder(const BuildState& state, const BuildOrderState& buildOrder, float endTime, const std::function<void(const BuildEvent&)>* listener);
     void handleCombat(SimulatorState& state, const std::vector<SimulatorUnitGroup*>& groups, int defender);
 };

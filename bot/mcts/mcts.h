@@ -161,9 +161,9 @@ struct MCTSPropagationResult {
 
 // TODO: needlessly evals root note
 template <class A, class T>
-MCTSPropagationResult mcts(MCTSState<A,T>& node) {
+MCTSPropagationResult mcts(MCTSState<A,T>& node, int depth = 0) {
     MCTSPropagationResult result;
-    if (node.visits == 0) {
+    if (node.visits == 0 || depth > 30) {
         Stopwatch w;
         result.rollouts = 2;
         result.usedActions = std::vector<bool>(10);
@@ -192,7 +192,7 @@ MCTSPropagationResult mcts(MCTSState<A,T>& node) {
             auto& child = node.select();
             w.stop();
             tSelect += w.millis();
-            result = mcts(*child.state);
+            result = mcts(*child.state, depth + 1);
             result.wins = result.rollouts - result.wins;
             result.usedActions[child.action] = true;
         }
@@ -215,7 +215,7 @@ MCTSPropagationResult mcts(MCTSState<A,T>& node) {
     }
 
     if ((node.visits % (8*1000)) == 0) {
-        std::cout << "MCTS timings " << tRollout << " " << tExpand << " " << tSelect << std::endl;
+        // std::cout << "MCTS timings " << tRollout << " " << tExpand << " " << tSelect << std::endl;
     }
     return result;
 }
@@ -233,7 +233,7 @@ nonstd::optional<std::pair<A, MCTSState<A,T>&>> MCTSState<A, T>::bestAction() co
         }
     }
 
-    std::cout << bestScore << std::endl;
+    // std::cout << bestScore << std::endl;
 
     if (bestAction == -1) {
         return {};

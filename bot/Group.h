@@ -3,7 +3,7 @@
 #include "sc2api/sc2_api.h"
 #include <vector>
 
-enum GroupType {Main, Scout, Strike, Sub, Drop};
+enum GroupType {Main, Scout, Strike, Sub, Drop, MCTS};
 class UnitGroup : public BOT::Context{
 public:
     GroupType type;
@@ -45,4 +45,10 @@ public:
 class StrikeGroup : public UnitGroup {
 public:
     StrikeGroup();
+};
+
+class MCTSGroup : public UnitGroup {
+public:
+    sc2::Point2DI target;
+    MCTSGroup();
 };

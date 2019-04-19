@@ -385,6 +385,65 @@ class CompositionAnalyzer2 : public sc2::Agent {
             makeUnit(2, UNIT_TYPEID::PROTOSS_ZEALOT),
 		} },
 
+        { {
+            makeUnit(1, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(1, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(1, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(1, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(1, UNIT_TYPEID::TERRAN_MARAUDER),
+
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+		} },
         };
 
         default_random_engine rnd;
@@ -404,7 +463,7 @@ class CompositionAnalyzer2 : public sc2::Agent {
 
     void createState(const CombatState& state, float offset = 0) {
         for (auto& u : state.units) {
-            agent.Debug()->DebugCreateUnit(u.type, u.owner == 1 ? p1 : p2, u.owner);
+            Debug()->DebugCreateUnit(u.type, u.owner == 1 ? p1 : p2, u.owner);
         }
     }
 
@@ -459,6 +518,14 @@ class CompositionAnalyzer2 : public sc2::Agent {
                 }
             }
 
+            vector<CombatSettings> allSettings(6);
+            allSettings[1].enableMeleeBlocking = false;
+            allSettings[2].enableSplash = false;
+            allSettings[3].enableSurroundLimits = false;
+            allSettings[3].debug = true;
+            allSettings[4].enableTimingAdjustment = false;
+            allSettings[5].assumeReasonablePositioning = false;
+
             if (!anyAlive || ticksToSeconds(Observation()->GetGameLoop() - combatStartTime) > 60) {
                 if (recorder != nullptr) {
                     stringstream ss;
@@ -466,12 +533,13 @@ class CompositionAnalyzer2 : public sc2::Agent {
                     recorder->finalize(ss.str());
                     recorder = nullptr;
 
-                    CombatRecording simRecording;
-                    predictor.predict_engage(combatStates[combatIndex], true, false, &simRecording, 1);
-
-                    stringstream ss2;
-                    ss2 << "experiment_results/combat/test" << combatIndex << "_sim.csv";
-                    simRecording.writeCSV(ss2.str());
+                    for (int si = 0; si < allSettings.size(); si++) {
+                        CombatRecording simRecording;
+                        predictor.predict_engage(combatStates[combatIndex], allSettings[si], &simRecording, 1);
+                        stringstream ss2;
+                        ss2 << "experiment_results/combat/test" << combatIndex << "_sim_" << si << ".csv";
+                        simRecording.writeCSV(ss2.str());
+                    }
                 }
 
                 for (auto* u : Observation()->GetUnits()) {
@@ -525,7 +593,7 @@ int main(int argc, char* argv[]) {
     coordinator.SetMultithreaded(true);
 
     CompositionAnalyzer2 bot;
-    agent = bot;
+    agent = &bot;
     coordinator.SetParticipants({ CreateParticipant(Race::Terran, &bot) });
 
     coordinator.SetRealtime(false);
