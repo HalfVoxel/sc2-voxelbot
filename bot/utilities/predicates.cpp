@@ -134,3 +134,16 @@ bool isStructure(const UnitTypeData& unitType) {
     }
     return is_structure;
 }
+
+bool carriesResources(const Unit* unit) {
+    // CARRYMINERALFIELDMINERALS = 271,
+    // CARRYHIGHYIELDMINERALFIELDMINERALS = 272,
+    // CARRYHARVESTABLEVESPENEGEYSERGAS = 273,
+    // CARRYHARVESTABLEVESPENEGEYSERGASPROTOSS = 274,
+    // CARRYHARVESTABLEVESPENEGEYSERGASZERG = 275,
+
+    for (auto b : unit->buffs) {
+        if (b >= 271 && b <= 275) return true;
+    }
+    return false;
+}
