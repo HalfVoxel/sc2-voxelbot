@@ -80,11 +80,14 @@ struct InfluenceMap {
     double sum() const;
 
     double max() const;
+    void max(const InfluenceMap& other);
     double maxFinite() const;
 
     sc2::Point2DI argmax() const;
 
     InfluenceMap replace_nonzero(double with) const;
+    InfluenceMap replace_nan(double with) const;
+    InfluenceMap replace(double value, double with) const;
 
     void addInfluence(double influence, sc2::Point2DI pos);
     void addInfluence(double influence, sc2::Point2D pos);

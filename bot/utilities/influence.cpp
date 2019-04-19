@@ -20,7 +20,7 @@ InfluenceMap::InfluenceMap(sc2::ImageData map)
     }
 }
 
-pair<int, int> round_point(Point2D p) {
+static pair<int, int> round_point(Point2D p) {
     return make_pair((int)round(p.x), (int)round(p.y));
 }
 
@@ -132,6 +132,12 @@ double InfluenceMap::sum() const {
     return ret;
 }
 
+void InfluenceMap::max(const InfluenceMap& other) {
+    for (int i = 0; i < w*h; i++) {
+        weights[i] = std::max(weights[i], other.weights[i]);
+    }
+}
+
 double InfluenceMap::max() const {
     double ret = 0.0;
     for (int i = 0; i < w * h; i++) {
@@ -167,6 +173,22 @@ InfluenceMap InfluenceMap::replace_nonzero(double with) const {
     InfluenceMap ret = InfluenceMap(w, h);
     for (int i = 0; i < w * h; i++) {
         ret.weights[i] = weights[i] != 0 ? with : 0;
+    }
+    return ret;
+}
+
+InfluenceMap InfluenceMap::replace_nan(double with) const {
+    InfluenceMap ret = InfluenceMap(w, h);
+    for (int i = 0; i < w * h; i++) {
+        ret.weights[i] = isnan(weights[i]) ? with : weights[i];
+    }
+    return ret;
+}
+
+InfluenceMap InfluenceMap::replace(double value, double with) const {
+    InfluenceMap ret = InfluenceMap(w, h);
+    for (int i = 0; i < w * h; i++) {
+        ret.weights[i] = weights[i] == value ? with : weights[i];
     }
     return ret;
 }
