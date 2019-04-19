@@ -139,50 +139,63 @@ def plot_owner(data_tuple, ax, title, tmax, show_xlabel):
     # ax.legend()
 
 
-fig, axs = plt.subplots(4, 4, figsize=(9, 5), sharex=True, sharey='row')
+for si in range(6):
 
-tmax = 40
-prefix = "experiment_results/combat/test"
+    tmax = 40
+    prefix = "experiment_results/combat/test"
 
-for i in range(4):
-    real1, real2 = parse(prefix + str(i) + "_real.csv")
-    sim1, sim2 = parse(prefix + str(i) + "_sim.csv")
-    sim1 = (sim1[0], sim1[1], real1[2])
-    sim2 = (sim2[0], sim2[1], real2[2])
+    indices = [
+        [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)],
+        [(0, 1), (1, 1), (2, 1), (3, 1), (4, 1)],
+        [(1, 0), (1, 2)],
+        [(5, 0), (5, 3)],
+        [(0, 0), (0, 4)],
+        [(0, 5), (1, 5), (2, 5), (3, 5), (4, 5)],
+    ]
 
-    plot_owner(real1, axs[i, 0], "Ground Truth" if i == 0 else "", tmax, False)
-    plot_owner(real2, axs[i, 2], "Ground Truth" if i == 0 else "", tmax, False)
-    plot_owner(sim1, axs[i, 1], "Simulated" if i == 0 else "", tmax, False)
-    plot_owner(sim2, axs[i, 3], "Simulated" if i == 0 else "", tmax, False)
-    # plot_owner(owners[1], axes[1], title, tmax, show_xlabel)
+    fig, axs = plt.subplots(len(indices[si]), 4, figsize=(9, 5), sharex=True, sharey='row')
 
-    # plot(, axs[i,[0, 2]], "Ground Truth" if i == 0 else "", tmax, show_xlabel=False)
-    # plot(, axs[i,[1, 3]], "Simulated" if i == 0 else "", tmax, show_xlabel=False)
+    for row, i in enumerate(indices[si]):
+        real1, real2 = parse(prefix + str(i[0]) + "_real.csv")
+        sim1, sim2 = parse(prefix + str(i[0]) + f"_sim_{i[1]}.csv")
+        sim1 = (sim1[0], sim1[1], real1[2])
+        sim2 = (sim2[0], sim2[1], real2[2])
 
-# fig.text(0.5, 0.04, 'common X', ha='center')
-plt.subplots_adjust(left=0.1, bottom=0.22, right=0.95, top=0.88, wspace=0.10, hspace=0.24)
-fig.text(0.01, 0.5, 'Total Health [hp]', va='center', rotation='vertical')
-xmid = (fig.subplotpars.left + fig.subplotpars.right) * 0.5
-leftQuarter = (fig.subplotpars.left * 0.75 + fig.subplotpars.right * 0.25)
-rightQuarter = (fig.subplotpars.left * 0.25 + fig.subplotpars.right * 0.75)
+        plot_owner(real1, axs[row, 0], "Ground Truth" if row == 0 else "", tmax, False)
+        plot_owner(real2, axs[row, 2], "Ground Truth" if row == 0 else "", tmax, False)
+        plot_owner(sim1, axs[row, 1], "Simulated" if row == 0 else "", tmax, False)
+        plot_owner(sim2, axs[row, 3], "Simulated" if row == 0 else "", tmax, False)
+        # plot_owner(owners[1], axes[1], title, tmax, show_xlabel)
 
-fig.text(xmid, 0.125, 'Time [s]', ha='center')
-fig.text(leftQuarter - 0.01, 0.96, 'Team 1', ha='center')
-fig.text(rightQuarter + 0.01, 0.96, 'Team 2', ha='center')
+        # plot(, axs[i,[0, 2]], "Ground Truth" if i == 0 else "", tmax, show_xlabel=False)
+        # plot(, axs[i,[1, 3]], "Simulated" if i == 0 else "", tmax, show_xlabel=False)
 
-xs = np.linspace(fig.subplotpars.left, fig.subplotpars.right, len(seenUnits), endpoint=True)
-for (x, (unit, color)) in zip(xs, seenUnits.items()):
-    if unit == "SiegeTankSieged":
-        unit = "Tank"
-    fig.patches.append(matplotlib.patches.Rectangle((x - 0.025, 0.05), 0.05, 0.05, facecolor=color, zorder=10, edgecolor="#000000", transform=fig.transFigure, figure=fig))
-    fig.texts.append(matplotlib.text.Text(x=x, y=0.01, text=unit, ha='center', transform=fig.transFigure, figure=fig))
+    # fig.text(0.5, 0.04, 'common X', ha='center')
+    plt.subplots_adjust(left=0.1, bottom=0.22, right=0.95, top=0.88, wspace=0.10, hspace=0.24)
+    fig.text(0.01, 0.5, 'Total Health [hp]', va='center', rotation='vertical')
+    xmid = (fig.subplotpars.left + fig.subplotpars.right) * 0.5
+    leftQuarter = (fig.subplotpars.left * 0.75 + fig.subplotpars.right * 0.25)
+    rightQuarter = (fig.subplotpars.left * 0.25 + fig.subplotpars.right * 0.75)
+
+    fig.text(xmid, 0.125, 'Time [s]', ha='center')
+    fig.text(leftQuarter - 0.01, 0.96, 'Team 1', ha='center')
+    fig.text(rightQuarter + 0.01, 0.96, 'Team 2', ha='center')
+
+    xs = np.linspace(fig.subplotpars.left, fig.subplotpars.right, len(seenUnits), endpoint=True)
+    for (x, (unit, color)) in zip(xs, seenUnits.items()):
+        if unit == "SiegeTankSieged":
+            unit = "Tank"
+        fig.patches.append(matplotlib.patches.Rectangle((x - 0.025, 0.05), 0.05, 0.05, facecolor=color, zorder=10, edgecolor="#000000", transform=fig.transFigure, figure=fig))
+        fig.texts.append(matplotlib.text.Text(x=x, y=0.01, text=unit, ha='center', transform=fig.transFigure, figure=fig))
 
 
-# plt.tight_layout(h_pad=0.0)
+    # plt.tight_layout(h_pad=0.0)
+    
+
+    pdf = PdfPages(f"/Users/arong/cloud/Skolarbeten/ML-2/thesis/draft/graphics/generated/combat_{si}.pdf")
+    pdf.savefig(fig)
+    pdf.close()
+    # plt.savefig('../final_images/speed' + ("_annotated" if annotate else "") + '.png', transparent=True)
+
+
 plt.show()
-
-pdf = PdfPages(f"/Users/arong/cloud/Skolarbeten/ML-2/thesis/draft/graphics/generated/combat.pdf")
-pdf.savefig(fig)
-pdf.close()
-# plt.savefig('../final_images/speed' + ("_annotated" if annotate else "") + '.png', transparent=True)
-
