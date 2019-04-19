@@ -51,3 +51,18 @@ void sortByValueDescending (std::vector<T>& arr, std::function<V(const T&)> valu
 		return value(b) < value(a);
 	});
 }
+
+
+template <class T, class V>
+void sortByValueDescendingBubble (std::vector<T>& arr, std::function<V(const T&)> value) {
+	bool changed = true;
+	while(changed) {
+		changed = false;
+		for (int i = 0; i < arr.size() - 1; i++) {
+			if (value(arr[i]) < value(arr[i+1])) {
+				std::swap(arr[i], arr[i+1]);
+				changed = true;
+			}
+		}
+	}
+}
