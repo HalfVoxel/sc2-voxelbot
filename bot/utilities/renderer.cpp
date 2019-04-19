@@ -169,7 +169,16 @@ void ImageGrayscale(const double* values, int width, int height, int off_x, int 
         if (isfinite(values[i])) {
             converted[i] = colormap[max(min((int)(values[i] * multiplier), 255), 0)];
         } else {
-            converted[i] = { 200, 0, 0 };
+            if (values[i] < 0) {
+                // Neg inf
+                converted[i] = { 0, 0, 200 };
+            } else if (values[i] > 0) {
+                // Pos inf
+                converted[i] = { 200, 0, 0 };
+            } else {
+                // NaN
+                converted[i] = { 255, 0, 255 };
+            }
         }
     }
 
