@@ -90,8 +90,6 @@ Status Build::OnTick() {
             continue;
         }
 
-        cout << "Checking a " << getUnitData(unit->unit_type).name << " for orders " << unit->orders.size() << " " << AbilityTypeToName(abilityType) << endl;
-
         if (unit->orders.size() > (hasReactor ? 1 : 0)) {
             continue;
         }
