@@ -148,13 +148,13 @@ def visualize(units, state_time, health_fraction1, health_fraction2, observation
             plt.bar(list(range(len(names))), vals, tick_label=names, color=np.array([55,126,184])/255 if playerIndex == 0 else np.array([228,26,28])/255)
             plt.xticks(rotation=90)
         
-        
-        mips = [(0, 2), (1, 2), (2, 0), (2, 1), (2, 2)]
-        NUM_MINIMAPS = 5
-        minimaps = observation[0:NUM_MINIMAPS*16*16].reshape([NUM_MINIMAPS, 16, 16])
-        for i in range(NUM_MINIMAPS):
-            plt.sca(axs[mips[i]])
-            plt.imshow(minimaps[i].transpose(1, 0), origin="lower")
+        if observation is not None:
+            mips = [(0, 2), (1, 2), (2, 0), (2, 1), (2, 2)]
+            NUM_MINIMAPS = 5
+            minimaps = observation[0:NUM_MINIMAPS*16*16].reshape([NUM_MINIMAPS, 16, 16])
+            for i in range(NUM_MINIMAPS):
+                plt.sca(axs[mips[i]])
+                plt.imshow(minimaps[i].transpose(1, 0), origin="lower")
 
         plt.pause(0.0001)
     
