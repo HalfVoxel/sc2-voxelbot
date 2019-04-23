@@ -7,11 +7,12 @@
 
 
 struct CoordinateRemapper {
-    sc2::Point2D mn;
-    sc2::Point2D mx;
-    bool flipX;
-    bool flipY;
+    sc2::Point2D mn = sc2::Point2D(0,0);
+    sc2::Point2D mx = sc2::Point2D(0,0);
+    bool flipX = false;
+    bool flipY = false;
 
+    CoordinateRemapper() {}
     CoordinateRemapper(sc2::Point2D mn, sc2::Point2D mx, bool flipX, bool flipY) : mn(mn), mx(mx), flipX(flipX), flipY(flipY) {}
 
     sc2::Point2D transform(sc2::Point2D coord) const;

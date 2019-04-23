@@ -131,6 +131,9 @@ ExtractedBuildOrder extractBuildOrder(const ReplaySession& session, int playerID
             if (unit.owner == playerID) {
                 if (!unitTypes.contains(unit.unit_type)) continue;
 
+                // Can't really handle this one yet
+                if (unit.unit_type == UNIT_TYPEID::PROTOSS_MOTHERSHIP) continue;
+
                 if (!seenTags.count(unit.tag)) {
                     seenTags.insert(unit.tag);
 
@@ -147,7 +150,7 @@ ExtractedBuildOrder extractBuildOrder(const ReplaySession& session, int playerID
 }
 
 SimulatorState extractSimulatorState (const ReplaySession& session, int timestep) {
-    array<shared_ptr<BuildState>, 2> buildStates = { make_shared<BuildState>(), make_shared<BuildState>() };
+    array<shared_ptr<BuildState>, 2> buildStates = {{ make_shared<BuildState>(), make_shared<BuildState>() }};
     auto bo1 = extractBuildOrder(session, 1, timestep);
     auto bo2 = extractBuildOrder(session, 2, timestep);
     SimulatorState state(nullptr, { buildStates[0], buildStates[1] }, { BuildOrderState(make_shared<BuildOrder>(bo1.buildOrder)), BuildOrderState(make_shared<BuildOrder>(bo2.buildOrder)) });

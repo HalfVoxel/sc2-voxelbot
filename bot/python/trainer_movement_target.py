@@ -87,8 +87,8 @@ class MovementStepper:
                 any_orders_mask = target_positions.view(outputs.size(), -1).sum(dim=1)
 
                 loss = losses.sum()
-                loss = loss + (self.loss_changed(outputs_keep_orders, fraction_similar_orders) * any_orders_mask).sum()
-                loss = loss + (self.loss_changed(outputs_attack_order, attack_order) * any_orders_mask).sum()
+                loss = loss + (self.loss_changed(outputs_keep_orders, fraction_similar_orders) * any_orders_mask).sum() * 0.2
+                loss = loss + (self.loss_changed(outputs_attack_order, attack_order) * any_orders_mask).sum() * 0.2
                 steps = outputs.size()[0]
                 return loss, steps
             else:

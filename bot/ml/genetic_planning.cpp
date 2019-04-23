@@ -151,4 +151,5 @@ GenePlanFitness calculateFitness(const GenePlan& strategy, const vector<GenePlan
 
     }
 }
+
 #endif

@@ -586,14 +586,18 @@ class Stepper:
         self.stepper.step()
         result = self.stepper.outputs.detach().cpu().exp()
         should_keep_order = self.stepper.outputs_keep_orders.item()
-        should_keep_order = random.random() < should_keep_order
+        should_keep_order = random.random() < should_keep_order**(1/2)
+
+        is_attack_order = self.stepper.outputs_attack_order.item()
+        is_attack_order = random.random() < is_attack_order
+
         probs = result.numpy().flatten()
         probs = probs**3
         probs /= probs.sum()
         index = np.random.choice(14*14, p=probs)
         index = probs.argmax()
-        coord = (index % 14, index // 14)
-        # coord = (index // 14, index % 14)
+        # coord = (index % 14, index // 14)
+        coord = (index // 14, index % 14)
         target_coord = game_state_loader.inverse_transform_coord_minimap(coord, game_state_loader.find_map_size(observer_session, playerID), 14, False)
 
         # axs[0].imshow(result.tranpose(0, 1), origin='lower')
@@ -602,7 +606,7 @@ class Stepper:
         print(target_coord)
 
 
-        return target_coord, should_keep_order
+        return target_coord, should_keep_order, is_attack_order
 
 if __name__ == "__main__":
     common.train_interface(cache_tensors, train, visualize)

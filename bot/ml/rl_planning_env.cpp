@@ -77,7 +77,7 @@ vector<pybind11::array_t<float>> EnvObserver::observe(const SimulatorMCTSState& 
 
     CombatSettings combatSettings;
     int defenderPlayer = 3 - playerID;
-    CombatResult combatResult = state.state.simulator->combatPredictor->predict_engage(cs, combatSettings, nullptr, defenderPlayer);
+    CombatResult combatResult = shared_ptr<SimulatorContext>(state.state.simulator)->combatPredictor->predict_engage(cs, combatSettings, nullptr, defenderPlayer);
 
     auto meta = oneHotEncode({
         { 5, buildState->resources.minerals/100 },
@@ -143,6 +143,23 @@ vector<pybind11::array_t<float>> EnvObserver::observe(const SimulatorMCTSState& 
         }
         if (unitTypesEnemy[i] >= 27) {
             unitTypesEnemyOneHot(i, 4) = 1;
+        }
+    }
+
+    auto units = Tensor(100, 3);
+    int index = 0;
+    for (auto& g : simState.groups) {
+        for (auto& u : g.units) {
+            if (index >= units.w) break;
+ 
+            int idx = unitMappings.getIndexMaybe(u.combat.type);
+            if (idx != -1 && g.owner == playerID && isBasicHarvester(u.combat.type) && !isStructure(u.combat.type)) {
+                auto pos = coordinates.transformCell(g.pos, minimapSize);
+                units(index, 0) = pos.x;
+                units(index, 1) = pos.y;
+                units(index, 2) = idx;
+                index++;
+            }
         }
     }
 
@@ -217,7 +234,22 @@ std::pair<float, bool> RLPlanningEnv::step(int actionIndex) {
 
     // TODO: Some strategy for other player?
     state.player = (3 - trainingPlayer) - 1;
-    state.executeAction(MCTSAction::ArmyAttackClosestEnemy);
+    
+    switch(state.seed % 3) {
+    case 0:
+        state.executeAction(MCTSAction::ArmyAttackClosestEnemy);
+        break;
+    case 1:
+        state.executeAction(MCTSAction::ArmyAttackBase);
+        break;
+    case 2:
+        if (state.state.time() < 60*2) {
+            state.executeAction(MCTSAction::ArmyConsolidate);
+        } else {
+            state.executeAction(MCTSAction::ArmyAttackClosestEnemy);
+        }
+        break;
+    }
 
     auto originalState = state.state;
     state.state.simulate(state.state.time() + TimestepDuration);
@@ -251,7 +283,7 @@ void RLPlanningEnv::print() {
 }
 
 RLEnvManager::RLEnvManager(pybind11::object simulatorVisualizerModule, pybind11::object replayLoadFn, vector<string> binaryReplayFilePaths) :
-    observer(getAvailableUnitsForRace(Race::Protoss), CoordinateRemapper(Point2D(0,0), Point2D(100, 100), false, false))
+    observer(getAvailableUnitsForRace(Race::Protoss), CoordinateRemapper(Point2D(15, 15), Point2D(168 - 15, 168 - 15), false, false))
 {
     simulatorVisualizer = new MCTSDebugger(simulatorVisualizerModule);
     initMappings();
@@ -269,12 +301,29 @@ SimulatorState createStartingState(shared_ptr<SimulatorContext> simulator);
 
 RLPlanningEnv RLEnvManager::getEnv() {
     int playerID = 1;
-    auto simulator = make_shared<SimulatorContext>(&combatPredictor, vector<Point2D>{ Point2D(20,20), Point2D(168 - 20, 168 - 20) });
-    SimulatorState simulatorState = statePool[rand() % statePool.size()]; //createStartingState(simulator);
-    simulatorState.simulator = simulator;
-    SimulatorMCTSState mctsState(simulatorState, playerID - 1);
-    RLPlanningEnv env(playerID, mctsState, observer);
-    return env;
+
+    while(true) {
+        SimulatorState simulatorState = statePool[rand() % statePool.size()]; //createStartingState(simulator);
+        auto nexus1 = simulatorState.selectOne(1, UNIT_TYPEID::PROTOSS_NEXUS);
+        auto nexus2 = simulatorState.selectOne(2, UNIT_TYPEID::PROTOSS_NEXUS);
+        if (nexus1.first == nullptr || nexus2.first == nullptr) continue;
+
+        vector<Point2D> spawningPoints(2);
+        spawningPoints[0] = nexus1.first->pos;
+        spawningPoints[1] = nexus2.first->pos;
+        
+        auto simulator = make_shared<SimulatorContext>(&combatPredictor, spawningPoints );
+        simulatorState.simulator = simulator;
+        SimulatorMCTSState mctsState(simulatorState, playerID - 1);
+
+        int playerIndex = playerID - 1;
+        int opponentIndex = 1 - playerIndex;
+        bool flipX = spawningPoints[playerIndex].x > spawningPoints[opponentIndex].x;
+        bool flipY = spawningPoints[playerIndex].y > spawningPoints[opponentIndex].y;
+        EnvObserver envObserver(getAvailableUnitsForRace(Race::Protoss), CoordinateRemapper(Point2D(15, 15), Point2D(168 - 15, 168 - 15), flipX, flipY));
+        RLPlanningEnv env(playerID, mctsState, envObserver);
+        return env;
+    }
 }
 
 SimulatorState createStartingState(shared_ptr<SimulatorContext> simulator) {

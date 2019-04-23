@@ -21,9 +21,10 @@ struct RLPlanningEnv {
     int trainingPlayer = 1;
     SimulatorMCTSState state;
     std::shared_ptr<SimulatorContext> simulator;
-    const EnvObserver& observer;
+    const EnvObserver observer;
 
-    RLPlanningEnv(int trainingPlayer, SimulatorMCTSState state, const EnvObserver& observer) : trainingPlayer(trainingPlayer), state(state), simulator(state.state.simulator), observer(observer) {}
+    RLPlanningEnv(int trainingPlayer, SimulatorMCTSState state, const EnvObserver observer) : trainingPlayer(trainingPlayer), state(state), simulator(state.state.simulator), observer(observer) {
+    }
 
     std::pair<float, bool> step(int action);
     std::vector<pybind11::array_t<float>> observe();

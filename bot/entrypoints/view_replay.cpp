@@ -90,13 +90,13 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    coordinator.SetStepSize(112); // 5 seconds (22.4*5)
+    // coordinator.SetStepSize(112); // 5 seconds (22.4*5)
 
     // if (!coordinator.SetReplayPath(kReplayFolder)) {
     //     std::cout << "Unable to find replays." << std::endl;
     //     return 1;
     // }
-    vector<string> list = { "saved_replays/2019_03_21_very_hard_fail.SC2Replay"};
+    vector<string> list = { "/Users/arong/Programming/kth/thesis/laddertest/replays/VoxelbotvKagamine-Bandwidth.SC2Replay"};
     coordinator.LoadReplayList(list);
 
     Replay replay_observer1;

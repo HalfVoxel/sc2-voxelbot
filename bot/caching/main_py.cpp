@@ -73,7 +73,7 @@ void printMappings() {
             output << "   ";
             if (blacklistedUnits.find(us[0]) != blacklistedUnits.end()) output << "# ";
             output << "Unit(\"" << UnitTypeToName(us[0]) << "\", " << (isArmy(us[0]) ? "True" : "False") << ", [";
-            for (int i = 0; i < us.size(); i++) {
+            for (size_t i = 0; i < us.size(); i++) {
                 if (i > 0) output << ", ";
                 output << (int)us[i];
             }
