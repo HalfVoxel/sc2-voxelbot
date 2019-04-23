@@ -57,33 +57,109 @@ BOT::Status InCombat::OnTick() {
     return Failure;
 }
 
+static Point2D NornalizeVector(Point2D v) {
+    float magn = sqrt(v.x*v.x + v.y*v.y);
+    return magn > 0 ? v / magn : Point2D(0,0);
+}
+
+bool isCombatRetreat(const UnitGroup* group, Point2D movementTarget) {
+    Point2D meanPos = Point2D(0,0);
+
+    for (auto unit : group->units) {
+        meanPos += unit->pos;
+    }
+    if (group->units.size() > 0) meanPos /= group->units.size();
+
+    auto movementDirection = movementTarget - meanPos;
+    auto normalizedMovementDirection = NornalizeVector(movementDirection);
+    const float DistanceThreshold = 14;
+    int inRange = 0;
+    int inRangeAndDirection = 0;
+    for (auto* unit : bot->enemyUnits()) {
+        if (DistanceSquared2D(meanPos, unit->pos) < DistanceThreshold*DistanceThreshold) {
+            inRange++;
+            auto unitDirection = unit->pos - meanPos;
+            // Dot product
+            float distanceAlongDirection = unitDirection.x*normalizedMovementDirection.x + unitDirection.y*normalizedMovementDirection.y;
+            if (distanceAlongDirection > 1) {
+                inRangeAndDirection++;
+            }
+        }
+    }
+
+    // True if the desired movement direction is not in the direction of any enemies
+    bool shouldAttack = inRangeAndDirection > inRange * 0.2f;
+
+    // Also attack move if there are no enemies in range at all
+    shouldAttack |= inRange == 0;
+
+    // TODO: Should force attack if MCTS action is AttackClosestEnemy?
+
+    return !shouldAttack;
+}
+
+
 BOT::Status TacticalMove::OnTick() {
     auto group = GetGroup();
     if (!group->units.empty()) {
         Point3D from = group->GetPosition();
+        auto movementTarget = bot->tacticalManager->RequestTargetPosition(group);
         if (pathingTicker % 100 == 0) {
-            currentPath = getPath(Point2DI((int)from.x, (int)from.y), bot->tacticalManager->RequestTargetPosition(group), bot->influenceManager.pathing_cost);
+            bool anyGroundUnits = false;
+            for (auto& u : group->units) if (!u->is_flying) anyGroundUnits = true;
+
+            if (anyGroundUnits) {
+                currentPath = getPath(Point2DI((int)from.x, (int)from.y), movementTarget, bot->influenceManager.pathing_cost_finite);
+            } else {
+                // Flying units can take the direct path
+                currentPath = { movementTarget };
+            }
         }
+
+        bool retreat = isCombatRetreat(group, Point2D(movementTarget.x, movementTarget.y));
         auto game_info = bot->Observation()->GetGameInfo();
-        if (!currentPath.empty()) {
+        auto ability = retreat ? ABILITY_ID::MOVE : ABILITY_ID::ATTACK;
+
+        // Only move units at most every second frame
+        // Orders sometimes seem to take 2 frames to show up in the API so multiple redundant actions might be issued
+        // if an order was given every frame.
+        if (!currentPath.empty() && (pathingTicker % 2) == 0) {
             for (int i = 0; i < std::min(40, (int)currentPath.size() - 1); i++) {
                 bot->Debug()->DebugLineOut(Point3D(currentPath[i].x, currentPath[i].y, from.z + 1), Point3D(currentPath[i + 1].x, currentPath[i + 1].y, from.z + 1), Colors::White);
             }
             // bot->Debug()->DebugLineOut(from, Point3D(currentPath[0].x, currentPath[0].y, from.z), Colors::White);
-            auto target_pos = Point2D(currentPath[0].x, currentPath[0].y);
-            bool positionReached = true;
-            int allowedDist = 7;
-            for (auto* unit : group->units) {
-                bool withinDistance = Distance2D(unit->pos, target_pos) < allowedDist;
-                if (!withinDistance && (unit->orders.empty() || Distance2D(target_pos, unit->orders[0].target_pos) > 1 || (pathingTicker % 250 == 0))) {
-                    bot->Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, target_pos);
+            while(true) {
+                auto target_pos = Point2D(currentPath[0].x, currentPath[0].y);
+                bool positionReached = true;
+                std::vector<const Unit*> unitsToOrder;
+                int allowedDist = 7;
+                
+                for (auto* unit : group->units) {
+                    bool withinDistance = DistanceSquared2D(unit->pos, target_pos) < allowedDist*allowedDist;
+                    if (unit->orders.empty() || DistanceSquared2D(target_pos, unit->orders[0].target_pos) > 1 || unit->orders[0].ability_id != ability || (!withinDistance && pathingTicker % 250 == 0)) {
+                        unitsToOrder.push_back(unit);
+                    }
+                    if (!withinDistance) {
+                        positionReached = false;
+                    }
                 }
-                if (!withinDistance) {
-                    positionReached = false;
+
+                if (positionReached) {
+                    if (currentPath.size() > 1) {
+                        currentPath.erase(currentPath.begin());
+                        // Check again
+                        continue;
+                    } else if (pathingTicker % 100 != 0) {
+                        // If we are at the end of the path then only allow actions every 100 ticks (≈5 seconds).
+                        // The orders will be constantly completed so the above code will try to give them orders all the time.
+                        break;
+                    }
                 }
-            }
-            if (positionReached) {
-                currentPath.erase(currentPath.begin());
+
+                if (unitsToOrder.size() > 0) {
+                    bot->Actions()->UnitCommand(unitsToOrder, ability, target_pos);
+                }
+                break;
             }
         }
         pathingTicker++;
