@@ -8,11 +8,6 @@
 using namespace std;
 using namespace sc2;
 
-
-static pair<int, int> round_point(Point2D p) {
-    return make_pair((int)round(p.x), (int)round(p.y));
-}
-
 Tensor& Tensor::operator+=(const Tensor& other) {
     assert(w == other.w);
     assert(h == other.h);
