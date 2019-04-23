@@ -2,7 +2,7 @@
 #include "../CombatPredictor.h"
 #include "mcts_cache.h"
 #include "sc2lib/sc2_lib.h"
-
+#include <iostream>
 #include<functional>
 #include <vector>
 
@@ -12,5 +12,6 @@ struct SimulatorContext {
     std::vector<sc2::Point2D> defaultPositions;
     MCTSCache cache;
 
-    SimulatorContext(CombatPredictor* combatPredictor, std::vector<sc2::Point2D> defaultPositions) : combatPredictor(combatPredictor), defaultPositions(defaultPositions) {}
+    SimulatorContext(CombatPredictor* combatPredictor, std::vector<sc2::Point2D> defaultPositions) : combatPredictor(combatPredictor), defaultPositions(defaultPositions) {
+    }
 };

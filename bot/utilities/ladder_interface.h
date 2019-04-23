@@ -84,19 +84,24 @@ struct ConnectionOptions
 	bool ComputerOpponent;
 	sc2::Difficulty ComputerDifficulty;
 	sc2::Race ComputerRace;
+	bool Bypass = false;
 };
 
 static void ParseArguments(int argc, char *argv[], ConnectionOptions &connect_options)
 {
 	sc2::ArgParser arg_parser(argv[0]);
-	arg_parser.AddOptions({
+
+	std::vector<sc2::Arg> args = {
 		{ "-g", "--GamePort", "Port of client to connect to", false },
 		{ "-o", "--StartPort", "Starting server port", false },
 		{ "-l", "--LadderServer", "Ladder server address", false },
 		{ "-c", "--ComputerOpponent", "If we set up a computer oppenent", false },
 		{ "-a", "--ComputerRace", "Race of computer oppent", false },
-		{ "-d", "--ComputerDifficulty", "Difficulty of computer oppenent", false }
-		});
+		{ "-d", "--ComputerDifficulty", "Difficulty of computer oppenent", false },
+		{ "-b", "--Bypass", "Play without using the ladder manager", false },
+	};
+	arg_parser.AddOptions(args);
+
 	arg_parser.Parse(argc, argv);
 	std::string GamePortStr;
 	if (arg_parser.Get("GamePort", GamePortStr)) {
@@ -105,6 +110,10 @@ static void ParseArguments(int argc, char *argv[], ConnectionOptions &connect_op
 	std::string StartPortStr;
 	if (arg_parser.Get("StartPort", StartPortStr)) {
 		connect_options.StartPort = atoi(StartPortStr.c_str());
+	}
+	std::string bp;
+	if (arg_parser.Get("Bypass", StartPortStr)) {
+		connect_options.Bypass = true;
 	}
 	arg_parser.Get("LadderServer", connect_options.ServerAddress);
 	std::string CompOpp;
@@ -129,14 +138,16 @@ static void ParseArguments(int argc, char *argv[], ConnectionOptions &connect_op
 	}
 }
 
-static void RunBot(int argc, char *argv[], sc2::Agent *Agent,sc2::Race race)
+static bool RunBot(int argc, char *argv[], sc2::Agent *Agent,sc2::Race race)
 {
 	ConnectionOptions Options;
 	ParseArguments(argc, argv, Options);
 
+	if (Options.Bypass) return false;
+
 	sc2::Coordinator coordinator;
 	if (!coordinator.LoadSettings(argc, argv)) {
-		return;
+		return true;
 	}
 
 	// Add the custom bot, it will control the players.
@@ -169,4 +180,5 @@ static void RunBot(int argc, char *argv[], sc2::Agent *Agent,sc2::Race race)
 	std::cout << " Successfully joined game" << std::endl;
 	while (coordinator.Update()) {
 	}
+	return true;
 }

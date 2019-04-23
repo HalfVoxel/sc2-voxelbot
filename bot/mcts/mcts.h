@@ -5,6 +5,7 @@
 #include <iomanip>
 #include "optional.hpp"
 #include "../utilities/profiler.h"
+#include "variance_estimator.h"
 
 template <class A, class T>
 struct MCTSState;
@@ -13,7 +14,7 @@ template <class A, class T>
 struct MCTSChild {
     A action;
     float prior;
-    MCTSState<A,T>* state;
+    std::shared_ptr<MCTSState<A,T>> state;
 };
 
 template <class A, class T>
@@ -24,8 +25,9 @@ struct MCTSState {
     float wins = 0;
     int raveVisits = 0;
     float raveWins = 0;
+    VarianceEstimator varianceEstimator;
 
-    MCTSState (const T& state) : internalState(state) {
+    MCTSState (T state) : internalState(state) {
     }
 
     MCTSChild<A,T>& select();
@@ -33,21 +35,13 @@ struct MCTSState {
     void expand();
     float rollout() const;
     void print(int padding=0, int maxDepth = 100000) const;
-    MCTSState<A,T>* getChild(A action);
-    nonstd::optional<std::pair<A, MCTSState<A,T>&>> bestAction() const;
-    ~MCTSState();
+    std::shared_ptr<MCTSState<A,T>> getChild(A action);
+    nonstd::optional<std::pair<A, std::shared_ptr<MCTSState<A,T>>>> bestAction() const;
     MCTSState(const MCTSState&) = delete;
 };
 
 template <class A, class T>
-MCTSState<A,T>::~MCTSState<A,T>() {
-    for (auto& c : children) {
-        delete c.state;
-    }
-}
-
-template <class A, class T>
-MCTSState<A,T>* MCTSState<A,T>::getChild(A action) {
+std::shared_ptr<MCTSState<A,T>> MCTSState<A,T>::getChild(A action) {
     for (auto& c : children) {
         if (c.action == action) return c.state;
     }
@@ -59,7 +53,7 @@ void MCTSState<A,T>::print(int padding, int maxDepth) const {
 
     for (int i = 0; i < padding; i++) std::cout << "|\t";
     auto p = std::cout.precision();
-    std::cout << internalState.to_string() << " (" << wins << "/" << visits << " = " << std::setprecision(2) << (wins/visits) << std::setprecision(p) << ")" << std::endl;
+    std::cout << internalState.to_string() << " (" << wins << "/" << visits << " = " << std::setprecision(2) << (wins/visits) << std::setprecision(p) << ", var=" << varianceEstimator.variance() << ")" << std::endl;
     if (maxDepth > 0) {
         for (auto& child : children) {
             if (child.state != nullptr) {
@@ -70,33 +64,51 @@ void MCTSState<A,T>::print(int padding, int maxDepth) const {
     }
 }
 
+static const bool ENABLE_RAVE = false;
+static const bool ENABLE_SCORE_NORMALIZATION = true;
+
 template <class A, class T>
 MCTSChild<A,T>& MCTSState<A,T>::select() {
+    float varianceMultiplier = 1.0f / (0.001f + sqrt(varianceEstimator.variance()));
     while(true) {
-        const float c = 1;
+        const float c = 2.0f;
         // float exploration = c * sqrt(visits);
         float exploration = c * sqrt(log(visits));
         float raveExploration = c * sqrt(log(raveVisits));
         float bestScore = -1000;
         int bestAction = -1;
-        for (int i = 0; i < children.size(); i++) {
+        for (size_t i = 0; i < children.size(); i++) {
             const auto& child = children[i];
             float score;
             if (children[i].state == nullptr) {
-                score = child.prior + exploration;
+                float r = child.prior;
+                if (ENABLE_SCORE_NORMALIZATION) r *= varianceMultiplier;
+                score = r + exploration;
                 // std::cout << "A " << score << std::endl;
             } else {
+                // if (ENABLE_SCORE_NORMALIZATION) {
+                //     float r = child.state->wins / child.state->visits;
+                //     r *= normalizationFactor;
+                //     float UCTScore = -r + exploration / sqrt(1 + child.state->visits);
+                // }
                 float priorStrength = 4;
-                float r = (child.state->wins + (1 - child.prior) * priorStrength) / (child.state->visits + priorStrength);
-                float raveR = (child.state->raveWins + ( 1 - child.prior) * priorStrength) / (child.state->raveVisits + priorStrength);
+                float r = (child.state->wins - child.prior * priorStrength) / (child.state->visits + priorStrength);
                 // score = (1 - r) + child.prior * exploration / sqrt(1 + child.state->visits);
                 // score = (1 - r) + exploration / sqrt(1 + child.state->visits);
                 
-                float UCTScore = (1 - r) + exploration / sqrt(1 + child.state->visits);
-                float RaveScore = (1 - raveR) + raveExploration / sqrt(1 + child.state->raveVisits);
+                // float UCTScore = (1 - r) + exploration / sqrt(1 + child.state->visits);
+                if (ENABLE_SCORE_NORMALIZATION) r *= varianceMultiplier;
+                float UCTScore = -r + exploration / sqrt(1 + child.state->visits);
+                
+                if (ENABLE_RAVE) {
+                    float raveR = (child.state->raveWins + ( 1 - child.prior) * priorStrength) / (child.state->raveVisits + priorStrength);
+                    float RaveScore = (1 - raveR) + raveExploration / sqrt(1 + child.state->raveVisits);
 
-                float alpha = 5000/(5000 + child.state->visits);
-                score = (1 - alpha) * UCTScore + alpha * RaveScore;
+                    float alpha = 5000/(5000 + child.state->visits);
+                    score = (1 - alpha) * UCTScore + alpha * RaveScore;
+                } else {
+                    score = UCTScore;
+                }
                 // std::cout << "B " << score << std::endl;
             }
 
@@ -121,7 +133,7 @@ bool MCTSState<A,T>::instantiateAction(int actionIndex) {
     // std::cout << "Exploring" << std::endl;
     auto ret = internalState.step(children[actionIndex].action);
     if (ret.second) {
-        children[actionIndex].state = new MCTSState(std::move(ret.first));
+        children[actionIndex].state = std::make_shared<MCTSState>(std::move(ret.first));
         return true;
     } else {
         // Invalid action, remove this child node
@@ -139,7 +151,7 @@ void MCTSState<A, T>::expand() {
         return;
     }
     children = std::vector<MCTSChild<A, T>>(moves.size());
-    for (int i = 0; i < children.size(); i++) {
+    for (size_t i = 0; i < children.size(); i++) {
         children[i] = { moves[i].first, moves[i].second, nullptr };
     }
 }
@@ -202,15 +214,21 @@ MCTSPropagationResult mcts(MCTSState<A,T>& node, int depth = 0) {
     node.visits += result.rollouts;
     node.raveWins += result.wins;
     node.raveVisits += result.rollouts;
-    for (int i = node.children.size() - 1; i >= 0; i--) {
-        auto& c = node.children[i];
-        if (result.usedActions[c.action]) {
-            if (c.state == nullptr) {
-                if (!node.instantiateAction(i)) continue;
-            }
+    for (int i = 0; i < result.rollouts; i++) {
+        node.varianceEstimator.add(result.wins/result.rollouts);
+    }
 
-            c.state->raveWins += result.wins;
-            c.state->raveVisits += result.rollouts;
+    if (ENABLE_RAVE) {
+        for (int i = node.children.size() - 1; i >= 0; i--) {
+            auto& c = node.children[i];
+            if (result.usedActions[c.action]) {
+                if (c.state == nullptr) {
+                    if (!node.instantiateAction(i)) continue;
+                }
+
+                c.state->raveWins += result.wins;
+                c.state->raveVisits += result.rollouts;
+            }
         }
     }
 
@@ -221,7 +239,7 @@ MCTSPropagationResult mcts(MCTSState<A,T>& node, int depth = 0) {
 }
 
 template <class A, class T>
-nonstd::optional<std::pair<A, MCTSState<A,T>&>> MCTSState<A, T>::bestAction() const {
+nonstd::optional<std::pair<A, std::shared_ptr<MCTSState<A,T>>>> MCTSState<A, T>::bestAction() const {
     int bestAction = -1;
     int bestScore = -1000;
     for (int i = 0; i < children.size(); i++) {
@@ -238,5 +256,5 @@ nonstd::optional<std::pair<A, MCTSState<A,T>&>> MCTSState<A, T>::bestAction() co
     if (bestAction == -1) {
         return {};
     }
-    return nonstd::make_optional<std::pair<A, MCTSState<A,T>&>> (children[bestAction].action, *children[bestAction].state);
+    return nonstd::make_optional<std::pair<A, std::shared_ptr<MCTSState<A,T>>>> (children[bestAction].action, children[bestAction].state);
 }

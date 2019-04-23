@@ -114,9 +114,9 @@ vector<bool> BuildOrderTracker::update(const vector<const Unit*>& ourUnits) {
         }
     }
 
-    cout << "In progress ";
-    for (auto p : inProgress) cout << getUnitData(p.first).name << " x" << p.second << ", ";
-    cout << endl;
+    // cout << "In progress ";
+    // for (auto p : inProgress) cout << getUnitData(p.first).name << " x" << p.second << ", ";
+    // cout << endl;
 
     
     vector<bool> res(buildOrderUnits.size());

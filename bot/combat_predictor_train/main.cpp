@@ -172,14 +172,14 @@ int main() {
 
             int winner = result.state.owner_with_best_outcome();
             int unitCount = 0;
-            for (int j = 0; j < state.units.size(); j++) {
+            for (size_t j = 0; j < state.units.size(); j++) {
                 unitCount += state.units[j].owner == winner;
             }
 
             if (unitCount > 3) {
                 for (int k = 0; k < 3; k++) {
                     int offset = rand() % state.units.size();
-                    for (int j = 0; j < state.units.size(); j++) {
+                    for (size_t j = 0; j < state.units.size(); j++) {
                         int idx = (j + offset) % state.units.size();
                         if (state.units[idx].owner == winner) {
                             state.units.erase(state.units.begin() + idx);

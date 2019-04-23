@@ -8,9 +8,10 @@
 struct MCTSDebugger {
     pybind11::object visualize_fn;
     pybind11::object visualize_bar_fn;
+    pybind11::object reset_fn;
 
     MCTSDebugger();
     MCTSDebugger(pybind11::object simulatorVisualizerModule);
     void visualize(SimulatorState& state);
-    void debugInteractive(MCTSState<int, SimulatorMCTSState>* state);
+    void debugInteractive(std::shared_ptr<MCTSState<int, SimulatorMCTSState>> state);
 };

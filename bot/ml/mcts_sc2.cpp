@@ -77,12 +77,12 @@ float healthFraction (const SimulatorState& state, int owner) {
 struct CanAttackGroup {
     vector<float> dps;
 
-    CanAttackGroup(const vector<SimulatorUnitGroup*>& ourGroups) {
+    CanAttackGroup(const CombatPredictor& combatPredictor, const vector<SimulatorUnitGroup*>& ourGroups) {
         dps = vector<float>(2);
         for (auto* group : ourGroups) {
             for (auto& unit : group->units) {
-                dps[0] += calculateDPS(unit.combat.type, false);
-                dps[1] += calculateDPS(unit.combat.type, true);
+                dps[0] +=  combatPredictor.defaultCombatEnvironment.calculateDPS(unit.combat.type, false);
+                dps[1] += combatPredictor.defaultCombatEnvironment.calculateDPS(unit.combat.type, true);
             }
         }
     }
@@ -172,7 +172,8 @@ bool SimulatorMCTSState::executeAction(MCTSAction action, std::function<void(Sim
                     state.command(groups, SimulatorOrder(SimulatorOrderType::Attack, destination), commandListener);
                 } else {
                     bool toOwnBase = action == MCTSAction::ArmyMoveBase || action == MCTSAction::NonArmyMoveBase;
-                    CanAttackGroup canAttack(groups);
+                    auto simulator = shared_ptr<SimulatorContext>(state.simulator);
+                    CanAttackGroup canAttack(*simulator->combatPredictor, groups);
                     function<bool(const SimulatorUnitGroup&)> filter = [&](const SimulatorUnitGroup& targetGroup) { return canAttack.canAttack(targetGroup); };
                     auto* targetGroupFilter = toOwnBase || action == MCTSAction::ArmyAttackBase ? &structureGroup : &filter;
                     auto* closestEnemy = closestGroup(state, toOwnBase ? playerID : opponentID, avgPos, targetGroupFilter);
@@ -219,6 +220,10 @@ bool SimulatorMCTSState::executeAction(MCTSAction action, std::function<void(Sim
             // assert(healthFraction(state, playerID) == 0.0f || healthFraction(state, playerID) == 0.5f);
             break;
         }
+        case MCTSAction::Count: {
+            assert(false);
+            break;
+        }
     }
 
     return true;
@@ -228,6 +233,7 @@ static float t1, t2, t3, t4, t5;
 static int counter = 0;
 
 bool SimulatorMCTSState::internalStep(int action, bool ignoreUnintentionalNOOP) {
+    auto simulator = shared_ptr<SimulatorContext>(state.simulator);
     Stopwatch w1;
     if (!executeAction((MCTSAction)action)) {
         w1.stop();
@@ -238,12 +244,12 @@ bool SimulatorMCTSState::internalStep(int action, bool ignoreUnintentionalNOOP) 
     t5 += w1.millis();
 
     // state.simulate(state.simulator, state.time() + max(5.0f, 0.2f * state.time()));
-    assert(state.time() >= state.simulator->simulationStartTime);
-    if ((state.time() + 3 + 0.2f * (state.time() - state.simulator->simulationStartTime)) > 10000) {
-        // cerr << "Too large time " << state.time() << " " << state.simulator.simulationStartTime << endl;
+    assert(state.time() >= simulator->simulationStartTime);
+    if ((state.time() + 3 + 0.2f * (state.time() - simulator->simulationStartTime)) > 10000) {
+        // cerr << "Too large time " << state.time() << " " << simulator.simulationStartTime << endl;
         // assert(false);
     }
-    state.simulate(state.time() + 3 + 0.2f * (state.time() - state.simulator->simulationStartTime));
+    state.simulate(state.time() + 3 + 0.2f * (state.time() - simulator->simulationStartTime));
 
     player = 1 - player;
     // if (action == 0) state += 100;
@@ -287,6 +293,7 @@ vector<pair<int, float>> SimulatorMCTSState::generateMoves() {
 }
 
 float SimulatorMCTSState::rollout() const {
+    auto simulator = shared_ptr<SimulatorContext>(state.simulator);
     Stopwatch w1;
     int w = isWin();
     w1.stop();
@@ -308,10 +315,10 @@ float SimulatorMCTSState::rollout() const {
         if (i == 3) {
             res.internalStep((rand() % 9));
         } else {
-            assert(res.state.time() >= state.simulator->simulationStartTime);
-            float newEndTime = res.state.time() + 3 + 0.2f * (res.state.time() - state.simulator->simulationStartTime);
+            assert(res.state.time() >= simulator->simulationStartTime);
+            float newEndTime = res.state.time() + 3 + 0.2f * (res.state.time() - simulator->simulationStartTime);
             if (newEndTime > 10000) {
-                // cerr << "Too large time2 " << res.state.time() << " " << res.state.simulator.simulationStartTime << " " << res.state.tick << endl;
+                // cerr << "Too large time2 " << res.state.time() << " " << res.simulator.simulationStartTime << " " << res.state.tick << endl;
                 // assert(false);
             }
             res.state.simulate(newEndTime);
@@ -343,14 +350,15 @@ string SimulatorMCTSState::to_string() const {
 
 unique_ptr<MCTSState<int, SimulatorMCTSState>> findBestActions(SimulatorState& startState, int startingPlayerIndex) {
     assert(startingPlayerIndex == 0 || startingPlayerIndex == 1);
+    auto simulator = shared_ptr<SimulatorContext>(startState.simulator);
     unique_ptr<MCTSState<int, SimulatorMCTSState>> state = make_unique<MCTSState<int, SimulatorMCTSState>>(SimulatorMCTSState(startState, startingPlayerIndex));
-    startState.simulator->simulationStartTime = startState.time();
+    simulator->simulationStartTime = startState.time();
 
-    for (int i = 0; i < 45000; i++) {
+    for (int i = 0; i < 30000; i++) {
         mcts<int, SimulatorMCTSState>(*state);
     }
 
-    auto* s = &*state;
+    /*auto* s = &*state;
     int depth = 0;
     while(true) {
         if (s->bestAction()) {
@@ -359,7 +367,7 @@ unique_ptr<MCTSState<int, SimulatorMCTSState>> findBestActions(SimulatorState& s
             break;
         }
         depth++;
-    }
+    }*/
     // cout << "SEARCH DEPTH " << depth << endl;
     return state;
 }

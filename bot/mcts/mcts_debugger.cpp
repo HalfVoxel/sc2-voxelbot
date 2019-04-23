@@ -24,6 +24,7 @@ MCTSDebugger::MCTSDebugger() {
     auto simulatorVisualizer = pybind11::module::import("simulator_visualizer");
     visualize_fn = simulatorVisualizer.attr("visualize");
     visualize_bar_fn = simulatorVisualizer.attr("visualize_bar");
+    reset_fn = simulatorVisualizer.attr("reset_visualizer");
 #endif
 }
 
@@ -31,6 +32,7 @@ MCTSDebugger::MCTSDebugger(pybind11::object simulatorVisualizerModule) {
 #if !DISABLE_PYTHON
     visualize_fn = simulatorVisualizerModule.attr("visualize");
     visualize_bar_fn = simulatorVisualizerModule.attr("visualize_bar");
+    reset_fn = simulatorVisualizerModule.attr("reset_visualizer");
 #endif
 }
 
@@ -48,9 +50,11 @@ void MCTSDebugger::visualize(SimulatorState& state) {
 #endif
 }
 
-void MCTSDebugger::debugInteractive(MCTSState<int, SimulatorMCTSState>* startState) {
-    MCTSState<int, SimulatorMCTSState>* state = startState;
-    stack<MCTSState<int, SimulatorMCTSState>*> stateStack;
+void MCTSDebugger::debugInteractive(shared_ptr<MCTSState<int, SimulatorMCTSState>> startState) {
+    reset_fn();
+
+    shared_ptr<MCTSState<int, SimulatorMCTSState>> state = startState;
+    stack<shared_ptr<MCTSState<int, SimulatorMCTSState>>> stateStack;
 
     string green = "\x1b[38;2;0;255;0m";
     string greenish = "\x1b[38;2;93;173;110m";
@@ -100,7 +104,7 @@ void MCTSDebugger::debugInteractive(MCTSState<int, SimulatorMCTSState>* startSta
         int chosenAction;
         if (!(ss >> chosenAction)) continue;
 
-        auto* child = state->getChild(chosenAction);
+        auto child = state->getChild(chosenAction);
         if (child == nullptr) continue;
         
         stateStack.push(state);

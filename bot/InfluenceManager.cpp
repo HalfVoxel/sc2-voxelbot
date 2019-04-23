@@ -21,7 +21,10 @@ void InfluenceManager::Init() {
         pathing_grid.addInfluence(square5x5, p - Point2D(0.5, 0.5));
     }
 
+    // 1 vs infinity in cost
     pathing_cost = (pathing_grid - 1).replace_nonzero(numeric_limits<double>::infinity()) + 1;
+    // 1 vs 100 in cost
+    pathing_cost_finite = (pathing_grid - 1).replace_nonzero(99) + 1;
 
     placement_grid = InfluenceMap(bot->game_info_.placement_grid);
     enemyDensity = InfluenceMap(pathing_grid.w, pathing_grid.h);
@@ -44,7 +47,7 @@ void InfluenceManager::OnStep() {
         double spread = 5;
         auto observation = bot->Observation();
         for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
-            if (IsStructure(observation)(*unit)) {
+            if (isStructure(unit->unit_type)) {
                 valueMap.addInfluence(1.0 / spread, unit->pos);
             } else if (!IsArmy(observation)(*unit)) {
                 valueMap.addInfluence(0.2 / spread, unit->pos);

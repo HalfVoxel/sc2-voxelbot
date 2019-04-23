@@ -32,11 +32,11 @@ int main(int argc, char* argv[]) {
     )");
 #endif
 
+    initMappings();
     bot = new Bot();
     agent = bot;
 
-    RunBot(argc, argv, agent, Race::Protoss);
-    return 0;
+    if (RunBot(argc, argv, agent, Race::Protoss)) return 0;
 
     /*
     std::cout << argc << " " << (std::string(argv[1]) == "--composition") << std::endl;

@@ -73,7 +73,7 @@ void example_simulation(SimulatorContext& simulator, SimulatorState& state) {
 void mcts(SimulatorState& startState) {
     srand(time(0));
 
-    unique_ptr<MCTSState<int, SimulatorMCTSState>> state = make_unique<MCTSState<int, SimulatorMCTSState>>(SimulatorMCTSState(startState));
+    shared_ptr<MCTSState<int, SimulatorMCTSState>> state = make_shared<MCTSState<int, SimulatorMCTSState>>(SimulatorMCTSState(startState));
     /*for (int i = 0; i < 100000; i++) {
         mcts<int, SimulatorMCTSState>(*state);
     }*/
@@ -83,13 +83,17 @@ void mcts(SimulatorState& startState) {
     // state->getChild(6)->getChild(4)->getChild(0)->getChild(1)->getChild(4)->print(0, 2);
     // state->getChild(4)->getChild(4)->print(0, 2);
 
-    auto* currentState = &*state;
+    auto currentState = state;
     visualizeSimulator(currentState->internalState.state);
     int it = 0;
     while(true) {
         if (it % 2 == 0) {
-            state = make_unique<MCTSState<int, SimulatorMCTSState>>(SimulatorMCTSState(currentState->internalState.state));
-            state->internalState.state.simulator->simulationStartTime = state->internalState.state.time();
+            auto simulator = shared_ptr<SimulatorContext>(state->internalState.state.simulator);
+            // Clear cache to excessive memory usage over time
+            simulator->cache.clear();
+
+            state = make_shared<MCTSState<int, SimulatorMCTSState>>(SimulatorMCTSState(currentState->internalState.state));
+            simulator->simulationStartTime = state->internalState.state.time();
 
             vector<vector<float>> stats(200, vector<float>(14));
             vector<vector<float>> statsRave(200, vector<float>(14));
@@ -108,14 +112,14 @@ void mcts(SimulatorState& startState) {
             if (it == 0) {
                 state->print(0, 3);
             }
-            currentState = &*state;
+            currentState = state;
         }
         //auto action = ((it % 2) == 1) ? (it == 1 || it == 3 || it == 5 ? nonstd::make_optional<pair<int, State<int, SimulatorMCTSState>&>>(4, *currentState->getChild(4)) : nonstd::make_optional<pair<int, State<int, SimulatorMCTSState>&>>(0, *currentState->getChild(0))) : currentState->bestAction();
         auto action = currentState->bestAction();
         it++;
         if (action && currentState->getChild(action.value().first) != nullptr) {
             cout << "Action " << action.value().first << endl;
-            currentState = &action.value().second;
+            currentState = action.value().second;
             for (auto& g : currentState->internalState.state.groups) {
                 cout << "Group action: " << g.order.type << " -> " << g.order.target.x << "," << g.order.target.y << " (player " << g.owner << " at " << g.pos.x << "," << g.pos.y << ")" << endl;
             }

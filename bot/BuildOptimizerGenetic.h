@@ -3,6 +3,7 @@
 #include <cmath>
 #include <functional>
 #include "sc2api/sc2_interfaces.h"
+#include <iostream>
 
 struct BuildState;
 
@@ -173,7 +174,7 @@ struct BuildOrder {
     }
 
     explicit BuildOrder (const std::vector<sc2::UNIT_TYPEID>& order) : items(order.size()) {
-        for (int i = 0; i < order.size(); i++) {
+        for (size_t i = 0; i < order.size(); i++) {
             items[i] = BuildOrderItem(order[i]);
         }
     }
@@ -437,7 +438,7 @@ struct AvailableUnitTypes {
         }
 
         type2index = std::vector<int>(maxIndex + 1, -1);
-        for (int i = 0; i < index2item.size(); i++) {
+        for (size_t i = 0; i < index2item.size(); i++) {
             if (index2item[i].isUnitType()) {
                 type2index[(int)index2item[i].typeID()] = i;
             }
@@ -446,14 +447,14 @@ struct AvailableUnitTypes {
     }
 
     int getIndex (sc2::UNIT_TYPEID unit) const {
-        assert((int)unit < type2index.size());
+        assert((int)unit < (int)type2index.size());
         auto res = type2index[(int)unit];
         assert(res != -1);
         return res;
     }
 
     int getIndexMaybe (sc2::UNIT_TYPEID unit) const {
-        if ((int)unit < type2index.size()) {
+        if ((int)unit < (int)type2index.size()) {
             return type2index[(int)unit];
         }
         return -1;
@@ -465,7 +466,7 @@ struct AvailableUnitTypes {
     }
 
     sc2::UNIT_TYPEID getUnitType(int index) const {
-        assert(index < index2item.size());
+        assert((size_t)index < index2item.size());
         if (!index2item[index].isUnitType()) return sc2::UNIT_TYPEID::INVALID;
         return index2item[index].typeID();
     }
@@ -473,7 +474,7 @@ struct AvailableUnitTypes {
     bool canBeChronoBoosted (int index) const;
 
     BuildOrderItem getBuildOrderItem (int index) const {
-        assert(index < index2item.size());
+        assert((size_t)index < index2item.size());
         return index2item[index];
     }
 

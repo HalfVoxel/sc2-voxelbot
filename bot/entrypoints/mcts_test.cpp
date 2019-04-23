@@ -182,7 +182,7 @@ int main () {
         auto action = state.bestAction();
         if (action) {
             cout << "Action " << action.value().first << endl;
-            state = action.value().second;
+            state = *action.value().second;
             cout << state.internalState.to_string();
         } else {
             break;

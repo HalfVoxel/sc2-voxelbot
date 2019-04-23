@@ -29,7 +29,7 @@ enum SimulatorOrderType {
 struct SimulatorOrder {
     SimulatorOrderType type = SimulatorOrderType::None;
     sc2::Point2D target;
-    int tick = 0;
+    int tick = -1000;
 
     SimulatorOrder() = default;
     SimulatorOrder(SimulatorOrderType type, sc2::Point2D target) : type(type), target(target) {}
@@ -56,7 +56,7 @@ struct SimulatorUnitGroup {
 };
 
 struct SimulatorState {
-    std::shared_ptr<SimulatorContext> simulator;
+    std::weak_ptr<SimulatorContext> simulator;
     std::vector<std::shared_ptr<const BuildState>> states;
     std::vector<SimulatorUnitGroup> groups;
     std::vector<BuildOrderState> buildOrders;
@@ -74,6 +74,7 @@ struct SimulatorState {
     void simulate (float endTime);
 
     std::vector<SimulatorUnitGroup*> select(int player, std::function<bool(const SimulatorUnitGroup&)>* groupFilter, std::function<bool(const SimulatorUnit&)>* unitFilter);
+    std::pair<SimulatorUnitGroup*, SimulatorUnit*> selectOne(int playerID, sc2::UNIT_TYPEID unit_type);
     bool command(int player, std::function<bool(const SimulatorUnitGroup&)>* groupFilter, std::function<bool(const SimulatorUnit&)>* unitFilter, SimulatorOrder order);
     void command(const std::vector<SimulatorUnitGroup*>& selection, SimulatorOrder order, std::function<void(SimulatorUnitGroup&, SimulatorOrder)>* commandListener = nullptr);
 

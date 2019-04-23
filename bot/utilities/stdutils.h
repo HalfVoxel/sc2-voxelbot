@@ -58,7 +58,7 @@ void sortByValueDescendingBubble (std::vector<T>& arr, std::function<V(const T&)
 	bool changed = true;
 	while(changed) {
 		changed = false;
-		for (int i = 0; i < arr.size() - 1; i++) {
+		for (size_t i = 0; i + 1 < arr.size(); i++) {
 			if (value(arr[i]) < value(arr[i+1])) {
 				std::swap(arr[i], arr[i+1]);
 				changed = true;

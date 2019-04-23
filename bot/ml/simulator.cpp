@@ -44,7 +44,7 @@ void removeEmptyGroups(vector<SimulatorUnitGroup>& groups) {
 void SimulatorState::simulateGroupMovement(float endTime) {
     float deltaTime = endTime - time();
     if (deltaTime < 0) {
-        cout << "Unexpected delta time " << deltaTime << " " << endTime << " " << time() << " " << &simulator << " " << simulator->simulationStartTime << endl;
+        cout << "Unexpected delta time " << deltaTime << " " << endTime << " " << time() << " " << &simulator << " " << shared_ptr<SimulatorContext>(simulator)->simulationStartTime << endl;
     }
     assert(deltaTime >= 0);
     for (auto& group : groups) {
@@ -58,7 +58,8 @@ void SimulatorState::simulateGroupMovement(float endTime) {
 void SimulatorState::simulateGroupCombat(float endTime) {
     // TODO: Vary depending on group sizes
     float combatThreshold = 8;
-
+    auto simulator = shared_ptr<SimulatorContext>(this->simulator);
+    auto& combatEnv = simulator->combatPredictor->defaultCombatEnvironment;
     for (auto& group1 : groups) {
         if (group1.owner == 1 && group1.units.size() > 0) {
             for (auto& group2 : groups) {
@@ -82,8 +83,8 @@ void SimulatorState::simulateGroupCombat(float endTime) {
                     // vector<vector<bool>> hasAirGround(2, vector<bool>(2));
                     for (auto* group : nearbyGroups) {
                         for (auto& unit : group->units) {
-                            dps[group->owner - 1][0] += calculateDPS(unit.combat.type, false);
-                            dps[group->owner - 1][1] += calculateDPS(unit.combat.type, true);
+                            dps[group->owner - 1][0] += combatEnv.calculateDPS(unit.combat.type, false);
+                            dps[group->owner - 1][1] += combatEnv.calculateDPS(unit.combat.type, true);
                             hasAirGround[group->owner - 1][0] = hasAirGround[group->owner - 1][0] | !unit.combat.is_flying;
                             hasAirGround[group->owner - 1][1] = hasAirGround[group->owner - 1][1] | canBeAttackedByAirWeapons(unit.combat.type);
                         }
@@ -112,13 +113,14 @@ void SimulatorState::simulateGroupCombat(float endTime) {
 
                         int defender = movementAmount[0] < movementAmount[1] ? 1 : 2;
 
-                        simulator->cache.handleCombat(*this, nearbyGroups, defender);
+                        float maxTime = endTime - time();
+                        simulator->cache.handleCombat(*this, nearbyGroups, defender, maxTime);
                         #if FALSE
                         // TODO: If both armies had a fight the previous time step as well, then they should already be in position (probably)
                         // TODO: What if the combat drags on longer than to endTime? (probably common in case of harassment, it takes some time for the player to start to defend)
                         // Add a max time to predict_engage and stop. Combat will resume next simulation step.
                         // Note: have to ensure that combat is resumed properly (without the attacker having to move into range and all that)
-                        CombatResult outcome = simulator.combatPredictor->predict_engage(state, false, false, nullptr, defender);
+                        CombatResult outcome = simulator->combatPredictor->predict_engage(state, false, false, nullptr, defender);
 
                         int index = 0;
                         for (auto* group : nearbyGroups) {
@@ -141,6 +143,7 @@ void SimulatorState::simulateGroupCombat(float endTime) {
 }
 
 void SimulatorState::filterDeadUnits() {
+    auto simulator = shared_ptr<SimulatorContext>(this->simulator);
     array<shared_ptr<BuildState>, 2> newStates = {{ simulator->cache.copyState(*states[0]), simulator->cache.copyState(*states[1]) }};
     states[0] = newStates[0];
     states[1] = newStates[1];
@@ -214,7 +217,7 @@ void SimulatorState::simulateBuildOrder (float endTime) {
             }
         };
 
-        auto simRes = simulator->cache.simulateBuildOrder(*states[i], buildOrders[i], endTime, &eventCallback);
+        auto simRes = shared_ptr<SimulatorContext>(simulator)->cache.simulateBuildOrder(*states[i], buildOrders[i], endTime, &eventCallback);
         states[i] = simRes.first;
         buildOrders[i].buildIndex = simRes.second.buildIndex;
         assertValidState();
@@ -270,6 +273,20 @@ void SimulatorState::mergeGroups () {
     removeEmptyGroups(groups);
 }
 
+std::pair<SimulatorUnitGroup*, SimulatorUnit*> SimulatorState::selectOne(int playerID, sc2::UNIT_TYPEID unit_type) {
+    for (auto& group : groups) {
+        if (group.owner == playerID) {
+            for (auto& unit : group.units) {
+                if (unit.combat.type == unit_type) {
+                    return { &group, &unit };
+                }
+            }
+        }
+    }
+
+    return { nullptr, nullptr };
+}
+
 vector<SimulatorUnitGroup*> SimulatorState::select(int player, std::function<bool(const SimulatorUnitGroup&)>* groupFilter, std::function<bool(const SimulatorUnit&)>* unitFilter) {
     // Note: keep track of indices instead of pointers since we are modifying the groups vector (possibly relocating it) inside the loop
     vector<int> matchingIndices;
@@ -315,6 +332,7 @@ vector<SimulatorUnitGroup*> SimulatorState::select(int player, std::function<boo
 }
 
 void SimulatorState::command(const vector<SimulatorUnitGroup*>& selection, SimulatorOrder order, std::function<void(SimulatorUnitGroup&, SimulatorOrder)>* commandListener) {
+    order.tick = tick;
     for (auto* group : selection) {
         if (commandListener != nullptr) (*commandListener)(*group, order);
         group->execute(order);
@@ -335,6 +353,7 @@ void SimulatorState::addUnit(const sc2::Unit* unit) {
     // TODO: Add order also when just attacking an enemy
     if (unit->orders.size() > 0 && Point2D(0, 0) != unit->orders[0].target_pos) {
         group.order = SimulatorOrder(SimulatorOrderType::Attack, unit->orders[0].target_pos);
+        group.order.tick = -1000;
     }
 }
 
@@ -368,7 +387,7 @@ void SimulatorState::addUnit(int owner, sc2::UNIT_TYPEID unit_type) {
     uniform_real_distribution<double> offsetDist(-0.5f, 0.5f);
     float dx = offsetDist(rnd);
     float dy = offsetDist(rnd);
-    auto pos = (randomGroup != nullptr ? randomGroup->pos : simulator->defaultPositions[owner]) + Point2D(dx * 5, dy * 5);
+    auto pos = (randomGroup != nullptr ? randomGroup->pos : shared_ptr<SimulatorContext>(simulator)->defaultPositions[owner]) + Point2D(dx * 5, dy * 5);
     addUnit(makeUnit(owner, unit_type), pos);
 }
 
@@ -398,6 +417,10 @@ float t1, t2, t3, t4;
 int c = 0;
 
 void SimulatorState::simulate (float endTime) {
+    if (simulator.expired()) {
+        cerr << "Simulator no longer exists" << endl;
+        assert(false);
+    }
     if (endTime < time()) throw std::out_of_range("endTime");
 
     tick++;

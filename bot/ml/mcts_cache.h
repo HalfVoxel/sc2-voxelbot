@@ -16,9 +16,10 @@ struct CombatHasher {
         hash = (hash * 31) ^ (unsigned long long)unit.owner;
     }
 
-    inline void hashParams(int defenderPlayer, bool badMicro) {
+    inline void hashParams(int defenderPlayer, bool badMicro, float maxTime) {
         hash = hash ^ defenderPlayer;
         hash = hash*31 ^ (int)badMicro;
+        hash = hash*31 ^ (int)round(maxTime);
     }
 };
 
@@ -34,7 +35,6 @@ struct MCTSCache {
     std::map<uint64_t, CombatResult> combatResults;
     std::map<uint64_t, SimulationCacheItem> simulationCache;
     std::map<uint64_t, std::pair<std::shared_ptr<const BuildState>, std::shared_ptr<const BuildState>>> stateCombatTransitions;
-    std::vector<std::shared_ptr<BuildState>> cachedStates;
 
     std::shared_ptr<BuildState> copyState(const BuildState& state);
 
@@ -42,5 +42,6 @@ struct MCTSCache {
 
     /** Simulate a build state with a given build order, but return an existing cached state if possible */
     std::pair<std::shared_ptr<const BuildState>, BuildOrderState> simulateBuildOrder(const BuildState& state, const BuildOrderState& buildOrder, float endTime, const std::function<void(const BuildEvent&)>* listener);
-    void handleCombat(SimulatorState& state, const std::vector<SimulatorUnitGroup*>& groups, int defender);
+    void handleCombat(SimulatorState& state, const std::vector<SimulatorUnitGroup*>& groups, int defender, float maxTime);
+    void clear();
 };

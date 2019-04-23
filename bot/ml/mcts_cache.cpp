@@ -5,9 +5,14 @@
 using namespace std;
 using namespace sc2;
 
+void MCTSCache::clear() {
+    combatResults.clear();
+    simulationCache.clear();
+    stateCombatTransitions.clear();
+}
+
 shared_ptr<BuildState> MCTSCache::copyState(const BuildState& state) {
     auto newState = make_shared<BuildState>(state);
-    cachedStates.push_back(newState);
     return newState;
 }
 
@@ -87,11 +92,11 @@ pair<shared_ptr<const BuildState>, BuildOrderState> MCTSCache::simulateBuildOrde
     return make_pair(cache.buildState, cache.buildOrder);
 }
 
-void MCTSCache::handleCombat(SimulatorState& state, const vector<SimulatorUnitGroup*>& groups, int defender) {
+void MCTSCache::handleCombat(SimulatorState& state, const vector<SimulatorUnitGroup*>& groups, int defender, float maxTime) {
     bool badMicro = false;
 
     CombatHasher combatHasher;
-    combatHasher.hashParams(defender, badMicro);
+    combatHasher.hashParams(defender, badMicro, maxTime);
     for (auto* group : groups) {
         for (auto& u : group->units) combatHasher.hashUnit(u.combat);
     }
@@ -150,7 +155,10 @@ void MCTSCache::handleCombat(SimulatorState& state, const vector<SimulatorUnitGr
         // TODO: What if the combat drags on longer than to endTime? (probably common in case of harassment, it takes some time for the player to start to defend)
         // Add a max time to predict_engage and stop. Combat will resume next simulation step.
         // Note: have to ensure that combat is resumed properly (without the attacker having to move into range and all that)
-        CombatResult combatResult = state.simulator->combatPredictor->predict_engage(combatState, false, badMicro, nullptr, defender);
+        CombatSettings settings;
+        settings.maxTime = maxTime;
+        settings.badMicro = badMicro;
+        CombatResult combatResult = shared_ptr<SimulatorContext>(state.simulator)->combatPredictor->predict_engage(combatState, settings, nullptr, defender);
         applyCombatOutcome(state, groups, combatResult);
 
         combatResults[combatHasher.hash] = combatResult;

@@ -25,6 +25,8 @@ enum class MCTSAction {
     NonArmyAttackClosestEnemy,
     NonArmyMoveBase,
 
+    // TODO: Reinforce
+    
     // Not an action, just a size indicator
     Count
 };
@@ -75,6 +77,7 @@ struct SimulatorMCTSState {
     SimulatorState state;
     int player = 0;
     int count = 0;
+    int seed = rand();
 
     SimulatorMCTSState (SimulatorState state, int player = 0) : state(state), player(player) {}
 

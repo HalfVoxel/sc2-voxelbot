@@ -8,101 +8,205 @@
 #include "utilities/mappings.h"
 #include "utilities/profiler.h"
 #include "utilities/stdutils.h"
+#include "utilities/predicates.h"
+#include <sstream>
 
 using namespace std;
 using namespace sc2;
 
-static UnitTypes unitTypes;
+string CombatState::str() {
+    stringstream ss;
+    for (auto& u : units) {
+        ss << u.owner << ": " << getUnitData(u.type).name << " " << u.health << "+" << u.shield << "/" << u.health_max << "+" << u.shield_max << endl;
+    }
+    return ss.str();
+}
 
-float calculateDPS(const Weapon& weapon, UNIT_TYPEID target) {
+int getDamageBonus(UNIT_TYPEID unit, const CombatUpgrades& upgrades) {
+    if (isStructure(unit)) return 0;
+
+    int bonus = 0;
+    switch(getUnitData(unit).race) {
+    case Race::Protoss:
+        if (isFlying(unit)) {
+            if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSAIRWEAPONSLEVEL1)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSAIRWEAPONSLEVEL2)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSAIRWEAPONSLEVEL3)) bonus += 1;
+        } else {
+            if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSGROUNDWEAPONSLEVEL1)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSGROUNDWEAPONSLEVEL2)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSGROUNDWEAPONSLEVEL3)) bonus += 1;
+        }
+        break;
+    case Race::Zerg:
+        if (isFlying(unit)) {
+            if (upgrades.hasUpgrade(UPGRADE_ID::ZERGFLYERWEAPONSLEVEL1)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::ZERGFLYERWEAPONSLEVEL2)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::ZERGFLYERWEAPONSLEVEL3)) bonus += 1;
+        } else if (isMelee(unit)) {
+            // TODO: Might need to check which units are actually melee
+            if (upgrades.hasUpgrade(UPGRADE_ID::ZERGMELEEWEAPONSLEVEL1)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::ZERGMELEEWEAPONSLEVEL2)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::ZERGMELEEWEAPONSLEVEL3)) bonus += 1;
+        } else {
+            // Ranged
+            if (upgrades.hasUpgrade(UPGRADE_ID::ZERGMISSILEWEAPONSLEVEL1)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::ZERGMISSILEWEAPONSLEVEL2)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::ZERGMISSILEWEAPONSLEVEL3)) bonus += 1;
+        }
+        break;
+    case Race::Terran: {
+        auto canonical = canonicalize(unit);
+        auto& casters = abilityToCasterUnit(getUnitData(canonical).ability_id);
+        if (casters.size() > 0 && casters[0] == UNIT_TYPEID::TERRAN_BARRACKS) {
+            if (upgrades.hasUpgrade(UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL2)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL3)) bonus += 1;
+        } else if (casters.size() > 0 && casters[0] == UNIT_TYPEID::TERRAN_FACTORY) {
+            if (upgrades.hasUpgrade(UPGRADE_ID::TERRANVEHICLEWEAPONSLEVEL1)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::TERRANVEHICLEWEAPONSLEVEL2)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::TERRANVEHICLEWEAPONSLEVEL3)) bonus += 1;
+        } else if (casters.size() > 0 && casters[0] == UNIT_TYPEID::TERRAN_STARPORT) {
+            if (upgrades.hasUpgrade(UPGRADE_ID::TERRANSHIPWEAPONSLEVEL1)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::TERRANSHIPWEAPONSLEVEL2)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::TERRANSHIPWEAPONSLEVEL3)) bonus += 1;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+    return bonus;
+}
+
+int getArmorBonus(UNIT_TYPEID unit, const CombatUpgrades& upgrades) {
+    if (isStructure(unit)) {
+        if (getUnitData(unit).race == Race::Terran && upgrades.hasUpgrade(UPGRADE_ID::TERRANBUILDINGARMOR)) return 2;
+        return 0;
+    }
+
+    int bonus = 0;
+    switch(getUnitData(unit).race) {
+        case Race::Protoss:
+            if (isFlying(unit)) {
+                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSAIRARMORSLEVEL1)) bonus += 1;
+                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSAIRARMORSLEVEL2)) bonus += 1;
+                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSAIRARMORSLEVEL3)) bonus += 1;
+            } else {
+                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL1)) bonus += 1;
+                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL2)) bonus += 1;
+                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL3)) bonus += 1;
+            }
+            break;
+        case Race::Zerg:
+            if (isFlying(unit)) {
+                if (upgrades.hasUpgrade(UPGRADE_ID::ZERGFLYERARMORSLEVEL1)) bonus += 1;
+                if (upgrades.hasUpgrade(UPGRADE_ID::ZERGFLYERARMORSLEVEL2)) bonus += 1;
+                if (upgrades.hasUpgrade(UPGRADE_ID::ZERGFLYERARMORSLEVEL3)) bonus += 1;
+            } else {
+                if (upgrades.hasUpgrade(UPGRADE_ID::ZERGGROUNDARMORSLEVEL1)) bonus += 1;
+                if (upgrades.hasUpgrade(UPGRADE_ID::ZERGGROUNDARMORSLEVEL2)) bonus += 1;
+                if (upgrades.hasUpgrade(UPGRADE_ID::ZERGGROUNDARMORSLEVEL3)) bonus += 1;
+            }
+        case Race::Terran: {
+            auto canonical = canonicalize(unit);
+            auto& casters = abilityToCasterUnit(getUnitData(canonical).ability_id);
+            if (casters.size() > 0 && casters[0] == UNIT_TYPEID::TERRAN_BARRACKS) {
+                if (upgrades.hasUpgrade(UPGRADE_ID::TERRANINFANTRYARMORSLEVEL1)) bonus += 1;
+                if (upgrades.hasUpgrade(UPGRADE_ID::TERRANINFANTRYARMORSLEVEL2)) bonus += 1;
+                if (upgrades.hasUpgrade(UPGRADE_ID::TERRANINFANTRYARMORSLEVEL3)) bonus += 1;
+            } else if (casters.size() > 0 && (casters[0] == UNIT_TYPEID::TERRAN_FACTORY || casters[0] == UNIT_TYPEID::TERRAN_STARPORT)) {
+                if (upgrades.hasUpgrade(UPGRADE_ID::TERRANVEHICLEANDSHIPARMORSLEVEL1)) bonus += 1;
+                if (upgrades.hasUpgrade(UPGRADE_ID::TERRANVEHICLEANDSHIPARMORSLEVEL2)) bonus += 1;
+                if (upgrades.hasUpgrade(UPGRADE_ID::TERRANVEHICLEANDSHIPARMORSLEVEL3)) bonus += 1;
+            }
+            break;
+        }
+        default:
+            break;
+    }
+    return bonus;
+}
+
+float calculateDPS(UNIT_TYPEID attacker, UNIT_TYPEID target, const Weapon& weapon, const CombatUpgrades& attackerUpgrades, const CombatUpgrades& targetUpgrades) {
     // canBeAttackedByAirWeapons is primarily for coloussus.
     if (weapon.type == Weapon::TargetType::Any || (weapon.type == Weapon::TargetType::Air ? canBeAttackedByAirWeapons(target) : !isFlying(target))) {
         float dmg = weapon.damage_;
         for (auto& b : weapon.damage_bonus) {
-            if (contains(unitTypes[(int)target].attributes, b.attribute)) {
+            if (contains(getUnitData(target).attributes, b.attribute)) {
                 dmg += b.bonus;
             }
         }
 
-        int armor = unitTypes[(int)target].armor;
-        return max(0.0f, dmg - armor) * weapon.attacks / weapon.speed;
+        dmg += getDamageBonus(attacker, attackerUpgrades);
+
+        int armor = getUnitData(target).armor + getArmorBonus(target, targetUpgrades);
+
+        float timeBetweenAttacks = weapon.speed;
+
+        if (attacker == UNIT_TYPEID::PROTOSS_ADEPT && attackerUpgrades.hasUpgrade(UPGRADE_ID::ADEPTPIERCINGATTACK)) timeBetweenAttacks /= 1.45f;
+
+        return max(0.0f, dmg - armor) * weapon.attacks / timeBetweenAttacks;
     }
 
     return 0;
 }
 
-struct WeaponInfo {
-   private:
-    mutable vector<float> dpsCache;
-    float baseDPS;
-
-   public:
-    bool available;
-    float splash;
-    const Weapon* weapon;
-
-    float getDPS() const {
-        return baseDPS;
+float WeaponInfo::getDPS(UNIT_TYPEID target) const {
+    if (!available)
+        return 0;
+    
+    if ((int)target >= (int)dpsCache.size()) {
+        throw std::out_of_range(UnitTypeToName(target));    
     }
 
-    float getDPS(UNIT_TYPEID target) const {
-        if ((int)target >= dpsCache.size()) {
-            if (!available)
-                return 0;
-            for (int i = dpsCache.size(); i <= (int)target; i++) {
-                dpsCache.push_back(calculateDPS(*weapon, (UNIT_TYPEID)i));
+    return dpsCache[(int)target];
+}
+
+float WeaponInfo::range() const {
+    return weapon != nullptr ? weapon->range : 0;
+}
+
+WeaponInfo::WeaponInfo(const Weapon* weapon, UNIT_TYPEID type, const CombatUpgrades& upgrades, const CombatUpgrades& targetUpgrades) {
+    available = true;
+    splash = 0;
+    this->weapon = weapon;
+    // TODO: Range upgrades!
+
+    baseDPS = (weapon->damage_ + getDamageBonus(type, upgrades)) * weapon->attacks / weapon->speed;
+
+    auto& unitTypes = getUnitTypes();
+    for (size_t i = 0; i < unitTypes.size(); i++) {
+        dpsCache.push_back(calculateDPS(type, (UNIT_TYPEID)i, *weapon, upgrades, targetUpgrades));
+    }
+}
+
+
+UnitCombatInfo::UnitCombatInfo(UNIT_TYPEID type, const CombatUpgrades& upgrades, const CombatUpgrades& targetUpgrades) {
+    auto& data = getUnitData(type);
+
+    for (const Weapon& weapon : data.weapons) {
+        if (weapon.type == Weapon::TargetType::Any || weapon.type == Weapon::TargetType::Air) {
+            if (airWeapon.available) {
+                cerr << "For unit type " << UnitTypeToName(type) << endl;
+                cerr << "Weapon slot is already used";
+                assert(false);
             }
+            airWeapon = WeaponInfo(&weapon, type, upgrades, targetUpgrades);
         }
-
-        return dpsCache[(int)target];
-    }
-
-    float range() const {
-        return weapon != nullptr ? weapon->range : 0;
-    }
-
-    WeaponInfo()
-        : baseDPS(0), available(false), splash(0), weapon(nullptr) {
-    }
-
-    WeaponInfo(const Weapon& weapon) {
-        available = true;
-        splash = 0;
-        this->weapon = &weapon;
-        baseDPS = weapon.damage_ * weapon.attacks / weapon.speed;
-    }
-};
-
-struct UnitCombatInfo {
-    WeaponInfo groundWeapon;
-    WeaponInfo airWeapon;
-
-    UnitCombatInfo(UNIT_TYPEID type) {
-        auto& data = unitTypes[(int)type];
-        for (const Weapon& weapon : data.weapons) {
-            if (weapon.type == Weapon::TargetType::Any || weapon.type == Weapon::TargetType::Air) {
-                if (airWeapon.available) {
-                    cerr << "For unit type " << UnitTypeToName(type) << endl;
-                    cerr << "Weapon slot is already used";
-                    assert(false);
-                }
-                airWeapon = WeaponInfo(weapon);
+        if (weapon.type == Weapon::TargetType::Any || weapon.type == Weapon::TargetType::Ground) {
+            if (groundWeapon.available) {
+                cerr << "For unit type " << UnitTypeToName(type) << endl;
+                cerr << "Weapon slot is already used";
+                assert(false);
             }
-            if (weapon.type == Weapon::TargetType::Any || weapon.type == Weapon::TargetType::Ground) {
-                if (groundWeapon.available) {
-                    cerr << "For unit type " << UnitTypeToName(type) << endl;
-                    cerr << "Weapon slot is already used";
-                    assert(false);
-                }
-                groundWeapon = WeaponInfo(weapon);
-            }
+            groundWeapon = WeaponInfo(&weapon, type, upgrades, targetUpgrades);
         }
     }
-};
-
+}
 
 void CombatRecordingFrame::add(UNIT_TYPEID type, int owner, float health, float shield) {
-    for (int i = 0; i < healths.size(); i++) {
+    for (size_t i = 0; i < healths.size(); i++) {
         if (get<0>(healths[i]) == type && get<1>(healths[i]) == owner) {
             healths[i] = make_tuple(type, owner, get<2>(healths[i]) + health + shield);
             return;
@@ -137,7 +241,7 @@ void CombatRecording::writeCSV(string filename) {
         output << "Time\t";
         for (auto p : frames[0].healths) {
             if (get<1>(p) == owner) {
-                output << unitTypes[(int)get<0>(p)].name << "\t";
+                output << getUnitData(get<0>(p)).name << "\t";
             }
         }
         output << endl;
@@ -166,9 +270,10 @@ void CombatRecorder::tick() {
 void CombatRecorder::finalize(string filename) {
     map<Tag, float> totalHealths;
     set<Tag> inCombat;
-    int firstFrame = frames.size() - 1;
-    int lastFrame = 0;
-    for (int i = 0; i < frames.size(); i++) {
+    assert(frames.size() > 1);
+    size_t firstFrame = frames.size() - 1;
+    size_t lastFrame = 0;
+    for (size_t i = 0; i < frames.size(); i++) {
         auto& p = frames[i];
         for (auto& u : p.second) {
             float h = u.is_alive ? u.health + u.shield : 0;
@@ -193,7 +298,7 @@ void CombatRecorder::finalize(string filename) {
     }
 
     CombatRecording recording;
-    for (int i = firstFrame; i <= lastFrame; i++) {
+    for (auto i = firstFrame; i <= lastFrame; i++) {
         auto& p = frames[i];
         CombatRecordingFrame frame;
         frame.tick = p.first;
@@ -209,13 +314,19 @@ void CombatRecorder::finalize(string filename) {
     recording.writeCSV(filename);
 };
 
-static vector<UnitCombatInfo> combatInfo;
+CombatPredictor::CombatPredictor() : defaultCombatEnvironment({}, {}) {    
+}
 
 void CombatPredictor::init() {
     
-    unitTypes = getUnitTypes();
-    for (int i = 0; i < unitTypes.size(); i++) {
-        combatInfo.push_back(UnitCombatInfo((UNIT_TYPEID)i));
+
+};
+
+CombatEnvironment::CombatEnvironment(const CombatUpgrades& upgrades, const CombatUpgrades& targetUpgrades) {
+    assertMappingsInitialized();
+    auto& unitTypes = getUnitTypes();
+    for (size_t i = 0; i < unitTypes.size(); i++) {
+        combatInfo.push_back(UnitCombatInfo((UNIT_TYPEID)i, upgrades, targetUpgrades));
     }
 
     combatInfo[(int)UNIT_TYPEID::TERRAN_LIBERATOR].airWeapon.splash = 3.0;
@@ -229,29 +340,39 @@ void CombatPredictor::init() {
     combatInfo[(int)UNIT_TYPEID::PROTOSS_ARCHON].groundWeapon.splash = 3;
     combatInfo[(int)UNIT_TYPEID::PROTOSS_ARCHON].airWeapon.splash = 3;
     combatInfo[(int)UNIT_TYPEID::PROTOSS_COLOSSUS].groundWeapon.splash = 3;
-};
+}
+
+const CombatEnvironment& CombatPredictor::getCombatEnvironment(const CombatUpgrades& upgrades, const CombatUpgrades& targetUpgrades) {
+    uint64_t hash = (upgrades.hash() * 5123143) ^ targetUpgrades.hash();
+    auto it = combatEnvironments.find(hash);
+    if (it != combatEnvironments.end()) {
+        return (*it).second;
+    }
+
+    return (*combatEnvironments.emplace(make_pair(hash, CombatEnvironment(upgrades, targetUpgrades))).first).second;
+}
 
 // TODO: Air?
-float attackRange(UNIT_TYPEID type) {
+float CombatEnvironment::attackRange(UNIT_TYPEID type) const {
     return max(combatInfo[(int)type].airWeapon.range(), combatInfo[(int)type].groundWeapon.range());
 }
 
-bool isMelee(UNIT_TYPEID type) {
+bool CombatEnvironment::isMelee(UNIT_TYPEID type) const {
     return attackRange(type) <= 2;
 }
 
-float calculateDPS(UNIT_TYPEID type, bool air) {
+float CombatEnvironment::calculateDPS(UNIT_TYPEID type, bool air) const {
     return air ? combatInfo[(int)type].airWeapon.getDPS() : combatInfo[(int)type].groundWeapon.getDPS();
 }
 
-float calculateDPS(const vector<CombatUnit>& units, bool air) {
+float CombatEnvironment::calculateDPS(const vector<CombatUnit>& units, bool air) const {
     float dps = 0;
     for (auto& u : units)
         dps += calculateDPS(u.type, air);
     return dps;
 }
 
-float calculateDPS(CombatUnit& unit1, CombatUnit& unit2) {
+float CombatEnvironment::calculateDPS(CombatUnit& unit1, CombatUnit& unit2) const {
     auto& info = combatInfo[(int)unit1.type];
     return max(info.groundWeapon.getDPS(unit2.type), info.airWeapon.getDPS(unit2.type));
 }
@@ -266,14 +387,14 @@ vector<CombatUnit*> filterByOwner(vector<CombatUnit>& units, int owner) {
     return result;
 }
 
-float targetScore(const CombatUnit& unit, bool hasGround, bool hasAir) {
+float CombatPredictor::targetScore(const CombatUnit& unit, bool hasGround, bool hasAir) const {
     const float VESPENE_MULTIPLIER = 1.5f;
-    float cost = unitTypes[(int)unit.type].mineral_cost + VESPENE_MULTIPLIER * unitTypes[(int)unit.type].vespene_cost;
+    float cost = getUnitData(unit.type).mineral_cost + VESPENE_MULTIPLIER * getUnitData(unit.type).vespene_cost;
 
     float score = 0;
 
-    float airDPS = calculateDPS(unit.type, true);
-    float groundDPS = calculateDPS(unit.type, false);
+    float airDPS = defaultCombatEnvironment.calculateDPS(unit.type, true);
+    float groundDPS = defaultCombatEnvironment.calculateDPS(unit.type, false);
 
     score += 0.01 * cost;
     score += 1000 * max(groundDPS, airDPS);
@@ -339,10 +460,11 @@ SurroundInfo maxSurround(float enemyGroundUnitArea, int enemyGroundUnits) {
 }
 
 // Hash for combat input
-unsigned long long combatHash(const CombatState& state, bool badMicro, int defenderPlayer) {
+unsigned long long combatHash(const CombatState& state, bool badMicro, int defenderPlayer, float maxTime) {
     unsigned long long h = 0L;
     h = h ^ defenderPlayer;
     h = h*31 ^ (int)badMicro;
+    h = h*31 ^ (int)round(maxTime);
     for (auto& u : state.units) {
         h = (h * 31) ^ (unsigned long long)u.energy;
         h = (h * 31) ^ (unsigned long long)u.health;
@@ -384,6 +506,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
         return seen_combats[h];
     }
 #endif
+    auto& env = defaultCombatEnvironment; // getCombatEnvironment(upgrades, targetUpgrades);
     bool debug = settings.debug;
     // Copy state
     CombatResult result;
@@ -408,18 +531,18 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
     if (defenderPlayer == 1 || defenderPlayer == 2) {
         // One player is the attacker and one is the defender
         for (auto& u : (defenderPlayer == 1 ? units1 : units2)) {
-            maxRangeDefender = max(maxRangeDefender, attackRange(u->type));
+            maxRangeDefender = max(maxRangeDefender, env.attackRange(u->type));
         }
         for (auto& u : (defenderPlayer == 1 ? units2 : units1)) {
-            fastestAttackerSpeed = max(fastestAttackerSpeed, unitTypes[(int)u->type].movement_speed);
+            fastestAttackerSpeed = max(fastestAttackerSpeed, getUnitData(u->type).movement_speed);
         }
     } else {
         // Both players are attackers
         for (auto& u : state.units) {
-            maxRangeDefender = max(maxRangeDefender, attackRange(u.type));
+            maxRangeDefender = max(maxRangeDefender, env.attackRange(u.type));
         }
         for (auto& u : state.units) {
-            fastestAttackerSpeed = max(fastestAttackerSpeed, unitTypes[(int)u.type].movement_speed);
+            fastestAttackerSpeed = max(fastestAttackerSpeed, getUnitData(u.type).movement_speed);
         }
     }
     
@@ -500,15 +623,15 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
             if (debug)
                 cout << "Max meleee attackers: " << surround.maxMeleeAttackers << " " << surround.maxAttackersPerDefender << endl;
 
-            for (int i = 0; i < g1.size(); i++) {
+            for (size_t i = 0; i < g1.size(); i++) {
                 auto& unit = *g1[i];
 
                 if (unit.health == 0)
                     continue;
 
-                auto& unitTypeData = unitTypes[(int)unit.type];
-                float airDPS = calculateDPS(unit.type, true);
-                float groundDPS = calculateDPS(unit.type, false);
+                auto& unitTypeData = getUnitData(unit.type);
+                float airDPS = env.calculateDPS(unit.type, true);
+                float groundDPS = env.calculateDPS(unit.type, false);
 
                 if (debug)
                     cout << "Processing " << UnitTypeToName(unit.type) << " " << unit.health << "+" << unit.shield << " "
@@ -517,12 +640,12 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                 if (unit.type == UNIT_TYPEID::TERRAN_MEDIVAC) {
                     if (unit.energy > 0) {
                         // Pick a random target
-                        int offset = rand() % g1.size();
+                        size_t offset = (size_t)rand() % g1.size();
                         const float HEALING_PER_NORMAL_SPEED_SECOND = 12.6 / 1.4f;
-                        for (int j = 0; j < g1.size(); j++) {
-                            int index = (j + offset) % g1.size();
+                        for (size_t j = 0; j < g1.size(); j++) {
+                            size_t index = (j + offset) % g1.size();
                             auto& other = *g1[index];
-                            if (index != i && !hasBeenHealed[index] && other.health > 0 && other.health < other.health_max && contains(unitTypes[(int)other.type].attributes, Attribute::Biological)) {
+                            if (index != i && !hasBeenHealed[index] && other.health > 0 && other.health < other.health_max && contains(getUnitData(other.type).attributes, Attribute::Biological)) {
                                 other.modifyHealth(HEALING_PER_NORMAL_SPEED_SECOND * dt);
                                 hasBeenHealed[index] = true;
                                 break;
@@ -535,11 +658,11 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                 if (unit.type == UNIT_TYPEID::PROTOSS_SHIELDBATTERY) {
                     if (unit.energy > 0) {
                         // Pick a random target
-                        int offset = rand() % g1.size();
+                        size_t offset = (size_t)rand() % g1.size();
                         const float SHIELDS_PER_NORMAL_SPEED_SECOND = 50.4 / 1.4f;
                         const float ENERGY_USE_PER_SHIELD = 1.0f / 3.0f;
-                        for (int j = 0; j < g1.size(); j++) {
-                            int index = (j + offset) % g1.size();
+                        for (size_t j = 0; j < g1.size(); j++) {
+                            size_t index = (j + offset) % g1.size();
                             auto& other = *g1[index];
                             if (index != i && !hasBeenHealed[index] && other.health > 0 && other.shield < other.shield_max) {
                                 float delta = min(min(other.shield_max - other.shield, SHIELDS_PER_NORMAL_SPEED_SECOND * dt), unit.energy / ENERGY_USE_PER_SHIELD);
@@ -585,7 +708,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                 if (airDPS == 0 && groundDPS == 0)
                     continue;
 
-                bool isUnitMelee = isMelee(unit.type);
+                bool isUnitMelee = env.isMelee(unit.type);
                 if (isUnitMelee && numMeleeUnitsUsed >= surround.maxMeleeAttackers && settings.enableSurroundLimits)
                     continue;
                 
@@ -597,14 +720,14 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                             // Make later melee units take longer to reach the enemy.
                             distanceToEnemy += maxExtraMeleeDistance * (i / (float)g1.size());
                         }
-                        float timeToReachEnemy = unitTypeData.movement_speed > 0 ? max(0.0f, distanceToEnemy - attackRange(unit.type)) / unitTypeData.movement_speed : 100000;
+                        float timeToReachEnemy = unitTypeData.movement_speed > 0 ? max(0.0f, distanceToEnemy - env.attackRange(unit.type)) / unitTypeData.movement_speed : 100000;
                         if (time < timeToReachEnemy) {
                             changed = true;
                             continue;
                         }
                     } else {
                         // Defender (stay put until attacker comes within range)
-                        float timeToReachEnemy = fastestAttackerSpeed > 0 ? (maxRangeDefender - attackRange(unit.type)) / fastestAttackerSpeed : 100000;
+                        float timeToReachEnemy = fastestAttackerSpeed > 0 ? (maxRangeDefender - env.attackRange(unit.type)) / fastestAttackerSpeed : 100000;
                         if (time < timeToReachEnemy) {
                             changed = true;
                             continue;
@@ -619,14 +742,14 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                 float bestScore = 0;
                 const WeaponInfo* bestWeapon = nullptr;
 
-                for (int j = 0; j < g2.size(); j++) {
+                for (size_t j = 0; j < g2.size(); j++) {
                     auto& other = *g2[j];
                     if (other.health == 0)
                         continue;
 
                     if (((canBeAttackedByAirWeapons(other.type) && airDPS > 0) || (!other.is_flying && groundDPS > 0))) {
-                        auto& info = combatInfo[(int)unit.type];
-                        auto& otherData = unitTypes[(int)other.type];
+                        const auto& info = env.combatInfo[(int)unit.type];
+                        auto& otherData = getUnitData(other.type);
 
                         float airDPS2 = info.airWeapon.getDPS(other.type);
                         float groundDPS2 = info.groundWeapon.getDPS(other.type);
@@ -648,7 +771,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                                 score = -score;
 
                             // Melee units should attack other melee units first, and have no splash against ranged units (assume reasonable micro)
-                            if (settings.enableMeleeBlocking && isMelee(other.type))
+                            if (settings.enableMeleeBlocking && env.isMelee(other.type))
                                 score += 1000;
                             // Check for kiting, hard to attack units with a higher movement speed
                             else if (settings.enableMeleeBlocking && unitTypeData.movement_speed < 1.05f * otherData.movement_speed)
@@ -661,7 +784,6 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                             bestScore = score;
                             bestTarget = g2[j];
                             bestTargetIndex = j;
-
                             bestWeapon = groundDPS2 > airDPS2 ? &info.groundWeapon : &info.airWeapon;
                         }
                     }
@@ -714,13 +836,13 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                     // or a non-melee unit does splash damage.
                     // If it is a melee unit, then splash is only applied to other melee units.
                     // TODO: Better rule: units only apply splash to other units that have a shorter range than themselves, or this unit has a higher movement speed than the other one
-                    if (settings.enableSplash && remainingSplash > 0.001f && (!isUnitMelee || isMelee(other.type)) && g2.size() > 0) {
+                    if (settings.enableSplash && remainingSplash > 0.001f && (!isUnitMelee || env.isMelee(other.type)) && g2.size() > 0) {
                         // Apply remaining splash to other random melee units
-                        int offset = rand() % g2.size();
-                        for (int j = 0; j < g2.size() && remainingSplash > 0.001f; j++) {
-                            int splashIndex = (j + offset) % g2.size();
+                        size_t offset = (size_t)rand() % g2.size();
+                        for (size_t j = 0; j < g2.size() && remainingSplash > 0.001f; j++) {
+                            size_t splashIndex = (j + offset) % g2.size();
                             auto* splashOther = g2[splashIndex];
-                            if (splashOther != bestTarget && splashOther->health > 0 && (!isUnitMelee || isMelee(splashOther->type))) {
+                            if (splashOther != bestTarget && splashOther->health > 0 && (!isUnitMelee || env.isMelee(splashOther->type))) {
                                 auto dps = bestWeapon->getDPS(splashOther->type) * min(1.0f, remainingSplash);
                                 if (dps > 0) {
                                     splashOther->modifyHealth(-dps * damageMultiplier * dt);
@@ -747,6 +869,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
         }
 
         time += dt;
+        if (time >= settings.maxTime) break;
     }
 
     result.time = time;
@@ -861,14 +984,14 @@ float mineralScore(const CombatState& initialState, const CombatResult& combatRe
     float ourScore = 0;
     float enemyScore = 0;
     float lossScore = 0;
-    for (int i = 0; i < initialState.units.size(); i++) {
+    for (size_t i = 0; i < initialState.units.size(); i++) {
         auto& unit1 = initialState.units[i];
         auto& unit2 = combatResult.state.units[i];
         assert(unit1.type == unit2.type);
 
         float healthDiff = (unit2.health - unit1.health) + (unit2.shield - unit1.shield);
         float damageTakenFraction = -healthDiff / (unit1.health_max + unit1.shield_max);
-        auto& unitTypeData = unitTypes[(int)unit1.type];
+        auto& unitTypeData = getUnitData(unit1.type);
 
         float cost = unitTypeData.mineral_cost + 1.2f * unitTypeData.vespene_cost;
         if (unit1.owner == player) {
@@ -881,7 +1004,7 @@ float mineralScore(const CombatState& initialState, const CombatResult& combatRe
     }
 
     // Handle added units (usually temporary units)
-    for (int i = initialState.units.size(); i < combatResult.state.units.size(); i++) {
+    for (size_t i = initialState.units.size(); i < combatResult.state.units.size(); i++) {
         auto& unit2 = combatResult.state.units[i];
 
         float healthDiff = unit2.health + unit2.shield;
@@ -907,7 +1030,7 @@ float mineralScore(const CombatState& initialState, const CombatResult& combatRe
 
     if (combatResult.time > 20) {
         bool hasAnyGroundUnits = false;
-        for (int i = 0; i < initialState.units.size(); i++) {
+        for (size_t i = 0; i < initialState.units.size(); i++) {
             if (combatResult.state.units[i].owner == player && combatResult.state.units[i].health > 0 && !combatResult.state.units[i].is_flying) {
                 hasAnyGroundUnits = true;
             }
@@ -1115,7 +1238,7 @@ struct CompositionGene {
     vector<pair<UNIT_TYPEID, int>> getUnits(const vector<UNIT_TYPEID>& availableUnitTypes) const {
         assert(unitCounts.size() == availableUnitTypes.size());
         vector<pair<UNIT_TYPEID, int>> result;
-        for (int i = 0; i < unitCounts.size(); i++) {
+        for (size_t i = 0; i < unitCounts.size(); i++) {
             if (unitCounts[i] > 0) result.emplace_back(availableUnitTypes[i], unitCounts[i]);
         }
         return result;
@@ -1124,7 +1247,7 @@ struct CompositionGene {
     vector<pair<int, int>> getUnitsUntyped(const vector<UNIT_TYPEID>& availableUnitTypes) const {
         assert(unitCounts.size() == availableUnitTypes.size());
         vector<pair<int, int>> result;
-        for (int i = 0; i < unitCounts.size(); i++) {
+        for (size_t i = 0; i < unitCounts.size(); i++) {
             if (unitCounts[i] > 0) result.emplace_back((int)availableUnitTypes[i], unitCounts[i]);
         }
         return result;
@@ -1132,7 +1255,7 @@ struct CompositionGene {
 
     void addToState(CombatState& state, const vector<UNIT_TYPEID>& availableUnitTypes, int owner) const {
         assert(unitCounts.size() == availableUnitTypes.size());
-        for (int i = 0; i < unitCounts.size(); i++) {
+        for (size_t i = 0; i < unitCounts.size(); i++) {
             for (int j = 0; j < unitCounts[i]; j++) {
                 state.units.push_back(makeUnit(owner, availableUnitTypes[i]));
             }
@@ -1141,7 +1264,7 @@ struct CompositionGene {
 
     void mutate(float amount, default_random_engine& seed) {
         bernoulli_distribution shouldMutate(amount);
-        for (int i = 0; i < unitCounts.size(); i++) {
+        for (size_t i = 0; i < unitCounts.size(); i++) {
             if (shouldMutate(seed)) {
                 exponential_distribution<float> dist(1.0f / max(1, unitCounts[i]));
                 unitCounts[i] = (int)round(dist(seed));
@@ -1158,7 +1281,7 @@ struct CompositionGene {
 
     void scale(float scale) {
         int diff = 0;
-        for (int i = 0; i < unitCounts.size(); i++) {
+        for (size_t i = 0; i < unitCounts.size(); i++) {
             if (unitCounts[i] > 100)
                 continue;
             auto o = unitCounts[i];
@@ -1174,7 +1297,7 @@ struct CompositionGene {
         assert(parent1.unitCounts.size() == parent2.unitCounts.size());
         bernoulli_distribution dist(0.5);
         CompositionGene gene(parent1.unitCounts.size());
-        for (int i = 0; i < gene.unitCounts.size(); i++) {
+        for (size_t i = 0; i < gene.unitCounts.size(); i++) {
             gene.unitCounts[i] = dist(seed) ? parent1.unitCounts[i] : parent2.unitCounts[i];
         }
         return gene;
@@ -1184,7 +1307,7 @@ struct CompositionGene {
         : unitCounts(availableUnitTypes.size()) {
         float mean = meanTotalCount / availableUnitTypes.size();
         exponential_distribution<float> dist(1.0f / mean);
-        for (int i = 0; i < unitCounts.size(); i++) {
+        for (size_t i = 0; i < unitCounts.size(); i++) {
             unitCounts[i] = (int)round(dist(seed));
         }
     }
@@ -1219,8 +1342,8 @@ void logRecordings(CombatState& state, const CombatPredictor& predictor, float s
     vector<int> mineralCosts(3);
     vector<int> vespeneCosts(3);
     for (auto u : state.units) {
-        mineralCosts[u.owner] += unitTypes[(int)u.type].mineral_cost;
-        vespeneCosts[u.owner] += unitTypes[(int)u.type].vespene_cost;
+        mineralCosts[u.owner] += getUnitData(u.type).mineral_cost;
+        vespeneCosts[u.owner] += getUnitData(u.type).vespene_cost;
     }
 
     cout << "Team 1 costs: " << mineralCosts[1] << "+" << vespeneCosts[1] << endl;
@@ -1260,7 +1383,7 @@ vector<pair<UNIT_TYPEID,int>> findBestCompositionGenetic(const CombatPredictor& 
         vector<int> indices(generation.size());
 
         vector<vector<pair<int,int>>> targetUnitsNN(generation.size());
-        for (int j = 0; j < generation.size(); j++) {
+        for (size_t j = 0; j < generation.size(); j++) {
             assert(generation[j].unitCounts.size() == availableUnitTypes.size());
             scaleUntilWinning(predictor, opponent, availableUnitTypes, generation[j]);
             targetUnitsNN[j] = generation[j].getUnitsUntyped(availableUnitTypes);
@@ -1268,12 +1391,12 @@ vector<pair<UNIT_TYPEID,int>> findBestCompositionGenetic(const CombatPredictor& 
 
         vector<vector<float>> timesToProduceUnits = startingBuildState != nullptr && buildTimePredictor != nullptr ? buildTimePredictor->predictTimeToBuild(startingUnitsNN, startingBuildState->resources, targetUnitsNN) : vector<vector<float>>(generation.size(), vector<float>(3));
 
-        for (int j = 0; j < generation.size(); j++) {
+        for (size_t j = 0; j < generation.size(); j++) {
             indices[j] = j;
             fitness[j] = calculateFitness(predictor, opponent, availableUnitTypes, generation[j], timesToProduceUnits[j]);
         }
 
-        sortByValueDescending<int, float>(indices, [=](int index) { return fitness[index]; });
+        sortByValueDescending<int, float>(indices, [&](int index) { return fitness[index]; });
         // for (int j = 0; j < indices.size(); j++) {
         //     cout << " " << fitness[indices[j]];
         // }
@@ -1292,7 +1415,7 @@ vector<pair<UNIT_TYPEID,int>> findBestCompositionGenetic(const CombatPredictor& 
         }
 
         // Note: do not mutate the first gene
-        for (int i = 1; i < nextGeneration.size(); i++) {
+        for (size_t i = 1; i < nextGeneration.size(); i++) {
             nextGeneration[i].mutate(mutationRate, rnd);
         }
 
@@ -1340,8 +1463,8 @@ void CombatPredictor::unitTest(const BuildOptimizerNN& buildTimePredictor) const
 
     auto u1 = makeUnit(1, UNIT_TYPEID::TERRAN_BATTLECRUISER);
     auto u2 = makeUnit(1, UNIT_TYPEID::TERRAN_THOR);
-    cout << "DPS1 " << calculateDPS(u1, u2) << endl;
-    cout << "DPS2 " << calculateDPS(u2, u1) << endl;
+    cout << "DPS1 " << defaultCombatEnvironment.calculateDPS(u1, u2) << endl;
+    cout << "DPS2 " << defaultCombatEnvironment.calculateDPS(u2, u1) << endl;
 
     assert(testCombat(*this, {{
 		makeUnit(1, UNIT_TYPEID::TERRAN_VIKINGFIGHTER),
@@ -1476,6 +1599,41 @@ void CombatPredictor::unitTest(const BuildOptimizerNN& buildTimePredictor) const
 		CombatUnit(1, UNIT_TYPEID::TERRAN_LIBERATOR, 180, true),
 		CombatUnit(2, UNIT_TYPEID::PROTOSS_COLOSSUS, 200, false),
 	}}) == 1);
+
+    {
+        CombatSettings settings;
+        settings.maxTime = 3;
+        auto result = predict_engage({{
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_PROBE),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(2, UNIT_TYPEID::PROTOSS_IMMORTAL),
+        }}, settings, nullptr, 1);
+
+        cout << result.state.str() << endl;
+    }
 
 	// Do not assume all enemies will just target the most beefy unit and leave the banshee alone
 	// while it takes out the hydras

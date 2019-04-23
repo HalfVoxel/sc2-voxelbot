@@ -21,7 +21,7 @@ void printBuildOrder(const vector<UNIT_TYPEID>& buildOrder);
 void printBuildOrder(const BuildOrder& buildOrder);
 
 bool AvailableUnitTypes::canBeChronoBoosted (int index) const {
-    assert(index < index2item.size());
+    assert((size_t)index < index2item.size());
     auto& item = index2item[index];
 
     // Upgrades can always be chrono boosted
@@ -39,7 +39,7 @@ BuildState::BuildState(const ObservationInterface* observation, Unit::Alliance a
 
     auto ourUnits = observation->GetUnits(alliance);
 
-    for (int i = 0; i < ourUnits.size(); i++) {
+    for (size_t i = 0; i < ourUnits.size(); i++) {
         auto unitType = ourUnits[i]->unit_type;
 
         // Addons are handled when the unit they are attached to are handled
@@ -149,7 +149,7 @@ BuildState::BuildState(const ObservationInterface* observation, Unit::Alliance a
     auto neutralUnits = observation->GetUnits(Unit::Alliance::Neutral);
     for (auto u : neutralUnits) {
         if (u->mineral_contents > 0) {
-            for (int i = 0; i < baseInfos.size(); i++) {
+            for (size_t i = 0; i < baseInfos.size(); i++) {
                 if (DistanceSquared2D(u->pos, basePositions[i]) < 10*10) {
                     baseInfos[i].remainingMinerals += u->mineral_contents;
                     break;
@@ -363,7 +363,7 @@ MiningSpeed BuildState::miningSpeed() const {
     int highYieldMineralHarvestingSlots = 0;
     int lowYieldMineralHarvestingSlots = 0;
     for (int i = 0; i < bases; i++) {
-        if (i < baseInfos.size()) {
+        if (i < (int)baseInfos.size()) {
             auto t = baseInfos[i].mineralSlots();
             highYieldMineralHarvestingSlots += t.first;
             lowYieldMineralHarvestingSlots += t.second;
@@ -497,7 +497,7 @@ bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, const function<
     float lastEventInBuildOrder = 0;
 
     // Loop through the build order
-    for (; buildOrder.buildIndex < buildOrder.buildOrder->size(); buildOrder.buildIndex++) {
+    for (; buildOrder.buildIndex < (int)buildOrder.buildOrder->size(); buildOrder.buildIndex++) {
         auto item = (*buildOrder.buildOrder)[buildOrder.buildIndex];
         if (item.chronoBoosted) buildOrder.lastChronoUnit = item.rawType();
 
@@ -853,6 +853,16 @@ static void traceDependencies(const vector<int>& unitCounts, const AvailableUnit
     if (isBasicHarvester(requiredType))
         return;
 
+    // Protoss buildings need pylons (in theory not strictly necessary, but they can only be placed in power fields... so... in practice yes)
+    if (getUnitData(requiredType).race == Race::Protoss && isStructure(requiredType) && (requiredType != UNIT_TYPEID::PROTOSS_NEXUS && requiredType != UNIT_TYPEID::PROTOSS_PYLON)) {
+        requiredType = UNIT_TYPEID::PROTOSS_PYLON;
+        if (unitCounts[availableUnitTypes.getIndex(requiredType)] == 0) {
+            // Need to add this type to the build order
+            requirements.emplace(requiredType);
+            traceDependencies(unitCounts, availableUnitTypes, requirements, requiredType);
+        }
+    }
+
     auto& unitData = getUnitData(requiredType);
     if (unitData.tech_requirement != UNIT_TYPEID::INVALID) {
         requiredType = unitData.tech_requirement;
@@ -963,7 +973,7 @@ BuildOrder addImplicitBuildOrderSteps(const vector<GeneUnitType>& buildOrder, Ra
                 // TODO: Might be better to account for this by having a much lower harvesting rate?
                 if (requirementUnitType == currentVespeneHarvester) {
                     int numBases = 0;
-                    for (int i = 0; i < availableUnitTypes.size(); i++) {
+                    for (size_t i = 0; i < availableUnitTypes.size(); i++) {
                         if (isTownHall(availableUnitTypes.getUnitType(i)))
                             numBases += unitCounts[i];
                     }
@@ -1043,14 +1053,14 @@ struct BuildOrderGene {
         validate(actionRequirements);
 
         bernoulli_distribution shouldMutate(amount);
-        for (int i = 0; i < buildOrder.size(); i++) {
+        for (size_t i = 0; i < buildOrder.size(); i++) {
             if (shouldMutate(seed)) {
                 normal_distribution<float> dist(i, buildOrder.size() * 0.25f);
                 while (true) {
                     int moveIndex = (int)round(dist(seed));
 
                     // Try again until we get a number in the right range
-                    if (moveIndex < 0 || moveIndex >= buildOrder.size())
+                    if (moveIndex < 0 || moveIndex >= (int)buildOrder.size())
                         continue;
 
                     int s = 0;
@@ -1059,7 +1069,7 @@ struct BuildOrderGene {
 
                     auto elem = buildOrder[i];
                     // Move element i to the new position by pushing the elements in between one step
-                    if (moveIndex < i) {
+                    if (moveIndex < (int)i) {
                         for (int j = i; j > moveIndex; j--)
                             buildOrder[j] = buildOrder[j - 1];
                     } else {
@@ -1087,7 +1097,7 @@ struct BuildOrderGene {
      */
     void mutateAddRemove(float amount, default_random_engine& seed, const vector<int>& actionRequirements, const vector<int>& addableUnits, const AvailableUnitTypes& availableUnitTypes, bool allowChronoBoost) {
         vector<int> remainingRequirements = actionRequirements;
-        for (int i = 0; i < buildOrder.size(); i++) {
+        for (size_t i = 0; i < buildOrder.size(); i++) {
             remainingRequirements[buildOrder[i].type]--;
         }
 
@@ -1096,7 +1106,7 @@ struct BuildOrderGene {
         bernoulli_distribution shouldChrono(amount);
         bernoulli_distribution shouldRemoveChrono(0.4);
 
-        for (int i = buildOrder.size() - 1; i >= 0; i--) {
+        for (int i = (int)buildOrder.size() - 1; i >= 0; i--) {
             if (remainingRequirements[buildOrder[i].type] < 0 && shouldRemove(seed)) {
                 // Remove it!
                 remainingRequirements[buildOrder[i].type]++;
@@ -1106,7 +1116,7 @@ struct BuildOrderGene {
 
         // Add elements randomly
         bernoulli_distribution shouldAdd(amount);
-        for (int i = 0; i < buildOrder.size(); i++) {
+        for (size_t i = 0; i < buildOrder.size(); i++) {
             if (shouldAdd(seed)) {
                 // Add something!
                 uniform_int_distribution<int> dist(0, addableUnits.size() - 1);
@@ -1169,7 +1179,7 @@ struct BuildOrderGene {
         : buildOrder() {}
     
     BuildOrderGene(vector<int> buildOrder) : buildOrder(buildOrder.size()) {
-        for (int i = 0; i < buildOrder.size(); i++) this->buildOrder[i] = GeneUnitType(buildOrder[i]);
+        for (size_t i = 0; i < buildOrder.size(); i++) this->buildOrder[i] = GeneUnitType(buildOrder[i]);
     }
 
     /** Creates a random build order that will train/build the given units.
@@ -1177,7 +1187,7 @@ struct BuildOrderGene {
      * The action requirements is a list as long as availableUnitTypes that specifies for each unit type how many that the build order should train/build.
      */
     BuildOrderGene(default_random_engine& seed, const vector<int>& actionRequirements) {
-        for (int i = 0; i < actionRequirements.size(); i++) {
+        for (size_t i = 0; i < actionRequirements.size(); i++) {
             for (int j = actionRequirements[i] - 1; j >= 0; j--)
                 buildOrder.push_back(GeneUnitType(i));
         }
@@ -1192,7 +1202,7 @@ struct BuildOrderGene {
             buildOrder.push_back(item);
             remainingRequirements[item.type]--;
         }
-        for (int i = 0; i < remainingRequirements.size(); i++) {
+        for (size_t i = 0; i < remainingRequirements.size(); i++) {
             int r = remainingRequirements[i];
             for (auto j = 0; j < r; j++) {
                 buildOrder.push_back(GeneUnitType(i));
@@ -1244,14 +1254,14 @@ void printBuildOrderDetailed(const BuildState& startState, const BuildOrder& bui
 
 void printBuildOrder(const vector<UNIT_TYPEID>& buildOrder) {
     cout << "Build order size " << buildOrder.size() << endl;
-    for (int i = 0; i < buildOrder.size(); i++) {
+    for (size_t i = 0; i < buildOrder.size(); i++) {
         cout << "Step " << i << " " << UnitTypeToName(buildOrder[i]) << endl;
     }
 }
 
 void printBuildOrder(const BuildOrder& buildOrder) {
     cout << "Build order size " << buildOrder.size() << endl;
-    for (int i = 0; i < buildOrder.size(); i++) {
+    for (size_t i = 0; i < buildOrder.size(); i++) {
         cout << "Step " << i << " ";
         if (buildOrder[i].isUnitType()) {
             cout << UnitTypeToName(buildOrder[i].typeID()) << endl;
@@ -1283,7 +1293,7 @@ BuildOrderFitness calculateFitness(const BuildState& startState, const vector<in
     // Find the average completion time of the army units in the build order (they are usually the important parts, though non army units also contribute a little bit)
     float avgTime = state.time * 0.00001f;
     float totalWeight = 0.00001f;
-    for (int i = 0; i < finishedTimes.size(); i++) {
+    for (size_t i = 0; i < finishedTimes.size(); i++) {
         float t = finishedTimes[i];
         float w = !buildOrder[i].isUnitType() || isArmy(buildOrder[i].typeID()) ? 1.0f : 0.1f;
         totalWeight += w;
@@ -1385,7 +1395,7 @@ BuildOrderGene locallyOptimizeGene(const BuildState& startState, const vector<in
     auto fitness = startFitness;
     BuildOrderGene newGene = gene;
     for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < newGene.buildOrder.size(); j++) {
+        for (size_t j = 0; j < newGene.buildOrder.size(); j++) {
             bool lastItem = j == newGene.buildOrder.size() - 1;
             if (lastItem || newGene.buildOrder[j] != newGene.buildOrder[j + 1]) {
                 // Check if the item is non-essential
@@ -1737,6 +1747,7 @@ const AvailableUnitTypes unitTypesProtossS = {
 
     // Upgrades
     BuildOrderItem(UPGRADE_ID::WARPGATERESEARCH),
+    BuildOrderItem(UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL1),
 };
 
 const AvailableUnitTypes unitTypesZergS = {
@@ -1804,7 +1815,7 @@ pair<BuildOrder, vector<bool>> expandBuildOrderWithImplicitSteps (const BuildSta
     tie(startingUnitCounts, startingAddonCountPerUnitType) = calculateStartingUnitCounts(startStateAfterEvents, availableUnitTypes);
 
     vector<GeneUnitType> remappedBuildOrder(buildOrder.size());
-    for (int i = 0; i < buildOrder.size(); i++) remappedBuildOrder[i] = availableUnitTypes.getGeneItem(buildOrder[i]);
+    for (size_t i = 0; i < buildOrder.size(); i++) remappedBuildOrder[i] = availableUnitTypes.getGeneItem(buildOrder[i]);
 
     vector<bool> partOfOriginalBuildOrder;
     BuildOrder finalBuildOrder = addImplicitBuildOrderSteps(remappedBuildOrder, startStateAfterEvents.race, startStateAfterEvents.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, &partOfOriginalBuildOrder);
@@ -1877,7 +1888,7 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
     tie(startingUnitCounts, startingAddonCountPerUnitType) = calculateStartingUnitCounts(startStateAfterEvents, availableUnitTypes);
 
     vector<int> actionRequirements(availableUnitTypes.size());
-    for (int i = 0; i < actionRequirements.size(); i++) {
+    for (size_t i = 0; i < actionRequirements.size(); i++) {
         auto item = availableUnitTypes.getBuildOrderItem(i);
         if (item.isUnitType()) {
             UNIT_TYPEID type = item.typeID();
@@ -1899,7 +1910,7 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
     }
 
     // All upgrades are counted as economic
-    for (int i = 0; i < availableUnitTypes.size(); i++) {
+    for (size_t i = 0; i < availableUnitTypes.size(); i++) {
         auto item = availableUnitTypes.getBuildOrderItem(i);
         if (!item.isUnitType()) economicUnits.push_back(i);
     }
@@ -1910,9 +1921,9 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
     vector<BuildOrderGene> generation(params.genePoolSize);
     default_random_engine rnd(time(0));
     // default_random_engine rnd(rand());
-    for (int i = 0; i < generation.size(); i++) {
-        generation[i] = BuildOrderGene(rnd, actionRequirements);
-        generation[i].validate(actionRequirements);
+    for (auto& gene : generation) {
+        gene = BuildOrderGene(rnd, actionRequirements);
+        gene.validate(actionRequirements);
     }
     for (int i = 0; i <= params.iterations; i++) {
         if (i == 150 && seed != nullptr) {
@@ -1927,7 +1938,7 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
         
         if (params.varianceBias <= 0) {
             indices = vector<int>(generation.size());
-            for (int j = 0; j < generation.size(); j++) {
+            for (size_t j = 0; j < generation.size(); j++) {
                 indices[j] = j;
                 fitness[j] = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, generation[j]);
             }
@@ -1941,7 +1952,7 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
             // Add a random one as well
             nextGeneration.push_back(generation[uniform_int_distribution<int>(0, indices.size() - 1)(rnd)]);
         } else {
-            for (int j = 0; j < generation.size(); j++) {
+            for (size_t j = 0; j < generation.size(); j++) {
                 fitness[j] = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, generation[j]);
             }
 
@@ -1949,7 +1960,7 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
             for (int j = 0; j < min(5, params.genePoolSize); j++) {
                 float bestScore = -100000000;
                 int bestIndex = -1;
-                for (int k = 0; k < generation.size(); k++) {
+                for (size_t k = 0; k < generation.size(); k++) {
                     float score = fitness[k].score();
                     float minDistance = 1;
                     for (auto& g : nextGeneration) minDistance = min(minDistance, geneDistance(generation[k], g));
@@ -1993,14 +2004,14 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
         }
 
         uniform_int_distribution<int> randomParentIndex(0, nextGeneration.size() - 1);
-        while (nextGeneration.size() < params.genePoolSize) {
+        while ((int)nextGeneration.size() < params.genePoolSize) {
             // nextGeneration.push_back(BuildOrderGene::crossover(generation[randomParentIndex(rnd)], generation[randomParentIndex(rnd)], rnd, actionRequirements));
             nextGeneration.push_back(generation[randomParentIndex(rnd)]);
         }
 
         // Note: do not mutate the first gene
         bernoulli_distribution moveMutation(0.5);
-        for (int i = 1; i < nextGeneration.size(); i++) {
+        for (size_t i = 1; i < nextGeneration.size(); i++) {
             nextGeneration[i].mutateMove(params.mutationRateMove, actionRequirements, rnd);
             nextGeneration[i].mutateAddRemove(params.mutationRateAddRemove, rnd, actionRequirements, economicUnits, availableUnitTypes, params.allowChronoBoost);
         }
@@ -2050,6 +2061,28 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
     // printBuildOrder(generation[0].constructBuildOrder(startState.foodAvailable(), startingUnitCounts, availableUnitTypes));
     // printBuildOrderDetailed(startState, generation[0].constructBuildOrder(startState.race, startState.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes));
     auto fitness = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, generation[0]);
+
+    for(auto u : startState.units) {
+        cout << "Starting unit " << UnitTypeToName(u.type) << " x" << u.units << endl;
+    }
+    cout << "Implicit build order" << endl;
+    for (auto u : generation[0].buildOrder) {
+        cout << UnitTypeToName(availableUnitTypes.getUnitType(u.type)) << endl;
+    }
+    cout << endl;
+    cout << "Explicit build order" << endl;
+    for (auto u : generation[0].constructBuildOrder(startState.race, startState.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes).items) {
+        cout << UnitTypeToName(u.typeID()) << endl;
+    }
+
+    stack<BuildOrderItem> reqs;
+    traceDependencies(startingUnitCounts, availableUnitTypes, reqs, UNIT_TYPEID::PROTOSS_GATEWAY);
+    cout << "Reqs " << reqs.size() << endl;
+    while(!reqs.empty()) {
+        auto u = reqs.top();
+        reqs.pop();
+        cout << "Req " << UnitTypeToName(u.typeID()) << endl;
+    }
     return make_pair(generation[0].constructBuildOrder(startState.race, startState.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes), fitness);
 }
 

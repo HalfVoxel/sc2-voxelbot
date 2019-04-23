@@ -218,12 +218,22 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
 
     for (const Unit* unit : observedUnitInstances) {
         if (unit->is_alive) {
-            result.emplace_back(CombatUnit(*unit), unit->pos);
             alreadySeen[(int)unit->unit_type]++;
 
             int score = 10 * (int)unit->is_alive + (unit->health_max/100);
             if (score > defaultPositionScore && isStructure(unit->unit_type)) {
                 defaultPosition = unit->pos;
+            }
+        }
+    }
+
+    for (const Unit* unit : observedUnitInstances) {
+        if (unit->is_alive) {
+            if (ticksToSeconds(agent->Observation()->GetGameLoop() - unit->last_seen_game_loop) < 20) {
+                result.emplace_back(CombatUnit(*unit), unit->pos);
+            } else {
+                // If it was a long time since we saw the unit, assume it has moved back to the default position
+                result.emplace_back(CombatUnit(*unit), defaultPosition);
             }
         }
     }
@@ -242,6 +252,7 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
 
             expectedCount -= alreadySeen[i];
             CombatUnit unit = makeUnit(playerID, (UNIT_TYPEID)i);
+            assert(expectedCount < 10000);
             for (int j = 0; j < expectedCount; j++) {
                 result.emplace_back(unit, defaultPosition);
             }
@@ -251,11 +262,11 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
     // Reduce prior as we kill more units
     int priorCount = 13 + min(30, (int)(1 + pow(ticksToSeconds(agent->Observation()->GetGameLoop())/60.0f, 2)));
     priorCount -= numDeadTotal/2;
-    cout << priorCount << endl;
+    assert(priorCount < 10000);
 
     // Prior
     int k = 0;
-    while(result.size() < priorCount) {
+    while((int)result.size() < priorCount) {
         if (false) {
             result.emplace_back(makeUnit(playerID, UNIT_TYPEID::ZERG_ROACH), defaultPosition);
 
