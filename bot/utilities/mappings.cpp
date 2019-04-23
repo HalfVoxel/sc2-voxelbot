@@ -138,6 +138,24 @@ void init() {
     mAbilityToCasterUnit[(int)ABILITY_ID::TRAIN_HIGHTEMPLAR].push_back(UNIT_TYPEID::PROTOSS_WARPGATE);
     mAbilityToCasterUnit[(int)ABILITY_ID::TRAIN_DARKTEMPLAR].push_back(UNIT_TYPEID::PROTOSS_WARPGATE);
 
+    // Some upgrades are inferred incorrectly due to not simultaneously being available on a unit
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PROTOSSGROUNDARMORLEVEL1].push_back(UNIT_TYPEID::PROTOSS_FORGE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PROTOSSGROUNDARMORLEVEL2].push_back(UNIT_TYPEID::PROTOSS_FORGE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PROTOSSGROUNDARMORLEVEL3].push_back(UNIT_TYPEID::PROTOSS_FORGE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PROTOSSGROUNDWEAPONSLEVEL1].push_back(UNIT_TYPEID::PROTOSS_FORGE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PROTOSSGROUNDWEAPONSLEVEL2].push_back(UNIT_TYPEID::PROTOSS_FORGE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PROTOSSGROUNDWEAPONSLEVEL3].push_back(UNIT_TYPEID::PROTOSS_FORGE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PROTOSSSHIELDSLEVEL1].push_back(UNIT_TYPEID::PROTOSS_FORGE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PROTOSSSHIELDSLEVEL2].push_back(UNIT_TYPEID::PROTOSS_FORGE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PROTOSSSHIELDSLEVEL3].push_back(UNIT_TYPEID::PROTOSS_FORGE);
+    
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PROTOSSAIRARMORLEVEL1].push_back(UNIT_TYPEID::PROTOSS_CYBERNETICSCORE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PROTOSSAIRARMORLEVEL2].push_back(UNIT_TYPEID::PROTOSS_CYBERNETICSCORE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PROTOSSAIRARMORLEVEL3].push_back(UNIT_TYPEID::PROTOSS_CYBERNETICSCORE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PROTOSSAIRWEAPONSLEVEL1].push_back(UNIT_TYPEID::PROTOSS_CYBERNETICSCORE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PROTOSSAIRWEAPONSLEVEL2].push_back(UNIT_TYPEID::PROTOSS_CYBERNETICSCORE);
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PROTOSSAIRWEAPONSLEVEL3].push_back(UNIT_TYPEID::PROTOSS_CYBERNETICSCORE);
+
     mCanBecome = vector<vector<UNIT_TYPEID>>(unitTypes.size());
     mHasBeen = vector<vector<UNIT_TYPEID>>(unitTypes.size());
     for (int i = 0; i < unitTypes.size(); i++) {
@@ -255,6 +273,13 @@ void init() {
     for (int i = 0; i < mUnitTypes.size(); i++) {
         mIsStationary[i] = mUnitTypes[i].movement_speed <= 0.0f;
         mIsStructure[i] = isStructure(getUnitData((UNIT_TYPEID)i));
+    }
+}
+
+void assertMappingsInitialized() {
+    if (!mappingInitialized) {
+        cerr << "Mappings have not been initialized, but they need to be at this point. You sohuld call initMappings()" << endl;
+        assert(mappingInitialized);
     }
 }
 

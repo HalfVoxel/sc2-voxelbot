@@ -1,6 +1,7 @@
 #pragma once
 #include "sc2api/sc2_api.h"
 
+void assertMappingsInitialized();
 void initMappings(const sc2::ObservationInterface* observation);
 void initMappings();
 const sc2::UnitTypeData& getUnitData(sc2::UNIT_TYPEID type);
