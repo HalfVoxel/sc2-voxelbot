@@ -147,3 +147,36 @@ bool carriesResources(const Unit* unit) {
     }
     return false;
 }
+
+bool isMelee(sc2::UNIT_TYPEID type) {
+    switch(type) {
+        case UNIT_TYPEID::PROTOSS_PROBE:
+        case UNIT_TYPEID::PROTOSS_ZEALOT:
+        case UNIT_TYPEID::PROTOSS_DARKTEMPLAR:
+        case UNIT_TYPEID::TERRAN_SCV:
+        case UNIT_TYPEID::TERRAN_HELLIONTANK:
+        case UNIT_TYPEID::ZERG_DRONE:
+        case UNIT_TYPEID::ZERG_ZERGLING:
+        case UNIT_TYPEID::ZERG_ZERGLINGBURROWED:
+        case UNIT_TYPEID::ZERG_BANELING:
+        case UNIT_TYPEID::ZERG_BANELINGBURROWED:
+        case UNIT_TYPEID::ZERG_ULTRALISK:
+        case UNIT_TYPEID::ZERG_BROODLING:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool isInfantry(sc2::UNIT_TYPEID type) {
+    switch(type) {
+        case UNIT_TYPEID::TERRAN_MARINE:
+        case UNIT_TYPEID::TERRAN_MARAUDER:
+        case UNIT_TYPEID::TERRAN_REAPER:
+        case UNIT_TYPEID::TERRAN_GHOST:
+        case UNIT_TYPEID::TERRAN_HELLIONTANK:
+            return true;
+        default:
+            return false;
+    }
+}

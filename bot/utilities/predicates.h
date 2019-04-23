@@ -29,3 +29,6 @@ bool isArmy(sc2::UNIT_TYPEID type);
 bool isStructure(const sc2::UnitTypeData& unitType);
 
 bool carriesResources(const sc2::Unit* unit);
+
+bool isMelee(sc2::UNIT_TYPEID type);
+bool isInfantry(sc2::UNIT_TYPEID type);
