@@ -48,11 +48,16 @@ add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 #   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=address -fsdfsdfe")
 # endif()
 
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -O1 -fno-omit-frame-pointer -DDISABLE_PYTHON=1")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -O0 -fno-omit-frame-pointer -DDISABLE_PYTHON=1")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wextra -Wmissing-field-initializers -Wuninitialized -Wsometimes-uninitialized")
+endif()
+
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -DDISABLE_PYTHON=1")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -D_GLIBCXX_DEBUG -fsanitize=address")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -Wsometimes-uninitialized")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -Wsometimes-uninitialized")
 
 # More dependencies
 include_directories(SYSTEM "${PROJECT_BINARY_DIR}/s2client-api/generated")
@@ -62,7 +67,7 @@ include_directories(SYSTEM "${PROJECT_BINARY_DIR}/s2client-api/generated")
 # Function to generate an example project with extra libraries
 function (create_executable project_name source_code mainfile extra_libs)
 	# TODO: The .h files don't seem to be necessary (think only .cpp files should be included here anyway)
-    file (GLOB example_project_sources ${source_code} "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc" "bot/*.h" "bot/behaviortree/*.h" "bot/ml/*.h" "bot/utilities/*.h" "bot/generated/*.cpp" ${mainfile})
+    file (GLOB example_project_sources ${source_code} "bot/*.h" "bot/behaviortree/*.h" "bot/ml/*.h" "bot/utilities/*.h" "bot/generated/*.cpp" ${mainfile})
     add_executable(${project_name} ${example_project_sources})
 
     # Sets the grouping in IDEs like visual studio (last parameter is the group name)
@@ -95,7 +100,7 @@ function (create_library project_name source_code extra_libs)
 endfunction ()
 
 # Note: trying to add SDL2-static as the extra_libs parameter here causes pybind11 modules to fail to link (for unknown reasons, maybe PIC related?)
-file (GLOB botlib_sources "bot/*.cpp" "bot/behaviortree/*.cpp" "bot/utilities/*.cpp" "bot/ml/*.cpp" "bot/generated/*.cpp" "bot/mcts/*.cpp" "s2client-api/examples/common/*.cc")
+file (GLOB botlib_sources "bot/*.cpp" "bot/behaviortree/*.cpp" "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc" "bot/utilities/*.cpp" "bot/ml/*.cpp" "bot/generated/*.cpp" "bot/mcts/*.cpp" "s2client-api/examples/common/*.cc")
 message(STATUS "${botlib_sources}")
 create_library(botlib "${botlib_sources}" "")
 
