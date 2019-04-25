@@ -6,6 +6,7 @@
 #include "Bot.h"
 #include "sc2api/sc2_api.h"
 #include "sc2utils/sc2_manage_process.h"
+#include "utilities/cereal_json.h"
 
 using namespace sc2;
 using namespace std;
@@ -264,8 +265,8 @@ void CompositionAnalyzer::OnGameLoading() {
 
 CompositionAnalyzer::CompositionAnalyzer() {
     results = ofstream("out.txt");
-    for (int i = 0; i < unitTypes.size(); i++) {
-        for (int j = 0; j < opponentTypes.size(); j++) {
+    for (size_t i = 0; i < unitTypes.size(); i++) {
+        for (size_t j = 0; j < opponentTypes.size(); j++) {
             for (int k = 1; k < 10; k += 2) {
                 for (int m = 1; m < 10; m += 2) {
                     vector<pair<UNIT_TYPEID, int>> left = { { unitTypes[i], k } };

@@ -6,7 +6,7 @@
 #include "../utilities/sc2_serialization.h"
 #include <fstream>
 #include <cereal/cereal.hpp>
-#include <cereal/archives/json.hpp>
+#include "../utilities/cereal_json.h"
 #include <cereal/archives/binary.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>

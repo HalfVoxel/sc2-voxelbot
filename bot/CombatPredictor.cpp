@@ -9,6 +9,7 @@
 #include "utilities/profiler.h"
 #include "utilities/stdutils.h"
 #include "utilities/predicates.h"
+#include "unit_lists.h"
 #include <sstream>
 
 using namespace std;
@@ -1082,182 +1083,35 @@ void createState(const CombatState& state, float offset = 0) {
     }
 }
 
-void findBestComposition(const CombatPredictor& predictor, const CombatState& startingState) {
-    // Find composition which has
-    // 1. lowest cost
-    // 2. takes the least amount of damage
-    // 3. kills the enemy in the shortest amount of time
-    //
-    // possibly:
-    // minimize sum_allies unit.cost*(1 + unit.damage_taken_fraction) - sum_enemies unit.cost*unit.damage_taken_fraction = expected delta in mineral cost
-
-    Stopwatch watch;
-    CombatState state = startingState;
-    int ourUnitsStartIndex = state.units.size();
-    float bestScore = -100000000;
-
-    // Starting guess
-    do {
-        // Add 3 marines at a time until we win
-        for (int i = 0; i < 3; i++) {
-            state.units.push_back(makeUnit(2, UNIT_TYPEID::TERRAN_MARINE));
-        }
-    } while (predictor.predict_engage(state).state.owner_with_best_outcome() == 1);
-
-    for (int i = 0; i < 1000; i++) {
-        CombatState newState = state;
-        // int action = rand() % 3;
-        int ourUnitCount = newState.units.size() - ourUnitsStartIndex;
-        int toRemove = ourUnitCount > 0 ? min(ourUnitCount, rand() % ourUnitCount) : 0;
-        int toAdd = rand() % max(5, ourUnitCount);
-        if (toRemove == 0 && toAdd == 0)
-            toAdd = 1;
-
-        for (int j = 0; j < toRemove; j++) {
-            int ourUnitCount2 = newState.units.size() - ourUnitsStartIndex;
-            // Overwrite this unit with the last unit and then delete the last unit.
-            // Effectively deletes this unit because the order is not important.
-            newState.units[(rand() % ourUnitCount2) + ourUnitsStartIndex] = newState.units[newState.units.size() - 1];
-            newState.units.pop_back();
-        }
-
-        // Add unit
-        for (int j = 0; j < toAdd; j++) {
-            auto unitType = availableUnitTypesTerran[rand() % availableUnitTypesTerran.size()];
-            newState.units.push_back(makeUnit(2, unitType));
-        }
-
-        /*if (action == 1) {
-			// Remove unit
-			if (newState.units.size() > ourUnitsStartIndex) {
-				for (int j = 0; j < stepSize && newState.units.size() > ourUnitsStartIndex; j++) {
-					int ourUnitCount = newState.units.size() - ourUnitsStartIndex;
-					// Overwrite this unit with the last unit and then delete the last unit.
-					// Effectively deletes this unit because the order is not important.
-					newState.units[(rand() % ourUnitCount) + ourUnitsStartIndex] = newState.units[newState.units.size()-1];
-					newState.units.pop_back();
-				}
-			} else {
-				// Add unit instead
-				action = 0;
-			}
-		}
-
-		if (action == 2) {
-			// Replace unit
-			if (newState.units.size() > ourUnitsStartIndex) {
-				for (int j = 0; j < stepSize; j++) {
-					int ourUnitCount = newState.units.size() - ourUnitsStartIndex;
-					// Overwrite this unit
-					auto unitType = availableUnitTypes[rand() % availableUnitTypes.size()];
-					newState.units[(rand() % ourUnitCount) + ourUnitsStartIndex] = CombatUnit(2, unitType, maxHealth(unitType), isFlying(unitType));
-				}
-			} else {
-				// Add unit instead
-				action = 0;
-			}
-		}
-
-		if (action == 0) {
-			// Add unit
-			for (int j = 0; j < stepSize; j++) {
-				auto unitType = availableUnitTypes[rand() % availableUnitTypes.size()];
-				newState.units.push_back(CombatUnit(2, unitType, maxHealth(unitType), isFlying(unitType)));
-			}
-
-			/CombatState newState2 = newState;
-			for (int i = 0; i < 20; i++) {
-				auto unitType = availableUnitTypes[rand() % availableUnitTypes.size()];
-				newState2.units.push_back(CombatUnit(2, unitType, maxHealth(unitType), isFlying(unitType)));
-
-				CombatResult newResult2 = predictor.predict_engage(newState2);
-				float newScore2 = mineralScore(newState2, newResult2, 2);
-				cout << " " << newScore2;
-			}
-			cout << endl;*
-		}*/
-
-        CombatResult newResult1 = predictor.predict_engage(newState);
-        CombatResult newResult2 = predictor.predict_engage(newState);
-        CombatResult newResult3 = predictor.predict_engage(newState);
-        float score1 = mineralScore(newState, newResult1, 2, { 0, 0, 0 });
-        float score2 = mineralScore(newState, newResult2, 2, { 0, 0, 0 });
-        float score3 = mineralScore(newState, newResult3, 2, { 0, 0, 0 });
-
-        float newScore = (score1 + score2 + score3) / 3.0f;
-        cout << (int)score1 << " " << (int)score2 << " " << (int)score3 << endl;
-
-        float temperature = 500.0f / (i + 1);
-        float randValue = (rand() % 10000) / 10000.0f;
-        if (randValue < exp((newScore - bestScore) / temperature)) {
-            state = newState;
-            if (newScore > bestScore) {
-                cout << "New record " << newScore << endl;
-                for (auto& u : state.units) {
-                    if (u.owner == 2) {
-                        cout << '\t' << UnitTypeToName(u.type) << endl;
-                    }
-                }
-            } else {
-                cout << "New score " << newScore << endl;
-                for (auto& u : state.units) {
-                    if (u.owner == 2) {
-                        cout << '\t' << UnitTypeToName(u.type) << endl;
-                    }
-                }
-            }
-            bestScore = newScore;
-        } else {
-            cout << "Discarded score " << newScore << endl;
-        }
-        // Actions: add unit, replace unit, remove unit?
-    }
-
-    watch.stop();
-    /*cout << "Duration " << watch.millis() << " ms" << endl;
-    vector<int> mineralCosts(3);
-    vector<int> vespeneCosts(3);
-    for (auto u : state.units) {
-        mineralCosts[u.owner] += unitTypes[(int)u.type].mineral_cost;
-        vespeneCosts[u.owner] += unitTypes[(int)u.type].vespene_cost;
-    }
-
-    cout << "Team 1 costs: " << mineralCosts[1] << "+" << vespeneCosts[1] << endl;
-    cout << "Team 2 costs: " << mineralCosts[2] << "+" << vespeneCosts[2] << endl;
-    createState(state);*/
-
-    CombatResult newResult = predictor.predict_engage(state, false);
-}
-
 struct CompositionGene {
 //    private:
     // Indices are into the availableUnitTypes list
     vector<int> unitCounts;
 
    public:
-    vector<pair<UNIT_TYPEID, int>> getUnits(const vector<UNIT_TYPEID>& availableUnitTypes) const {
+    vector<pair<UNIT_TYPEID, int>> getUnits(const AvailableUnitTypes& availableUnitTypes) const {
         assert(unitCounts.size() == availableUnitTypes.size());
         vector<pair<UNIT_TYPEID, int>> result;
         for (size_t i = 0; i < unitCounts.size(); i++) {
-            if (unitCounts[i] > 0) result.emplace_back(availableUnitTypes[i], unitCounts[i]);
+            if (unitCounts[i] > 0) result.emplace_back(availableUnitTypes.getUnitType(i), unitCounts[i]);
         }
         return result;
     }
 
-    vector<pair<int, int>> getUnitsUntyped(const vector<UNIT_TYPEID>& availableUnitTypes) const {
+    vector<pair<int, int>> getUnitsUntyped(const AvailableUnitTypes& availableUnitTypes) const {
         assert(unitCounts.size() == availableUnitTypes.size());
         vector<pair<int, int>> result;
         for (size_t i = 0; i < unitCounts.size(); i++) {
-            if (unitCounts[i] > 0) result.emplace_back((int)availableUnitTypes[i], unitCounts[i]);
+            if (unitCounts[i] > 0) result.emplace_back((int)availableUnitTypes.getUnitType(i), unitCounts[i]);
         }
         return result;
     }
 
-    void addToState(CombatState& state, const vector<UNIT_TYPEID>& availableUnitTypes, int owner) const {
+    void addToState(CombatState& state, const AvailableUnitTypes& availableUnitTypes, int owner) const {
         assert(unitCounts.size() == availableUnitTypes.size());
         for (size_t i = 0; i < unitCounts.size(); i++) {
             for (int j = 0; j < unitCounts[i]; j++) {
-                state.units.push_back(makeUnit(owner, availableUnitTypes[i]));
+                state.units.push_back(makeUnit(owner, availableUnitTypes.getUnitType(i)));
             }
         }
     }
@@ -1303,7 +1157,7 @@ struct CompositionGene {
         return gene;
     }
 
-    CompositionGene(const vector<UNIT_TYPEID>& availableUnitTypes, int meanTotalCount, default_random_engine& seed)
+    CompositionGene(const AvailableUnitTypes& availableUnitTypes, int meanTotalCount, default_random_engine& seed)
         : unitCounts(availableUnitTypes.size()) {
         float mean = meanTotalCount / availableUnitTypes.size();
         exponential_distribution<float> dist(1.0f / mean);
@@ -1312,15 +1166,15 @@ struct CompositionGene {
         }
     }
 
-    CompositionGene(const vector<UNIT_TYPEID>& availableUnitTypes, const vector<pair<UNIT_TYPEID, int>>& units)
+    CompositionGene(const AvailableUnitTypes& availableUnitTypes, const vector<pair<UNIT_TYPEID, int>>& units)
         : unitCounts(availableUnitTypes.size()) {
         for (auto u : units) {
-            unitCounts[indexOf(availableUnitTypes, u.first)] += u.second;
+            unitCounts[availableUnitTypes.getIndex(u.first)] += u.second;
         }
     }
 };
 
-void scaleUntilWinning(const CombatPredictor& predictor, const CombatState& opponent, const vector<UNIT_TYPEID>& availableUnitTypes, CompositionGene& gene) {
+void scaleUntilWinning(const CombatPredictor& predictor, const CombatState& opponent, const AvailableUnitTypes& availableUnitTypes, CompositionGene& gene) {
     for (int its = 0; its < 5; its++) {
         CombatState state = opponent;
         gene.addToState(state, availableUnitTypes, 2);
@@ -1330,7 +1184,7 @@ void scaleUntilWinning(const CombatPredictor& predictor, const CombatState& oppo
     }
 }
 
-float calculateFitness(const CombatPredictor& predictor, const CombatState& opponent, const vector<UNIT_TYPEID>& availableUnitTypes, CompositionGene& gene, const vector<float>& timeToProduceUnits) {
+float calculateFitness(const CombatPredictor& predictor, const CombatState& opponent, const AvailableUnitTypes& availableUnitTypes, CompositionGene& gene, const vector<float>& timeToProduceUnits) {
     CombatState state = opponent;
     gene.addToState(state, availableUnitTypes, 2);
     return mineralScore(state, predictor.predict_engage(state, false, false), 2, timeToProduceUnits);  // + mineralScore(state, predictor.predict_engage(state, false, true), 2)) * 0.5f;
@@ -1359,7 +1213,7 @@ void logRecordings(CombatState& state, const CombatPredictor& predictor, float s
     recording2.writeCSV(msg + "3.csv");
 }
 
-vector<pair<UNIT_TYPEID,int>> findBestCompositionGenetic(const CombatPredictor& predictor, const vector<UNIT_TYPEID>& availableUnitTypes, const CombatState& opponent, const BuildOptimizerNN* buildTimePredictor, const BuildState* startingBuildState, vector<pair<UNIT_TYPEID,int>>* seedComposition) {
+vector<pair<UNIT_TYPEID,int>> findBestCompositionGenetic(const CombatPredictor& predictor, const AvailableUnitTypes& availableUnitTypes, const CombatState& opponent, const BuildOptimizerNN* buildTimePredictor, const BuildState* startingBuildState, vector<pair<UNIT_TYPEID,int>>* seedComposition) {
     Stopwatch watch;
 
     const int POOL_SIZE = 20;
@@ -1950,7 +1804,7 @@ void CombatPredictor::unitTest(const BuildOptimizerNN& buildTimePredictor) const
             makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
 		} };
 
-		auto res = findBestCompositionGenetic(*this, availableUnitTypesProtoss, opponentUnits, &buildTimePredictor, &startingBuildState);
+		auto res = findBestCompositionGenetic(*this, getAvailableUnitsForRace(Race::Protoss, UnitCategory::ArmyCompositionOptions), opponentUnits, &buildTimePredictor, &startingBuildState);
 
         CombatState resState = opponentUnits;
         for (auto u : res) for (int i = 0; i < u.second; i++) resState.units.push_back(makeUnit(2, u.first));

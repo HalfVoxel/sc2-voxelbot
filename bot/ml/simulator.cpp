@@ -249,13 +249,13 @@ bool similarOrders(const SimulatorUnitGroup& group1, const SimulatorUnitGroup& g
 void SimulatorState::mergeGroups () {
     float mergeDistance = 6;
 
-    for (int i = 0; i < groups.size(); i++) {
+    for (size_t i = 0; i < groups.size(); i++) {
         auto& group1 = groups[i];
         if (group1.units.size() == 0) continue;
 
         bool isBuilding1 = isStationary(group1.units[0].combat.type);
 
-        for (int j = i + 1; j < groups.size(); j++) {
+        for (size_t j = i + 1; j < groups.size(); j++) {
             auto& group2 = groups[j];
             if (group2.owner != group1.owner || group2.units.size() == 0) continue;
 
@@ -290,7 +290,7 @@ std::pair<SimulatorUnitGroup*, SimulatorUnit*> SimulatorState::selectOne(int pla
 vector<SimulatorUnitGroup*> SimulatorState::select(int player, std::function<bool(const SimulatorUnitGroup&)>* groupFilter, std::function<bool(const SimulatorUnit&)>* unitFilter) {
     // Note: keep track of indices instead of pointers since we are modifying the groups vector (possibly relocating it) inside the loop
     vector<int> matchingIndices;
-    for (int i = groups.size() - 1; i >= 0; i--) {
+    for (int i = (int)groups.size() - 1; i >= 0; i--) {
         auto& group = groups[i];
         if (group.owner == player && (groupFilter == nullptr || (*groupFilter)(group))) {
             if (unitFilter == nullptr) {
@@ -323,7 +323,7 @@ vector<SimulatorUnitGroup*> SimulatorState::select(int player, std::function<boo
         }
     }
     vector<SimulatorUnitGroup*> result(matchingIndices.size());
-    for (int i = 0; i < matchingIndices.size(); i++) {
+    for (size_t i = 0; i < matchingIndices.size(); i++) {
         result[i] = &groups[matchingIndices[i]];
         assert(result[i]->owner == player);
     }

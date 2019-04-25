@@ -45,7 +45,7 @@ void CameraController::OnStep() {
         if (unit->alliance == Unit::Alliance::Self) {
             if (unit->orders.size() > 0) {
                 auto order = unit->orders[0];
-                auto& ability = observation->GetAbilityData()[order.ability_id];
+                // auto& ability = observation->GetAbilityData()[order.ability_id];
 
                 UnitTypeID unitType = simplifyUnitType(abilityToUnit(order.ability_id));
                 if (unitType != UNIT_TYPEID::INVALID) {

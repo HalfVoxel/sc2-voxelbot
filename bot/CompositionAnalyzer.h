@@ -4,7 +4,6 @@
 #include <vector>
 #include "Bot.h"
 #include "cereal/cereal.hpp"
-#include <cereal/archives/json.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
 

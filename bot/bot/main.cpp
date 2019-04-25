@@ -12,7 +12,6 @@ using namespace sc2;
 using namespace BOT;
 using namespace std;
 
-
 const char* BelShirVestigeLE = "Ladder/(2)Bel'ShirVestigeLE (Void).SC2Map";
 const char* BackwaterLE = "Ladder/BackwaterLE.SC2Map";
 const char* BlackpinkLE = "Ladder/BlackpinkLE.SC2Map";

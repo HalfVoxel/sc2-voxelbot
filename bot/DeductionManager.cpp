@@ -20,7 +20,7 @@ void DeductionManager::OnGameStart(int playerID) {
 
     auto playerInfos = bot->Observation()->GetGameInfo().player_info;
     for (auto& p : playerInfos) {
-        if (p.player_id == playerID) {
+        if ((int)p.player_id == (int)playerID) {
             race = p.race_requested;
             startingResources = Spending(50, 0);
 
@@ -54,7 +54,7 @@ void DeductionManager::OnGameStart(int playerID) {
 vector<pair<UNIT_TYPEID, int>> DeductionManager::GetKnownUnits() {
     vector<pair<UNIT_TYPEID, int>> units;
     auto infos = Summary();
-    for (int i = 0; i < infos.size(); i++) {
+    for (size_t i = 0; i < infos.size(); i++) {
         auto info = infos[i];
         if (info.alive > 0) {
             units.emplace_back((UNIT_TYPEID)i, info.alive);
@@ -86,7 +86,7 @@ void DeductionManager::Observe(const vector<const Unit*>& units) {
     int requiredFood = 0;
 
     auto infos = Summary();
-    for (int i = 0; i < infos.size(); i++) {
+    for (size_t i = 0; i < infos.size(); i++) {
         auto info = infos[i];
 
         if (info.alive > 0) {
@@ -130,7 +130,7 @@ vector<pair<UNIT_TYPEID, int>> DeductionManager::ApproximateArmy(float scale) {
     vector<pair<UNIT_TYPEID, int>> result;
     auto& unitTypes = getUnitTypes();
     int totalCount = 0;
-    for (int i = 0; i < unitTypes.size(); i++) {
+    for (size_t i = 0; i < unitTypes.size(); i++) {
         if (summary[i].total > 0) {
             if (isArmy((UNIT_TYPEID)i)) {
                 int expectedCount = (int)ceil((summary[i].alive + summary[i].dead * 0.5f));
@@ -240,7 +240,7 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
 
     int numDeadTotal = 0;
 
-    for (int i = 0; i < unitTypes.size(); i++) {
+    for (size_t i = 0; i < unitTypes.size(); i++) {
         numDeadTotal += summary[i].dead;
         if (summary[i].total > 0) {
             int expectedCount;
@@ -298,7 +298,7 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
     }
 
     assert(result.size() > 0);
-    if(result.size() < priorCount * scale) {
+    if((int)result.size() < priorCount * scale) {
         result.push_back(result[rand() % result.size()]);
     }
 
@@ -315,7 +315,7 @@ vector<UnitTypeInfo> DeductionManager::Summary() {
     vector<UNIT_TYPEID> observedUnitTypes(observedUnitInstances.size());
     vector<int> currentExpectedObservations = expectedObservations;
 
-    for (int i = 0; i < currentExpectedObservations.size(); i++) {
+    for (size_t i = 0; i < currentExpectedObservations.size(); i++) {
         int toRemove = currentExpectedObservations[i];
         if (toRemove == 0)
             continue;
@@ -353,7 +353,7 @@ vector<UnitTypeInfo> DeductionManager::Summary() {
     // then it is more likely that the hatchery was upgraded to a hive rather than a drone.
 
     for (int maxUpgradeDistance = 0; maxUpgradeDistance <= 3; maxUpgradeDistance++) {
-        for (int i = 0; i < observedUnitInstances.size(); i++) {
+        for (size_t i = 0; i < observedUnitInstances.size(); i++) {
             if (processedUnits[i])
                 continue;
 
@@ -381,7 +381,7 @@ vector<UnitTypeInfo> DeductionManager::Summary() {
                         // drone -> (hatchery -> lair) -> hive = 3
                         auto upgradePath = hasBeen(future);
                         auto depth = find(upgradePath.begin(), upgradePath.end(), unitType) - upgradePath.begin();
-                        assert(depth < upgradePath.size());
+                        assert(depth < (int)upgradePath.size());
                         assert(depth <= 3);
 
                         if (depth > maxUpgradeDistance) {
@@ -420,7 +420,7 @@ vector<UnitTypeInfo> DeductionManager::Summary() {
     }
 
     vector<UnitTypeInfo> infos(unitTypes.size());
-    for (int i = 0; i < observedUnitInstances.size(); i++) {
+    for (size_t i = 0; i < observedUnitInstances.size(); i++) {
         const Unit* u = observedUnitInstances[i];
         // Note: already canonicalized
         auto unitType = observedUnitTypes[i];
@@ -434,7 +434,7 @@ vector<UnitTypeInfo> DeductionManager::Summary() {
         spending.spentGas += unitTypeData.vespene_cost;
     }
 
-    for (int i = 0; i < currentExpectedObservations.size(); i++) {
+    for (size_t i = 0; i < currentExpectedObservations.size(); i++) {
         int expected = currentExpectedObservations[i];
         infos[i].total += expected;
         infos[i].alive += expected;

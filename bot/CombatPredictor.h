@@ -5,6 +5,8 @@
 #include <limits>
 #include "utilities/stdutils.h"
 
+struct AvailableUnitTypes;
+
 inline bool canBeAttackedByAirWeapons(sc2::UNIT_TYPEID type) {
     return isFlying(type) || type == sc2::UNIT_TYPEID::PROTOSS_COLOSSUS;
 }
@@ -139,7 +141,7 @@ CombatUnit makeUnit(int owner, sc2::UNIT_TYPEID type);
 extern const std::vector<sc2::UNIT_TYPEID> availableUnitTypesTerran;
 extern const std::vector<sc2::UNIT_TYPEID> availableUnitTypesProtoss;
 
-std::vector<std::pair<sc2::UNIT_TYPEID,int>> findBestCompositionGenetic(const CombatPredictor& predictor, const std::vector<sc2::UNIT_TYPEID>& availableUnitTypes, const CombatState& opponent, const BuildOptimizerNN* buildTimePredictor = nullptr, const BuildState* startingBuildState = nullptr, std::vector<std::pair<sc2::UNIT_TYPEID,int>>* seedComposition = nullptr);
+std::vector<std::pair<sc2::UNIT_TYPEID,int>> findBestCompositionGenetic(const CombatPredictor& predictor, const AvailableUnitTypes& availableUnitTypes, const CombatState& opponent, const BuildOptimizerNN* buildTimePredictor = nullptr, const BuildState* startingBuildState = nullptr, std::vector<std::pair<sc2::UNIT_TYPEID,int>>* seedComposition = nullptr);
 
 struct CombatRecorder {
 private:

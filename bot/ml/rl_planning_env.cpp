@@ -1,6 +1,7 @@
 #include "rl_planning_env.h"
 #include "tensor.h"
 #include "../mcts/mcts_debugger.h"
+#include "../unit_lists.h"
 
 using namespace std;
 using namespace sc2;
@@ -112,7 +113,7 @@ vector<pybind11::array_t<float>> EnvObserver::observe(const SimulatorMCTSState& 
 
     auto unitTypesOurOneHot = Tensor(unitMappings.size(), 5);
     auto unitTypesEnemyOneHot = Tensor(unitMappings.size(), 5);
-    for (int i = 0; i < unitMappings.size(); i++) {
+    for (size_t i = 0; i < unitMappings.size(); i++) {
         if (unitTypesOur[i] == 0) {
             unitTypesOurOneHot(i, 0) = 1;
         }
@@ -283,7 +284,7 @@ void RLPlanningEnv::print() {
 }
 
 RLEnvManager::RLEnvManager(pybind11::object simulatorVisualizerModule, pybind11::object replayLoadFn, vector<string> binaryReplayFilePaths) :
-    observer(getAvailableUnitsForRace(Race::Protoss), CoordinateRemapper(Point2D(15, 15), Point2D(168 - 15, 168 - 15), false, false))
+    observer(getAvailableUnitsForRace(Race::Protoss, UnitCategory::BuildOrderOptions), CoordinateRemapper(Point2D(15, 15), Point2D(168 - 15, 168 - 15), false, false))
 {
     simulatorVisualizer = new MCTSDebugger(simulatorVisualizerModule);
     initMappings();
@@ -320,7 +321,7 @@ RLPlanningEnv RLEnvManager::getEnv() {
         int opponentIndex = 1 - playerIndex;
         bool flipX = spawningPoints[playerIndex].x > spawningPoints[opponentIndex].x;
         bool flipY = spawningPoints[playerIndex].y > spawningPoints[opponentIndex].y;
-        EnvObserver envObserver(getAvailableUnitsForRace(Race::Protoss), CoordinateRemapper(Point2D(15, 15), Point2D(168 - 15, 168 - 15), flipX, flipY));
+        EnvObserver envObserver(getAvailableUnitsForRace(Race::Protoss, UnitCategory::BuildOrderOptions), CoordinateRemapper(Point2D(15, 15), Point2D(168 - 15, 168 - 15), flipX, flipY));
         RLPlanningEnv env(playerID, mctsState, envObserver);
         return env;
     }

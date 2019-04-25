@@ -1,6 +1,6 @@
 #pragma once
 #include <cereal/cereal.hpp>
-#include <cereal/archives/json.hpp>
+#include "../utilities/cereal_json.h"
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
 

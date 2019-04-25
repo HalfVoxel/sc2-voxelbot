@@ -24,12 +24,13 @@
 #include "ScoutingManager.h"
 #include "behaviortree/TacticalNodes.h"
 #include "BuildingPlacement.h"
-#include <cereal/archives/json.hpp>
+#include "utilities/cereal_json.h"
 #include <cereal/types/string.hpp>
 #include <fstream>
 #include "cereal/cereal.hpp"
 #include "mcts/mcts_debugger.h"
 #include "build_order_helpers.h"
+#include "unit_lists.h"
 
 using Clock = std::chrono::high_resolution_clock;
 
@@ -43,6 +44,7 @@ Agent* agent = nullptr;
 map<const Unit*, AvailableAbilities> availableAbilities;
 map<const Unit*, AvailableAbilities> availableAbilitiesExcludingCosts;
 bool mctsDebug = false;
+bool autoCamera = false;
 
 // TODO: Should move this to a better place
 bool IsAbilityReady(const Unit* unit, ABILITY_ID ability) {
@@ -360,13 +362,13 @@ void Bot::refreshAbilities() {
     availableAbilities.clear();
     auto& ourUnits = this->ourUnits();
     auto abilities = Query()->GetAbilitiesForUnits(ourUnits, false);
-    for (int i = 0; i < ourUnits.size(); i++) {
+    for (size_t i = 0; i < ourUnits.size(); i++) {
         availableAbilities[ourUnits[i]] = abilities[i];
     }
 
     abilities = Query()->GetAbilitiesForUnits(ourUnits, true);
     availableAbilitiesExcludingCosts.clear();
-    for (int i = 0; i < ourUnits.size(); i++) {
+    for (size_t i = 0; i < ourUnits.size(); i++) {
         availableAbilitiesExcludingCosts[ourUnits[i]] = abilities[i];
     }
 }
@@ -384,6 +386,9 @@ void Bot::OnStep() {
     for (auto& msg : Observation()->GetChatMessages()) {
         if (msg.message == "mcts") {
             mctsDebug = !mctsDebug;
+        }
+        if (msg.message == "cam") {
+            autoCamera = !autoCamera;
         }
     }
 
@@ -491,7 +496,7 @@ void Bot::OnStep() {
             startingState.units.push_back(makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK));
         }*/
 
-        for (int i = 0; i < ourUnits.size(); i++) {
+        for (size_t i = 0; i < ourUnits.size(); i++) {
             if (isArmy(ourUnits[i]->unit_type)) {
                 startingState.units.push_back(makeUnit(2, ourUnits[i]->unit_type));
             }
@@ -548,7 +553,7 @@ void Bot::OnStep() {
             buildTimePredictorPtr = nullptr;
 #endif
 
-            auto bestCounter = findBestCompositionGenetic(combatPredictor, availableUnitTypesProtoss, startingState, buildTimePredictorPtr, &futureState, &lastCounter);
+            auto bestCounter = findBestCompositionGenetic(combatPredictor, getAvailableUnitsForRace(Race::Protoss, UnitCategory::ArmyCompositionOptions), startingState, buildTimePredictorPtr, &futureState, &lastCounter);
 
             // auto bestCounter = findBestCompositionGenetic(combatPredictor, availableUnitTypesProtoss, startingState, nullptr, &futureState, &lastCounter);
             /*vector<pair<UNIT_TYPEID, int>> bestCounter = {
@@ -633,7 +638,9 @@ void Bot::OnStep() {
     // scoutingManager->OnStep();
     // tacticalManager->OnStep();
 
-    // cameraController.OnStep();
+    if (autoCamera) {
+        cameraController.OnStep();
+    }
     // DebugUnitPositions();
 
     Debug()->SendDebug();

@@ -219,7 +219,7 @@ MCTSPropagationResult mcts(MCTSState<A,T>& node, int depth = 0) {
     }
 
     if (ENABLE_RAVE) {
-        for (int i = node.children.size() - 1; i >= 0; i--) {
+        for (int i = (int)node.children.size() - 1; i >= 0; i--) {
             auto& c = node.children[i];
             if (result.usedActions[c.action]) {
                 if (c.state == nullptr) {
@@ -242,7 +242,7 @@ template <class A, class T>
 nonstd::optional<std::pair<A, std::shared_ptr<MCTSState<A,T>>>> MCTSState<A, T>::bestAction() const {
     int bestAction = -1;
     int bestScore = -1000;
-    for (int i = 0; i < children.size(); i++) {
+    for (size_t i = 0; i < children.size(); i++) {
         if (children[i].state != nullptr) {
             if (children[i].state->visits > bestScore || (children[i].state->visits == bestScore && children[i].state->wins < children[bestAction].state->wins)) {
                 bestScore = children[i].state->visits;

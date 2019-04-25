@@ -8,7 +8,7 @@ void ScoutingManager::OnStep() {
     const sc2::ObservationInterface* observation = bot->Observation();
     int scoutCount = (observation->GetFoodUsed() > 16 ? 1 : 0) + (observation->GetFoodUsed() / 200) * 4;
 
-    if (scoutCount > scoutAssignments.size()) {
+    if (scoutCount > (int)scoutAssignments.size()) {
         UnitGroup* unit_group = bot->tacticalManager->CreateGroup(Scout);
         if (unit_group != nullptr) {
             auto p = bot->influenceManager.scoutingMap.argmax();

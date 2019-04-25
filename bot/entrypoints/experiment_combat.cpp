@@ -11,6 +11,7 @@
 #include "sc2api/sc2_api.h"
 #include "sc2utils/sc2_manage_process.h"
 #include <random>
+#include <sstream>
 
 using namespace sc2;
 using namespace std;
@@ -533,7 +534,7 @@ class CompositionAnalyzer2 : public sc2::Agent {
                     recorder->finalize(ss.str());
                     recorder = nullptr;
 
-                    for (int si = 0; si < allSettings.size(); si++) {
+                    for (size_t si = 0; si < allSettings.size(); si++) {
                         CombatRecording simRecording;
                         predictor.predict_engage(combatStates[combatIndex], allSettings[si], &simRecording, 1);
                         stringstream ss2;
@@ -548,7 +549,7 @@ class CompositionAnalyzer2 : public sc2::Agent {
                 combatUnits.clear();
 
                 combatIndex++;
-                if (combatIndex >= combatStates.size()) {
+                if (combatIndex >= (int)combatStates.size()) {
                     Debug()->DebugEndGame();
                     Debug()->SendDebug();
                     return;

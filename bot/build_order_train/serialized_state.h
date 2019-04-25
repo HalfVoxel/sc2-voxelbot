@@ -1,10 +1,11 @@
 #pragma once
+#include "../utilities/cereal_json.h"
+
+
 #include "../BuildOptimizerGenetic.h"
 #include "../utilities/mappings.h"
 #include "../utilities/predicates.h"
 #include "../utilities/stdutils.h"
-#include <cereal/cereal.hpp>
-#include <cereal/archives/json.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
 #include <vector>

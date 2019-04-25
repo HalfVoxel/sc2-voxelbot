@@ -9,7 +9,7 @@
 using namespace std;
 using namespace sc2;
 
-const Race GetPlayerRace(const ObservationInterface* obs, int playerID) {
+Race GetPlayerRace(const ObservationInterface* obs, int playerID) {
 	return obs->GetGameInfo().player_info[playerID].race_actual;
 }
 
@@ -64,7 +64,7 @@ vector<float> lastMoveProbs;
 map<int, float> timeBias;
 
 void MLMovement::Tick(const ObservationInterface* observation) {
-    auto playerID = observation->GetPlayerID();
+    int playerID = observation->GetPlayerID();
     auto ourUnits = observation->GetUnits(Unit::Alliance::Self);
 
     if ((ticks % 50) == 1) {
@@ -93,7 +93,7 @@ void MLMovement::Tick(const ObservationInterface* observation) {
             }
         }
 
-        for (int i = 0; i < res.size(); i++) {
+        for (size_t i = 0; i < res.size(); i++) {
             timeBias[(int)validUnits[i]->tag] *= 0.9f;
             timeBias[(int)validUnits[i]->tag] += res[i] * 0.1f;
             res[i] += 2 * timeBias[(int)validUnits[i]->tag];
@@ -104,7 +104,7 @@ void MLMovement::Tick(const ObservationInterface* observation) {
         assert(validUnits.size() == res.size());
 
         vector<bool> isSampled;
-        for (int i = 0; i < res.size(); i++) {
+        for (size_t i = 0; i < res.size(); i++) {
             if (res[i] > 0.05) {
                 lastMovedUnits.push_back(validUnits[i]);
                 lastMoveProbs.push_back(res[i]);
@@ -117,7 +117,7 @@ void MLMovement::Tick(const ObservationInterface* observation) {
             int armyFilter = 1;
             float totalWeight = 0;
             int sampledUnit = -1;
-            for (int i = 0; i < res.size(); i++) {
+            for (size_t i = 0; i < res.size(); i++) {
                 bool valid = (armyFilter == -1 || isArmy(validUnits[i]->unit_type) == armyFilter);
                 if (valid && !isSampled[i]) {
                     if (((rand() % 10000)/10000.0f) * totalWeight <= res[i]) {
@@ -133,7 +133,7 @@ void MLMovement::Tick(const ObservationInterface* observation) {
 
             if (sampledUnit != -1) {
                 // Pick other nearby units
-                for (int j = 0; j < res.size(); j++) {
+                for (size_t j = 0; j < res.size(); j++) {
                     bool valid = (armyFilter == -1 || isArmy(validUnits[j]->unit_type) == armyFilter);
                     if (valid && !isSampled[j] && Distance2D(validUnits[j]->pos, validUnits[sampledUnit]->pos) < 8 && res[j] > res[sampledUnit]*0.5f) {
                         sampledTags.push_back((int)validUnits[j]->tag);
@@ -162,7 +162,7 @@ void MLMovement::Tick(const ObservationInterface* observation) {
         }
     }
 
-    for (int i = 0; i < lastMovedUnits.size(); i++) {
+    for (size_t i = 0; i < lastMovedUnits.size(); i++) {
         agent->Debug()->DebugSphereOut(lastMovedUnits[i]->pos, min(lastMoveProbs[i], 0.5f) * 3, lastMoveProbs[i] > 0.5 ? Colors::Yellow : (lastMoveProbs[i] > 0.2 ? Colors::Red : Colors::Blue));
     }
 

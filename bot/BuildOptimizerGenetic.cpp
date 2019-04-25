@@ -10,6 +10,7 @@
 #include "utilities/predicates.h"
 #include "utilities/profiler.h"
 #include "utilities/stdutils.h"
+#include "unit_lists.h"
 
 using namespace std;
 using namespace sc2;
@@ -19,19 +20,6 @@ const BuildOrderFitness BuildOrderFitness::ReallyBad = { 100000, BuildResources(
 
 void printBuildOrder(const vector<UNIT_TYPEID>& buildOrder);
 void printBuildOrder(const BuildOrder& buildOrder);
-
-bool AvailableUnitTypes::canBeChronoBoosted (int index) const {
-    assert((size_t)index < index2item.size());
-    auto& item = index2item[index];
-
-    // Upgrades can always be chrono boosted
-    if (!item.isUnitType()) return true;
-
-    auto unitType = item.typeID();
-
-    // Only allow chrono boosting non-structures that are built in structures
-    return !isStructure(unitType) && isStructure(abilityToCasterUnit(getUnitData(unitType).ability_id)[0]);
-}
 
 BuildState::BuildState(const ObservationInterface* observation, Unit::Alliance alliance, Race race, BuildResources resources, float time) : time(time), race(race), resources(resources) {
     map<UNIT_TYPEID, int> startingUnitsCount;
@@ -854,7 +842,7 @@ static void traceDependencies(const vector<int>& unitCounts, const AvailableUnit
         return;
 
     // Protoss buildings need pylons (in theory not strictly necessary, but they can only be placed in power fields... so... in practice yes)
-    if (getUnitData(requiredType).race == Race::Protoss && isStructure(requiredType) && (requiredType != UNIT_TYPEID::PROTOSS_NEXUS && requiredType != UNIT_TYPEID::PROTOSS_PYLON)) {
+    if (getUnitData(requiredType).race == Race::Protoss && isStructure(requiredType) && (requiredType != UNIT_TYPEID::PROTOSS_NEXUS && requiredType != UNIT_TYPEID::PROTOSS_PYLON && requiredType != UNIT_TYPEID::PROTOSS_ASSIMILATOR)) {
         requiredType = UNIT_TYPEID::PROTOSS_PYLON;
         if (unitCounts[availableUnitTypes.getIndex(requiredType)] == 0) {
             // Need to add this type to the build order
@@ -1438,29 +1426,7 @@ BuildOrderGene locallyOptimizeGene(const BuildState& startState, const vector<in
     return newGene;
 }
 
-vector<UNIT_TYPEID> unitTypesZergEconomic = {
-    UNIT_TYPEID::ZERG_BANELINGNEST,
-    UNIT_TYPEID::ZERG_DRONE,
-    UNIT_TYPEID::ZERG_DRONE,
-    UNIT_TYPEID::ZERG_DRONE,
-    UNIT_TYPEID::ZERG_DRONE,
-    UNIT_TYPEID::ZERG_DRONE,
-    UNIT_TYPEID::ZERG_EVOLUTIONCHAMBER,
-    UNIT_TYPEID::ZERG_EXTRACTOR,
-    UNIT_TYPEID::ZERG_GREATERSPIRE,
-    UNIT_TYPEID::ZERG_HATCHERY,
-    UNIT_TYPEID::ZERG_HIVE,
-    UNIT_TYPEID::ZERG_HYDRALISKDEN,
-    UNIT_TYPEID::ZERG_INFESTATIONPIT,
-    UNIT_TYPEID::ZERG_LAIR,
-    UNIT_TYPEID::ZERG_LURKERDENMP,
-    UNIT_TYPEID::ZERG_NYDUSCANAL,
-    UNIT_TYPEID::ZERG_NYDUSNETWORK,
-    UNIT_TYPEID::ZERG_QUEEN,
-    UNIT_TYPEID::ZERG_SPAWNINGPOOL,
-    UNIT_TYPEID::ZERG_SPIRE,
-    UNIT_TYPEID::ZERG_ULTRALISKCAVERN,
-};
+
 
 vector<UNIT_TYPEID> unitTypesZerg = {
     UNIT_TYPEID::ZERG_BANELING,
@@ -1501,34 +1467,6 @@ vector<UNIT_TYPEID> unitTypesZerg = {
     UNIT_TYPEID::ZERG_ZERGLING,
 };
 
-vector<UNIT_TYPEID> unitTypesTerranEconomic = {
-    UNIT_TYPEID::TERRAN_ARMORY,
-    UNIT_TYPEID::TERRAN_BARRACKS,
-    UNIT_TYPEID::TERRAN_BARRACKSREACTOR,
-    UNIT_TYPEID::TERRAN_BARRACKSTECHLAB,
-    UNIT_TYPEID::TERRAN_COMMANDCENTER,
-    UNIT_TYPEID::TERRAN_ENGINEERINGBAY,
-    UNIT_TYPEID::TERRAN_FACTORY,
-    UNIT_TYPEID::TERRAN_FACTORYREACTOR,
-    UNIT_TYPEID::TERRAN_FACTORYTECHLAB,
-    UNIT_TYPEID::TERRAN_FUSIONCORE,
-    UNIT_TYPEID::TERRAN_GHOSTACADEMY,
-    // UNIT_TYPEID::TERRAN_MULE,
-    UNIT_TYPEID::TERRAN_ORBITALCOMMAND,
-    UNIT_TYPEID::TERRAN_PLANETARYFORTRESS,
-    UNIT_TYPEID::TERRAN_REFINERY,
-    UNIT_TYPEID::TERRAN_SCV,
-    UNIT_TYPEID::TERRAN_SCV,
-    UNIT_TYPEID::TERRAN_SCV,
-    UNIT_TYPEID::TERRAN_SCV,
-    UNIT_TYPEID::TERRAN_SCV,
-    UNIT_TYPEID::TERRAN_SCV,
-    UNIT_TYPEID::TERRAN_SCV,
-    UNIT_TYPEID::TERRAN_STARPORT,
-    UNIT_TYPEID::TERRAN_STARPORTREACTOR,
-    UNIT_TYPEID::TERRAN_STARPORTTECHLAB,
-    UNIT_TYPEID::TERRAN_SUPPLYDEPOT,
-};
 
 static vector<UNIT_TYPEID> unitTypesTerran = {
     UNIT_TYPEID::TERRAN_ARMORY,
@@ -1617,29 +1555,6 @@ vector<UNIT_TYPEID> unitTypesProtoss = {
     UNIT_TYPEID::PROTOSS_ZEALOT,
 };
 
-vector<UNIT_TYPEID> unitTypesProtossEconomic = {
-    UNIT_TYPEID::PROTOSS_ASSIMILATOR,
-    UNIT_TYPEID::PROTOSS_CYBERNETICSCORE,
-    UNIT_TYPEID::PROTOSS_DARKSHRINE,
-    UNIT_TYPEID::PROTOSS_FLEETBEACON,
-    UNIT_TYPEID::PROTOSS_FORGE,
-    UNIT_TYPEID::PROTOSS_GATEWAY,
-    UNIT_TYPEID::PROTOSS_NEXUS,
-    UNIT_TYPEID::PROTOSS_NEXUS,
-    UNIT_TYPEID::PROTOSS_PROBE,
-    UNIT_TYPEID::PROTOSS_PROBE,
-    UNIT_TYPEID::PROTOSS_PROBE,
-    UNIT_TYPEID::PROTOSS_PROBE,
-    UNIT_TYPEID::PROTOSS_PROBE,
-    UNIT_TYPEID::PROTOSS_PROBE,
-    UNIT_TYPEID::PROTOSS_PYLON,
-    UNIT_TYPEID::PROTOSS_ROBOTICSBAY,
-    UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY,
-    UNIT_TYPEID::PROTOSS_STARGATE,
-    UNIT_TYPEID::PROTOSS_TEMPLARARCHIVE,
-    UNIT_TYPEID::PROTOSS_TWILIGHTCOUNCIL,
-    // UNIT_TYPEID::PROTOSS_WARPGATE, // TODO: Warpgate messes up the optimization because it requires a research to be built
-};
 
 pair<vector<int>, vector<int>> calculateStartingUnitCounts(const BuildState& startState, const AvailableUnitTypes& availableUnitTypes) {
     vector<int> startingUnitCounts(availableUnitTypes.size());
@@ -1658,151 +1573,8 @@ pair<vector<int>, vector<int>> calculateStartingUnitCounts(const BuildState& sta
     return { startingUnitCounts, startingAddonCountPerUnitType };
 }
 
-static AvailableUnitTypes unitTypesTerranS = {
-    BuildOrderItem(UNIT_TYPEID::TERRAN_ARMORY),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_BANSHEE),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_BARRACKS),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_BARRACKSREACTOR),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_BATTLECRUISER),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_BUNKER),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_COMMANDCENTER),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_CYCLONE),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_ENGINEERINGBAY),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_FACTORY),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_FACTORYREACTOR),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_FACTORYTECHLAB),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_FUSIONCORE),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_GHOST),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_GHOSTACADEMY),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_HELLION),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_HELLIONTANK),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_LIBERATOR),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_MARAUDER),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_MARINE),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_MEDIVAC),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_MISSILETURRET),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_MULE),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_ORBITALCOMMAND),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_PLANETARYFORTRESS),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_RAVEN),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_REAPER),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_REFINERY),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_SCV),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_SENSORTOWER),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_SIEGETANK),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_STARPORT),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_STARPORTREACTOR),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_STARPORTTECHLAB),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_SUPPLYDEPOT),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_THOR),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_VIKINGFIGHTER),
-    BuildOrderItem(UNIT_TYPEID::TERRAN_WIDOWMINE),
-};
-
-const AvailableUnitTypes unitTypesProtossS = {
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_ADEPT),
-    // BuildOrderItem(UNIT_TYPEID::PROTOSS_ADEPTPHASESHIFT),
-    // BuildOrderItem(UNIT_TYPEID::PROTOSS_ARCHON, // TODO: Special case creation rul)e
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_ASSIMILATOR),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_CARRIER),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_COLOSSUS),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_CYBERNETICSCORE),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_DARKSHRINE),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_DARKTEMPLAR),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_DISRUPTOR),
-    // BuildOrderItem(UNIT_TYPEID::PROTOSS_DISRUPTORPHASED),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_FLEETBEACON),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_FORGE),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_GATEWAY),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_HIGHTEMPLAR),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_IMMORTAL),
-    // BuildOrderItem(UNIT_TYPEID::PROTOSS_INTERCEPTOR),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_MOTHERSHIP),
-    // BuildOrderItem(UNIT_TYPEID::PROTOSS_MOTHERSHIPCORE),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_NEXUS),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_OBSERVER),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_ORACLE),
-    // BuildOrderItem(UNIT_TYPEID::PROTOSS_ORACLESTASISTRAP),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_PHOENIX),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_PHOTONCANNON),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_PYLON),
-    // BuildOrderItem(UNIT_TYPEID::PROTOSS_PYLONOVERCHARGED),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_ROBOTICSBAY),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_SENTRY),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_SHIELDBATTERY),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_STALKER),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_STARGATE),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_TEMPEST),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_TEMPLARARCHIVE),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_TWILIGHTCOUNCIL),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_VOIDRAY),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_WARPGATE),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_WARPPRISM),
-    // BuildOrderItem(UNIT_TYPEID::PROTOSS_WARPPRISMPHASING),
-    BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT),
-
-
-    // Upgrades
-    BuildOrderItem(UPGRADE_ID::WARPGATERESEARCH),
-    BuildOrderItem(UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL1),
-};
-
-const AvailableUnitTypes unitTypesZergS = {
-    BuildOrderItem(UNIT_TYPEID::ZERG_BANELING),
-    BuildOrderItem(UNIT_TYPEID::ZERG_BANELINGNEST),
-    BuildOrderItem(UNIT_TYPEID::ZERG_BROODLORD),
-    BuildOrderItem(UNIT_TYPEID::ZERG_CORRUPTOR),
-    BuildOrderItem(UNIT_TYPEID::ZERG_DRONE),
-    BuildOrderItem(UNIT_TYPEID::ZERG_EVOLUTIONCHAMBER),
-    BuildOrderItem(UNIT_TYPEID::ZERG_EXTRACTOR),
-    BuildOrderItem(UNIT_TYPEID::ZERG_GREATERSPIRE),
-    BuildOrderItem(UNIT_TYPEID::ZERG_HATCHERY),
-    BuildOrderItem(UNIT_TYPEID::ZERG_HIVE),
-    BuildOrderItem(UNIT_TYPEID::ZERG_HYDRALISK),
-    BuildOrderItem(UNIT_TYPEID::ZERG_HYDRALISKDEN),
-    BuildOrderItem(UNIT_TYPEID::ZERG_INFESTATIONPIT),
-    BuildOrderItem(UNIT_TYPEID::ZERG_INFESTOR),
-    BuildOrderItem(UNIT_TYPEID::ZERG_LAIR),
-    BuildOrderItem(UNIT_TYPEID::ZERG_LURKERDENMP),
-    // BuildOrderItem(UNIT_TYPEID::ZERG_LURKERMP),
-    BuildOrderItem(UNIT_TYPEID::ZERG_MUTALISK),
-    BuildOrderItem(UNIT_TYPEID::ZERG_NYDUSCANAL),
-    BuildOrderItem(UNIT_TYPEID::ZERG_NYDUSNETWORK),
-    BuildOrderItem(UNIT_TYPEID::ZERG_OVERLORD),
-    BuildOrderItem(UNIT_TYPEID::ZERG_OVERLORDTRANSPORT),
-    BuildOrderItem(UNIT_TYPEID::ZERG_OVERSEER),
-    BuildOrderItem(UNIT_TYPEID::ZERG_QUEEN),
-    BuildOrderItem(UNIT_TYPEID::ZERG_RAVAGER),
-    BuildOrderItem(UNIT_TYPEID::ZERG_ROACH),
-    BuildOrderItem(UNIT_TYPEID::ZERG_ROACHWARREN),
-    BuildOrderItem(UNIT_TYPEID::ZERG_SPAWNINGPOOL),
-    BuildOrderItem(UNIT_TYPEID::ZERG_SPINECRAWLER),
-    BuildOrderItem(UNIT_TYPEID::ZERG_SPIRE),
-    BuildOrderItem(UNIT_TYPEID::ZERG_SPORECRAWLER),
-    BuildOrderItem(UNIT_TYPEID::ZERG_SWARMHOSTMP),
-    BuildOrderItem(UNIT_TYPEID::ZERG_ULTRALISK),
-    BuildOrderItem(UNIT_TYPEID::ZERG_ULTRALISKCAVERN),
-    BuildOrderItem(UNIT_TYPEID::ZERG_VIPER),
-    BuildOrderItem(UNIT_TYPEID::ZERG_ZERGLING),
-};
-
-const AvailableUnitTypes& getAvailableUnitsForRace (Race race) {
-    return race == Race::Terran ? unitTypesTerranS : (race == Race::Protoss ? unitTypesProtossS : unitTypesZergS);
-}
-
-const vector<UNIT_TYPEID>& getAvailableUnitTypesForRace (Race race) {
-    return race == Race::Terran ? unitTypesTerran : (race == Race::Protoss ? unitTypesProtoss : unitTypesZerg);
-}
-
-const vector<UNIT_TYPEID>& getEconomicUnitTypesForRace (Race race) {
-    return race == Race::Terran ? unitTypesTerranEconomic : (race == Race::Protoss ? unitTypesProtossEconomic : unitTypesZergEconomic);
-}
-
 pair<BuildOrder, vector<bool>> expandBuildOrderWithImplicitSteps (const BuildState& startState, BuildOrder buildOrder) {
-    const AvailableUnitTypes& availableUnitTypes = getAvailableUnitsForRace(startState.race);
+    const AvailableUnitTypes& availableUnitTypes = getAvailableUnitsForRace(startState.race, UnitCategory::BuildOrderOptions);
 
     // Simulate the starting state until all current events have finished, only then do we know which exact unit types the player will start with.
     // This is important for implicit dependencies in the build order.
@@ -1874,8 +1646,8 @@ BuildOrder findBestBuildOrderGenetic(const BuildState& startState, const vector<
 
 /** Finds the best build order using an evolutionary algorithm */
 pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& startState, const vector<pair<UNIT_TYPEID, int>>& target, const BuildOrder* seed, BuildOptimizerParams params) {
-    const AvailableUnitTypes& availableUnitTypes = getAvailableUnitsForRace(startState.race);
-    const vector<UNIT_TYPEID>& allEconomicUnits = getEconomicUnitTypesForRace(startState.race);
+    const AvailableUnitTypes& availableUnitTypes = getAvailableUnitsForRace(startState.race, UnitCategory::BuildOrderOptions);
+    const AvailableUnitTypes& allEconomicUnits = getAvailableUnitsForRace(startState.race, UnitCategory::Economic);
 
     // Simulate the starting state until all current events have finished, only then do we know which exact unit types the player will start with.
     // This is important for implicit dependencies in the build order.
@@ -1904,15 +1676,8 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
     }
 
     vector<int> economicUnits;
-    for (auto u : allEconomicUnits) {
-        int index = availableUnitTypes.getIndexMaybe(u);
-        if (index != -1) economicUnits.push_back(index);
-    }
-
-    // All upgrades are counted as economic
-    for (size_t i = 0; i < availableUnitTypes.size(); i++) {
-        auto item = availableUnitTypes.getBuildOrderItem(i);
-        if (!item.isUnitType()) economicUnits.push_back(i);
+    for (int i = 0; i < allEconomicUnits.size(); i++) {
+        economicUnits.push_back(remapAvailableUnitIndex(i, allEconomicUnits, availableUnitTypes));
     }
 
     Stopwatch watch;

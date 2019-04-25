@@ -118,7 +118,7 @@ void DependencyAnalyzer::analyze() {
     }
 
     allUnitDependencies = vector<vector<UNIT_TYPEID>>(unitTypes.size());
-    for (int i = 0; i < unitTypes.size(); i++) {
+    for (size_t i = 0; i < unitTypes.size(); i++) {
         UnitTypeData& unitType = unitTypes[i];
         if (!unitType.available || unitType.race == RaceNeutral)
             continue;
@@ -139,8 +139,8 @@ void DependencyAnalyzer::analyze() {
         }
 
         allUnitDependencies[i] = reqs;
-        for (auto u : reqs) {
+        // for (auto u : reqs) {
             // cout << unitType.name << " requires " << unitTypes[(int)u].name << endl;
-        }
+        // }
     }
 }

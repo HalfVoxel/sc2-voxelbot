@@ -11,9 +11,10 @@
 #include <iomanip>
 #include <iostream>
 #include <cereal/cereal.hpp>
-#include <cereal/archives/json.hpp>
+#include "../utilities/cereal_json.h"
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
+#include "../unit_lists.h"
 
 using namespace sc2;
 using namespace std;

@@ -1,9 +1,10 @@
 #include "game_state_loader.h"
 #include <cereal/cereal.hpp>
-#include <cereal/archives/json.hpp>
+#include "../utilities/cereal_json.h"
 #include <cereal/archives/binary.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
+#include "../unit_lists.h"
 #include <fstream>
 
 using namespace std;
@@ -125,7 +126,7 @@ ExtractedBuildOrder extractBuildOrder(const ReplaySession& session, int playerID
     set<Tag> seenTags;
     AvailableUnitTypes unitTypes = getAvailableUnitsForRace(Race::Protoss);
 
-    for (int t = startingTimestep; t < obs.rawUnits.size(); t++) {
+    for (int t = startingTimestep; t < (int)obs.rawUnits.size(); t++) {
         auto& units = obs.rawUnits[t].units;
         for (auto& unit : units) {
             if (unit.owner == playerID) {
@@ -177,7 +178,7 @@ SimulatorState extractSimulatorState (const ReplaySession& session, int timestep
 }
 
 SimulatorState loadPlanningEnvSession(const ReplaySession& session) {
-    int timesteps = session.observations[0].rawUnits.size();
+    int timesteps = (int)session.observations[0].rawUnits.size();
 
     int timestep = rand() % (timesteps/2);
     SimulatorState state = extractSimulatorState(session, timestep);
