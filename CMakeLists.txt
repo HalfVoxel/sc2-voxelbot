@@ -88,7 +88,7 @@ function (create_library project_name source_code extra_libs)
 	# TODO: The .h files don't seem to be necessary (think only .cpp files should be included here anyway)
     # file (GLOB example_project_sources ${source_code} "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc" "bot/*.h" "bot/behaviortree/*.h" "bot/ml/*.h" "bot/utilities/*.h" "bot/generated/*.cpp")
     add_library(${project_name} ${source_code})
-    message(STATUS ${source_code})
+    # message(STATUS ${source_code})
 
     if (MSCV AND (NOT (MSVC_VERSION LESS 1910)))
 		target_link_libraries(${project_name} legacy_stdio_definitions)
@@ -101,7 +101,7 @@ endfunction ()
 
 # Note: trying to add SDL2-static as the extra_libs parameter here causes pybind11 modules to fail to link (for unknown reasons, maybe PIC related?)
 file (GLOB botlib_sources "bot/*.cpp" "bot/behaviortree/*.cpp" "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc" "bot/utilities/*.cpp" "bot/ml/*.cpp" "bot/generated/*.cpp" "bot/mcts/*.cpp" "s2client-api/examples/common/*.cc")
-message(STATUS "${botlib_sources}")
+# message(STATUS "${botlib_sources}")
 create_library(botlib "${botlib_sources}" "")
 
 create_executable(our_bot "" "bot/bot/main.cpp" "SDL2-static")
