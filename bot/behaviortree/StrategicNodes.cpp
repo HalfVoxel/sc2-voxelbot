@@ -137,7 +137,7 @@ Status Build::OnTick() {
         bot->spendingManager.AddAction(score(unitType), CostOfUnit(unitType), [=]() {
             if (unit->unit_type == UNIT_TYPEID::PROTOSS_WARPGATE) {
                 auto warpAbility = getWarpGateAbility(abilityType);
-                auto point = bot->buildingPlacement.GetReasonablePlacement(unitType, warpAbility, false);
+                auto point = bot->buildingPlacement.GetReasonablePlacement(unitType, warpAbility, true);
                 bot->Actions()->UnitCommand(unit, warpAbility, point);
             } else {
                 bot->Actions()->UnitCommand(unit, abilityType);
@@ -182,13 +182,15 @@ BOT::Status Research::OnTick() {
             continue;
         }
 
-        if (unit->build_progress != 1) {
+        if (unit->build_progress != 1 || unit->orders.size() > 0) {
             continue;
         }
 
+        abilityType = GetGeneralizedAbilityID(abilityType, *observation);
         if (!IsAbilityReady(unit, abilityType)) {
             continue;
         }
+        
 
         bot->spendingManager.AddAction(score(research), CostOfUpgrade(research), [=]() {
             bot->Actions()->UnitCommand(unit, abilityType);
@@ -623,7 +625,8 @@ BOT::Status HasUpgrade::OnTick() {
             return Success;
         }
     }
-    for (auto const unit : agent->Observation()->GetUnits(Unit::Self, IsUnits(bot->researchBuildingTypes))) {
+    for (auto const unit : bot->ourUnits()) {
+        // Note: Upgrades with levels use generalized ability IDs
         if (!unit->orders.empty() && unit->orders[0].ability_id == upgradeBuild) {
             return Running;
         }
