@@ -54,7 +54,7 @@ pair<const BuildState*, BuildOrderState> MCTSCache::simulateBuildOrder(const Bui
     uint64_t hash = state.immutableHash();
     hash = hash*31 ^ ((int)(endTime*1000));
     hash = hash*31 ^ buildOrder.buildIndex;
-    hash = hash*31 ^ (uint64_t)(&buildOrder.buildOrder);
+    hash = hash*31 ^ (uint64_t)(&*buildOrder.buildOrder);
     // cout << "Simulating " << state.immutableHash() << " to " << endTime << endl;
     simTot++;
     if (simTot % 5000 == 0) {
