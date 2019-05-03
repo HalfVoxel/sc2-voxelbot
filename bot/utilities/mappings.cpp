@@ -14,6 +14,7 @@ using namespace sc2;
 
 vector<vector<UNIT_TYPEID>> mAbilityToCasterUnit;
 vector<UNIT_TYPEID> mAbilityToCreatedUnit;
+vector<UPGRADE_ID> mAbilityToUpgrade;
 vector<vector<UNIT_TYPEID>> mCanBecome;
 vector<vector<UNIT_TYPEID>> mHasBeen;
 vector<vector<ABILITY_ID>> mUnitTypeHasAbilities;
@@ -22,6 +23,9 @@ vector<AbilityData> mAbilities;
 vector<UpgradeData> mUpgrades;
 vector<bool> mIsStationary;
 vector<bool> mIsStructure;
+
+vector<UPGRADE_ID> mUpgradeUpgradeDependency;
+vector<UNIT_TYPEID> mUpgradeUnitDependency;
 
 bool mappingInitialized = false;
 
@@ -89,6 +93,11 @@ const sc2::UpgradeData& getUpgradeData(sc2::UPGRADE_ID upgrade) {
     return mUpgrades[(int)upgrade];
 }
 
+static void addEnumeratedUpgradeDependency(UPGRADE_ID level1) {
+    mUpgradeUpgradeDependency[(int)level1 + 2] = (UPGRADE_ID)((int)level1 + 1);
+    mUpgradeUpgradeDependency[(int)level1 + 1] = level1;
+}
+
 void init() {
     if (mappingInitialized)
         return;
@@ -103,8 +112,12 @@ void init() {
     const auto& abilities = mAbilities;
 
     mAbilityToCreatedUnit = vector<UNIT_TYPEID>(abilities.size(), UNIT_TYPEID::INVALID);
+    mAbilityToUpgrade = vector<UPGRADE_ID>(abilities.size(), UPGRADE_ID::INVALID);
     for (auto type : unitTypes) {
         mAbilityToCreatedUnit[type.ability_id] = (UNIT_TYPEID)type.unit_type_id;
+    }
+    for (auto upgrade : mUpgrades) {
+        mAbilityToUpgrade[upgrade.ability_id] = (UPGRADE_ID)upgrade.upgrade_id;
     }
 
     mUnitTypeHasAbilities = vector<vector<ABILITY_ID>>(unitTypes.size());
@@ -274,6 +287,40 @@ void init() {
         mIsStationary[i] = mUnitTypes[i].movement_speed <= 0.0f;
         mIsStructure[i] = isStructure(getUnitData((UNIT_TYPEID)i));
     }
+
+    mUpgradeUnitDependency.resize(mUpgrades.size());
+    mUpgradeUpgradeDependency.resize(mUpgrades.size());
+
+    mUpgradeUnitDependency[(int)UPGRADE_ID::PROTOSSGROUNDWEAPONSLEVEL2] = UNIT_TYPEID::PROTOSS_TWILIGHTCOUNCIL;
+    mUpgradeUnitDependency[(int)UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL2] = UNIT_TYPEID::PROTOSS_TWILIGHTCOUNCIL;
+    mUpgradeUnitDependency[(int)UPGRADE_ID::PROTOSSSHIELDSLEVEL2] = UNIT_TYPEID::PROTOSS_TWILIGHTCOUNCIL;
+    mUpgradeUnitDependency[(int)UPGRADE_ID::PROTOSSAIRWEAPONSLEVEL2] = UNIT_TYPEID::PROTOSS_FLEETBEACON;
+    mUpgradeUnitDependency[(int)UPGRADE_ID::PROTOSSAIRARMORSLEVEL2] = UNIT_TYPEID::PROTOSS_FLEETBEACON;
+
+    addEnumeratedUpgradeDependency(UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1);
+    addEnumeratedUpgradeDependency(UPGRADE_ID::TERRANINFANTRYARMORSLEVEL1);
+    addEnumeratedUpgradeDependency(UPGRADE_ID::TERRANVEHICLEWEAPONSLEVEL1);
+    addEnumeratedUpgradeDependency(UPGRADE_ID::TERRANSHIPWEAPONSLEVEL1);
+    addEnumeratedUpgradeDependency(UPGRADE_ID::PROTOSSGROUNDWEAPONSLEVEL1);
+    addEnumeratedUpgradeDependency(UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL1);
+    addEnumeratedUpgradeDependency(UPGRADE_ID::PROTOSSSHIELDSLEVEL1);
+    addEnumeratedUpgradeDependency(UPGRADE_ID::ZERGMELEEWEAPONSLEVEL1);
+    addEnumeratedUpgradeDependency(UPGRADE_ID::ZERGGROUNDARMORSLEVEL1);
+    addEnumeratedUpgradeDependency(UPGRADE_ID::ZERGMISSILEWEAPONSLEVEL1);
+    addEnumeratedUpgradeDependency(UPGRADE_ID::ZERGFLYERWEAPONSLEVEL1);
+    addEnumeratedUpgradeDependency(UPGRADE_ID::ZERGFLYERARMORSLEVEL1);
+    addEnumeratedUpgradeDependency(UPGRADE_ID::PROTOSSAIRWEAPONSLEVEL1);
+    addEnumeratedUpgradeDependency(UPGRADE_ID::PROTOSSAIRARMORSLEVEL1);
+    addEnumeratedUpgradeDependency(UPGRADE_ID::TERRANVEHICLEANDSHIPARMORSLEVEL1);
+}
+
+
+sc2::UNIT_TYPEID getUpgradeUnitDependency(sc2::UPGRADE_ID upgrade) {
+    return mUpgradeUnitDependency[(int)upgrade];
+}
+
+sc2::UPGRADE_ID getUpgradeUpgradeDependency(sc2::UPGRADE_ID upgrade) {
+    return mUpgradeUpgradeDependency[(int)upgrade];
 }
 
 void assertMappingsInitialized() {
@@ -604,121 +651,11 @@ UNIT_TYPEID abilityToUnit(ABILITY_ID ability) {
     /*switch (ability) {
         case ABILITY_ID::BUILD_ARMORY:
             return UNIT_TYPEID::TERRAN_ARMORY;
-        case ABILITY_ID::BUILD_ASSIMILATOR:
-            return UNIT_TYPEID::PROTOSS_ASSIMILATOR;
-        case ABILITY_ID::BUILD_BANELINGNEST:
-            return UNIT_TYPEID::ZERG_BANELINGNEST;
-        case ABILITY_ID::BUILD_BARRACKS:
-            return UNIT_TYPEID::TERRAN_BARRACKS;
-        case ABILITY_ID::BUILD_BUNKER:
-            return UNIT_TYPEID::TERRAN_BUNKER;
-        case ABILITY_ID::BUILD_COMMANDCENTER:
-            return UNIT_TYPEID::TERRAN_COMMANDCENTER;
-        case ABILITY_ID::BUILD_CREEPTUMOR:
-            return UNIT_TYPEID::ZERG_CREEPTUMOR;
-        case ABILITY_ID::BUILD_CREEPTUMOR_QUEEN:
-            return UNIT_TYPEID::ZERG_CREEPTUMORQUEEN;
-        case ABILITY_ID::BUILD_CREEPTUMOR_TUMOR:
-            return UNIT_TYPEID::ZERG_CREEPTUMOR;
-        case ABILITY_ID::BUILD_CYBERNETICSCORE:
-            return UNIT_TYPEID::PROTOSS_CYBERNETICSCORE;
-        case ABILITY_ID::BUILD_DARKSHRINE:
-            return UNIT_TYPEID::PROTOSS_DARKSHRINE;
-        case ABILITY_ID::BUILD_ENGINEERINGBAY:
-            return UNIT_TYPEID::TERRAN_ENGINEERINGBAY;
-        case ABILITY_ID::BUILD_EVOLUTIONCHAMBER:
-            return UNIT_TYPEID::ZERG_EVOLUTIONCHAMBER;
-        case ABILITY_ID::BUILD_EXTRACTOR:
-            return UNIT_TYPEID::ZERG_EXTRACTOR;
-        case ABILITY_ID::BUILD_FACTORY:
-            return UNIT_TYPEID::TERRAN_FACTORY;
-        case ABILITY_ID::BUILD_FLEETBEACON:
-            return UNIT_TYPEID::PROTOSS_FLEETBEACON;
-        case ABILITY_ID::BUILD_FORGE:
-            return UNIT_TYPEID::PROTOSS_FORGE;
-        case ABILITY_ID::BUILD_FUSIONCORE:
-            return UNIT_TYPEID::TERRAN_FUSIONCORE;
-        case ABILITY_ID::BUILD_GATEWAY:
-            return UNIT_TYPEID::PROTOSS_GATEWAY;
-        case ABILITY_ID::BUILD_GHOSTACADEMY:
-            return UNIT_TYPEID::TERRAN_GHOSTACADEMY;
-        case ABILITY_ID::BUILD_HATCHERY:
-            return UNIT_TYPEID::ZERG_HATCHERY;
-        case ABILITY_ID::BUILD_HYDRALISKDEN:
-            return UNIT_TYPEID::ZERG_HYDRALISKDEN;
-        case ABILITY_ID::BUILD_INFESTATIONPIT:
-            return UNIT_TYPEID::ZERG_INFESTATIONPIT;
-        case ABILITY_ID::BUILD_INTERCEPTORS:
-            return UNIT_TYPEID::PROTOSS_INTERCEPTOR;
-        case ABILITY_ID::BUILD_MISSILETURRET:
-            return UNIT_TYPEID::TERRAN_MISSILETURRET;
-        case ABILITY_ID::BUILD_NEXUS:
-            return UNIT_TYPEID::PROTOSS_NEXUS;
-        case ABILITY_ID::BUILD_NUKE:
-            return UNIT_TYPEID::TERRAN_NUKE;
-        case ABILITY_ID::BUILD_NYDUSNETWORK:
-            return UNIT_TYPEID::ZERG_NYDUSNETWORK;
-        case ABILITY_ID::BUILD_NYDUSWORM:
-            return UNIT_TYPEID::ZERG_NYDUSCANAL;
-        case ABILITY_ID::BUILD_PHOTONCANNON:
-            return UNIT_TYPEID::PROTOSS_PHOTONCANNON;
-        case ABILITY_ID::BUILD_PYLON:
-            return UNIT_TYPEID::PROTOSS_PYLON;
-        case ABILITY_ID::BUILD_REACTOR:
-            return UNIT_TYPEID::TERRAN_REACTOR;
-        case ABILITY_ID::BUILD_REACTOR_BARRACKS:
-            return UNIT_TYPEID::TERRAN_BARRACKSREACTOR;
-        case ABILITY_ID::BUILD_REACTOR_FACTORY:
-            return UNIT_TYPEID::TERRAN_FACTORYREACTOR;
-        case ABILITY_ID::BUILD_REACTOR_STARPORT:
-            return UNIT_TYPEID::TERRAN_STARPORTREACTOR;
-        case ABILITY_ID::BUILD_REFINERY:
-            return UNIT_TYPEID::TERRAN_REFINERY;
-        case ABILITY_ID::BUILD_ROACHWARREN:
-            return UNIT_TYPEID::ZERG_ROACHWARREN;
-        case ABILITY_ID::BUILD_ROBOTICSBAY:
-            return UNIT_TYPEID::PROTOSS_ROBOTICSBAY;
-        case ABILITY_ID::BUILD_ROBOTICSFACILITY:
-            return UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY;
-        case ABILITY_ID::BUILD_SENSORTOWER:
-            return UNIT_TYPEID::TERRAN_SENSORTOWER;
-        case ABILITY_ID::BUILD_SHIELDBATTERY:
-            return UNIT_TYPEID::PROTOSS_SHIELDBATTERY;
-        case ABILITY_ID::BUILD_SPAWNINGPOOL:
-            return UNIT_TYPEID::ZERG_SPAWNINGPOOL;
-        case ABILITY_ID::BUILD_SPINECRAWLER:
-            return UNIT_TYPEID::ZERG_SPINECRAWLER;
-        case ABILITY_ID::BUILD_SPIRE:
-            return UNIT_TYPEID::ZERG_SPIRE;
-        case ABILITY_ID::BUILD_SPORECRAWLER:
-            return UNIT_TYPEID::ZERG_SPORECRAWLER;
-        case ABILITY_ID::BUILD_STARGATE:
-            return UNIT_TYPEID::PROTOSS_STARGATE;
-        case ABILITY_ID::BUILD_STARPORT:
-            return UNIT_TYPEID::TERRAN_STARPORT;
-        case ABILITY_ID::BUILD_STASISTRAP:
-            return UNIT_TYPEID::PROTOSS_ORACLESTASISTRAP;
-        case ABILITY_ID::BUILD_SUPPLYDEPOT:
-            return UNIT_TYPEID::TERRAN_SUPPLYDEPOT;
-        case ABILITY_ID::BUILD_TECHLAB:
-            return UNIT_TYPEID::TERRAN_TECHLAB;
-        case ABILITY_ID::BUILD_TECHLAB_BARRACKS:
-            return UNIT_TYPEID::TERRAN_BARRACKSTECHLAB;
-        case ABILITY_ID::BUILD_TECHLAB_FACTORY:
-            return UNIT_TYPEID::TERRAN_FACTORYTECHLAB;
-        case ABILITY_ID::BUILD_TECHLAB_STARPORT:
-            return UNIT_TYPEID::TERRAN_STARPORTTECHLAB;
-        case ABILITY_ID::BUILD_TEMPLARARCHIVE:
-            return UNIT_TYPEID::PROTOSS_TEMPLARARCHIVE;
-        case ABILITY_ID::BUILD_TWILIGHTCOUNCIL:
-            return UNIT_TYPEID::PROTOSS_TWILIGHTCOUNCIL;
-        case ABILITY_ID::BUILD_ULTRALISKCAVERN:
-            return UNIT_TYPEID::ZERG_ULTRALISKCAVERN;
-        case ABILITY_ID::MORPH_GREATERSPIRE:
-            return UNIT_TYPEID::ZERG_GREATERSPIRE;
-        default:
-            return UNIT_TYPEID::INVALID;
     }*/
+}
+
+UPGRADE_ID abilityToUpgrade(ABILITY_ID ability) {
+    return mAbilityToUpgrade[(int)ability];
 }
 
 UNIT_TYPEID simplifyUnitType(UNIT_TYPEID type) {
