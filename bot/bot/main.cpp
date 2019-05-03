@@ -54,6 +54,7 @@ int main(int argc, char* argv[]) {
     coordinator.SetPortStart(8020);
 
     coordinator.SetMultithreaded(true);
+    // coordinator.SetUseGeneralizedAbilityId(false);
 
     coordinator.SetParticipants({
         CreateParticipant(Race::Protoss, bot),

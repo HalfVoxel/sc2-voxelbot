@@ -193,6 +193,9 @@ int main() {
         vector<float>& scoresVar = allScoresVar[i];
         vector<float>& timesVar = allTimesVar[i];
 
+        vector<pair<BuildOrderItem, int>> targetUnits2;
+        for (auto p : targetUnits) targetUnits2.push_back({ BuildOrderItem(p.first), p.second });
+
         for (auto varianceBias : mutationRates2) {
             cout << "Var " << varianceBias << endl;
             BuildOptimizerParams params;
@@ -201,7 +204,7 @@ int main() {
 
             BuildOrderFitness fitness;
             BuildOrder buildOrder;
-            tie(buildOrder, fitness) = findBestBuildOrderGenetic(startState, targetUnits, nullptr, params);
+            tie(buildOrder, fitness) = findBestBuildOrderGenetic(startState, targetUnits2, nullptr, params);
 
             auto state2 = startState;
             state2.simulateBuildOrder(buildOrder, nullptr, true);

@@ -4,8 +4,10 @@
 #include <functional>
 #include "sc2api/sc2_interfaces.h"
 #include <iostream>
+#include "CombatPredictor.h"
 
 struct BuildState;
+struct BuildOrderTracker;
 
 struct BuildResources {
     float minerals;
@@ -138,9 +140,9 @@ struct BuildOrderItem {
     }
 
     BuildOrderItem() {}
-    BuildOrderItem(sc2::UPGRADE_ID upgrade, bool chronoBoosted = false) : internalType((sc2::UNIT_TYPEID)((int)upgrade + UPGRADE_ID_OFFSET)), chronoBoosted(chronoBoosted) {}
-    BuildOrderItem(sc2::UNIT_TYPEID type) : internalType(type), chronoBoosted(false) {}
-    BuildOrderItem(sc2::UNIT_TYPEID type, bool chronoBoosted) : internalType(type), chronoBoosted(chronoBoosted) {}
+    explicit BuildOrderItem(sc2::UPGRADE_ID upgrade, bool chronoBoosted = false) : internalType((sc2::UNIT_TYPEID)((int)upgrade + UPGRADE_ID_OFFSET)), chronoBoosted(chronoBoosted) {}
+    explicit BuildOrderItem(sc2::UNIT_TYPEID type) : internalType(type), chronoBoosted(false) {}
+    explicit BuildOrderItem(sc2::UNIT_TYPEID type, bool chronoBoosted) : internalType(type), chronoBoosted(chronoBoosted) {}
 
     bool operator==(const BuildOrderItem& other) const {
         return internalType == other.internalType && chronoBoosted == other.chronoBoosted;
@@ -278,6 +280,7 @@ struct BuildState {
     std::vector<BaseInfo> baseInfos;
 
     ChronoBoostInfo chronoInfo;
+    CombatUpgrades upgrades;
     bool hasWarpgateResearch = false;
 
 private:
@@ -302,7 +305,7 @@ public:
         return immutableHash();
     }
 
-    void recalculateHash() {
+        void recalculateHash() {
         cachedHash = 0;
         immutableHash();
     }
@@ -413,7 +416,8 @@ struct BuildOptimizerParams {
 std::pair<BuildOrder, std::vector<bool>> expandBuildOrderWithImplicitSteps (const BuildState& startState, BuildOrder buildOrder);
 
 BuildOrder findBestBuildOrderGenetic(const std::vector<std::pair<sc2::UNIT_TYPEID, int>>& startingUnits, const std::vector<std::pair<sc2::UNIT_TYPEID, int>>& target);
-BuildOrder findBestBuildOrderGenetic(const BuildState& startState, const std::vector<std::pair<sc2::UNIT_TYPEID, int>>& target, const BuildOrder* seed = nullptr);
-std::pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& startState, const std::vector<std::pair<sc2::UNIT_TYPEID, int>>& target, const BuildOrder* seed, BuildOptimizerParams params);
+BuildOrder findBestBuildOrderGenetic(const BuildState& startState, const std::vector<std::pair<sc2::UNIT_TYPEID, int>>& target, const BuildOrder* seed = nullptr, BuildOptimizerParams params = BuildOptimizerParams());
+std::pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& startState, const std::vector<std::pair<BuildOrderItem, int>>& target, const BuildOrder* seed = nullptr, BuildOptimizerParams params = BuildOptimizerParams());
 void unitTestBuildOptimizer();
 void printBuildOrderDetailed(const BuildState& startState, const BuildOrder& buildOrder, const std::vector<bool>* highlight = nullptr);
+void optimizeExistingBuildOrder(const std::vector<const sc2::Unit*>& ourUnits, const BuildState& buildOrderStartingState, BuildOrderTracker& buildOrder);

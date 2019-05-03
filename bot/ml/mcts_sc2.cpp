@@ -84,8 +84,8 @@ struct CanAttackGroup {
         dps = vector<float>(2);
         for (auto* group : ourGroups) {
             for (auto& unit : group->units) {
-                dps[0] +=  combatPredictor.defaultCombatEnvironment.calculateDPS(unit.combat.type, false);
-                dps[1] += combatPredictor.defaultCombatEnvironment.calculateDPS(unit.combat.type, true);
+                dps[0] += combatPredictor.defaultCombatEnvironment.calculateDPS(1, unit.combat.type, false);
+                dps[1] += combatPredictor.defaultCombatEnvironment.calculateDPS(1, unit.combat.type, true);
             }
         }
     }

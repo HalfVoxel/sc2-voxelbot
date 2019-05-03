@@ -34,7 +34,9 @@ BuildState::BuildState(const ObservationInterface* observation, Unit::Alliance a
         // Addons are handled when the unit they are attached to are handled
         if (isAddon(unitType)) continue;
 
-        if (ourUnits[i]->build_progress < 1) {
+        // If the building is still in progress.
+        // Don't do this for warpgates as they are just morphed, not in progress really
+        if (ourUnits[i]->build_progress < 1 && unitType != UNIT_TYPEID::PROTOSS_WARPGATE) {
             if (race == Race::Terran) {
                 // Ignore (will be handled by the order code below)
             } else {
@@ -104,14 +106,13 @@ BuildState::BuildState(const ObservationInterface* observation, Unit::Alliance a
                     // Assume the probe will be free in a few seconds
                     addEvent(BuildEvent(BuildEventType::MakeUnitAvailable, time + min(remainingTime, 4.0f), event.caster, sc2::ABILITY_ID::INVALID));
                 }
-                if (event.ability == ABILITY_ID::MORPH_WARPGATE) {
-                    // Warpgate transition is a bit weird. The unit will have the warpgate type from right when it starts, in contrast to most other cases where the unit changes type as it completes.
-                    // (I think?, maybe this needs to be investigated?)
-                    // Just make the unit busy instead otherwise the simulator will crash when it cannot find a gateway to remove when the ability is finished
-                    addEvent(BuildEvent(BuildEventType::MakeUnitAvailable, event.time, event.caster, sc2::ABILITY_ID::INVALID));
-                } else {
-                    addEvent(event);
-                }
+                // if (event.ability == ABILITY_ID::MORPH_WARPGATE) {
+                //     cout << "Got morph ability on " << UnitTypeToName(ourUnits[i]->unit_type) << " " << UnitTypeToName(createdUnit) << endl;
+                //     // Just make the unit busy instead otherwise the simulator will crash when it cannot find a gateway to remove when the ability is finished
+                //     addEvent(BuildEvent(BuildEventType::MakeUnitAvailable, event.time, event.caster, sc2::ABILITY_ID::INVALID));
+                // } else {
+                addEvent(event);
+                // }
             }
 
             // Only process the first order (this bot should never have more than one anyway)
@@ -119,10 +120,19 @@ BuildState::BuildState(const ObservationInterface* observation, Unit::Alliance a
         }
     }
 
-    auto hasUpgrade = HasUpgrade(sc2::UPGRADE_ID::WARPGATERESEARCH).Tick();
-    // Note: slightly incorrect. Assumes warpgate research is already done when it may actually be in progress.
-    // But since the proper event for upgrades is not added above, this is better than nothing.
-    hasWarpgateResearch = hasUpgrade == BOT::Status::Running || BOT::Status::Success;
+    // Add all upgrades
+    auto& availableUnits = getAvailableUnitsForRace(race, UnitCategory::BuildOrderOptions);
+    for (size_t i = 0; i < availableUnits.size(); i++) {
+        auto item = availableUnits.getBuildOrderItem(i);
+        if (!item.isUnitType()) {
+            auto hasUpgrade = HasUpgrade(item.upgradeID()).Tick();
+            // Note: slightly incorrect. Assumes warpgate research is already done when it may actually be in progress.
+            // But since the proper event for upgrades is not added above, this is better than nothing.
+            if (hasUpgrade == BOT::Status::Running || hasUpgrade == BOT::Status::Success) {
+                upgrades.add(item.upgradeID());
+            }
+        }
+    }
 
     vector<Point2D> basePositions;
     for (auto u : ourUnits) {
@@ -146,16 +156,22 @@ BuildState::BuildState(const ObservationInterface* observation, Unit::Alliance a
             }
         }
     }
+
+    // Sanity check
+    for (auto u : units) {
+        assert(u.availableUnits() >= 0);
+    }
 }
 
 void BuildState::transitionToWarpgates (const function<void(const BuildEvent&)>* eventCallback) {
-    assert(hasWarpgateResearch);
+    assert(upgrades.hasUpgrade(sc2::UPGRADE_ID::WARPGATERESEARCH));
     const float WarpGateTransitionTime = 7;
     for (auto& u : units) {
         if (u.type == UNIT_TYPEID::PROTOSS_GATEWAY && u.busyUnits < u.units) {
             int delta = u.units - u.busyUnits;
             u.units -= delta;
             assert(u.units >= 0);
+            assert(u.availableUnits() >= 0);
             addUnits(UNIT_TYPEID::PROTOSS_WARPGATE, delta);
             makeUnitsBusy(UNIT_TYPEID::PROTOSS_WARPGATE, UNIT_TYPEID::INVALID, delta);
             for (int i = 0; i < delta; i++) {
@@ -204,15 +220,20 @@ void BuildState::addUnits(UNIT_TYPEID type, UNIT_TYPEID addon, int delta) {
     for (auto& u : units) {
         if (u.type == type && u.addon == addon) {
             u.units += delta;
+            if (u.availableUnits() < 0) {
+                cout << "Buggy units? " << UnitTypeToName(u.type) << " " << u.availableUnits() << " " << u.units << " " << u.busyUnits << endl;
+            }
             assert(u.availableUnits() >= 0);
             return;
         }
     }
 
-    if (delta > 0)
+    if (delta > 0) {
         units.emplace_back(type, addon, delta);
-    else
+    } else {
+        cerr << "Cannot remove " << UnitTypeToName(type) << endl;
         assert(false);
+    }
 }
 
 void BuildState::killUnits(UNIT_TYPEID type, UNIT_TYPEID addon, int count) {
@@ -443,7 +464,7 @@ void BuildState::simulate(float endTime, const function<void(const BuildEvent&)>
         if (eventCallback != nullptr) (*eventCallback)(ev);
         
         // TODO: Maybe a bit slow...
-        if (hasWarpgateResearch) transitionToWarpgates(eventCallback);
+        if (upgrades.hasUpgrade(sc2::UPGRADE_ID::WARPGATERESEARCH)) transitionToWarpgates(eventCallback);
     }
 
     // events.erase(events.begin(), events.begin() + eventIndex);
@@ -553,6 +574,23 @@ bool BuildState::simulateBuildOrder(BuildOrderState& buildOrder, const function<
                 isItemStructure = isStructure(unitType);
                 buildTime = ticksToSeconds(unitData.build_time);
             } else {
+                auto upgrade = item.upgradeID();
+                auto upgradeDependency = getUpgradeUpgradeDependency(upgrade);
+                auto unitDependency = getUpgradeUnitDependency(upgrade);
+                if ((upgradeDependency != UPGRADE_ID::INVALID && !upgrades.hasUpgrade(upgradeDependency)) || (unitDependency != UNIT_TYPEID::INVALID && !hasEquivalentTech(unitDependency))) {
+                    if (events.empty()) {
+                        cout << "No tech at index " << buildOrder.buildIndex << endl;
+                        return false;
+                    }
+
+                    if (events[0].time > maxTime) {
+                        simulate(maxTime, eventCallback);
+                        return true;
+                    }
+                    simulate(events[0].time, eventCallback);
+                    continue;
+                }
+
                 auto& upgradeData = getUpgradeData(item.upgradeID());
 
                 isUnitAddon = false;
@@ -802,9 +840,7 @@ void BuildEvent::apply(BuildState& state) const {
             break;
         }
         case FinishedUpgrade: {
-            if (ability == ABILITY_ID::RESEARCH_WARPGATE) {
-                state.hasWarpgateResearch = true;
-            }
+            state.upgrades.add(abilityToUpgrade(ability));
             // Make the caster unit available again
             state.makeUnitsBusy(caster, casterAddon, -1);
             break;
@@ -830,7 +866,6 @@ void BuildEvent::apply(BuildState& state) const {
     // Add remaining chrono boost to be used for other things
     if (chronoEndTime > state.time) state.chronoInfo.addRemainingChronoBoost(caster, chronoEndTime);
 }
-
 
 /** Adds all dependencies of the required type to the requirements stack in the order that they need to be performed in order to fulfill all preconditions for building/training the required type
  * 
@@ -869,9 +904,23 @@ static void traceDependencies(const vector<int>& unitCounts, const AvailableUnit
                 // This is really a bit of a hack to avoid having to prune the requirements for duplicates, but it's good for performance too.
             }
         } else if (unitCounts[availableUnitTypes.getIndex(requiredType)] == 0) {
-            // Need to add this type to the build order
-            requirements.emplace(requiredType);
-            traceDependencies(unitCounts, availableUnitTypes, requirements, requiredType);
+            // Do a more thorough check because we might have a unit which is tech aliased to the required type
+            // This can happen for example when we have warpgates and some unit has a gateway as a dependency
+            bool anyValid = false;
+            for (auto t : availableUnitTypes.getUnitTypes()) {
+                for (auto t2 : getUnitData(t).tech_alias) {
+                    if (t2 == requiredType) {
+                        anyValid = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!anyValid) {
+                // Need to add this type to the build order
+                requirements.emplace(requiredType);
+                traceDependencies(unitCounts, availableUnitTypes, requirements, requiredType);
+            }
         }
     }
 
@@ -896,6 +945,39 @@ static void traceDependencies(const vector<int>& unitCounts, const AvailableUnit
     }
 }
 
+static void traceDependencies(const vector<int>& unitCounts, const AvailableUnitTypes& availableUnitTypes, stack<BuildOrderItem>& requirements, UPGRADE_ID requiredUpgrade) {
+    {
+        auto unitType = getUpgradeUnitDependency(requiredUpgrade);
+        if (unitType != UNIT_TYPEID::INVALID) {
+            if (unitCounts[availableUnitTypes.getIndex(unitType)] == 0) {
+                requirements.push(BuildOrderItem(unitType));
+                traceDependencies(unitCounts, availableUnitTypes, requirements, unitType);
+            }
+        }
+    }
+
+    {
+        auto upgrade = getUpgradeUpgradeDependency(requiredUpgrade);
+        if (upgrade != UPGRADE_ID::INVALID) {
+            // This upgrade depends on an earlier upgrade (previous level)
+            if (unitCounts[availableUnitTypes.getIndex(upgrade)] == 0) {
+                requirements.push(BuildOrderItem(upgrade));
+                traceDependencies(unitCounts, availableUnitTypes, requirements, upgrade);
+            }
+        } else {
+            // This upgrade does not depend on an earlier upgrade (previous level)
+            // Add the building which one can research the research from as a dependency.
+            // We don't do this if it depended on an upgrade because then we might add the caster as a dependency twice
+            // (it is assumed that the caster is the same for the dependency)
+            auto unitType = abilityToCasterUnit(getUpgradeData(requiredUpgrade).ability_id)[0];
+            if (unitCounts[availableUnitTypes.getIndex(unitType)] == 0) {
+                requirements.push(BuildOrderItem(unitType));
+                traceDependencies(unitCounts, availableUnitTypes, requirements, unitType);
+            }
+        }
+    }
+}
+
 /** Finalizes the gene's build order by adding in all implicit steps */
 BuildOrder addImplicitBuildOrderSteps(const vector<GeneUnitType>& buildOrder, Race race, float startingFood, const vector<int>& startingUnitCounts, const vector<int>& startingAddonCountPerUnitType, const AvailableUnitTypes& availableUnitTypes, vector<bool>* outIsOriginalItem = nullptr) {
     vector<int> unitCounts = startingUnitCounts;
@@ -915,21 +997,19 @@ BuildOrder addImplicitBuildOrderSteps(const vector<GeneUnitType>& buildOrder, Ra
         auto item = availableUnitTypes.getBuildOrderItem(type);
         reqs.push(item);
 
-        UNIT_TYPEID unitType;
         if (item.isUnitType()) {
+            UNIT_TYPEID unitType;
             unitType = item.typeID();
-        } else {
-            // Add the building which one can research the research from as a dependency
-            unitType = abilityToCasterUnit(getUpgradeData(item.upgradeID()).ability_id)[0];
-            if (unitCounts[availableUnitTypes.getIndex(unitType)] == 0) reqs.push(BuildOrderItem(unitType));
-        }
 
-        // Analyze the prerequisites for the action and add in implicit dependencies
-        // (e.g to train a marine, we first need a baracks)
-        // TODO: Need more sophisticated tracking because some dependencies can become invalid by other actions
-        // (e.g. when building a planetary fortress, a command center is 'used up')
-        // auto requiredType = unitType;
-        traceDependencies(unitCounts, availableUnitTypes, reqs, unitType);
+            // Analyze the prerequisites for the action and add in implicit dependencies
+            // (e.g to train a marine, we first need a baracks)
+            // TODO: Need more sophisticated tracking because some dependencies can become invalid by other actions
+            // (e.g. when building a planetary fortress, a command center is 'used up')
+            // auto requiredType = unitType;
+            traceDependencies(unitCounts, availableUnitTypes, reqs, unitType);
+        } else {
+            traceDependencies(unitCounts, availableUnitTypes, reqs, item.upgradeID());
+        }
 
         while (!reqs.empty()) {
             auto requirement = reqs.top();
@@ -948,13 +1028,13 @@ BuildOrder addImplicitBuildOrderSteps(const vector<GeneUnitType>& buildOrder, Ra
 
                 // BUILD ADDITIONAL PYLONS
                 if (totalFood + foodDelta < 0 && foodDelta < 0) {
-                    reqs.push(currentSupplyUnit);
+                    reqs.emplace(currentSupplyUnit);
                     continue;
                 }
 
                 // Make sure we have a refinery if we need vespene for this unit
                 if (d.vespene_cost > 0 && unitCounts[availableUnitTypes.getIndex(currentVespeneHarvester)] == 0) {
-                    reqs.push(currentVespeneHarvester);
+                    reqs.emplace(currentVespeneHarvester);
                     continue;
                 }
 
@@ -968,7 +1048,7 @@ BuildOrder addImplicitBuildOrderSteps(const vector<GeneUnitType>& buildOrder, Ra
                     }
 
                     if (unitCounts[availableUnitTypes.getIndex(currentVespeneHarvester)] >= numBases * 2) {
-                        reqs.push(currentTownHall);
+                        reqs.emplace(currentTownHall);
                         continue;
                     }
                 }
@@ -985,7 +1065,7 @@ BuildOrder addImplicitBuildOrderSteps(const vector<GeneUnitType>& buildOrder, Ra
                             addonCountPerUnitType[idx]++;
                         } else {
                             // If there are no possible such buildings, then we need to add a new one of those buildings
-                            reqs.push(previous[1]);
+                            reqs.emplace(previous[1]);
                             traceDependencies(unitCounts, availableUnitTypes, reqs, previous[1]);
                             continue;
                         }
@@ -998,6 +1078,8 @@ BuildOrder addImplicitBuildOrderSteps(const vector<GeneUnitType>& buildOrder, Ra
 
                 totalFood += foodDelta;
                 unitCounts[availableUnitTypes.getIndex(requirementUnitType)] += 1;
+            } else {
+                unitCounts[availableUnitTypes.getIndex(requirement.upgradeID())] += 1;
             }
             finalBuildOrder.items.push_back(requirement);
             reqs.pop();
@@ -1020,7 +1102,6 @@ BuildOrder addImplicitBuildOrderSteps(const vector<GeneUnitType>& buildOrder, Ra
 struct BuildOrderGene {
     // Indices are into the availableUnitTypes list
     vector<GeneUnitType> buildOrder;
-    vector<pair<GeneUnitType, int>> chronoBoosts;
 
     /** Validates that the build order will train/build the given units and panics otherwise */
     void validate(const vector<int>& actionRequirements) const {
@@ -1271,7 +1352,7 @@ float BuildOrderFitness::score() const {
 BuildOrderFitness calculateFitness(const BuildState& startState, const vector<int>& startingUnitCounts, const vector<int>& startingAddonCountPerUnitType, const AvailableUnitTypes& availableUnitTypes, const BuildOrderGene& gene) {
     BuildState state = startState;
     vector<float> finishedTimes;
-    auto buildOrder = gene.constructBuildOrder(startState.race, startState.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes);
+    auto buildOrder = gene.constructBuildOrder(startState.race, startState.foodAvailableInFuture(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes);
     if (!state.simulateBuildOrder(buildOrder, [&](int index) {
             finishedTimes.push_back(state.time);
         })) {
@@ -1291,7 +1372,8 @@ BuildOrderFitness calculateFitness(const BuildState& startState, const vector<in
 
     avgTime /= totalWeight;
     float originalTime = state.time;
-    float time = originalTime + (avgTime*2) * 0.001f;
+    // float time = originalTime + (avgTime*2) * 0.001f;
+    float time = avgTime*2;
 
     // Simulate until at least the 2 minutes mark, this ensures that the agent will do some economic stuff if nothing else
     state.simulate(60 * 2);
@@ -1397,7 +1479,8 @@ BuildOrderGene locallyOptimizeGene(const BuildState& startState, const vector<in
 
                     // Check if the new fitness is better
                     // Also always remove non-essential items at the end of the build order
-                    if (fitness < newFitness || lastItem) {
+                    // Note: !(a < b) == (a >= b)
+                    if (!(newFitness < fitness) || lastItem) {
                         currentActionRequirements[orig.type] += 1;
                         fitness = newFitness;
                         j--;
@@ -1571,6 +1654,10 @@ pair<vector<int>, vector<int>> calculateStartingUnitCounts(const BuildState& sta
             }
         }
     }
+    for (auto u : startState.upgrades) {
+        auto index = availableUnitTypes.getIndexMaybe(u);
+        if (index != -1) startingUnitCounts[index]++;
+    }
     return { startingUnitCounts, startingAddonCountPerUnitType };
 }
 
@@ -1641,12 +1728,18 @@ BuildOrder findBestBuildOrderGenetic(const std::vector<std::pair<sc2::UNIT_TYPEI
     return findBestBuildOrderGenetic(BuildState(startingUnits), target, nullptr);
 }
 
-BuildOrder findBestBuildOrderGenetic(const BuildState& startState, const vector<pair<UNIT_TYPEID, int>>& target, const BuildOrder* seed) {
-    return findBestBuildOrderGenetic(startState, target, seed, BuildOptimizerParams()).first;
+BuildOrder findBestBuildOrderGenetic(const BuildState& startState, const vector<pair<sc2::UNIT_TYPEID, int>>& target, const BuildOrder* seed, BuildOptimizerParams params) {
+    auto target2 = vector<pair<BuildOrderItem, int>>(target.size());
+    for (size_t i = 0; i < target.size(); i++) target2[i] = { BuildOrderItem(target[i].first), target[i].second };
+    return findBestBuildOrderGenetic(startState, target2, seed, params).first;
 }
 
+// BuildOrder findBestBuildOrderGenetic(const BuildState& startState, const vector<pair<BuildOrderItem, int>>& target, const BuildOrder* seed) {
+//     return findBestBuildOrderGenetic(startState, target, seed, BuildOptimizerParams()).first;
+// }
+
 /** Finds the best build order using an evolutionary algorithm */
-pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& startState, const vector<pair<UNIT_TYPEID, int>>& target, const BuildOrder* seed, BuildOptimizerParams params) {
+pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& startState, const vector<pair<BuildOrderItem, int>>& target, const BuildOrder* seed, BuildOptimizerParams params) {
     const AvailableUnitTypes& availableUnitTypes = getAvailableUnitsForRace(startState.race, UnitCategory::BuildOrderOptions);
     const AvailableUnitTypes& allEconomicUnits = getAvailableUnitsForRace(startState.race, UnitCategory::Economic);
 
@@ -1661,23 +1754,30 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
     tie(startingUnitCounts, startingAddonCountPerUnitType) = calculateStartingUnitCounts(startStateAfterEvents, availableUnitTypes);
 
     vector<int> actionRequirements(availableUnitTypes.size());
+    for (auto p : target) {
+        int index = availableUnitTypes.getIndexMaybe(p.first.rawType());
+        if (index != -1) {
+            actionRequirements[index] += p.second;
+        }
+    }
     for (size_t i = 0; i < actionRequirements.size(); i++) {
         auto item = availableUnitTypes.getBuildOrderItem(i);
         if (item.isUnitType()) {
             UNIT_TYPEID type = item.typeID();
-            int count = 0;
-            for (auto p : target)
-                if (p.first == type || getUnitData(p.first).unit_alias == type)
-                    count += p.second;
             for (auto p : startStateAfterEvents.units)
                 if (p.type == type || getUnitData(p.type).unit_alias == type)
-                    count -= p.units;
-            actionRequirements[i] = max(0, count);
+                    actionRequirements[i] -= p.units;
+            actionRequirements[i] = max(0, actionRequirements[i]);
+        } else {
+            // Check if we already have the upgrade
+            if (startState.upgrades.hasUpgrade(item.upgradeID())) {
+                actionRequirements[i] = 0;
+            }
         }
     }
 
     vector<int> economicUnits;
-    for (int i = 0; i < allEconomicUnits.size(); i++) {
+    for (size_t i = 0; i < allEconomicUnits.size(); i++) {
         economicUnits.push_back(remapAvailableUnitIndex(i, allEconomicUnits, availableUnitTypes));
     }
 
@@ -1756,7 +1856,7 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
             if (i > 150) {
                 for (auto& g : nextGeneration) {
                     // float f1 = calculateFitness(startState, uniqueStartingUnits, availableUnitTypes, g);
-                    auto order = g.constructBuildOrder(startState.race, startState.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes);
+                    auto order = g.constructBuildOrder(startState.race, startState.foodAvailableInFuture(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes);
                     // cout << "Order size " << order.size() << endl;
                     g.buildOrder.clear();
                     for (BuildOrderItem t : order.items)
@@ -1776,7 +1876,6 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
         }
 
         // Note: do not mutate the first gene
-        bernoulli_distribution moveMutation(0.5);
         for (size_t i = 1; i < nextGeneration.size(); i++) {
             nextGeneration[i].mutateMove(params.mutationRateMove, actionRequirements, rnd);
             nextGeneration[i].mutateAddRemove(params.mutationRateAddRemove, rnd, actionRequirements, economicUnits, availableUnitTypes, params.allowChronoBoost);
@@ -1817,7 +1916,7 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
         miningSpeedFutureColor = 0;
         assert(indices[0] == 0);
         for (auto index : indices) {
-            auto bo = generation[index].constructBuildOrder(startState.race, startState.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes);
+            auto bo = generation[index].constructBuildOrder(startState.race, startState.foodAvailableInFuture(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes);
             printBuildOrderDetailed(startState, bo);
             miningSpeedFutureColor++;
         }
@@ -1833,23 +1932,23 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
     }
     cout << "Implicit build order" << endl;
     for (auto u : generation[0].buildOrder) {
-        cout << UnitTypeToName(availableUnitTypes.getUnitType(u.type)) << endl;
+        cout << availableUnitTypes.getBuildOrderItem(u.type).name() << endl;
     }
     cout << endl;
     cout << "Explicit build order" << endl;
-    for (auto u : generation[0].constructBuildOrder(startState.race, startState.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes).items) {
-        cout << UnitTypeToName(u.typeID()) << endl;
+    for (auto u : generation[0].constructBuildOrder(startState.race, startState.foodAvailableInFuture(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes).items) {
+        cout << u.name() << endl;
     }
 
-    stack<BuildOrderItem> reqs;
+    /*stack<BuildOrderItem> reqs;
     traceDependencies(startingUnitCounts, availableUnitTypes, reqs, UNIT_TYPEID::PROTOSS_GATEWAY);
     cout << "Reqs " << reqs.size() << endl;
     while(!reqs.empty()) {
         auto u = reqs.top();
         reqs.pop();
         cout << "Req " << UnitTypeToName(u.typeID()) << endl;
-    }
-    return make_pair(generation[0].constructBuildOrder(startState.race, startState.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes), fitness);
+    }*/
+    return make_pair(generation[0].constructBuildOrder(startState.race, startState.foodAvailableInFuture(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes), fitness);
 }
 
 vector<UNIT_TYPEID> buildOrderProBO = {
@@ -2193,10 +2292,8 @@ void unitTestBuildOptimizer() {
             BuildOptimizerParams params;
             params.iterations = 1024;
             // auto boTuple = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ADEPT, 23 }, { UNIT_TYPEID::PROTOSS_PROBE, 31 }, { UNIT_TYPEID::PROTOSS_NEXUS, 2 }, { UNIT_TYPEID::PROTOSS_GATEWAY, 4 } }, nullptr, params);
-            auto boTuple = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ADEPT, 23 } }, nullptr, params);
-            auto bo = boTuple.first;
+            auto bo = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_ADEPT, 23 } }, nullptr, params);
             printBuildOrderDetailed(startState, bo);
-            cout << "Build order score " << boTuple.second.score() << endl;
 
             
             printBuildOrderDetailed(startState, buildOrderProBO3);
@@ -2601,8 +2698,7 @@ void unitTestBuildOptimizer() {
         for (int i = 1; i < 5; i++) {
             BuildOptimizerParams params;
             params.iterations = i*100;
-            auto boTuple = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_VOIDRAY, 1 } }, nullptr, params);
-            auto bo = boTuple.first;
+            auto bo = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_VOIDRAY, 1 } }, nullptr, params);
             printBuildOrderDetailed(startState, bo);
             // cout << "Build order score " << boTuple.second.score() << endl;
         }
@@ -2672,8 +2768,7 @@ void unitTestBuildOptimizer() {
         // startState.baseInfos = { BaseInfo(10800, 1000, 1000) };
         BuildOptimizerParams params;
         params.iterations = 1024;
-        auto boTuple = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_VOIDRAY, 1 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 5 } }, nullptr, params);
-        auto bo = boTuple.first;
+        auto bo = findBestBuildOrderGenetic(startState, { { UNIT_TYPEID::PROTOSS_VOIDRAY, 1 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 5 } }, nullptr, params);
         printBuildOrderDetailed(startState, bo);
         // cout << "Build order score " << boTuple.second.score() << endl;
 

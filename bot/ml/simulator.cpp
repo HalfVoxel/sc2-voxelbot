@@ -59,7 +59,7 @@ void SimulatorState::simulateGroupCombat(float endTime) {
     // TODO: Vary depending on group sizes
     float combatThreshold = 8;
     auto simulator = shared_ptr<SimulatorContext>(this->simulator);
-    auto& combatEnv = simulator->combatPredictor->defaultCombatEnvironment;
+    auto& combatEnv = simulator->combatPredictor->getCombatEnvironment(this->states[0]->upgrades, this->states[1]->upgrades);
     for (auto& group1 : groups) {
         if (group1.owner == 1 && group1.units.size() > 0) {
             for (auto& group2 : groups) {
@@ -83,8 +83,8 @@ void SimulatorState::simulateGroupCombat(float endTime) {
                     // vector<vector<bool>> hasAirGround(2, vector<bool>(2));
                     for (auto* group : nearbyGroups) {
                         for (auto& unit : group->units) {
-                            dps[group->owner - 1][0] += combatEnv.calculateDPS(unit.combat.type, false);
-                            dps[group->owner - 1][1] += combatEnv.calculateDPS(unit.combat.type, true);
+                            dps[group->owner - 1][0] += combatEnv.calculateDPS(1, unit.combat.type, false);
+                            dps[group->owner - 1][1] += combatEnv.calculateDPS(1, unit.combat.type, true);
                             hasAirGround[group->owner - 1][0] = hasAirGround[group->owner - 1][0] | !unit.combat.is_flying;
                             hasAirGround[group->owner - 1][1] = hasAirGround[group->owner - 1][1] | canBeAttackedByAirWeapons(unit.combat.type);
                         }
@@ -112,6 +112,11 @@ void SimulatorState::simulateGroupCombat(float endTime) {
                         if (movementWeight[1] > 0) movementAmount[1] /= movementWeight[1];
 
                         int defender = movementAmount[0] < movementAmount[1] ? 1 : 2;
+
+                        // Check the attackers movement. If it is low then both players become attackers
+                        if (movementAmount[2 - defender] < 4) {
+                            defender = 0;
+                        }
 
                         float maxTime = endTime - time();
                         simulator->cache.handleCombat(*this, nearbyGroups, defender, maxTime);
@@ -490,7 +495,7 @@ void SimulatorState::simulate (float endTime) {
 }
 
 void SimulatorState::assertValidState () {
-    return;
+    // return;
     for (int k = 0; k < 2; k++) {
         const BuildState& buildState = *states[k];
         map<UNIT_TYPEID, int> unitCounts;

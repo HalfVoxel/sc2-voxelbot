@@ -127,7 +127,6 @@ void Bot::OnGameLoading() {
 int ticks = 0;
 std::future<tuple<BuildOrder, BuildState, float, vector<pair<UNIT_TYPEID,int>>, BuildOrderTracker>> currentBuildOrderFuture;
 int currentBuildOrderFutureTick;
-BuildOrder currentBuildOrder;
 int currentBuildOrderIndex;
 vector<bool> buildOrderItemsDone;
 BuildOrderTracker buildOrderTracker;
@@ -146,7 +145,6 @@ void Bot::clearFields() {
     constructionPreparation.clear();
     currentBuildOrderFuture = {};
     currentBuildOrderFutureTick = 0;
-    currentBuildOrder = BuildOrder();
     currentBuildOrderIndex = 0;
     buildOrderItemsDone.clear();
     lastCounter.clear();
@@ -176,7 +174,7 @@ SimulatorState createSimulatorState(shared_ptr<SimulatorContext> mctsSimulator) 
     }
     enemyBuildState.time = ourBuildState.time;
 
-    BuildOrderState ourBO = BuildOrderState(make_shared<BuildOrder>(currentBuildOrder));
+    BuildOrderState ourBO = BuildOrderState(make_shared<BuildOrder>(buildOrderTracker.buildOrder));
     BuildOrderState enemyBO = BuildOrderState(make_shared<BuildOrder>(emptyBO));
     ourBO.buildIndex = currentBuildOrderIndex;
 
@@ -400,12 +398,13 @@ void Bot::OnStep() {
     }
 
     // mlMovement.Tick(Observation());
-    bool shouldRecalculateBuildOrder = (ticks % 20000) == 1 || ((ticks % 200) == 1 && currentBuildOrderIndex > currentBuildOrder.size() * 0.8f);
+    bool shouldRecalculateBuildOrder = (ticks % 20000) == 1 || ((ticks % 200) == 1 && currentBuildOrderIndex > buildOrderTracker.buildOrder.size() * 0.8f);
     if ((ticks >= currentBuildOrderFutureTick || shouldRecalculateBuildOrder) && currentBuildOrderFuture.valid()) {
         currentBuildOrderFutureTick = 100000000;
         cout << "Updating build order" << endl;
         currentBuildOrderFuture.wait();
         float buildOrderTime;
+        BuildOrder currentBuildOrder;
         tie(currentBuildOrder, lastStartingState, buildOrderTime, lastCounter, buildOrderTracker) = currentBuildOrderFuture.get();
         currentBuildOrderTime = buildOrderTime;
 
@@ -530,6 +529,10 @@ void Bot::OnStep() {
             }
         }
 
+        // Add our current upgrades to the build order state
+        startingState.environment = &combatPredictor.combineCombatEnvironment(startingState.environment, buildOrderStartingState.upgrades, 2);
+        // TODO Use deduction manager to fill in what upgrades we think the enemy might reasonable have at this time?
+
         currentBuildOrderFutureTick = ticks;
         currentBuildOrderFuture = std::async(std::launch::async, [=]{
             // return make_tuple(vector<UNIT_TYPEID>(0), buildOrderStartingState, 0.0f, vector<pair<UNIT_TYPEID,int>>(0));
@@ -562,12 +565,17 @@ void Bot::OnStep() {
             };*/
 
             cout << "Best counter" << endl;
-            for (auto c : bestCounter) {
+            for (auto c : bestCounter.unitCounts) {
                 cout << "\t" << UnitTypeToName(c.first) << " " << c.second << endl;
             }
+            cout << "With upgrades:";
+            for (auto u : bestCounter.upgrades) {
+                cout << " " << UpgradeIDToName(u);
+            }
+            cout << endl;
 
             int totalTargetCount = 0;
-            for (auto c : bestCounter) {
+            for (auto c : bestCounter.unitCounts) {
                 targetUnitsCount2[c.first] += c.second * 2;
                 totalTargetCount += c.second * 2;
             }
@@ -589,8 +597,9 @@ void Bot::OnStep() {
                 totalTargetCount += 1;
             }
 
-            vector<pair<UNIT_TYPEID, int>> targetUnits;
-            for (auto p : targetUnitsCount2) targetUnits.push_back(p);
+            vector<pair<BuildOrderItem, int>> targetUnits;
+            for (auto p : targetUnitsCount2) targetUnits.push_back({ BuildOrderItem(p.first), p.second });
+            for (auto u : bestCounter.upgrades) targetUnits.push_back({ BuildOrderItem(u), 1 });
 
             cout << "Additional units to build" << endl;
             for (auto p : targetUnitsCount2) {
@@ -602,14 +611,15 @@ void Bot::OnStep() {
             }
             cout << "---" << endl;
 
-            auto buildOrder = findBestBuildOrderGenetic(buildOrderStartingState, targetUnits, &currentBuildOrder);
+            auto currentBO = buildOrderTracker.buildOrder;
+            auto buildOrder = findBestBuildOrderGenetic(buildOrderStartingState, targetUnits, &currentBO).first;
             auto state2 = buildOrderStartingState;
             state2.simulateBuildOrder(buildOrder);
             watch.stop();
             cout << "Time " << watch.millis() << endl;
             BuildOrderTracker trackerTmp = tracker;
             trackerTmp.setBuildOrder(buildOrder);
-            return make_tuple(buildOrder, buildOrderStartingState, state2.time, bestCounter, trackerTmp);
+            return make_tuple(buildOrder, buildOrderStartingState, state2.time, bestCounter.unitCounts, trackerTmp);
         });
     }
 
@@ -637,7 +647,10 @@ void Bot::OnStep() {
 
     BuildState spendingManagerState(Observation(), Unit::Alliance::Self, Race::Protoss, BuildResources(Observation()->GetMinerals(), Observation()->GetVespene()), 0);
     spendingManager.OnStep(spendingManagerState);
-    debugBuildOrder(lastStartingState, currentBuildOrder, boExTuple.second);
+    {
+        BuildState currentState(agent->Observation(), Unit::Alliance::Self, Race::Protoss, BuildResources(agent->Observation()->GetMinerals(), agent->Observation()->GetVespene()), 0);
+        debugBuildOrderMasked(currentState, buildOrderTracker.buildOrder, boExTuple.second);
+    }
     influenceManager.OnStep();
     // scoutingManager->OnStep();
     // tacticalManager->OnStep();

@@ -145,7 +145,11 @@ class ExperimentBuildOrderAgent : public Bot {
         }
         
         // { { UNIT_TYPEID::PROTOSS_ZEALOT, 8 }, { UNIT_TYPEID::PROTOSS_STALKER, 10 }, { UNIT_TYPEID::PROTOSS_IMMORTAL, 5 } }
-        auto boTuple = findBestBuildOrderGenetic(startState, targetUnitCounts, nullptr, params);
+
+        vector<pair<BuildOrderItem, int>> targetItems;
+        for (auto p : targetUnitCounts) targetItems.push_back({ BuildOrderItem(p.first), p.second });
+
+        auto boTuple = findBestBuildOrderGenetic(startState, targetItems, nullptr, params);
 
         lastStartingState = startState;
         currentBuildOrder = boTuple.first;

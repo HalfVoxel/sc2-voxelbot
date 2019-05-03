@@ -27,8 +27,8 @@ struct SpendingItem {
 struct SpendingManager {
 private:
     std::vector<SpendingItem> actions;
-    int lastActionFrame = -1000;
 public:
+    int lastActionFrame = -1000;
     static double GetUnitProportion(sc2::UNIT_TYPEID unitType);
     void AddAction (double score, Cost cost, std::function<void()> action, bool reserveResourcesOnly = false);
     void AddAction (double score, Cost cost, std::function<void()> action, float preparationTime, std::function<void()> preparationCallback);

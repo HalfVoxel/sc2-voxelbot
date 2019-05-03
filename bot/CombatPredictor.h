@@ -1,11 +1,12 @@
 #pragma once
 #include "sc2api/sc2_interfaces.h"
 #include "build_optimizer_nn.h"
-#include "BuildOptimizer.h"
 #include <limits>
 #include "utilities/stdutils.h"
+#include <vector>
 
 struct AvailableUnitTypes;
+struct BuildState;
 
 inline bool canBeAttackedByAirWeapons(sc2::UNIT_TYPEID type) {
     return isFlying(type) || type == sc2::UNIT_TYPEID::PROTOSS_COLOSSUS;
@@ -27,8 +28,55 @@ struct CombatUnit {
 	CombatUnit(const sc2::Unit& unit) : owner(unit.owner), type(unit.unit_type), health(unit.health), health_max(unit.health_max), shield(unit.shield), shield_max(unit.shield_max), energy(unit.energy), is_flying(unit.is_flying) {}
 };
 
+struct CombatUpgrades {
+	std::bitset<90> upgrades;
+
+	struct iterator {
+		const CombatUpgrades& parent;
+		size_t index = 0;
+		iterator(const CombatUpgrades& parent, size_t index): parent(parent), index(index) {
+			while(this->index < parent.upgrades.size() && !parent.upgrades[this->index]) this->index++;
+		}
+        iterator operator++() {
+			index++;
+			while(index < parent.upgrades.size() && !parent.upgrades[index]) index++;
+			return *this;
+		}
+        bool operator!=(const iterator & other) const {
+			return index != other.index;
+		}
+        sc2::UPGRADE_ID operator*() const;
+	};
+
+	CombatUpgrades();
+
+	bool hasUpgrade(sc2::UPGRADE_ID upgrade) const;
+
+	uint64_t hash() const {
+		return std::hash<std::bitset<90>>()(upgrades);
+		// uint64_t h = 0;
+		// for (auto u : upgrades) {
+		// 	h = h * 31 ^ (uint64_t)u;
+		// }
+		// return h;
+	}
+
+	void add(sc2::UPGRADE_ID upgrade);
+
+	void combine(const CombatUpgrades& other) {
+		upgrades |= other.upgrades;
+	}
+
+	iterator begin() const { return iterator(*this, 0 ); }
+	iterator end() const { return iterator(*this, upgrades.size() ); }
+};
+
+struct CombatEnvironment;
+
 struct CombatState {
 	std::vector<CombatUnit> units;
+	const CombatEnvironment* environment = nullptr;
+
 	// Owner with the highest total health summed over all units
 	int owner_with_best_outcome() const;
 	std::string str();
@@ -49,8 +97,6 @@ struct CombatRecording {
 	std::vector<CombatRecordingFrame> frames;
 	void writeCSV(std::string filename);
 };
-
-struct CombatUpgrades;
 
 struct WeaponInfo {
    private:
@@ -88,21 +134,6 @@ struct CombatSettings {
 	float maxTime = std::numeric_limits<float>::infinity();
 };
 
-struct CombatUpgrades {
-	std::vector<sc2::UPGRADE_ID> upgrades;
-	bool hasUpgrade(sc2::UPGRADE_ID upgrade) const {
-		return contains(upgrades, upgrade);
-	}
-
-	uint64_t hash() const {
-		uint64_t h = 0;
-		for (auto u : upgrades) {
-			h = h * 31 ^ (uint64_t)u;
-		}
-		return h;
-	}
-};
-
 struct UnitCombatInfo {
     WeaponInfo groundWeapon;
     WeaponInfo airWeapon;
@@ -111,20 +142,24 @@ struct UnitCombatInfo {
 };
 
 struct CombatEnvironment {
-	std::vector<UnitCombatInfo> combatInfo;
+	std::array<std::vector<UnitCombatInfo>, 2> combatInfo;
+	std::array<CombatUpgrades, 2> upgrades;
 
 	CombatEnvironment(const CombatUpgrades& upgrades, const CombatUpgrades& targetUpgrades);
 
-	// TODO: Air?
-	float attackRange(sc2::UNIT_TYPEID type) const;
-	bool isMelee(sc2::UNIT_TYPEID type) const;
-	float calculateDPS(sc2::UNIT_TYPEID type, bool air) const;
+	float attackRange(int owner, sc2::UNIT_TYPEID type) const;
+	float attackRange(const CombatUnit& unit) const;
+	const UnitCombatInfo& getCombatInfo(const CombatUnit& unit) const;
+	float calculateDPS(int owner, sc2::UNIT_TYPEID type, bool air) const;
 	float calculateDPS(const std::vector<CombatUnit>& units, bool air) const;
-	float calculateDPS(CombatUnit& unit1, CombatUnit& unit2) const;
+	float calculateDPS(const CombatUnit& unit, bool air) const;
+	float calculateDPS(const CombatUnit& unit1, const CombatUnit& unit2) const;
 };
 
 struct CombatPredictor {
-	std::map<uint64_t, CombatEnvironment> combatEnvironments;
+private:
+	mutable std::map<uint64_t, CombatEnvironment> combatEnvironments;
+public:
 	CombatEnvironment defaultCombatEnvironment;
 	CombatPredictor();
 	void init();
@@ -132,7 +167,10 @@ struct CombatPredictor {
 	CombatResult predict_engage(const CombatState& state, CombatSettings settings, CombatRecording* recording=nullptr, int defenderPlayer = 1) const;
 	void unitTest(const BuildOptimizerNN& buildTimePredictor) const;
 
-	const CombatEnvironment& getCombatEnvironment(const CombatUpgrades& upgrades, const CombatUpgrades& targetUpgrades);
+	const CombatEnvironment& getCombatEnvironment(const CombatUpgrades& upgrades, const CombatUpgrades& targetUpgrades) const;
+
+	const CombatEnvironment& combineCombatEnvironment(const CombatEnvironment* env, const CombatUpgrades& upgrades, int upgradesOwner) const;
+
 	float targetScore(const CombatUnit& unit, bool hasGround, bool hasAir) const;
 };
 
@@ -141,7 +179,12 @@ CombatUnit makeUnit(int owner, sc2::UNIT_TYPEID type);
 extern const std::vector<sc2::UNIT_TYPEID> availableUnitTypesTerran;
 extern const std::vector<sc2::UNIT_TYPEID> availableUnitTypesProtoss;
 
-std::vector<std::pair<sc2::UNIT_TYPEID,int>> findBestCompositionGenetic(const CombatPredictor& predictor, const AvailableUnitTypes& availableUnitTypes, const CombatState& opponent, const BuildOptimizerNN* buildTimePredictor = nullptr, const BuildState* startingBuildState = nullptr, std::vector<std::pair<sc2::UNIT_TYPEID,int>>* seedComposition = nullptr);
+struct ArmyComposition {
+    std::vector<std::pair<sc2::UNIT_TYPEID,int>> unitCounts;
+    CombatUpgrades upgrades;
+};
+
+ArmyComposition findBestCompositionGenetic(const CombatPredictor& predictor, const AvailableUnitTypes& availableUnitTypes, const CombatState& opponent, const BuildOptimizerNN* buildTimePredictor = nullptr, const BuildState* startingBuildState = nullptr, std::vector<std::pair<sc2::UNIT_TYPEID,int>>* seedComposition = nullptr);
 
 struct CombatRecorder {
 private:
