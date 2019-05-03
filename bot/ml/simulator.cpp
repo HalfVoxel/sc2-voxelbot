@@ -60,8 +60,15 @@ void SimulatorState::simulateGroupCombat(float endTime) {
     float combatThreshold = 8;
     auto simulator = shared_ptr<SimulatorContext>(this->simulator);
     auto& combatEnv = simulator->combatPredictor->getCombatEnvironment(this->states[0]->upgrades, this->states[1]->upgrades);
-    for (auto& group1 : groups) {
-        if (group1.owner == 1 && group1.units.size() > 0) {
+    vector<bool> processedGroups(groups.size());
+    for (size_t gi1 = 0; gi1 < groups.size(); gi1++) {
+        auto& group1 = groups[gi1];
+        if (group1.owner == 1 && group1.units.size() > 0 && !processedGroups[gi1]) {
+            // Note: not checking if the enemy groups are processed.
+            // This allows multiple battles to happen in the same frame that involves the same enemy groups.
+            // E.g. if groups A, B are close to each other and B is an enemy, but groups B and C are also close but not so close that they get included in the A-B fight.
+            // Could equally well have done the check only for enemy units but not for our units.
+            // Essentially we want to prevent any given pair of groups from being included in a fight more than once
             for (auto& group2 : groups) {
                 if (group2.owner == 2 && group2.units.size() > 0 && DistanceSquared2D(group1.pos, group2.pos) < combatThreshold*combatThreshold) {
                     // Possible combat
@@ -70,9 +77,14 @@ void SimulatorState::simulateGroupCombat(float endTime) {
                     // Simulate outcome of battle
                     auto mean = (group1.pos + group2.pos) * 0.5f;
                     vector<SimulatorUnitGroup*> nearbyGroups;
-                    for (auto& group3 : groups) {
-                        if (DistanceSquared2D(mean, group3.pos) < combatThreshold*combatThreshold && group3.units.size() > 0) {
+                    for (size_t gi3 = 0; gi3 < groups.size(); gi3++) {
+                        auto& group3 = groups[gi3];
+                        // Check if it is close enough
+                        // Also make sure that owner=1 groups are never included twice in a fight
+                        if (DistanceSquared2D(mean, group3.pos) < combatThreshold*combatThreshold && group3.units.size() > 0 && (group3.owner != 1 || !processedGroups[gi3])) {
                             nearbyGroups.push_back(&group3);
+                            // Mark the group as processed so that we don't include it in a combat again (if it is an ally group)
+                            processedGroups[gi3] = true;
                         }
                     }
 
