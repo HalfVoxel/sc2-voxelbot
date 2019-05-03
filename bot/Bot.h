@@ -87,7 +87,8 @@ public:
     void clearFields();
 
     std::vector<ConstructionPreparationMovement> constructionPreparation;
-    
+
+    LargeObservationChangeObserver observationChangeCheck;
     SpendingManager spendingManager;
     CameraController cameraController;
     TacticalManager* tacticalManager;

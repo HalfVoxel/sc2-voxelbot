@@ -613,8 +613,12 @@ void Bot::OnStep() {
         });
     }
 
-    if ((ticks % 200) == 1) {
+    // Run MCTS regularly or when we have just seen a large change in the game (since the last mcts)
+    bool largeChange = observationChangeCheck.isLargeObservationChange(deductionManager);
+    if ((ticks % 200) == 1 || largeChange) {
+        if (largeChange) cout << "Detected large observation change. Running MCTS" << endl;
         runMCTS();
+        observationChangeCheck.reset(deductionManager);
     }
 
     if ((ticks % 200) == 136) {

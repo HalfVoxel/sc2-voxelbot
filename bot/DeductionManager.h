@@ -18,8 +18,15 @@ struct UnitTypeInfo {
 	int dead;
 };
 
+struct DeductionManager;
+
+struct LargeObservationChangeObserver {
+	std::vector<UnitTypeInfo> lastSummary;
+	void reset(const DeductionManager& deductionManager);
+	bool isLargeObservationChange(const DeductionManager& deductionManager);
+};
+
 struct DeductionManager {
-	Spending spending;
 	Spending freeResources;
 	Spending startingResources;
 	int playerID;
@@ -38,8 +45,8 @@ public:
 	std::vector<std::pair<sc2::UNIT_TYPEID, int>> GetKnownUnits();
 	std::vector<std::pair<sc2::UNIT_TYPEID, int>> ApproximateArmy(float scale);
 	std::vector<std::pair<CombatUnit, sc2::Point2D>> SampleUnitPositions(float scale);
+	std::vector<UnitTypeInfo> Summary() const;
 private:
-	std::vector<UnitTypeInfo> Summary();
 	void Observe(const sc2::Unit* unit);
 	void Observe(sc2::UNIT_TYPEID unitType);
 };

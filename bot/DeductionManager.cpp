@@ -12,6 +12,30 @@ using namespace sc2;
 
 map<Tag, set<UNIT_TYPEID>> aliasTypes;
 
+void LargeObservationChangeObserver::reset(const DeductionManager& deductionManager) {
+    lastSummary = deductionManager.Summary();
+}
+
+bool LargeObservationChangeObserver::isLargeObservationChange(const DeductionManager& deductionManager) {
+    if (lastSummary.empty()) reset(deductionManager);
+
+    auto summary = deductionManager.Summary();
+    assert(summary.size() == lastSummary.size());
+    int totalDiff = 0;
+    int totalCount = 0;
+    for (size_t i = 0; i < summary.size(); i++) {
+        int diff = abs(summary[i].total - lastSummary[i].total);
+        totalDiff += diff;
+        totalCount += lastSummary[i].total;
+    }
+
+    float fractionChanged = totalDiff / (totalCount + 0.001f);
+    if (fractionChanged > 0.1f) {
+        return true;
+    }
+    return false;
+}
+
 void DeductionManager::OnGameStart(int playerID) {
     this->playerID = playerID;
     const auto& unitTypes = bot->Observation()->GetUnitTypeData();
@@ -147,7 +171,7 @@ vector<pair<UNIT_TYPEID, int>> DeductionManager::ApproximateArmy(float scale) {
     
     priorCount *= scale;
     int k = 0;
-    while(totalCount < min((int)priorCount, 10)) {
+    while(totalCount < priorCount) {
         if (race == Race::Zerg) {
             if ((k % 4) == 0) {
                 result.emplace_back(UNIT_TYPEID::ZERG_QUEEN, 1);
@@ -173,7 +197,7 @@ vector<pair<UNIT_TYPEID, int>> DeductionManager::ApproximateArmy(float scale) {
                 totalCount += 1;
             }
 
-            if ((k % 4) == 1 || (k % 4) == 2 || (k % 4) == 3) {
+            if ((k % 4) == 1 || (k % 4) == 2) {
                 result.emplace_back(UNIT_TYPEID::PROTOSS_STALKER, 1);
                 totalCount += 1;
             }
@@ -188,6 +212,12 @@ vector<pair<UNIT_TYPEID, int>> DeductionManager::ApproximateArmy(float scale) {
                 result.emplace_back(UNIT_TYPEID::PROTOSS_STALKER, 1);
                 totalCount += 1;
             }
+
+            if ((k % 4) == 3) {
+                result.emplace_back(UNIT_TYPEID::PROTOSS_ARCHON, 1);
+                totalCount += 1;
+            }
+
             k++;
         }
     }
@@ -229,7 +259,7 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
 
     for (const Unit* unit : observedUnitInstances) {
         if (unit->is_alive) {
-            if (ticksToSeconds(agent->Observation()->GetGameLoop() - unit->last_seen_game_loop) < 20) {
+            if (ticksToSeconds(agent->Observation()->GetGameLoop() - unit->last_seen_game_loop) < 20 && !isStructure(unit->unit_type)) {
                 result.emplace_back(CombatUnit(*unit), unit->pos);
             } else {
                 // If it was a long time since we saw the unit, assume it has moved back to the default position
@@ -306,8 +336,9 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
 }
 
 
-vector<UnitTypeInfo> DeductionManager::Summary() {
+vector<UnitTypeInfo> DeductionManager::Summary() const {
     const auto& unitTypes = bot->Observation()->GetUnitTypeData();
+    Spending spending;
     spending.spentMinerals = 0;
     spending.spentGas = 0;
     uint32_t gameLoop = bot->Observation()->GetGameLoop();
