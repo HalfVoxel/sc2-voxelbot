@@ -20,10 +20,13 @@ function<bool(const SimulatorUnit&)> structureUnit = [](const SimulatorUnit& uni
 
 Point2D averagePos(vector<SimulatorUnitGroup*> groups) {
     Point2D p;
+    float weight = 0;
     for (auto* g : groups) {
-        p += g->pos;
+        float w = sqrt(g->units.size());
+        p += g->pos * w;
+        weight += w;
     }
-    return p / groups.size();
+    return p / (weight + 0.00001f);
 }
 
 SimulatorUnitGroup* closestGroup (SimulatorState& state, int owner, Point2D point, function<bool(const SimulatorUnitGroup&)>* groupFilter) {
