@@ -10,16 +10,16 @@ struct SimulatorUnit;
 
 enum class MCTSAction {
     ArmyAttackClosestEnemy,
-    IdleArmyAttackClosestEnemy,
     ArmyConsolidate,
-    IdleArmyConsolidate,
     ArmyMoveC1,
     ArmyMoveC2,
     None,
     ArmyMoveBase,
     ArmyAttackBase,
+    Reinforce,
 
-    
+    IdleArmyAttackClosestEnemy,
+    IdleArmyConsolidate,
     ArmySuicide,
     IdleNonArmyAttackClosestEnemy,
     NonArmyAttackClosestEnemy,
@@ -51,6 +51,8 @@ inline std::string MCTSActionName(MCTSAction action) {
             return "ArmyMoveBase";
         case MCTSAction::ArmyAttackBase:
             return "ArmyAttackBase";
+            case MCTSAction::Reinforce:
+            return "Reinforce";
         case MCTSAction::ArmySuicide:
             return "ArmySuicide";
         case MCTSAction::IdleNonArmyAttackClosestEnemy:

@@ -195,6 +195,32 @@ bool SimulatorMCTSState::executeAction(MCTSAction action, std::function<void(Sim
             }
             break;
         }
+        case MCTSAction::Reinforce: {
+            float bestScore = 0;
+            SimulatorUnitGroup* bestGroup;
+            for (auto& group : state.groups) {
+                if (group.owner == playerID && !structureGroup(group)) {
+                    int numArmyUnits = 0;
+                    for (auto& u : group.units) numArmyUnits += isArmy(u.combat.type);
+                    float score = numArmyUnits;
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestGroup = &group;
+                    }
+                }
+            }
+            if (bestGroup == nullptr) return false;
+            auto avgPos = bestGroup->pos;
+
+            vector<SimulatorUnitGroup*> groups = state.select(playerID, nullptr, &armyUnit);
+            // Note: probably invalidated by the select call
+            bestGroup = nullptr;
+
+            if (!isValidDestination(groups, avgPos, state.tick)) return false;
+
+            state.command(groups, SimulatorOrder(SimulatorOrderType::Attack, avgPos), commandListener);
+            break;
+        }
         case MCTSAction::ArmyConsolidate:
         case MCTSAction::IdleArmyConsolidate: {
             auto* groupFilter = action == MCTSAction::IdleArmyConsolidate ? &idleGroup : nullptr;
@@ -288,7 +314,7 @@ vector<pair<int, float>> SimulatorMCTSState::generateMoves() {
     vector<pair<int, float>> moves;
     if (isWin() != 0) return moves;
 
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < 8; i++) {
         // moves.push_back({ i, min(1.0f, (i/45.0f) * 0.1f + 0.9f * 1/10.0f + 0.01f * (rand() % 10))});
         moves.push_back({ i, 0.5f });
     }
