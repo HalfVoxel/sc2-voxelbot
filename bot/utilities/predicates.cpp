@@ -180,3 +180,17 @@ bool isInfantry(sc2::UNIT_TYPEID type) {
             return false;
     }
 }
+
+bool isChangeling(sc2::UNIT_TYPEID type) {
+    switch(type) {
+        case UNIT_TYPEID::ZERG_CHANGELING:
+        case UNIT_TYPEID::ZERG_CHANGELINGMARINE:
+        case UNIT_TYPEID::ZERG_CHANGELINGMARINESHIELD:
+        case UNIT_TYPEID::ZERG_CHANGELINGZEALOT:
+        case UNIT_TYPEID::ZERG_CHANGELINGZERGLING:
+        case UNIT_TYPEID::ZERG_CHANGELINGZERGLINGWINGS:
+            return true;
+        default:
+            return false;
+    }
+}

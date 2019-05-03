@@ -90,7 +90,7 @@ BOT::Status InCombat::OnTick() {
         for (auto unit : group->units) {
             if (!unit->orders.empty() && unit->orders[0].target_unit_tag != NullTag) {
                 const Unit* enemy = bot->Observation()->GetUnit(unit->orders[0].target_unit_tag);
-                if (enemy && !(enemy->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINE || enemy->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINESHIELD)) {
+                if (enemy && !isChangeling(enemy->unit_type)) {
                     group->SetCombatPosition(new Point2D(enemy->pos.x, enemy->pos.y));
                     bot->Debug()->DebugLineOut(unit->pos, enemy->pos, Colors::Red);
                     return Success;
