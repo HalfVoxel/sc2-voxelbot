@@ -13,6 +13,7 @@ struct BuildOrderTracker {
     BuildOrderTracker (BuildOrder buildOrder);
 
     void setBuildOrder (BuildOrder buildOrder);
+    void tweakBuildOrder (std::vector<bool> keepMask, BuildOrder buildOrder);
     void addExistingUnit(const sc2::Unit* unit);
 
     void ignoreUnit (sc2::UNIT_TYPEID type, int count);
@@ -20,6 +21,7 @@ struct BuildOrderTracker {
 };
 
 std::pair<int, std::vector<bool>> executeBuildOrder(const std::vector<const sc2::Unit*>& ourUnits, const BuildState& buildOrderStartingState, BuildOrderTracker& buildOrder, float currentMinerals, SpendingManager& spendingManager);
+void debugBuildOrderMasked(BuildState startingState, BuildOrder buildOrder, std::vector<bool> doneItems);
 void debugBuildOrder(BuildState startingState, BuildOrder buildOrder, std::vector<bool> doneItems);
 
 void debugBuildOrder(BuildState startingState, BuildOrder buildOrder, std::vector<float> doneTimes);

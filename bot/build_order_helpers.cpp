@@ -4,6 +4,7 @@
 #include "behaviortree/BehaviorTree.h"
 #include "utilities/predicates.h"
 #include "utilities/stdutils.h"
+#include "unit_lists.h"
 #include <sstream>
 
 using namespace std;
@@ -52,6 +53,27 @@ void BuildOrderTracker::setBuildOrder (BuildOrder buildOrder) {
     buildOrderUnits = vector<const Unit*>(buildOrder.size());
     assert(buildOrder.size() == buildOrderUnits.size());
     cout << "Created as " << buildOrder.size() << " " << buildOrderUnits.size() << endl;
+}
+
+void BuildOrderTracker::tweakBuildOrder (std::vector<bool> keepMask, BuildOrder tweakBuildOrder) {
+    assert(keepMask.size() == buildOrder.size());
+    vector<const Unit*> newUnits;
+    BuildOrder newBO;
+
+    for (size_t i = 0; i < buildOrder.size(); i++) {
+        if (keepMask[i]) {
+            newBO.items.push_back(buildOrder[i]);
+            newUnits.push_back(buildOrderUnits[i]);
+        }
+    }
+    
+    for (auto item : tweakBuildOrder.items) {
+        newBO.items.push_back(item);
+        newUnits.push_back(nullptr);
+    }
+
+    buildOrder = move(newBO);
+    buildOrderUnits = move(newUnits);
 }
 
 void BuildOrderTracker::addExistingUnit(const Unit* unit) {
@@ -111,6 +133,9 @@ vector<bool> BuildOrderTracker::update(const vector<const Unit*>& ourUnits) {
                 }
                 inProgress[canonicalize(createdUnit)]++;
             }
+
+            // Only process the first order (this bot should never have more than one anyway)
+            break;
         }
     }
 
@@ -137,6 +162,12 @@ vector<bool> BuildOrderTracker::update(const vector<const Unit*>& ourUnits) {
 }
 
 pair<int, vector<bool>> executeBuildOrder(const vector<const Unit*>& ourUnits, const BuildState& buildOrderStartingState, BuildOrderTracker& tracker, float currentMinerals, SpendingManager& spendingManager) {
+    // Optimize the current build order, but only if we didn't just do an action because then the 'doneActions' list might be inaccurate
+    if ((agent->Observation()->GetGameLoop() % 10) == 0 && agent->Observation()->GetGameLoop() - spendingManager.lastActionFrame > 2) {
+        BuildState currentState(agent->Observation(), Unit::Alliance::Self, Race::Protoss, BuildResources(agent->Observation()->GetMinerals(), agent->Observation()->GetVespene()), 0);
+        optimizeExistingBuildOrder(ourUnits, currentState, tracker);
+    }
+
     auto doneActions = tracker.update(ourUnits);
 
     // Keep track of how many units have been created/started to be created since the build order was last updated.
@@ -229,7 +260,7 @@ pair<int, vector<bool>> executeBuildOrder(const vector<const Unit*>& ourUnits, c
             s -= 1;
             node = make_shared<Research>(upgrade, [=](auto) { return s; });
 
-            cost = { (int)getUpgradeData(upgrade).mineral_cost, (int)getUpgradeData(upgrade).vespene_cost, 0, UNIT_TYPEID::INVALID };
+            cost = CostOfUpgrade(upgrade);
         }
 
         totalMinerals -= cost.minerals;
@@ -241,6 +272,41 @@ pair<int, vector<bool>> executeBuildOrder(const vector<const Unit*>& ourUnits, c
     }
 
     return { currentBuildOrderIndex, doneActions };
+}
+
+void debugBuildOrderMasked(BuildState startingState, BuildOrder buildOrder, vector<bool> doneItems) {
+    BuildState state = startingState;
+    stringstream ss;
+    BuildOrder maskedBO;
+    for (size_t i = 0; i < buildOrder.size(); i++) {
+        if (!doneItems[i]) {
+            maskedBO.items.push_back(buildOrder[i]);
+        } else {
+            string name = buildOrder[i].isUnitType() ? getUnitData(buildOrder[i].typeID()).name : UpgradeIDToName(buildOrder[i].upgradeID());
+            ss << " :   " << name << "(done)" << endl;
+        }
+    }
+    float timeOffset = ticksToSeconds(agent->Observation()->GetGameLoop());
+    // ss << "Time: " << (int)round(buildOrderTime) << endl;
+    bool success = state.simulateBuildOrder(maskedBO, [&](int i) {
+        string name = maskedBO[i].isUnitType() ? getUnitData(maskedBO[i].typeID()).name : UpgradeIDToName(maskedBO[i].upgradeID());
+        float time = state.time + timeOffset;
+        int sec = (int)(fmod(time, 60.0f));
+        ss << (int)(time / 60.0f) << ":" << (sec < 10 ? "0" : "") << sec << " " << name;
+        if (maskedBO.items[i].chronoBoosted) ss << " (chrono)";
+        ss << endl;
+    });
+
+    if (!success) ss << "FAILED " << "(food: " << state.foodAvailableInFuture() << ")" << endl;
+
+    /*    
+    for (int i = 0; i < buildOrder.items.size(); i++) {
+        auto b = buildOrder.items[i];
+        ss << b.name();
+        if (i < currentBuildOrderIndex) ss << " (done)";
+        ss << endl;
+    }*/
+    agent->Debug()->DebugTextOut(ss.str(), Point2D(0.05, 0.05), Colors::Purple);
 }
 
 void debugBuildOrder(BuildState startingState, BuildOrder buildOrder, vector<bool> doneItems) {
@@ -255,6 +321,8 @@ void debugBuildOrder(BuildState startingState, BuildOrder buildOrder, vector<boo
         if (i < doneItems.size() && doneItems[i]) ss << " (done)";
         ss << endl;
     });
+
+    if (!success) ss << "FAILED " << "(food: " << state.foodAvailableInFuture() << ")" << endl;
 
     /*    
     for (int i = 0; i < buildOrder.items.size(); i++) {

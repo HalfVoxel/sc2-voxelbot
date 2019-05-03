@@ -11,6 +11,7 @@
 #include "utilities/profiler.h"
 #include "utilities/stdutils.h"
 #include "unit_lists.h"
+#include "build_order_helpers.h"
 
 using namespace std;
 using namespace sc2;
@@ -2768,4 +2769,74 @@ bool BuildOrderFitness::operator<(const BuildOrderFitness& other) const {
     // s += ((resources.minerals + 2 * resources.vespene) + (miningSpeed.mineralsPerSecond + 2 * miningSpeed.vespenePerSecond) * 60) * 0.001f;
     // s = log(s) - time/400.0f;
     // return s;
+}
+
+void optimizeExistingBuildOrder(const std::vector<const sc2::Unit*>& ourUnits, const BuildState& startState, BuildOrderTracker& buildOrder) {
+    const AvailableUnitTypes& availableUnitTypes = getAvailableUnitsForRace(startState.race, UnitCategory::BuildOrderOptions);
+    const AvailableUnitTypes& allEconomicUnits = getAvailableUnitsForRace(startState.race, UnitCategory::Economic);
+
+    auto doneItems = buildOrder.update(ourUnits);
+
+    // Simulate the starting state until all current events have finished, only then do we know which exact unit types the player will start with.
+    // This is important for implicit dependencies in the build order.
+    // If say a factory is under construction, we don't want to implictly build another factory if the build order specifies that a tank is supposed to be built.
+    BuildState startStateAfterEvents = startState;
+    startStateAfterEvents.simulate(startStateAfterEvents.time + 1000000);
+
+    vector<int> startingUnitCounts;
+    vector<int> startingAddonCountPerUnitType;
+    tie(startingUnitCounts, startingAddonCountPerUnitType) = calculateStartingUnitCounts(startStateAfterEvents, availableUnitTypes);
+
+    vector<int> economicUnits;
+    for (size_t i = 0; i < allEconomicUnits.size(); i++) {
+        economicUnits.push_back(remapAvailableUnitIndex(i, allEconomicUnits, availableUnitTypes));
+    }
+
+    vector<int> actionRequirements(availableUnitTypes.size());
+    BuildOrderGene gene;
+
+    for (size_t i = 0; i < buildOrder.buildOrder.size(); i++) {
+        if (!doneItems[i]) {
+            auto item = buildOrder.buildOrder[i];
+            gene.buildOrder.push_back(availableUnitTypes.getGeneItem(item));
+
+            if (item.isUnitType() && (isStructure(item.typeID()) || isBasicHarvester(item.typeID()))) {
+                // Not a goal item
+            } else {
+                // Important stuff
+                actionRequirements[availableUnitTypes.getGeneItem(item).type]++;
+            }
+        }
+    }
+
+    auto originalBuildOrder = gene.constructBuildOrder(startState.race, startStateAfterEvents.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes);
+
+    auto fitness = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, gene);
+
+    default_random_engine rnd(rand());
+    BuildOptimizerParams params;
+    for (int i = 0; i < 2; i++) {
+        int r = rand();
+        BuildOrderGene newGene = gene;
+        if (r % 3 == 0) newGene = locallyOptimizeGene(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, actionRequirements, newGene);
+        if (r % 3 == 1) newGene.mutateMove(params.mutationRateMove, actionRequirements, rnd);
+        if (r % 3 == 2) newGene.mutateAddRemove(params.mutationRateAddRemove, rnd, actionRequirements, economicUnits, availableUnitTypes, params.allowChronoBoost);
+
+        auto newFitness = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, newGene);
+
+        if (fitness < newFitness) {
+            fitness = newFitness;
+            gene = move(newGene);
+        }
+    }
+
+    auto newBuildOrder = gene.constructBuildOrder(startState.race, startStateAfterEvents.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes);
+
+    if (newBuildOrder.size() != originalBuildOrder.size()) {
+        cout << "Original build order" << endl;
+        printBuildOrder(originalBuildOrder);
+        cout << "New build order" << endl;
+        printBuildOrder(newBuildOrder);
+    }
+    buildOrder.tweakBuildOrder(doneItems, newBuildOrder);
 }
