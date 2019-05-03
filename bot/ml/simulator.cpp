@@ -389,7 +389,8 @@ void SimulatorState::addUnit(int owner, sc2::UNIT_TYPEID unit_type) {
     // Base the seed on some function of the state pointers
     // This ensures that the simulation is deterministic (with caching)
     // even when it includes randomness
-    uint64_t seed = (uint64_t)&*states[0] + (uint64_t)&*states[1];
+    
+    uint64_t seed = (uint64_t)states[0]->immutableHash() + (uint64_t)states[1]->immutableHash();
     default_random_engine rnd(seed);
 
     // Reservoir sampling
