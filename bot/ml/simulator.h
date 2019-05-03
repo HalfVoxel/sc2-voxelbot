@@ -59,7 +59,7 @@ struct SimulatorState {
     std::weak_ptr<SimulatorContext> simulator;
     std::array<const BuildState*, 2> states;
     std::vector<SimulatorUnitGroup> groups;
-    std::vector<BuildOrderState> buildOrders;
+    std::array<BuildOrderState, 2> buildOrders;
     int tick = 0;
     
     float time() const {

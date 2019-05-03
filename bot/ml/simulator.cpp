@@ -547,7 +547,7 @@ void SimulatorState::assertValidState () {
     }
 }
 
-SimulatorState::SimulatorState (std::shared_ptr<SimulatorContext> simulator, const std::vector<BuildState>& states, const std::vector<BuildOrderState>& buildOrders) : simulator(simulator), buildOrders(buildOrders) {
+SimulatorState::SimulatorState (std::shared_ptr<SimulatorContext> simulator, const std::vector<BuildState>& states, const std::vector<BuildOrderState>& buildOrders) : simulator(simulator), buildOrders({{ buildOrders[0], buildOrders[1] }}) {
     assert(states.size() == 2);
     assert(buildOrders.size() == 2);
     this->states = {{ simulator->cache.copyState(states[0]), simulator->cache.copyState(states[1]) }};
