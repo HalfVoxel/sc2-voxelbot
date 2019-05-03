@@ -41,23 +41,7 @@ BOT::Status GroupPosition::OnTick() {
     return Success;
 }
 
-BOT::Status InCombat::OnTick() {
-    auto group = GetGroup();
-    for (auto unit : group->units) {
-        if (!unit->orders.empty() && unit->orders[0].target_unit_tag != NullTag) {
-            const Unit* enemy = bot->Observation()->GetUnit(unit->orders[0].target_unit_tag);
-            if (enemy && !(enemy->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINE || enemy->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINESHIELD)) {
-                group->SetCombatPosition(new Point2D(enemy->pos.x, enemy->pos.y));
-                bot->Debug()->DebugLineOut(unit->pos, enemy->pos, Colors::Red);
-                return Success;
-            }
-        }
-    }
-    group->SetCombatPosition(nullptr);
-    return Failure;
-}
-
-static Point2D NornalizeVector(Point2D v) {
+static Point2D NormalizeVector(Point2D v) {
     float magn = sqrt(v.x*v.x + v.y*v.y);
     return magn > 0 ? v / magn : Point2D(0,0);
 }
@@ -71,7 +55,7 @@ bool isCombatRetreat(const UnitGroup* group, Point2D movementTarget) {
     if (group->units.size() > 0) meanPos /= group->units.size();
 
     auto movementDirection = movementTarget - meanPos;
-    auto normalizedMovementDirection = NornalizeVector(movementDirection);
+    auto normalizedMovementDirection = NormalizeVector(movementDirection);
     const float DistanceThreshold = 14;
     int inRange = 0;
     int inRangeAndDirection = 0;
@@ -98,6 +82,25 @@ bool isCombatRetreat(const UnitGroup* group, Point2D movementTarget) {
     return !shouldAttack;
 }
 
+BOT::Status InCombat::OnTick() {
+    auto group = GetGroup();
+    auto movementTarget = bot->tacticalManager->RequestTargetPosition(group);
+    bool retreat = isCombatRetreat(group, Point2D(movementTarget.x, movementTarget.y));
+    if (!retreat) {
+        for (auto unit : group->units) {
+            if (!unit->orders.empty() && unit->orders[0].target_unit_tag != NullTag) {
+                const Unit* enemy = bot->Observation()->GetUnit(unit->orders[0].target_unit_tag);
+                if (enemy && !(enemy->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINE || enemy->unit_type == UNIT_TYPEID::ZERG_CHANGELINGMARINESHIELD)) {
+                    group->SetCombatPosition(new Point2D(enemy->pos.x, enemy->pos.y));
+                    bot->Debug()->DebugLineOut(unit->pos, enemy->pos, Colors::Red);
+                    return Success;
+                }
+            }
+        }
+    }
+    group->SetCombatPosition(nullptr);
+    return Failure;
+}
 
 BOT::Status TacticalMove::OnTick() {
     auto group = GetGroup();
@@ -132,7 +135,7 @@ BOT::Status TacticalMove::OnTick() {
                 auto target_pos = Point2D(currentPath[0].x, currentPath[0].y);
                 bool positionReached = true;
                 std::vector<const Unit*> unitsToOrder;
-                int allowedDist = 7;
+                int allowedDist = 5 + 2 * sqrt(group->units.size());
                 
                 for (auto* unit : group->units) {
                     bool withinDistance = DistanceSquared2D(unit->pos, target_pos) < allowedDist*allowedDist;
