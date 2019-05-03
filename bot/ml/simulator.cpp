@@ -119,7 +119,10 @@ void SimulatorState::simulateGroupCombat(float endTime) {
                         }
 
                         float maxTime = endTime - time();
-                        simulator->cache.handleCombat(*this, nearbyGroups, defender, maxTime);
+                        if (simulator->debug) {
+                            cout << "Starting combat between " << nearbyGroups.size() << " groups with max time " << maxTime << endl;
+                        }
+                        simulator->cache.handleCombat(*this, nearbyGroups, defender, maxTime, simulator->debug);
                         #if FALSE
                         // TODO: If both armies had a fight the previous time step as well, then they should already be in position (probably)
                         // TODO: What if the combat drags on longer than to endTime? (probably common in case of harassment, it takes some time for the player to start to defend)

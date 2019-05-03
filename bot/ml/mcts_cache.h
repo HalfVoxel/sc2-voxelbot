@@ -42,6 +42,6 @@ struct MCTSCache {
 
     /** Simulate a build state with a given build order, but return an existing cached state if possible */
     std::pair<std::shared_ptr<const BuildState>, BuildOrderState> simulateBuildOrder(const BuildState& state, const BuildOrderState& buildOrder, float endTime, const std::function<void(const BuildEvent&)>* listener);
-    void handleCombat(SimulatorState& state, const std::vector<SimulatorUnitGroup*>& groups, int defender, float maxTime);
+    void handleCombat(SimulatorState& state, const std::vector<SimulatorUnitGroup*>& groups, int defender, float maxTime, bool debug);
     void clear();
 };

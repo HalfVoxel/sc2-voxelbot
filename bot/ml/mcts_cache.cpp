@@ -58,7 +58,7 @@ pair<shared_ptr<const BuildState>, BuildOrderState> MCTSCache::simulateBuildOrde
     // cout << "Simulating " << state.immutableHash() << " to " << endTime << endl;
     simTot++;
     if (simTot % 5000 == 0) {
-        // cout << "Stats " << simHits << "/" << simTot << " " << combatHits << "/" << combatTot << endl;
+        cout << "Stats " << simHits << "/" << simTot << " " << combatHits << "/" << combatTot << endl;
     }
 
     auto ptr = simulationCache.find(hash);
@@ -92,7 +92,7 @@ pair<shared_ptr<const BuildState>, BuildOrderState> MCTSCache::simulateBuildOrde
     return make_pair(cache.buildState, cache.buildOrder);
 }
 
-void MCTSCache::handleCombat(SimulatorState& state, const vector<SimulatorUnitGroup*>& groups, int defender, float maxTime) {
+void MCTSCache::handleCombat(SimulatorState& state, const vector<SimulatorUnitGroup*>& groups, int defender, float maxTime, bool debug) {
     bool badMicro = false;
 
     CombatHasher combatHasher;
@@ -105,7 +105,7 @@ void MCTSCache::handleCombat(SimulatorState& state, const vector<SimulatorUnitGr
 
     auto combatIt = combatResults.find(combatHasher.hash);
     combatTot++;
-    if (combatIt != combatResults.end()) {
+    if (combatIt != combatResults.end() && !debug) {
         combatHits++;
         // cout << "Combat result cached" << endl;
         const CombatResult& outcome = combatIt->second;
@@ -158,6 +158,7 @@ void MCTSCache::handleCombat(SimulatorState& state, const vector<SimulatorUnitGr
         CombatSettings settings;
         settings.maxTime = maxTime;
         settings.badMicro = badMicro;
+        settings.debug = debug;
         CombatResult combatResult = shared_ptr<SimulatorContext>(state.simulator)->combatPredictor->predict_engage(combatState, settings, nullptr, defender);
         applyCombatOutcome(state, groups, combatResult);
 

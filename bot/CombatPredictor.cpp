@@ -651,7 +651,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
         // and make it coarser over time. This ensures that even very long simulations can be evaluated in a reasonable time.
         float dt = min(5, 1 + (it / 10));
         if (debug)
-            cout << "Iteration " << it << " " << dt << endl;
+            cout << "Iteration " << it << " Time: " << time << endl;
         changed = false;
         for (int group = 0; group < 2; group++) {
             // TODO: Group 1 always attacks first
@@ -670,8 +670,9 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
             // How many melee units that have attacked a particular enemy so far
             vector<int> meleeUnitAttackCount(g2.size());
 
-            if (debug)
-                cout << "Max meleee attackers: " << surround.maxMeleeAttackers << " " << surround.maxAttackersPerDefender << endl;
+            if (debug) {
+                cout << "Max meleee attackers: " << surround.maxMeleeAttackers << " " << surround.maxAttackersPerDefender << " num units: " << g1.size() << endl;
+            }
 
             for (size_t i = 0; i < g1.size(); i++) {
                 auto& unit = *g1[i];
@@ -698,6 +699,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                             if (index != i && !hasBeenHealed[index] && other.health > 0 && other.health < other.health_max && contains(getUnitData(other.type).attributes, Attribute::Biological)) {
                                 other.modifyHealth(HEALING_PER_NORMAL_SPEED_SECOND * dt);
                                 hasBeenHealed[index] = true;
+                                changed = true;
                                 break;
                             }
                         }
@@ -721,6 +723,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                                 assert(other.shield >= 0 && other.shield <= other.shield_max + 0.001f);
                                 unit.energy -= delta * ENERGY_USE_PER_SHIELD;
                                 hasBeenHealed[index] = true;
+                                changed = true;
                                 // cout << "Restoring " << delta << " shields. New health is " << other.health << "+" << other.shield << endl;
                                 break;
                             }
@@ -741,6 +744,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                         temporaryUnits.push_back(up);
                         // Note: a bit ugly, extracting a raw pointer from a shared one
                         g1.push_back(&**temporaryUnits.rbegin());
+                        changed = true;
                     }
                     continue;
                 }
@@ -751,6 +755,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                     if (unit.energy <= 0) {
                         unit.modifyHealth(-100000);
                         // TODO: Remove from group
+                        changed = true;
                         continue;
                     }
                 }
@@ -915,7 +920,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
             }
 
             if (debug)
-                cout << "Meleee attackers used: " << numMeleeUnitsUsed << endl;
+                cout << "Meleee attackers used: " << numMeleeUnitsUsed << " did change during last iteration: " << changed << endl;
         }
 
         time += dt;

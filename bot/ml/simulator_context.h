@@ -11,6 +11,7 @@ struct SimulatorContext {
     float simulationStartTime = 0;
     std::vector<sc2::Point2D> defaultPositions;
     MCTSCache cache;
+    bool debug = false;
 
     SimulatorContext(CombatPredictor* combatPredictor, std::vector<sc2::Point2D> defaultPositions) : combatPredictor(combatPredictor), defaultPositions(defaultPositions) {
     }
