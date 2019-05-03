@@ -252,7 +252,13 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
 
             int score = 10 * (int)unit->is_alive + (unit->health_max/100);
             if (score > defaultPositionScore && isStructure(unit->unit_type)) {
-                defaultPosition = unit->pos;
+                // Visible points really shouldn't be used as default positions because we know they aren't there (otherwise we would have observed them)
+                if (agent->Observation()->GetVisibility(unit->pos) == Visibility::Visible) {
+                    score /= 2;
+                }
+                if (score > defaultPositionScore) {
+                    defaultPosition = unit->pos;
+                }
             }
         }
     }
