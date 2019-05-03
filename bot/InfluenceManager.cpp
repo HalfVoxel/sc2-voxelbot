@@ -137,10 +137,12 @@ void InfluenceManager::OnStep() {
             auto g2 = (g * -1) + 1;
             g.propagateMax(0.0, 1.0, g2);
             g.propagateMax(0.0, 1.0, g2);
-            g.propagateMax(0.0, 1.0, g2);
 
             // Invert
             g.max(valueMap);
+            g.propagateMax(0.0, 0.7, g2);
+            g.propagateMax(0.0, 0.7, g2);
+            g.propagateMax(0.0, 0.7, g2);
             g.render(1, 2);
 
             g *= -1;
