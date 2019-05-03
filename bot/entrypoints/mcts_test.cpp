@@ -172,18 +172,18 @@ struct TicTacToeState {
 int main () {
     srand(time(0));
 
-    MCTSState<int, TicTacToeState> state((TicTacToeState()));
-    for (int i = 0; i < 10000; i++) {
-        mcts<int, TicTacToeState>(state);
-    }
+    MCTSSearch<int, TicTacToeState> search((TicTacToeState()));
+    search.search(10000);
 
-    state.print(0, 2);
+    search.root->print(0, 2);
+
+    MCTSState<int, TicTacToeState>* state = search.root;
     while(true) {
-        auto action = state.bestAction();
+        auto action = state->bestAction();
         if (action) {
             cout << "Action " << action.value().first << endl;
-            state = *action.value().second;
-            cout << state.internalState.to_string();
+            state = action.value().second;
+            cout << state->internalState.to_string();
         } else {
             break;
         }

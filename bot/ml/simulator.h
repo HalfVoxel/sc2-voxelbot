@@ -57,7 +57,7 @@ struct SimulatorUnitGroup {
 
 struct SimulatorState {
     std::weak_ptr<SimulatorContext> simulator;
-    std::vector<std::shared_ptr<const BuildState>> states;
+    std::array<const BuildState*, 2> states;
     std::vector<SimulatorUnitGroup> groups;
     std::vector<BuildOrderState> buildOrders;
     int tick = 0;
@@ -66,10 +66,7 @@ struct SimulatorState {
         return states[0]->time;
     }
 
-    SimulatorState (std::shared_ptr<SimulatorContext> simulator, std::vector<std::shared_ptr<const BuildState>> states, std::vector<BuildOrderState> buildOrders) : simulator(simulator), states(states), buildOrders(buildOrders) {
-        assert(states.size() == 2);
-        assert(buildOrders.size() == 2);
-    }
+    explicit SimulatorState (std::shared_ptr<SimulatorContext> simulator, const std::vector<BuildState>& states, const std::vector<BuildOrderState>& buildOrders);
 
     void simulate (float endTime);
 

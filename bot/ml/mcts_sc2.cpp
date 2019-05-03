@@ -377,15 +377,16 @@ string SimulatorMCTSState::to_string() const {
     return ss.str();
 }
 
-unique_ptr<MCTSState<int, SimulatorMCTSState>> findBestActions(SimulatorState& startState, int startingPlayerIndex) {
+MCTSSearchSC2 findBestActions(SimulatorState& startState, int startingPlayerIndex) {
     assert(startingPlayerIndex == 0 || startingPlayerIndex == 1);
     auto simulator = shared_ptr<SimulatorContext>(startState.simulator);
     unique_ptr<MCTSState<int, SimulatorMCTSState>> state = make_unique<MCTSState<int, SimulatorMCTSState>>(SimulatorMCTSState(startState, startingPlayerIndex));
     simulator->simulationStartTime = startState.time();
 
-    for (int i = 0; i < 30000; i++) {
-        mcts<int, SimulatorMCTSState>(*state);
-    }
+    auto search = make_unique<MCTSSearch<int, SimulatorMCTSState>>(startState);
+    search->search(30000);
+
+    return MCTSSearchSC2(search, simulator);
 
     /*auto* s = &*state;
     int depth = 0;
@@ -398,5 +399,5 @@ unique_ptr<MCTSState<int, SimulatorMCTSState>> findBestActions(SimulatorState& s
         depth++;
     }*/
     // cout << "SEARCH DEPTH " << depth << endl;
-    return state;
+    // return state;
 }

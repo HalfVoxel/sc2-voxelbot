@@ -2,6 +2,7 @@
 #include "../CombatPredictor.h"
 #include "simulator.h"
 #include "mcts_sc2.h"
+#include "../utilities/bump_allocator.h"
 #include<numeric>
 
 
@@ -24,24 +25,25 @@ struct CombatHasher {
 };
 
 struct SimulationCacheItem {
-    std::shared_ptr<BuildState> buildState;
+    BuildState* buildState;
     BuildOrderState buildOrder;
     std::vector<BuildEvent> buildEvents;
 
-    SimulationCacheItem (std::shared_ptr<BuildState> buildState, BuildOrderState buildOrder, std::vector<BuildEvent> buildEvents) : buildState(buildState), buildOrder(buildOrder), buildEvents(buildEvents) {}
+    SimulationCacheItem (BuildState* buildState, BuildOrderState buildOrder, std::vector<BuildEvent> buildEvents) : buildState(buildState), buildOrder(buildOrder), buildEvents(buildEvents) {}
 };
 
 struct MCTSCache {
+    BumpAllocator<BuildState> buildStateAllocator;
     std::map<uint64_t, CombatResult> combatResults;
     std::map<uint64_t, SimulationCacheItem> simulationCache;
-    std::map<uint64_t, std::pair<std::shared_ptr<const BuildState>, std::shared_ptr<const BuildState>>> stateCombatTransitions;
+    std::map<uint64_t, std::pair<const BuildState*, const BuildState*>> stateCombatTransitions;
 
-    std::shared_ptr<BuildState> copyState(const BuildState& state);
+    BuildState* copyState(const BuildState& state);
 
     void applyCombatOutcome(SimulatorState& state, const std::vector<SimulatorUnitGroup*>& groups, const CombatResult& outcome);
 
     /** Simulate a build state with a given build order, but return an existing cached state if possible */
-    std::pair<std::shared_ptr<const BuildState>, BuildOrderState> simulateBuildOrder(const BuildState& state, const BuildOrderState& buildOrder, float endTime, const std::function<void(const BuildEvent&)>* listener);
+    std::pair<const BuildState*, BuildOrderState> simulateBuildOrder(const BuildState& state, const BuildOrderState& buildOrder, float endTime, const std::function<void(const BuildEvent&)>* listener);
     void handleCombat(SimulatorState& state, const std::vector<SimulatorUnitGroup*>& groups, int defender, float maxTime, bool debug);
     void clear();
 };

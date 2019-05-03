@@ -11,13 +11,13 @@ void MCTSCache::clear() {
     stateCombatTransitions.clear();
 }
 
-shared_ptr<BuildState> MCTSCache::copyState(const BuildState& state) {
-    auto newState = make_shared<BuildState>(state);
-    return newState;
+BuildState* MCTSCache::copyState(const BuildState& state) {
+    // auto newState = make_shared<BuildState>(state);
+    return buildStateAllocator.allocate(state);
 }
 
 void MCTSCache::applyCombatOutcome(SimulatorState& state, const vector<SimulatorUnitGroup*>& groups, const CombatResult& outcome) {
-    array<std::shared_ptr<BuildState>, 2> newStates = {{ copyState(*state.states[0]), copyState(*state.states[1]) }};
+    array<BuildState*, 2> newStates = {{ copyState(*state.states[0]), copyState(*state.states[1]) }};
     state.states[0] = newStates[0];
     state.states[1] = newStates[1];
 
@@ -50,7 +50,7 @@ int combatTot;
 
 const bool debugMCTSCache = false;
 
-pair<shared_ptr<const BuildState>, BuildOrderState> MCTSCache::simulateBuildOrder(const BuildState& state, const BuildOrderState& buildOrder, float endTime, const std::function<void(const BuildEvent&)>* listener) {
+pair<const BuildState*, BuildOrderState> MCTSCache::simulateBuildOrder(const BuildState& state, const BuildOrderState& buildOrder, float endTime, const std::function<void(const BuildEvent&)>* listener) {
     uint64_t hash = state.immutableHash();
     hash = hash*31 ^ ((int)(endTime*1000));
     hash = hash*31 ^ buildOrder.buildIndex;

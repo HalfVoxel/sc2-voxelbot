@@ -6,6 +6,7 @@
 #include <cereal/types/vector.hpp>
 #include "../unit_lists.h"
 #include <fstream>
+#include "simulator_context.h"
 
 using namespace std;
 using namespace sc2;
@@ -151,21 +152,21 @@ ExtractedBuildOrder extractBuildOrder(const ReplaySession& session, int playerID
 }
 
 SimulatorState extractSimulatorState (const ReplaySession& session, int timestep) {
-    array<shared_ptr<BuildState>, 2> buildStates = {{ make_shared<BuildState>(), make_shared<BuildState>() }};
+    array<BuildState, 2> buildStates = {{ BuildState(), BuildState() }};
     auto bo1 = extractBuildOrder(session, 1, timestep);
     auto bo2 = extractBuildOrder(session, 2, timestep);
-    SimulatorState state(nullptr, { buildStates[0], buildStates[1] }, { BuildOrderState(make_shared<BuildOrder>(bo1.buildOrder)), BuildOrderState(make_shared<BuildOrder>(bo2.buildOrder)) });
+    SimulatorState state(nullptr, { BuildState(), BuildState() }, { BuildOrderState(make_shared<BuildOrder>(bo1.buildOrder)), BuildOrderState(make_shared<BuildOrder>(bo2.buildOrder)) });
 
     for (int playerID = 1; playerID <= 2; playerID++) {
         auto& obs = session.observations[playerID - 1];
         for (auto& unit : obs.rawUnits[timestep].units) {
             if (unit.owner == playerID) {
                 state.addUnit(&unit);
-                buildStates[unit.owner - 1]->addUnits(unit.unit_type, 1);
+                buildStates[unit.owner - 1].addUnits(unit.unit_type, 1);
             }
         }
 
-        BuildState& buildState = *buildStates[playerID - 1];
+        BuildState& buildState = buildStates[playerID - 1];
         buildState.resources.minerals = obs.selfStates[timestep].minerals;
         buildState.resources.vespene = obs.selfStates[timestep].vespene;
         buildState.race = obs.selfStates[timestep].race;
@@ -173,6 +174,9 @@ SimulatorState extractSimulatorState (const ReplaySession& session, int timestep
         // TODO:
         // obs.selfStates[timestep].upgrades;
     }
+
+    auto sim = shared_ptr<SimulatorContext>(state.simulator);
+    state.states = {{ sim->cache.copyState(buildStates[0]), sim->cache.copyState(buildStates[1]) }};
 
     return state;
 }

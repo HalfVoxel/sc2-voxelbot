@@ -178,14 +178,14 @@ SimulatorState createSimulatorState(shared_ptr<SimulatorContext> mctsSimulator) 
     BuildOrderState enemyBO = BuildOrderState(make_shared<BuildOrder>(emptyBO));
     ourBO.buildIndex = currentBuildOrderIndex;
 
-    vector<shared_ptr<const BuildState>> startingStates(2);
+    vector<BuildState> startingStates(2);
     vector<BuildOrderState> buildOrders;
 
     int ourID = agent->Observation()->GetPlayerID();
     int opponentID = 3 - ourID;
 
-    startingStates[ourID - 1] = make_shared<BuildState>(ourBuildState);
-    startingStates[opponentID - 1] = make_shared<BuildState>(enemyBuildState);
+    startingStates[ourID - 1] = ourBuildState;
+    startingStates[opponentID - 1] = enemyBuildState;
     buildOrders.push_back(ourID == 1 ? ourBO : enemyBO);
     buildOrders.push_back(ourID == 1 ? enemyBO : ourBO);
 
@@ -243,8 +243,7 @@ float tSelect = 0;
 
 MCTSDebugger* debugger;
 
-std::shared_ptr<MCTSState<int, SimulatorMCTSState>> lastMCTSState;
-std::shared_ptr<SimulatorContext> lastMCTSSimulator;
+MCTSSearchSC2 lastMCTSSearch;
 
 void mctsActionListener(SimulatorUnitGroup& group, SimulatorOrder order) {
     vector<const Unit*> realUnits;
@@ -266,9 +265,9 @@ void mctsActionListener(SimulatorUnitGroup& group, SimulatorOrder order) {
 }
 
 void runMCTSOffBeat(int depth) {
-    if (!lastMCTSState) return;
+    if (!lastMCTSSearch.search) return;
 
-    auto mctsState = lastMCTSState;
+    auto mctsState = lastMCTSSearch.search->root;
 
     // 2 steps per depth step because we need to skip over the opponent's turn
     // Assume the opponent took what we though was the most reasonable action
@@ -291,7 +290,7 @@ void runMCTSOffBeat(int depth) {
     cout << "Offbeat action " << depth << " " << MCTSActionName(action) << endl;
 
     // Construct a new state that matches the current one?
-    auto updatedState = SimulatorMCTSState(createSimulatorState(lastMCTSSimulator), agent->Observation()->GetPlayerID() - 1);
+    auto updatedState = SimulatorMCTSState(createSimulatorState(lastMCTSSearch.simulator), agent->Observation()->GetPlayerID() - 1);
     updatedState.executeAction(action, nullptr);
     updatedState.state.mergeGroups();
     updatedState.executeAction(action, &listener);
@@ -303,8 +302,7 @@ void runMCTS () {
 
     if (!hasAnyMilitaryUnits) {
         cout << "Skipping mcts because there are no military units" << endl;
-        lastMCTSState = nullptr;
-        lastMCTSSimulator = nullptr;
+        lastMCTSSearch = {};
         return;
     }
 
@@ -317,7 +315,7 @@ void runMCTS () {
     auto state = createSimulatorState(mctsSimulator);
     int ourPlayerIndex = agent->Observation()->GetPlayerID() - 1;
     w2.stop();
-    std::shared_ptr<MCTSState<int, SimulatorMCTSState>> mctsState = findBestActions(state, ourPlayerIndex);
+    MCTSSearchSC2 search = findBestActions(state, ourPlayerIndex);
     // cout << "Executing mcts action..." << endl;
     w1.stop();
     tmcts += w1.millis();
@@ -327,33 +325,31 @@ void runMCTS () {
     // Group merging also takes into account the groups' current destinations, so merging the groups before taking the actions will not merge all that can be merged.
     // So we first execute the actions, merge the groups and then execute the actions again with a listener
     // The executeAction method can safely be executed multiple times.
-    auto best = mctsState->bestAction();
+    auto best = search.search->root->bestAction();
     if (!best) {
         cout << "No possible action, one player has probably lost" << endl;
-        lastMCTSState = nullptr;
-        lastMCTSSimulator = nullptr;
+        lastMCTSSearch = {};
         return;
     }
     MCTSAction action = (MCTSAction)best.value().first;
     cout << "Primary action " << MCTSActionName(action) << endl;
-    mctsState->internalState.executeAction(action, nullptr);
-    mctsState->internalState.state.mergeGroups();
+    search.search->root->internalState.executeAction(action, nullptr);
+    search.search->root->internalState.state.mergeGroups();
     std::function<void(SimulatorUnitGroup&, SimulatorOrder)> listener = mctsActionListener;
-    mctsState->internalState.executeAction(action, &listener);
+    search.search->root->internalState.executeAction(action, &listener);
 
     cout << "MCTS done " << tmcts << " " << tmctsprep << endl;
 
     if (debugger == nullptr) debugger = new MCTSDebugger();
 
     if (mctsDebug) {
-        debugger->debugInteractive(mctsState);
+        debugger->debugInteractive(*search.search);
     } else {
         // debugger->visualize(mctsState->internalState.state);
     }
 
-    lastMCTSState = move(mctsState);
-    // Ensures the simulator still lives, otherwise lastMCTSState.state.simulator can become a bad weak ptr
-    lastMCTSSimulator = move(mctsSimulator);
+    // Ensures the simulator and search data still lives, otherwise lastMCTSState.state.simulator can become a bad weak ptr
+    lastMCTSSearch = move(search);
 }
 
 void Bot::refreshAbilities() {
@@ -651,6 +647,7 @@ void Bot::OnStep() {
         BuildState currentState(agent->Observation(), Unit::Alliance::Self, Race::Protoss, BuildResources(agent->Observation()->GetMinerals(), agent->Observation()->GetVespene()), 0);
         debugBuildOrderMasked(currentState, buildOrderTracker.buildOrder, boExTuple.second);
     }
+
     influenceManager.OnStep();
     // scoutingManager->OnStep();
     // tacticalManager->OnStep();

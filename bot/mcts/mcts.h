@@ -5,16 +5,23 @@
 #include <iomanip>
 #include "optional.hpp"
 #include "../utilities/profiler.h"
+#include "../utilities/bump_allocator.h"
 #include "variance_estimator.h"
+
+static const bool ENABLE_RAVE = false;
+static const bool ENABLE_SCORE_NORMALIZATION = true;
 
 template <class A, class T>
 struct MCTSState;
 
 template <class A, class T>
+struct MCTSSearch;
+
+template <class A, class T>
 struct MCTSChild {
     A action;
     float prior;
-    std::shared_ptr<MCTSState<A,T>> state;
+    MCTSState<A,T>* state;
 };
 
 template <class A, class T>
@@ -30,18 +37,108 @@ struct MCTSState {
     MCTSState (T state) : internalState(state) {
     }
 
-    MCTSChild<A,T>& select();
-    bool instantiateAction(int actionIndex);
+    MCTSChild<A,T>& select(MCTSSearch<A,T>& context);
+    bool instantiateAction(MCTSSearch<A,T>& context, int actionIndex);
     void expand();
     float rollout() const;
     void print(int padding=0, int maxDepth = 100000) const;
-    std::shared_ptr<MCTSState<A,T>> getChild(A action);
-    nonstd::optional<std::pair<A, std::shared_ptr<MCTSState<A,T>>>> bestAction() const;
+    MCTSState<A,T>* getChild(A action);
+    nonstd::optional<std::pair<A, MCTSState<A,T>*>> bestAction() const;
     MCTSState(const MCTSState&) = delete;
 };
 
+extern float tRollout;
+extern float tExpand;
+extern float tSelect;
+
+struct MCTSPropagationResult {
+    float wins = 0;
+    int rollouts = 0;
+    std::vector<bool> usedActions;
+};
+
 template <class A, class T>
-std::shared_ptr<MCTSState<A,T>> MCTSState<A,T>::getChild(A action) {
+struct MCTSSearch {
+    BumpAllocator<MCTSState<A,T>> stateAllocator;
+    MCTSState<A,T>* root;
+
+    MCTSSearch(const T& state) {
+        root = stateAllocator.allocate(state);
+    }
+
+    // TODO: needlessly evals root note
+    MCTSPropagationResult mcts(MCTSState<A,T>& node, int depth) {
+        MCTSPropagationResult result;
+        if (node.visits == 0 || depth > 30) {
+            Stopwatch w;
+            result.rollouts = 2;
+            result.usedActions = std::vector<bool>(10);
+            for (int i = 0; i < result.rollouts; i++) {
+                result.wins += node.rollout();
+            }
+            // std::cout << "Evald " << node.internalState.to_string() << ": " << wins << " of " << rollouts << std::endl;
+            w.stop();
+            tRollout += w.millis();
+        } else {
+            if (node.children.size() == 0) {
+                Stopwatch w;
+                node.expand();
+                w.stop();
+                tExpand += w.millis();
+            }
+
+            if (node.children.size() == 0) {
+                // Terminal node
+                result.rollouts = 1;
+                result.wins = node.rollout();
+                result.usedActions = std::vector<bool>(10);
+            } else {
+                Stopwatch w;
+                // std::cout << node.internalState.to_string() << " -> ";
+                auto& child = node.select(*this);
+                w.stop();
+                tSelect += w.millis();
+                result = mcts(*child.state, depth + 1);
+                result.wins = result.rollouts - result.wins;
+                result.usedActions[child.action] = true;
+            }
+        }
+
+        node.wins += result.wins;
+        node.visits += result.rollouts;
+        node.raveWins += result.wins;
+        node.raveVisits += result.rollouts;
+        for (int i = 0; i < result.rollouts; i++) {
+            node.varianceEstimator.add(result.wins/result.rollouts);
+        }
+
+        if (ENABLE_RAVE) {
+            for (int i = (int)node.children.size() - 1; i >= 0; i--) {
+                auto& c = node.children[i];
+                if (result.usedActions[c.action]) {
+                    if (c.state == nullptr) {
+                        if (!node.instantiateAction(*this, i)) continue;
+                    }
+
+                    c.state->raveWins += result.wins;
+                    c.state->raveVisits += result.rollouts;
+                }
+            }
+        }
+
+        if ((node.visits % (8*1000)) == 0) {
+            // std::cout << "MCTS timings " << tRollout << " " << tExpand << " " << tSelect << std::endl;
+        }
+        return result;
+    }
+
+    void search(int iterations) {
+        for (int i = 0; i < iterations; i++) mcts(*root, 0);
+    }
+};
+
+template <class A, class T>
+MCTSState<A,T>* MCTSState<A,T>::getChild(A action) {
     for (auto& c : children) {
         if (c.action == action) return c.state;
     }
@@ -64,11 +161,8 @@ void MCTSState<A,T>::print(int padding, int maxDepth) const {
     }
 }
 
-static const bool ENABLE_RAVE = false;
-static const bool ENABLE_SCORE_NORMALIZATION = true;
-
 template <class A, class T>
-MCTSChild<A,T>& MCTSState<A,T>::select() {
+MCTSChild<A,T>& MCTSState<A,T>::select(MCTSSearch<A,T>& context) {
     float varianceMultiplier = 1.0f / (0.001f + sqrt(varianceEstimator.variance()));
     while(true) {
         const float c = 2.0f;
@@ -121,7 +215,7 @@ MCTSChild<A,T>& MCTSState<A,T>::select() {
         assert(bestAction != -1);
 
         if (children[bestAction].state == nullptr) {
-            if (!instantiateAction(bestAction)) continue;
+            if (!instantiateAction(context, bestAction)) continue;
         }
 
         return children[bestAction];
@@ -129,11 +223,12 @@ MCTSChild<A,T>& MCTSState<A,T>::select() {
 }
 
 template <class A, class T>
-bool MCTSState<A,T>::instantiateAction(int actionIndex) {
+bool MCTSState<A,T>::instantiateAction(MCTSSearch<A,T>& context, int actionIndex) {
     // std::cout << "Exploring" << std::endl;
     auto ret = internalState.step(children[actionIndex].action);
     if (ret.second) {
-        children[actionIndex].state = std::make_shared<MCTSState>(std::move(ret.first));
+        // children[actionIndex].state = std::make_shared<MCTSState>(std::move(ret.first));
+        children[actionIndex].state = context.stateAllocator.allocate(std::move(ret.first));
         return true;
     } else {
         // Invalid action, remove this child node
@@ -161,85 +256,9 @@ float MCTSState<A, T>::rollout() const {
     return internalState.rollout();
 }
 
-extern float tRollout;
-extern float tExpand;
-extern float tSelect;
-
-struct MCTSPropagationResult {
-    float wins = 0;
-    int rollouts = 0;
-    std::vector<bool> usedActions;
-};
-
-// TODO: needlessly evals root note
-template <class A, class T>
-MCTSPropagationResult mcts(MCTSState<A,T>& node, int depth = 0) {
-    MCTSPropagationResult result;
-    if (node.visits == 0 || depth > 30) {
-        Stopwatch w;
-        result.rollouts = 2;
-        result.usedActions = std::vector<bool>(10);
-        for (int i = 0; i < result.rollouts; i++) {
-            result.wins += node.rollout();
-        }
-        // std::cout << "Evald " << node.internalState.to_string() << ": " << wins << " of " << rollouts << std::endl;
-        w.stop();
-        tRollout += w.millis();
-    } else {
-        if (node.children.size() == 0) {
-            Stopwatch w;
-            node.expand();
-            w.stop();
-            tExpand += w.millis();
-        }
-
-        if (node.children.size() == 0) {
-            // Terminal node
-            result.rollouts = 1;
-            result.wins = node.rollout();
-            result.usedActions = std::vector<bool>(10);
-        } else {
-            Stopwatch w;
-            // std::cout << node.internalState.to_string() << " -> ";
-            auto& child = node.select();
-            w.stop();
-            tSelect += w.millis();
-            result = mcts(*child.state, depth + 1);
-            result.wins = result.rollouts - result.wins;
-            result.usedActions[child.action] = true;
-        }
-    }
-
-    node.wins += result.wins;
-    node.visits += result.rollouts;
-    node.raveWins += result.wins;
-    node.raveVisits += result.rollouts;
-    for (int i = 0; i < result.rollouts; i++) {
-        node.varianceEstimator.add(result.wins/result.rollouts);
-    }
-
-    if (ENABLE_RAVE) {
-        for (int i = (int)node.children.size() - 1; i >= 0; i--) {
-            auto& c = node.children[i];
-            if (result.usedActions[c.action]) {
-                if (c.state == nullptr) {
-                    if (!node.instantiateAction(i)) continue;
-                }
-
-                c.state->raveWins += result.wins;
-                c.state->raveVisits += result.rollouts;
-            }
-        }
-    }
-
-    if ((node.visits % (8*1000)) == 0) {
-        // std::cout << "MCTS timings " << tRollout << " " << tExpand << " " << tSelect << std::endl;
-    }
-    return result;
-}
 
 template <class A, class T>
-nonstd::optional<std::pair<A, std::shared_ptr<MCTSState<A,T>>>> MCTSState<A, T>::bestAction() const {
+nonstd::optional<std::pair<A, MCTSState<A,T>*>> MCTSState<A, T>::bestAction() const {
     int bestAction = -1;
     int bestScore = -1000;
     for (size_t i = 0; i < children.size(); i++) {
@@ -256,5 +275,5 @@ nonstd::optional<std::pair<A, std::shared_ptr<MCTSState<A,T>>>> MCTSState<A, T>:
     if (bestAction == -1) {
         return {};
     }
-    return nonstd::make_optional<std::pair<A, std::shared_ptr<MCTSState<A,T>>>> (children[bestAction].action, children[bestAction].state);
+    return nonstd::make_optional<std::pair<A, MCTSState<A,T>*>> (children[bestAction].action, children[bestAction].state);
 }

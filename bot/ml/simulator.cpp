@@ -164,7 +164,7 @@ void SimulatorState::simulateGroupCombat(float endTime) {
 
 void SimulatorState::filterDeadUnits() {
     auto simulator = shared_ptr<SimulatorContext>(this->simulator);
-    array<shared_ptr<BuildState>, 2> newStates = {{ simulator->cache.copyState(*states[0]), simulator->cache.copyState(*states[1]) }};
+    array<BuildState*, 2> newStates = {{ simulator->cache.copyState(*states[0]), simulator->cache.copyState(*states[1]) }};
     states[0] = newStates[0];
     states[1] = newStates[1];
 
@@ -544,4 +544,10 @@ void SimulatorState::assertValidState () {
             }
         }
     }
+}
+
+SimulatorState::SimulatorState (std::shared_ptr<SimulatorContext> simulator, const std::vector<BuildState>& states, const std::vector<BuildOrderState>& buildOrders) : simulator(simulator), buildOrders(buildOrders) {
+    assert(states.size() == 2);
+    assert(buildOrders.size() == 2);
+    this->states = {{ simulator->cache.copyState(states[0]), simulator->cache.copyState(states[1]) }};
 }

@@ -498,7 +498,7 @@ SimulatorState createStartingState(shared_ptr<SimulatorContext> simulator) {
             states[g.owner - 1].addUnits(u.combat.type, 1);
         }
     }
-    state.states = { simulator->cache.copyState(states[0]), simulator->cache.copyState(states[1]) };
+    state.states = {{ simulator->cache.copyState(states[0]), simulator->cache.copyState(states[1]) }};
 
     return state;
 }

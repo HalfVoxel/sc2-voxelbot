@@ -1,6 +1,7 @@
 #include "../ml/simulator.h"
 #include "../utilities/predicates.h"
 #include "../utilities/mappings.h"
+#include "../utilities/profiler.h"
 #include <functional>
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
@@ -70,19 +71,103 @@ void example_simulation(SimulatorContext& simulator, SimulatorState& state) {
     cout << "Frac: " << healthFraction(state, 1) << " " << healthFraction(state, 2) << endl;
 }
 
+int cs = 0;
+int ds = 0;
+int cp = 0;
+struct Blah {
+    int x;
+    int y;
+    int z;
+    float q;
+    vector<float> meh;
+    vector<float> meh2;
+    vector<float> meh3;
+
+    Blah(int x, int y) : x(x), y(y) {
+        cs++;
+        meh = vector<float>(100, 2);
+        meh2 = vector<float>(99, 1);
+        meh3 = vector<float>(50, 3);
+    }
+
+    // Blah(const Blah& x) {
+    //     cp++;
+    // }
+
+    // ~Blah() {
+    //     ds++;
+    // }
+};
+
+void test_allocator() {
+    {
+        Stopwatch w;
+        {
+            BumpAllocator<Blah, 512> blahs;
+            vector<Blah*> bs;
+            for (int i = 0; i < 1000000; i++) {
+                Blah* b = blahs.allocate(5, 3);
+                b->z = 3;
+                b->z = 6;
+                bs.push_back(b);
+            }
+            blahs.clear();
+        }
+        w.stop();
+        cout << "Bump: " << w.millis() << endl;
+    }
+    // assert(cs == ds);
+    // assert(cp == 0);
+
+    {
+        Stopwatch w;
+        vector<Blah*> bs;
+        for (int i = 0; i < 1000000; i++) {
+            Blah* b = new Blah(5, 3);
+            b->z = 3;
+            b->z = 6;
+            bs.push_back(b);
+        }
+        for (auto b : bs) delete b;
+        w.stop();
+        cout << "raw ptr: " << w.millis() << endl;
+    }
+
+    {
+        Stopwatch w;
+        {
+            vector<shared_ptr<Blah>> bs;
+            for (int i = 0; i < 1000000; i++) {
+                // shared_ptr<Blah> b = std::shared_ptr<Blah>(new Blah(5, 3));
+                shared_ptr<Blah> b = std::make_shared<Blah>(5, 3);
+                b->z = 3;
+                b->z = 6;
+                bs.push_back(b);
+            }
+        }
+        w.stop();
+        cout << "Shared ptr: " << w.millis() << endl;
+    }
+}
+
 void mcts(SimulatorState& startState) {
+    // for (int i = 0; i < 100; i++) {
+    //     test_allocator();
+    // }
+
     srand(time(0));
 
-    shared_ptr<MCTSState<int, SimulatorMCTSState>> state = make_shared<MCTSState<int, SimulatorMCTSState>>(SimulatorMCTSState(startState));
-    /*for (int i = 0; i < 100000; i++) {
-        mcts<int, SimulatorMCTSState>(*state);
-    }*/
+    {
+        MCTSSearch<int, SimulatorMCTSState> search((SimulatorMCTSState(startState)));
+        search.search(10000);
+    }
 
-    // exit(0);
+    exit(0);
 
     // state->getChild(6)->getChild(4)->getChild(0)->getChild(1)->getChild(4)->print(0, 2);
     // state->getChild(4)->getChild(4)->print(0, 2);
 
+    /*
     auto currentState = state;
     visualizeSimulator(currentState->internalState.state);
     int it = 0;
@@ -132,6 +217,7 @@ void mcts(SimulatorState& startState) {
     while(true) {
         stepSimulator(currentState->internalState.state, currentState->internalState.state.time() + 5);
     }
+    */
 }
 
 void test_simulator() {
@@ -153,9 +239,9 @@ void test_simulator() {
         UNIT_TYPEID::PROTOSS_VOIDRAY, UNIT_TYPEID::PROTOSS_VOIDRAY, UNIT_TYPEID::PROTOSS_PYLON,
         UNIT_TYPEID::PROTOSS_VOIDRAY, UNIT_TYPEID::PROTOSS_VOIDRAY, UNIT_TYPEID::PROTOSS_PYLON,
      };
-    SimulatorState state(simulator, {
-        simulator->cache.copyState(BuildState({ { UNIT_TYPEID::PROTOSS_NEXUS, 1 }, { UNIT_TYPEID::PROTOSS_PYLON, 6 }, { UNIT_TYPEID::PROTOSS_PROBE, 12 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 0 }, { UNIT_TYPEID::PROTOSS_STALKER, 2 }, { UNIT_TYPEID::PROTOSS_PHOENIX, 9 }, { UNIT_TYPEID::PROTOSS_IMMORTAL, 4 }})),
-        simulator->cache.copyState(BuildState({ { UNIT_TYPEID::PROTOSS_NEXUS, 2 }, { UNIT_TYPEID::PROTOSS_PYLON, 6 }, { UNIT_TYPEID::PROTOSS_PROBE, 12 }, { UNIT_TYPEID::PROTOSS_CARRIER, 2 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 1+2 }, { UNIT_TYPEID::PROTOSS_COLOSSUS, 2 }, { UNIT_TYPEID::PROTOSS_VOIDRAY, 2 }, { UNIT_TYPEID::PROTOSS_PHOTONCANNON, 6 }, { UNIT_TYPEID::PROTOSS_STARGATE, 1 } })),
+    SimulatorState state(simulator, vector<BuildState>{
+        BuildState({ { UNIT_TYPEID::PROTOSS_NEXUS, 1 }, { UNIT_TYPEID::PROTOSS_PYLON, 6 }, { UNIT_TYPEID::PROTOSS_PROBE, 12 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 0 }, { UNIT_TYPEID::PROTOSS_STALKER, 2 }, { UNIT_TYPEID::PROTOSS_PHOENIX, 9 }, { UNIT_TYPEID::PROTOSS_IMMORTAL, 4 }}),
+        BuildState({ { UNIT_TYPEID::PROTOSS_NEXUS, 2 }, { UNIT_TYPEID::PROTOSS_PYLON, 6 }, { UNIT_TYPEID::PROTOSS_PROBE, 12 }, { UNIT_TYPEID::PROTOSS_CARRIER, 2 }, { UNIT_TYPEID::PROTOSS_ZEALOT, 1+2 }, { UNIT_TYPEID::PROTOSS_COLOSSUS, 2 }, { UNIT_TYPEID::PROTOSS_VOIDRAY, 2 }, { UNIT_TYPEID::PROTOSS_PHOTONCANNON, 6 }, { UNIT_TYPEID::PROTOSS_STARGATE, 1 } }),
     },
     {
         BuildOrderState(make_shared<BuildOrder>(bo1)),

@@ -13,5 +13,5 @@ struct MCTSDebugger {
     MCTSDebugger();
     MCTSDebugger(pybind11::object simulatorVisualizerModule);
     void visualize(SimulatorState& state);
-    void debugInteractive(std::shared_ptr<MCTSState<int, SimulatorMCTSState>> state);
+    void debugInteractive(MCTSSearch<int, SimulatorMCTSState>& state);
 };

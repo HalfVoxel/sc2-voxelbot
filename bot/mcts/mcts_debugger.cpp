@@ -50,11 +50,11 @@ void MCTSDebugger::visualize(SimulatorState& state) {
 #endif
 }
 
-void MCTSDebugger::debugInteractive(shared_ptr<MCTSState<int, SimulatorMCTSState>> startState) {
+void MCTSDebugger::debugInteractive(MCTSSearch<int, SimulatorMCTSState>& search) {
     reset_fn();
 
-    shared_ptr<MCTSState<int, SimulatorMCTSState>> state = startState;
-    stack<shared_ptr<MCTSState<int, SimulatorMCTSState>>> stateStack;
+    MCTSState<int, SimulatorMCTSState>* state = search.root;
+    stack<MCTSState<int, SimulatorMCTSState>*> stateStack;
 
     auto sim = shared_ptr<SimulatorContext>(state->internalState.state.simulator);
 
@@ -80,7 +80,7 @@ void MCTSDebugger::debugInteractive(shared_ptr<MCTSState<int, SimulatorMCTSState
             if (state->children[i].state == nullptr) {
                 bool origDebug = sim->debug;
                 sim->debug = false;
-                state->instantiateAction(i);
+                state->instantiateAction(search, i);
                 sim->debug = origDebug;
             }
         }
@@ -114,7 +114,7 @@ void MCTSDebugger::debugInteractive(shared_ptr<MCTSState<int, SimulatorMCTSState
         int chosenAction;
         if (!(ss >> chosenAction)) continue;
 
-        shared_ptr<MCTSState<int, SimulatorMCTSState>> child;
+        MCTSState<int, SimulatorMCTSState>* child;
         if (sim->debug) {
             auto nextState = state->internalState.step(chosenAction);
             if (!nextState.second) {
@@ -122,7 +122,7 @@ void MCTSDebugger::debugInteractive(shared_ptr<MCTSState<int, SimulatorMCTSState
                 continue;
             }
 
-            child = std::make_shared<MCTSState<int, SimulatorMCTSState>>(std::move(nextState.first));
+            child = search.stateAllocator.allocate(std::move(nextState.first));
         } else {
             child = state->getChild(chosenAction);
             if (child == nullptr) continue;

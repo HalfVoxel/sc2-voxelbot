@@ -95,4 +95,12 @@ struct SimulatorMCTSState {
     std::string to_string() const;
 };
 
-std::unique_ptr<MCTSState<int, SimulatorMCTSState>> findBestActions(SimulatorState& startState, int startingPlayerIndex);
+struct MCTSSearchSC2 {
+    std::unique_ptr<MCTSSearch<int, SimulatorMCTSState>> search = nullptr;
+    std::shared_ptr<SimulatorContext> simulator = nullptr;
+
+    MCTSSearchSC2() {}
+    MCTSSearchSC2(std::unique_ptr<MCTSSearch<int, SimulatorMCTSState>>& search, std::shared_ptr<SimulatorContext>& simulator) : search(move(search)), simulator(simulator) {}
+};
+
+MCTSSearchSC2 findBestActions(SimulatorState& startState, int startingPlayerIndex);
