@@ -84,64 +84,66 @@ if __name__ == "__main__":
     rcParams['font.serif'] = ['CMU Serif']
     rcParams['font.size'] = 14
 
-    allRealT = []
-    allSimT = []
-    for path in os.listdir(savePath):
-        if path.endswith(".pickle"):
-            with open(savePath + path, "rb") as f:
-                buildOrder, chronoBoosted, expectedTimings, realTimings = pickle.load(f)
-                if len(expectedTimings) > 0:
-                    print(np.array(expectedTimings, dtype=np.float32)[-10:] / np.array(realTimings, dtype=np.float32)[-10:])
-                    mx = ((1 - (np.array(expectedTimings, dtype=np.float32)[-10:] / np.array(realTimings, dtype=np.float32)[-10:]))**2).mean()
-                    print(mx)
-                    if mx > 0.01 or True:
-                        allRealT.append(realTimings)
-                        allSimT.append(expectedTimings)
-                        # plt.plot(realTimings, expectedTimings, label=path)
+    for correctTimings in [False, True]:
+        allRealT = []
+        allSimT = []
+        for path in os.listdir(savePath):
+            if path.endswith(".pickle"):
+                with open(savePath + path, "rb") as f:
+                    buildOrder, chronoBoosted, expectedTimings, realTimings = pickle.load(f)
+                    if len(expectedTimings) > 0:
+                        print(np.array(expectedTimings, dtype=np.float32)[-10:] / np.array(realTimings, dtype=np.float32)[-10:])
+                        mx = ((1 - (np.array(expectedTimings, dtype=np.float32)[-10:] / np.array(realTimings, dtype=np.float32)[-10:]))**2).mean()
+                        print(mx)
+                        if mx > 0.01 or True:
+                            allRealT.append(realTimings)
+                            allSimT.append(expectedTimings)
+                            # plt.plot(realTimings, expectedTimings, label=path)
 
-    
-    allRealT = np.concatenate(allRealT)
-    allSimT = np.concatenate(allSimT)
-    # allSimT /= 0.9662882837688399
-    mx = max(allRealT.max(), allSimT.max())
+        
+        allRealT = np.concatenate(allRealT)
+        allSimT = np.concatenate(allSimT)
+        if correctTimings:
+            allSimT /= 0.9662882837688399
+        mx = max(allRealT.max(), allSimT.max())
 
-    fit = np.polyfit(allRealT, allSimT, 1)
-    fit_fn = np.poly1d(fit) 
-    xs = np.linspace(0, mx, 2)
+        fit = np.polyfit(allRealT, allSimT, 1)
+        fit_fn = np.poly1d(fit) 
+        xs = np.linspace(0, mx, 2)
 
-    fig = plt.figure()
-    plt.subplot(2, 1, 1)
-    plt.plot(xs, fit_fn(xs), "--", color="#000000")
-    plt.scatter(allRealT, allSimT, color="#e41a1c", s=6, edgecolors="none", alpha=0.3)
-    
-    # plt.axis('scaled')
-    plt.plot([0, mx], [0, mx], c="#000000", alpha=0.5)
-    # plt.ylim(bottom=-1, top=mx)
-    # plt.xlim(left=-1, right=mx)
-    # plt.xlabel("Game Time [s]")
-    plt.ylabel("Sim. Time [s]")
+        fig = plt.figure()
+        plt.subplot(2, 1, 1)
+        plt.plot(xs, fit_fn(xs), "--", color="#000000")
+        plt.scatter(allRealT, allSimT, color="#e41a1c", s=6, edgecolors="none", alpha=0.3)
+        
+        # plt.axis('scaled')
+        plt.plot([0, mx], [0, mx], c="#000000", alpha=0.5)
+        # plt.ylim(bottom=-1, top=mx)
+        # plt.xlim(left=-1, right=mx)
+        # plt.xlabel("Game Time [s]")
+        plt.ylabel("Sim. Time [s]")
 
-    plt.subplot(2, 1, 2)
+        plt.subplot(2, 1, 2)
 
-    plt.plot(xs, fit_fn(xs) - xs, "--", color="#000000")
-    plt.scatter(allRealT, allSimT - allRealT, color="#e41a1c", edgecolors="none", s=6, alpha=0.3)
-    plt.plot([0, mx], [0, 0], c="#000000", alpha=0.5)
-    # plt.ylim(bottom=-1, top=mx)
-    # plt.xlim(left=-1, right=mx)
-    plt.yticks([0, -50, 50])
-    plt.gca().yaxis.set_minor_locator(MultipleLocator(10))
-    plt.xlabel("Game Time [s]")
-    plt.ylabel("Relative Sim. Time [s]")
-    print(fit_fn(mx)/mx)
+        plt.plot(xs, fit_fn(xs) - xs, "--", color="#000000")
+        plt.scatter(allRealT, allSimT - allRealT, color="#e41a1c", edgecolors="none", s=6, alpha=0.3)
+        plt.plot([0, mx], [0, 0], c="#000000", alpha=0.5)
+        # plt.ylim(bottom=-1, top=mx)
+        # plt.xlim(left=-1, right=mx)
+        plt.yticks([0, -50, 50])
+        plt.gca().yaxis.set_minor_locator(MultipleLocator(10))
+        plt.xlabel("Game Time [s]")
+        plt.ylabel("Relative Sim. Time [s]")
+        print(fit_fn(mx)/mx)
 
-    plt.subplots_adjust(bottom=0.13, top=0.99)
-    
-    print(len(allSimT))
-    pdf = PdfPages(f"/Users/arong/cloud/Skolarbeten/ML-2/thesis/draft/graphics/generated/buildorder_sim.pdf")
-    pdf.savefig(fig)
-    pdf.close()
-    
+        plt.subplots_adjust(bottom=0.13, top=0.99)
+        
+        print(len(allSimT))
+        pdf = PdfPages(f"/Users/arong/cloud/Skolarbeten/ML-2/thesis/draft/graphics/generated/buildorder_sim_{'adjusted' if correctTimings else 'original'}.pdf")
+        pdf.savefig(fig)
+        pdf.close()
+        
 
-    # plt.legend()
-    plt.show()
+        # plt.legend()
+    # plt.show()
 
