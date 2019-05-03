@@ -384,6 +384,24 @@ void Bot::OnStep() {
         if (msg.message == "cam") {
             autoCamera = !autoCamera;
         }
+        if (msg.message == "fow") {
+            Debug()->DebugShowMap();
+        }
+        if (msg.message == "control") {
+            Debug()->DebugEnemyControl();
+        }
+        if (msg.message == "tech") {
+            Debug()->DebugGiveAllTech();
+        }
+        if (msg.message == "upgrades") {
+            Debug()->DebugGiveAllUpgrades();
+        }
+        if (msg.message == "spawn enemy") {
+            Debug()->DebugCreateUnit(UNIT_TYPEID::PROTOSS_STALKER, Observation()->GetCameraPos(), 3 - Observation()->GetPlayerID());
+        }
+        if (msg.message == "spawn ally") {
+            Debug()->DebugCreateUnit(UNIT_TYPEID::PROTOSS_STALKER, Observation()->GetCameraPos(), Observation()->GetPlayerID());
+        }
     }
 
     if (ticks == 0)
