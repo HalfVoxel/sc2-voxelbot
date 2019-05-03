@@ -197,7 +197,7 @@ bool SimulatorMCTSState::executeAction(MCTSAction action, std::function<void(Sim
         }
         case MCTSAction::Reinforce: {
             float bestScore = 0;
-            SimulatorUnitGroup* bestGroup;
+            SimulatorUnitGroup* bestGroup = nullptr;
             for (auto& group : state.groups) {
                 if (group.owner == playerID && !structureGroup(group)) {
                     int numArmyUnits = 0;
