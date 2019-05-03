@@ -56,6 +56,8 @@ void MCTSDebugger::debugInteractive(shared_ptr<MCTSState<int, SimulatorMCTSState
     shared_ptr<MCTSState<int, SimulatorMCTSState>> state = startState;
     stack<shared_ptr<MCTSState<int, SimulatorMCTSState>>> stateStack;
 
+    auto sim = shared_ptr<SimulatorContext>(state->internalState.state.simulator);
+
     string green = "\x1b[38;2;0;255;0m";
     string greenish = "\x1b[38;2;93;173;110m";
     string red = "\x1b[38;2;255;0;0m";
@@ -76,7 +78,10 @@ void MCTSDebugger::debugInteractive(shared_ptr<MCTSState<int, SimulatorMCTSState
         // Make sure all children are intantiated
         for (int i = state->children.size() - 1; i >= 0; i--) {
             if (state->children[i].state == nullptr) {
+                bool origDebug = sim->debug;
+                sim->debug = false;
                 state->instantiateAction(i);
+                sim->debug = origDebug;
             }
         }
 
@@ -92,6 +97,11 @@ void MCTSDebugger::debugInteractive(shared_ptr<MCTSState<int, SimulatorMCTSState
         if (!(cin >> command)) continue;
 
         if (command == "exit") return;
+        if (command == "debug") {
+            sim->debug = !sim->debug;
+            cout << "Debug mode: " << sim->debug << endl;
+            continue;
+        }
         if (command == "b" || command == "back") {
             if (stateStack.size() > 0) {
                 state = stateStack.top();
@@ -104,8 +114,19 @@ void MCTSDebugger::debugInteractive(shared_ptr<MCTSState<int, SimulatorMCTSState
         int chosenAction;
         if (!(ss >> chosenAction)) continue;
 
-        auto child = state->getChild(chosenAction);
-        if (child == nullptr) continue;
+        shared_ptr<MCTSState<int, SimulatorMCTSState>> child;
+        if (sim->debug) {
+            auto nextState = state->internalState.step(chosenAction);
+            if (!nextState.second) {
+                cout << red << "Invalid action" << reset << endl;
+                continue;
+            }
+
+            child = std::make_shared<MCTSState<int, SimulatorMCTSState>>(std::move(nextState.first));
+        } else {
+            child = state->getChild(chosenAction);
+            if (child == nullptr) continue;
+        }
         
         stateStack.push(state);
         state = child;
