@@ -72,4 +72,8 @@ public:
         for (size_t i = 0; i < currentBlockCount; i++) (currentBlock + i)->~T();
         currentBlockCount = 0;
     }
+
+    size_t size() {
+        return blocks.size() * BlockSize + currentBlockCount;
+    }
 };

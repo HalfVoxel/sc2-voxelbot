@@ -155,11 +155,13 @@ void mcts(SimulatorState& startState) {
     //     test_allocator();
     // }
 
-    srand(time(0));
+    //srand(time(0));
+    srand(0);
 
     {
         MCTSSearch<int, SimulatorMCTSState> search((SimulatorMCTSState(startState)));
         search.search(10000);
+        cout << "Post search bump size " << search.stateAllocator.size() << " " << startState.simulator.lock()->cache.buildStateAllocator.size() << endl;
     }
 
     exit(0);
