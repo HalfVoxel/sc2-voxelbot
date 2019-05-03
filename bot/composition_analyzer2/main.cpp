@@ -132,13 +132,16 @@ int main(int argc, char* argv[]) {
         sys.path.append("bot/python")
     )");
 
-    // CombatPredictor predictor;
-    // BuildOptimizerNN buildTimePredictor;
-    // initMappings();
-    // buildTimePredictor.init();
-    // predictor.init();
-    // predictor.unitTest(buildTimePredictor);
-    // exit(0);
+    if (argc == 2 && string(argv[1]) == "--simple") {
+        initMappings();
+        CombatPredictor predictor;
+        BuildOptimizerNN buildTimePredictor;
+        buildTimePredictor.init();
+        predictor.init();
+        predictor.unitTest(buildTimePredictor);
+        exit(0);
+    }
+    
 
     Coordinator coordinator;
     if (!coordinator.LoadSettings(argc, argv)) {
