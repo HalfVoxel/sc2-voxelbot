@@ -2,9 +2,10 @@
 //#include <pybind11/embed.h>
 //#include <pybind11/stl.h>
 #include <vector>
-#include "BuildOptimizerGenetic.h"
 #include "utilities/mappings.h"
 #include <pybind11/pybind11.h>
+
+struct BuildResources;
 
 struct BuildOptimizerNN {
     pybind11::object predictFunction;

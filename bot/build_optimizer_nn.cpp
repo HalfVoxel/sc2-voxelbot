@@ -3,6 +3,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/embed.h>
 #include "utilities/python_utils.h"
+#include "BuildOptimizerGenetic.h"
 
 using namespace std;
 using namespace sc2;
