@@ -174,9 +174,51 @@ BOT::Status GroupAttackMove::OnTick() {
     auto group = GetGroup();
     if (group->IsInCombat()) {
         auto target_pos = *group->combatPosition;
+        const auto& env = bot->combatPredictor.defaultCombatEnvironment;
+        int playerID = bot->Observation()->GetPlayerID();
+        bool redirectAttacksTick = (agent->Observation()->GetGameLoop() % 10) == 0;
+        bool hasGround = false;
+        bool hasAir = false;
         for (auto* unit : group->units) {
-            if (unit->orders.empty() || Distance2D(target_pos, unit->orders[unit->orders.size() - 1].target_pos) > 1) {
-                bot->Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, target_pos);
+            hasGround |= !unit->is_flying;
+            hasAir |= unit->is_flying;
+        }
+        for (auto* unit : group->units) {
+            if (unit->orders.empty() || Distance2D(target_pos, unit->orders[unit->orders.size() - 1].target_pos) > 1 || (unit->weapon_cooldown > 0.1 && redirectAttacksTick)) {
+                float range = env.attackRange(playerID, unit->unit_type);
+                CombatUnit cUnit = CombatUnit(*unit);
+
+                float bestScore = -1000000;
+                const Unit* bestTarget = nullptr;
+                // Find best target in range
+                for (auto* enemy : bot->enemyUnits()) {
+                    float dist = DistanceSquared2D(unit->pos, enemy->pos);
+                    CombatUnit cUnitEnemy = CombatUnit(*enemy);
+                    if (enemy->is_alive && enemy->display_type == Unit::DisplayType::Visible && dist < range*range*1.2f*1.2f) {
+                        // Calculate a score which has the unit dps/second
+                        // or in other words the average amount we will reduce the enemy dps with if we attack this enemy
+                        float score = env.calculateDPS(cUnit, cUnitEnemy) * bot->combatPredictor.targetScore(cUnitEnemy, hasGround, hasAir);
+                        score /= enemy->health + enemy->shield;
+
+                        // Penalty for moving outside the range
+                        if (dist > range*range) score *= 0.25f;
+
+                        if (score > bestScore) {
+                            bestTarget = enemy;
+                            bestScore = score;
+                        }
+                    }
+                }
+
+                if (bestTarget != nullptr) {
+                    bot->Debug()->DebugLineOut(unit->pos + Point3D(0, 0, 0.1), bestTarget->pos + Point3D(0, 0, 0.1), Colors::Red);
+                }
+
+                if (bestTarget != nullptr && (unit->orders.empty() || unit->orders[0].target_unit_tag != bestTarget->tag)) {
+                    bot->Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, bestTarget);
+                } else if (unit->orders.empty() || Distance2D(target_pos, unit->orders[unit->orders.size() - 1].target_pos) > 1) {
+                    bot->Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, target_pos);
+                }
             }
         }
         return Running;
