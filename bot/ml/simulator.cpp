@@ -9,6 +9,7 @@ using namespace std;
 using namespace sc2;
 
 Tag simulatorUnitIndexCounter = (Tag)1 << 40;
+int numSimulationTicks = 0;
 
 Point2D SimulatorUnitGroup::futurePosition(float deltaTime) {
     if (order.type == SimulatorOrderType::Attack) {
@@ -59,7 +60,6 @@ void SimulatorState::simulateGroupCombat(float endTime) {
     // TODO: Vary depending on group sizes
     float combatThreshold = 8;
     auto simulator = shared_ptr<SimulatorContext>(this->simulator);
-    auto& combatEnv = simulator->combatPredictor->getCombatEnvironment(this->states[0]->upgrades, this->states[1]->upgrades);
     vector<bool> processedGroups(groups.size());
     for (size_t gi1 = 0; gi1 < groups.size(); gi1++) {
         auto& group1 = groups[gi1];
@@ -93,6 +93,8 @@ void SimulatorState::simulateGroupCombat(float endTime) {
                     array<array<float, 2>, 2> dps {{{{0, 0}}, {{0, 0}}}}; // (2, vector<float>(2));
                     array<array<bool, 2>, 2> hasAirGround {{{{false, false}}, {{false, false}}}};
                     // vector<vector<bool>> hasAirGround(2, vector<bool>(2));
+                    auto& combatEnv = simulator->combatPredictor->getCombatEnvironment(this->states[0]->upgrades, this->states[1]->upgrades);
+
                     for (auto* group : nearbyGroups) {
                         for (auto& unit : group->units) {
                             dps[group->owner - 1][0] += combatEnv.calculateDPS(1, unit.combat.type, false);
@@ -435,8 +437,6 @@ Stopwatch w3(false);
 Stopwatch w4(false);
 float t1, t2, t3, t4;
 
-int c = 0;
-
 void SimulatorState::simulate (float endTime) {
     if (simulator.expired()) {
         cerr << "Simulator no longer exists" << endl;
@@ -456,17 +456,15 @@ void SimulatorState::simulate (float endTime) {
     w1.start();
     float midTime = (time() + endTime) * 0.5f;
 
-    bool checkState = (c % 10000) == 0;
-
     w3.start();
     simulateGroupMovement(midTime);
-    if (checkState) assertValidState();
+    assertValidState();
     w3.stop();
     t3 += w3.millis();
 
     w4.start();
     simulateGroupCombat(midTime);
-    if (checkState) assertValidState();
+    assertValidState();
     w4.stop();
     t4 += w4.millis();
     
@@ -474,17 +472,17 @@ void SimulatorState::simulate (float endTime) {
     simulateBuildOrder(midTime);
     w2.stop();
     t2 += w2.millis();
-    if (checkState) assertValidState();
+    assertValidState();
 
     w3.start();
     simulateGroupMovement(endTime);
-    if (checkState) assertValidState();
+    assertValidState();
     w3.stop();
     t3 += w3.millis();
 
     w4.start();
     simulateGroupCombat(endTime);
-    if (checkState) assertValidState();
+    assertValidState();
     w4.stop();
     t4 += w4.millis();
 
@@ -492,25 +490,28 @@ void SimulatorState::simulate (float endTime) {
     simulateBuildOrder(endTime);
     w2.stop();
     t2 += w2.millis();
-    if (checkState) assertValidState();
+    assertValidState();
 
     // New units?
 
     mergeGroups();
-    if (checkState) assertValidState();
+    assertValidState();
     w1.stop();
     t1 += w1.millis();
 
     // Simulate group combat again
     assert(time() == endTime);
-    c++;
-    if ((c % 10000) == 0) {
+    numSimulationTicks++;
+    if ((numSimulationTicks % 10000) == 0) {
         // cout << "Times " << t1 << " " << t2 << " " << t3 << " " << t4 << endl;
     }
     
 }
 
 void SimulatorState::assertValidState () {
+    bool checkState = (numSimulationTicks % 10000) == 0;
+    if (!checkState) return;
+
     // return;
     for (int k = 0; k < 2; k++) {
         const BuildState& buildState = *states[k];
