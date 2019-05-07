@@ -11,6 +11,7 @@
 #include "utilities/predicates.h"
 #include "unit_lists.h"
 #include <sstream>
+#include <chrono>
 
 using namespace std;
 using namespace sc2;
@@ -89,20 +90,19 @@ float getArmorBonus(UNIT_TYPEID unit, const CombatUpgrades& upgrades) {
     float bonus = 0;
     switch(getUnitData(unit).race) {
         case Race::Protoss:
-            // Note: cannot distinguish between damage to shields and damage to health yet, so average out so that the armor is about 0.5 over the whole shield+health of the unit
             if (isFlying(unit)) {
-                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSAIRARMORSLEVEL1)) bonus += 0.5f;
-                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSAIRARMORSLEVEL2)) bonus += 0.5f;
-                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSAIRARMORSLEVEL3)) bonus += 0.5f;
+                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSAIRARMORSLEVEL1)) bonus += 1;
+                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSAIRARMORSLEVEL2)) bonus += 1;
+                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSAIRARMORSLEVEL3)) bonus += 1;
             } else {
-                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL1)) bonus += 0.5f;
-                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL2)) bonus += 0.5f;
-                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL3)) bonus += 0.5f;
+                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL1)) bonus += 1;
+                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL2)) bonus += 1;
+                if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL3)) bonus += 1;
             }
 
-            if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSSHIELDSLEVEL1)) bonus += 0.45f;
-            if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSSHIELDSLEVEL2)) bonus += 0.45f;
-            if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSSHIELDSLEVEL3)) bonus += 0.45f;
+            if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSSHIELDSLEVEL1)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSSHIELDSLEVEL2)) bonus += 1;
+            if (upgrades.hasUpgrade(UPGRADE_ID::PROTOSSSHIELDSLEVEL3)) bonus += 1;
             break;
         case Race::Zerg:
             if (isFlying(unit)) {
@@ -147,6 +147,10 @@ float calculateDPS(UNIT_TYPEID attacker, UNIT_TYPEID target, const Weapon& weapo
         dmg += getDamageBonus(attacker, attackerUpgrades);
 
         float armor = getUnitData(target).armor + getArmorBonus(target, targetUpgrades);
+
+        // Note: cannot distinguish between damage to shields and damage to health yet, so average out so that the armor is about 0.5 over the whole shield+health of the unit
+        // Important only for protoss
+        armor *= maxHealth(target) / (maxHealth(target) + maxShield(target));
 
         float timeBetweenAttacks = weapon.speed;
 
@@ -398,7 +402,11 @@ float CombatEnvironment::attackRange(int owner, UNIT_TYPEID type) const {
 
 float CombatEnvironment::attackRange(const CombatUnit& unit) const {
     auto& info = combatInfo[unit.owner - 1][(int)unit.type];
-    return max(info.airWeapon.range(), info.groundWeapon.range());
+    float range = max(info.airWeapon.range(), info.groundWeapon.range());
+
+    if (unit.type == UNIT_TYPEID::PROTOSS_COLOSSUS && upgrades[unit.owner-1].hasUpgrade(UPGRADE_ID::EXTENDEDTHERMALLANCE)) range += 2;
+
+    return range;
 }
 
 const UnitCombatInfo& CombatEnvironment::getCombatInfo(const CombatUnit& unit) const {
@@ -529,6 +537,11 @@ map<unsigned long long, CombatResult> seen_combats;
 
 int counter = 0;
 
+float timeToBeAbleToAttack (const CombatEnvironment& env, CombatUnit& unit, float distanceToEnemy) {
+    auto& unitTypeData = getUnitData(unit.type);
+    return unitTypeData.movement_speed > 0 ? max(0.0f, distanceToEnemy - env.attackRange(unit)) / unitTypeData.movement_speed : 100000;
+}
+
 // Owner = 1 is the defender, Owner != 1 is an attacker
 CombatResult CombatPredictor::predict_engage(const CombatState& inputState, bool debug, bool badMicro, CombatRecording* recording, int defenderPlayer) const {
     CombatSettings settings;
@@ -595,12 +608,14 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
             fastestAttackerSpeed = max(fastestAttackerSpeed, getUnitData(u.type).movement_speed);
         }
     }
-    
 
+    float time = settings.startTime;
     bool changed = true;
     // Note: required in case of healers on both sides to avoid inf loop
     const int MAX_ITERATIONS = 100;
-    float time = 0;
+    int recordingStartTick = 0;
+    if (recording != nullptr && !recording->frames.empty()) recordingStartTick = ticksToSeconds(recording->frames.rbegin()->tick) + 1 - time;
+
     for (int it = 0; it < MAX_ITERATIONS && changed; it++) {
         int hasAir1 = 0;
         int hasAir2 = 0;
@@ -627,7 +642,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
 
         if (recording != nullptr) {
             CombatRecordingFrame frame;
-            frame.tick = (int)round(time * 22.4f);
+            frame.tick = (int)round((recordingStartTick + time) * 22.4f);
             for (auto u : units1) {
                 frame.add(u->type, u->owner, u->health, u->shield);
             }
@@ -664,6 +679,13 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
 
             int numMeleeUnitsUsed = 0;
 
+            // Fraction of opponent units that are melee units (and are still alive)
+            float opponentFractionMeleeUnits = 0;
+            for (auto* u : g2) {
+                if (isMelee(u->type) && u->health > 0) opponentFractionMeleeUnits += 1;
+            }
+            if (g2.size() > 0) opponentFractionMeleeUnits /= g2.size();
+
             // Only a single healer can heal a given unit at a time
             // (holds for medivacs and shield batteries at least)
             vector<bool> hasBeenHealed(g1.size());
@@ -679,7 +701,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
 
                 if (unit.health == 0)
                     continue;
-
+                
                 auto& unitTypeData = getUnitData(unit.type);
                 float airDPS = env.calculateDPS(unit, true);
                 float groundDPS = env.calculateDPS(unit, false);
@@ -762,6 +784,9 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
 
                 if (airDPS == 0 && groundDPS == 0)
                     continue;
+                
+                if (settings.workersDoNoDamage && isBasicHarvester(unit.type))
+                    continue;
 
                 bool isUnitMelee = isMelee(unit.type);
                 if (isUnitMelee && numMeleeUnitsUsed >= surround.maxMeleeAttackers && settings.enableSurroundLimits)
@@ -775,7 +800,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                             // Make later melee units take longer to reach the enemy.
                             distanceToEnemy += maxExtraMeleeDistance * (i / (float)g1.size());
                         }
-                        float timeToReachEnemy = unitTypeData.movement_speed > 0 ? max(0.0f, distanceToEnemy - env.attackRange(unit)) / unitTypeData.movement_speed : 100000;
+                        float timeToReachEnemy = timeToBeAbleToAttack(env, unit, distanceToEnemy);
                         if (time < timeToReachEnemy) {
                             changed = true;
                             continue;
@@ -810,7 +835,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                         float groundDPS2 = info.groundWeapon.getDPS(other.type);
 
                         auto dps = max(groundDPS2, airDPS2);
-                        float score = dps * targetScore(other, group == 0 ? hasGround1 : hasGround2, group == 0 ? hasAir1 : hasAir2);
+                        float score = dps * targetScore(other, group == 0 ? hasGround1 : hasGround2, group == 0 ? hasAir1 : hasAir2) * 0.001f;
                         if (group == 1 && settings.badMicro)
                             score = -score;
 
@@ -831,6 +856,16 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                             // Check for kiting, hard to attack units with a higher movement speed
                             else if (settings.enableMeleeBlocking && unitTypeData.movement_speed < 1.05f * otherData.movement_speed)
                                 score -= 500;
+                        } else {
+                            if (!isFlying(unit.type)) {
+                                // If the other unit has a significantly higher range than this unit, then assume we cannot attack it until most melee units are dead
+                                float rangeDiff = env.attackRange(other) - env.attackRange(unit);
+                                if (opponentFractionMeleeUnits > 0.5f && rangeDiff > 0.5f) {
+                                    score -= 1000;
+                                } else if (opponentFractionMeleeUnits > 0.3f && rangeDiff > 1.0f) {
+                                    score -= 1000;
+                                }
+                            }
                         }
 
                         // if (debug) cout << "Potential target: " << UnitTypeToName(other.type) << " score: " << score << endl;
@@ -1030,7 +1065,7 @@ const vector<UNIT_TYPEID> availableUnitTypesZerg = {
     UNIT_TYPEID::ZERG_ZERGLING,
 };
 
-float mineralScore(const CombatState& initialState, const CombatResult& combatResult, int player, const vector<float>& timeToProduceUnits, const CombatUpgrades upgrades) {
+float CombatPredictor::mineralScore(const CombatState& initialState, const CombatResult& combatResult, int player, const vector<float>& timeToProduceUnits, const CombatUpgrades upgrades) const {
     assert(timeToProduceUnits.size() == 3);
     // The combat result may contain more units due to temporary units spawning (e.g. infested terran, etc.) however never fewer.
     // The first N units correspond to all the N units in the initial state.
@@ -1051,8 +1086,14 @@ float mineralScore(const CombatState& initialState, const CombatResult& combatRe
         float cost = unitTypeData.mineral_cost + 1.2f * unitTypeData.vespene_cost;
         if (unit1.owner == player) {
             ourScore += cost * -(1 + damageTakenFraction);
+            // if (unit1.type == UNIT_TYPEID::PROTOSS_COLOSSUS) ourScore += 500;
         } else {
-            lossScore += cost * (-100 * (1 - damageTakenFraction));
+            if (defaultCombatEnvironment.calculateDPS(unit2, false) > 0) {
+                lossScore += cost * (-10 * (1 - damageTakenFraction));
+            } else {
+                lossScore += cost * (-1 * (1 - damageTakenFraction));
+            }
+            // lossScore += cost * (-100 * (1 - damageTakenFraction));
             enemyScore += cost * (1 + damageTakenFraction);
         }
         // totalScore += score;
@@ -1087,6 +1128,7 @@ float mineralScore(const CombatState& initialState, const CombatResult& combatRe
     float timeMult = min(1.0f, 2 * 30/(30 + timeToProduceUnits[0]));
     // float timeMult2 = min(1.0f, 2 * 10/(10 + combatResult.time));
     totalScore = ourScore + enemyScore*timeMult + lossScore;
+    // cout << ourScore << " " << enemyScore << " " << lossScore << endl;
 
     if (combatResult.time > 20) {
         bool hasAnyGroundUnits = false;
@@ -1320,10 +1362,10 @@ float calculateFitness(const CombatPredictor& predictor, const CombatState& oppo
     CombatState state = opponent;
     gene.addToState(predictor, state, availableUnitTypes, 2);
     // TODO: Ignore current upgrades in costs
-    return mineralScore(state, predictor.predict_engage(state, false, false), 2, timeToProduceUnits, gene.getUpgrades(availableUnitTypes));  // + mineralScore(state, predictor.predict_engage(state, false, true), 2)) * 0.5f;
+    return predictor.mineralScore(state, predictor.predict_engage(state, false, false), 2, timeToProduceUnits, gene.getUpgrades(availableUnitTypes));  // + mineralScore(state, predictor.predict_engage(state, false, true), 2)) * 0.5f;
 }
 
-void logRecordings(CombatState& state, const CombatPredictor& predictor, float spawnOffset = 0, string msg = "recording") {
+void logRecordings(CombatState& state, const CombatPredictor& predictor, float spawnOffset, string msg) {
     createState(state, spawnOffset);
     // cout << "Duration " << watch.millis() << " ms" << endl;
     vector<int> mineralCosts(3);
@@ -1344,6 +1386,22 @@ void logRecordings(CombatState& state, const CombatPredictor& predictor, float s
     CombatRecording recording2;
     CombatResult newResult2 = predictor.predict_engage(state, false, true, &recording2);
     recording2.writeCSV(msg + "3.csv");
+
+    CombatRecording recording3;
+    CombatSettings settings;
+    settings.maxTime = 3;
+    settings.startTime = 0;
+    for (int i = 0; i < 13; i++) {
+        CombatResult newResult2 = predictor.predict_engage(state, settings, &recording3);
+        state = newResult2.state;
+        settings.startTime = newResult2.time;
+        settings.maxTime = newResult2.time + 3;
+    }
+    recording3.writeCSV(msg + "4.csv");
+}
+
+int64_t micros() {
+    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 }
 
 ArmyComposition findBestCompositionGenetic(const CombatPredictor& predictor, const AvailableUnitTypes& availableUnitTypes, const CombatState& opponent, const BuildOptimizerNN* buildTimePredictor, const BuildState* startingBuildState, vector<pair<UNIT_TYPEID,int>>* seedComposition) {
@@ -1352,7 +1410,7 @@ ArmyComposition findBestCompositionGenetic(const CombatPredictor& predictor, con
     const int POOL_SIZE = 20;
     const float mutationRate = 0.1f;
     vector<CompositionGene> generation(POOL_SIZE);
-    default_random_engine rnd(time(0));
+    default_random_engine rnd(micros());
     for (auto& gene : generation) {
         gene = CompositionGene(availableUnitTypes, 10, rnd);
     }
