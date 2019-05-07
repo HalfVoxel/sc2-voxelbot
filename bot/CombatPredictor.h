@@ -130,8 +130,10 @@ struct CombatSettings {
     bool enableTimingAdjustment = true;
     bool enableSurroundLimits = true;
     bool enableMeleeBlocking = true;
+	bool workersDoNoDamage = false;
 	bool assumeReasonablePositioning = true;
 	float maxTime = std::numeric_limits<float>::infinity();
+	float startTime = 0;
 };
 
 struct UnitCombatInfo {
@@ -172,6 +174,8 @@ public:
 	const CombatEnvironment& combineCombatEnvironment(const CombatEnvironment* env, const CombatUpgrades& upgrades, int upgradesOwner) const;
 
 	float targetScore(const CombatUnit& unit, bool hasGround, bool hasAir) const;
+
+	float mineralScore(const CombatState& initialState, const CombatResult& combatResult, int player, const std::vector<float>& timeToProduceUnits, const CombatUpgrades upgrades) const;
 };
 
 CombatUnit makeUnit(int owner, sc2::UNIT_TYPEID type);
@@ -194,3 +198,6 @@ public:
 	void finalize(std::string filename="recording.csv");
 };
 
+
+void logRecordings(CombatState& state, const CombatPredictor& predictor, float spawnOffset = 0, std::string msg = "recording");
+float timeToBeAbleToAttack (const CombatEnvironment& env, CombatUnit& unit, float distanceToEnemy);
