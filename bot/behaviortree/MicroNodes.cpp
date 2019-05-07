@@ -142,7 +142,7 @@ Status MicroNexus::OnTick() {
     auto unit = GetUnit();
     auto ability = agent->Observation()->GetAbilityData()[(int)chronoboostAbility];
     if (IsAbilityReady(unit, chronoboostAbility)) {
-        for (auto other : agent->Observation()->GetUnits(Unit::Alliance::Self)) {
+        for (auto other : bot->ourUnits()) {
             if (other->owner == unit->owner && isStructure(other->unit_type) && other->build_progress == 1 && other->orders.size() > 0 && other->orders[0].progress < 0.2f && other->buffs.size() == 0) {
                 agent->Actions()->UnitCommand(unit, chronoboostAbility, other);
                 break;
@@ -153,14 +153,49 @@ Status MicroNexus::OnTick() {
     return Success;
 }
 
+static int lastGuardianShieldTick = 0;
+
+Status MicroSentry::OnTick() {
+    auto unit = GetUnit();
+    // If the guardian shield ability is ready and we didn't just enable a guardian shield somewhere.
+    // Observations may take a tick to update so we want to make sure we base the decision on up to date information
+    if (agent->Observation()->GetGameLoop() - lastGuardianShieldTick > 2 && IsAbilityReady(unit, ABILITY_ID::EFFECT_GUARDIANSHIELD)) {
+        float nearbyEnemyRangedDPS = 0;
+        float nearbyAllyDPS = 0;
+        int nearbyNotBuffed = 0;
+        bool anyEngaged = false;
+        const auto& env = bot->combatPredictor.defaultCombatEnvironment;
+        for (auto other : bot->ourUnits()) {
+            if (other->engaged_target_tag != NullTag) anyEngaged = true;
+            if (DistanceSquared2D(unit->pos, other->pos) < 4.5f*4.5f && !hasBuff(other, BUFF_ID::GUARDIANSHIELD)) {
+                nearbyNotBuffed++;
+            }
+            if (DistanceSquared2D(unit->pos, other->pos) < 6.0f*6.0f) {
+                nearbyAllyDPS += env.calculateDPS(1, other->unit_type, false);
+            }
+        }
+        for (auto other : bot->enemyUnits()) {
+            if (DistanceSquared2D(unit->pos, other->pos) < 8.0f*8.0f) {
+                if (!isMelee(other->unit_type)) nearbyEnemyRangedDPS += env.calculateDPS(1, other->unit_type, false);
+            }
+        }
+
+        if (nearbyNotBuffed >= 3 && anyEngaged && nearbyEnemyRangedDPS > nearbyAllyDPS*0.2f) {
+            lastGuardianShieldTick = agent->Observation()->GetGameLoop();
+            agent->Actions()->UnitCommand(unit, ABILITY_ID::EFFECT_GUARDIANSHIELD);
+        }
+    }
+
+    return Success;
+}
 
 map<const Unit*, MicroNode*> microNodes;
 
 void TickMicro() {
     // Cache for performance reasons
-    enemyUnits = agent->Observation()->GetUnits(Unit::Alliance::Enemy);
+    enemyUnits = bot->enemyUnits();
 
-    for (auto* unit : agent->Observation()->GetUnits(Unit::Alliance::Self)) {
+    for (auto* unit : bot->ourUnits()) {
         auto& node = microNodes[unit];
         if (node == nullptr) {
             switch (simplifyUnitType(unit->unit_type)) {
@@ -178,6 +213,9 @@ void TickMicro() {
                     break;
                 case UNIT_TYPEID::PROTOSS_NEXUS:
                     node = new MicroNexus(unit);
+                    break;
+                case UNIT_TYPEID::PROTOSS_SENTRY:
+                    node = new MicroSentry(unit);
                     break;
                 default:
                     continue;

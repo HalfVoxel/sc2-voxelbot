@@ -42,5 +42,11 @@ public:
     BOT::Status OnTick() override;
 };
 
+struct MicroSentry : MicroNode {
+public:
+    explicit MicroSentry(const sc2::Unit* unit) : MicroNode(unit){}
+    BOT::Status OnTick() override;
+};
+
 bool IsAbilityReady (const sc2::Unit* unit, sc2::ABILITY_ID ability);
 void TickMicro ();
