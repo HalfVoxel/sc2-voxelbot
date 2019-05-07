@@ -161,11 +161,12 @@ vector<bool> BuildOrderTracker::update(const vector<const Unit*>& ourUnits) {
     return res;
 }
 
-pair<int, vector<bool>> executeBuildOrder(const vector<const Unit*>& ourUnits, const BuildState& buildOrderStartingState, BuildOrderTracker& tracker, float currentMinerals, SpendingManager& spendingManager) {
+pair<int, vector<bool>> executeBuildOrder(const vector<const Unit*>& ourUnits, const BuildState& buildOrderStartingState, BuildOrderTracker& tracker, float currentMinerals, SpendingManager& spendingManager, bool& serialize) {
     // Optimize the current build order, but only if we didn't just do an action because then the 'doneActions' list might be inaccurate
     if ((agent->Observation()->GetGameLoop() % 10) == 0 && agent->Observation()->GetGameLoop() - spendingManager.lastActionFrame > 2) {
         BuildState currentState(agent->Observation(), Unit::Alliance::Self, Race::Protoss, BuildResources(agent->Observation()->GetMinerals(), agent->Observation()->GetVespene()), 0);
-        optimizeExistingBuildOrder(ourUnits, currentState, tracker);
+        optimizeExistingBuildOrder(ourUnits, currentState, tracker, serialize);
+        serialize = false;
     }
 
     auto doneActions = tracker.update(ourUnits);
@@ -331,7 +332,11 @@ void debugBuildOrder(BuildState startingState, BuildOrder buildOrder, vector<boo
         if (i < currentBuildOrderIndex) ss << " (done)";
         ss << endl;
     }*/
-    agent->Debug()->DebugTextOut(ss.str(), Point2D(0.05, 0.05), Colors::Purple);
+    if (agent != nullptr) {
+        cout << ss.str();
+    } else {
+        agent->Debug()->DebugTextOut(ss.str(), Point2D(0.05, 0.05), Colors::Purple);
+    }
 }
 
 void debugBuildOrder(BuildState startingState, BuildOrder buildOrder, vector<float> doneTimes) {

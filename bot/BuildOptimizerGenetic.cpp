@@ -13,6 +13,9 @@
 #include "unit_lists.h"
 #include "build_order_helpers.h"
 
+#include <fstream>
+#include "utilities/build_state_serialization.h"
+
 using namespace std;
 using namespace sc2;
 using namespace pybind11::literals;
@@ -2866,7 +2869,7 @@ bool BuildOrderFitness::operator<(const BuildOrderFitness& other) const {
     // return s;
 }
 
-void optimizeExistingBuildOrder(const std::vector<const sc2::Unit*>& ourUnits, const BuildState& startState, BuildOrderTracker& buildOrder) {
+void optimizeExistingBuildOrder(const std::vector<const sc2::Unit*>& ourUnits, const BuildState& startState, BuildOrderTracker& buildOrder, bool serialize) {
     const AvailableUnitTypes& availableUnitTypes = getAvailableUnitsForRace(startState.race, UnitCategory::BuildOrderOptions);
     const AvailableUnitTypes& allEconomicUnits = getAvailableUnitsForRace(startState.race, UnitCategory::Economic);
 
@@ -2905,6 +2908,31 @@ void optimizeExistingBuildOrder(const std::vector<const sc2::Unit*>& ourUnits, c
     }
 
     auto originalBuildOrder = gene.constructBuildOrder(startState.race, startStateAfterEvents.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes);
+
+    if (serialize) {
+        // BuildState buildOrderStartingState(Observation(), Unit::Alliance::Self, Race::Protoss, BuildResources(Observation()->GetMinerals(), Observation()->GetVespene()), 0);
+        ofstream json("saved_buildorder_state.json");
+        {
+            cereal::JSONOutputArchive archive(json);
+            archive(startState);
+        }
+        ofstream json2("saved_buildorder_gene.json");
+        {
+            cereal::JSONOutputArchive archive(json2);
+            archive(originalBuildOrder);
+        }
+        ofstream json3("saved_buildorder_bo.json");
+        {
+            for (auto item : originalBuildOrder.items) {
+                if (item.isUnitType()) {
+                    json3 << "BuildOrderItem(UNIT_TYPEID::" << UnitTypeToName(item.typeID()) << ", " << (item.chronoBoosted ? "true" : "false") << ")," << endl;
+                } else {
+                    json3 << "BuildOrderItem(UPGRADE_ID::" << UpgradeIDToName(item.upgradeID()) << ", " << (item.chronoBoosted ? "true" : "false") << ")," << endl;
+                }
+            }
+        }
+        json3.close();
+    }
 
     auto fitness = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, gene);
 

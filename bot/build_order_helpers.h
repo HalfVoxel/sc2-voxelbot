@@ -20,7 +20,7 @@ struct BuildOrderTracker {
     std::vector<bool> update(const std::vector<const sc2::Unit*>& ourUnits);
 };
 
-std::pair<int, std::vector<bool>> executeBuildOrder(const std::vector<const sc2::Unit*>& ourUnits, const BuildState& buildOrderStartingState, BuildOrderTracker& buildOrder, float currentMinerals, SpendingManager& spendingManager);
+std::pair<int, std::vector<bool>> executeBuildOrder(const std::vector<const sc2::Unit*>& ourUnits, const BuildState& buildOrderStartingState, BuildOrderTracker& buildOrder, float currentMinerals, SpendingManager& spendingManager, bool& serialize);
 void debugBuildOrderMasked(BuildState startingState, BuildOrder buildOrder, std::vector<bool> doneItems);
 void debugBuildOrder(BuildState startingState, BuildOrder buildOrder, std::vector<bool> doneItems);
 

@@ -86,6 +86,8 @@ struct BuildEvent {
     BuildEvent(BuildEventType type, float time, sc2::UNIT_TYPEID caster, sc2::ABILITY_ID ability)
         : type(type), ability(ability), caster(caster), casterAddon(sc2::UNIT_TYPEID::INVALID), time(time) {}
 
+    explicit BuildEvent() {}
+
     /** True if this event may have an impact on food or mining speed */
     bool impactsEconomy() const;
 
@@ -116,10 +118,9 @@ struct GeneUnitType {
 
 static const int UPGRADE_ID_OFFSET = 1000000;
 struct BuildOrderItem {
-  private:
+  public:
     // union ish. It is assumed that unit type ids are pretty small (which they are)
     sc2::UNIT_TYPEID internalType = sc2::UNIT_TYPEID::INVALID;
-  public:
     bool chronoBoosted = false;
 
     bool isUnitType() const {
@@ -281,7 +282,6 @@ struct BuildState {
 
     ChronoBoostInfo chronoInfo;
     CombatUpgrades upgrades;
-    bool hasWarpgateResearch = false;
 
 private:
     mutable uint64_t cachedHash = 0;
@@ -420,4 +420,5 @@ BuildOrder findBestBuildOrderGenetic(const BuildState& startState, const std::ve
 std::pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& startState, const std::vector<std::pair<BuildOrderItem, int>>& target, const BuildOrder* seed = nullptr, BuildOptimizerParams params = BuildOptimizerParams());
 void unitTestBuildOptimizer();
 void printBuildOrderDetailed(const BuildState& startState, const BuildOrder& buildOrder, const std::vector<bool>* highlight = nullptr);
-void optimizeExistingBuildOrder(const std::vector<const sc2::Unit*>& ourUnits, const BuildState& buildOrderStartingState, BuildOrderTracker& buildOrder);
+void optimizeExistingBuildOrder(const std::vector<const sc2::Unit*>& ourUnits, const BuildState& buildOrderStartingState, BuildOrderTracker& buildOrder, bool serialize);
+BuildOrderFitness calculateFitness(const BuildState& startState, const BuildOrder& buildOrder);
