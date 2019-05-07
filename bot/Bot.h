@@ -86,6 +86,7 @@ public:
 
     void clearFields();
 
+    std::string resultSavePath = "";
     std::vector<ConstructionPreparationMovement> constructionPreparation;
 
     LargeObservationChangeObserver observationChangeCheck;

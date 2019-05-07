@@ -3,6 +3,7 @@
 #include <random>
 #include <sstream>
 #include <ctime>
+#include <array>
 #include <iostream>
 
 using namespace std;
@@ -115,13 +116,13 @@ struct TicTacToeState {
         return moves;
     }
 
-    float rollout() const {
+    array<float, 2> rollout() const {
         TicTacToeState res = *this;
         res.count = 0;
 
         while(true) {
             int w = res.isWin();
-            if (w != 0) return w - 1 == player ? 1 : 0;
+            if (w != 0) return {{ (float)(int)(w == 1), (float)(int)(w == 2) }};
 
             int possibleActions = 0;
             for (int r = 0; r < 3; r++)
@@ -129,7 +130,7 @@ struct TicTacToeState {
                     possibleActions += (res.state[r][c] == 0);
 
             // Tie
-            if (possibleActions == 0) return 0.5f;
+            if (possibleActions == 0) return {{ 0.5f, 0.5f }};
 
             int a = rand() % possibleActions;
             for (int r = 0; r < 3; r++) {

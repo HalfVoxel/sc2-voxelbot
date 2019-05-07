@@ -31,6 +31,7 @@
 #include "mcts/mcts_debugger.h"
 #include "build_order_helpers.h"
 #include "unit_lists.h"
+#include "utilities/build_state_serialization.h"
 
 using Clock = std::chrono::high_resolution_clock;
 
@@ -45,6 +46,7 @@ map<const Unit*, AvailableAbilities> availableAbilities;
 map<const Unit*, AvailableAbilities> availableAbilitiesExcludingCosts;
 bool mctsDebug = false;
 bool autoCamera = false;
+bool botDisabled = false;
 
 // TODO: Should move this to a better place
 bool IsAbilityReady(const Unit* unit, ABILITY_ID ability) {
@@ -135,6 +137,7 @@ float currentBuildOrderTime;
 BuildState lastStartingState;
 float enemyScaling = 1;
 BuildOrder emptyBO;
+bool saveNextBO;
 
 void Bot::clearFields() {
     availableAbilities.clear();
@@ -415,6 +418,12 @@ void Bot::OnStep() {
         if (msg.message == "spawn ally") {
             Debug()->DebugCreateUnit(UNIT_TYPEID::PROTOSS_STALKER, Observation()->GetCameraPos(), Observation()->GetPlayerID());
         }
+        if (msg.message == "save bo") {
+            saveNextBO = true;
+        }
+        if (msg.message == "disable") {
+            botDisabled = true;
+        }
     }
 
     if (ticks == 0)
@@ -498,9 +507,8 @@ void Bot::OnStep() {
     }
 
     if (shouldRecalculateBuildOrder) {
-    // if ((ticks == 1 || ticks == 2)) {
         CombatState startingState;
-        for (auto u : deductionManager.ApproximateArmy(1.5f)) {
+        for (auto u : deductionManager.ApproximateArmy(1.0f)) {
             cout << "Expected enemy unit: " << UnitTypeToName(u.first) << " " << u.second << endl;
             for (int i = 0; i < u.second; i++) startingState.units.push_back(makeUnit(1, u.first));
         }
@@ -559,6 +567,18 @@ void Bot::OnStep() {
         // Add our current upgrades to the build order state
         startingState.environment = &combatPredictor.combineCombatEnvironment(startingState.environment, buildOrderStartingState.upgrades, 2);
         // TODO Use deduction manager to fill in what upgrades we think the enemy might reasonable have at this time?
+        CombatUpgrades enemyUpgrades;
+        if (ticksToSeconds(Observation()->GetGameLoop()) > 60*5) {
+            enemyUpgrades.add(UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1);
+            enemyUpgrades.add(UPGRADE_ID::ZERGMELEEWEAPONSLEVEL1);
+            enemyUpgrades.add(UPGRADE_ID::PROTOSSGROUNDWEAPONSLEVEL1);
+        }
+        if (ticksToSeconds(Observation()->GetGameLoop()) > 60*10) {
+            enemyUpgrades.add(UPGRADE_ID::TERRANINFANTRYARMORSLEVEL1);
+            enemyUpgrades.add(UPGRADE_ID::ZERGGROUNDARMORSLEVEL1);
+            enemyUpgrades.add(UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL1);
+        }
+        startingState.environment = &combatPredictor.combineCombatEnvironment(startingState.environment, enemyUpgrades, 1);
 
         currentBuildOrderFutureTick = ticks;
         currentBuildOrderFuture = std::async(std::launch::async, [=]{
@@ -583,7 +603,7 @@ void Bot::OnStep() {
             buildTimePredictorPtr = nullptr;
 #endif
 
-            auto bestCounter = findBestCompositionGenetic(combatPredictor, getAvailableUnitsForRace(Race::Protoss, UnitCategory::ArmyCompositionOptions), startingState, buildTimePredictorPtr, &futureState, &lastCounter);
+            auto bestCounter = findBestCompositionGenetic(combatPredictor, getAvailableUnitsForRace(Race::Protoss, UnitCategory::ArmyCompositionOptions), startingState, buildTimePredictorPtr, &futureState, nullptr);
 
             // auto bestCounter = findBestCompositionGenetic(combatPredictor, availableUnitTypesProtoss, startingState, nullptr, &futureState, &lastCounter);
             /*vector<pair<UNIT_TYPEID, int>> bestCounter = {
@@ -603,8 +623,8 @@ void Bot::OnStep() {
 
             int totalTargetCount = 0;
             for (auto c : bestCounter.unitCounts) {
-                targetUnitsCount2[c.first] += c.second * 2;
-                totalTargetCount += c.second * 2;
+                targetUnitsCount2[c.first] += c.second * 1.0;
+                totalTargetCount += c.second * 1.0;
             }
 
             // Add some extra units until we are going to produce at least N units
@@ -624,6 +644,8 @@ void Bot::OnStep() {
                 totalTargetCount += 1;
             }
 
+            targetUnitsCount2[UNIT_TYPEID::PROTOSS_COLOSSUS] = max(targetUnitsCount2[UNIT_TYPEID::PROTOSS_COLOSSUS], 2);
+
             vector<pair<BuildOrderItem, int>> targetUnits;
             for (auto p : targetUnitsCount2) targetUnits.push_back({ BuildOrderItem(p.first), p.second });
             for (auto u : bestCounter.upgrades) targetUnits.push_back({ BuildOrderItem(u), 1 });
@@ -636,6 +658,7 @@ void Bot::OnStep() {
                     cout << UnitTypeToName(p.first) << ": " << delta << endl;
                 }
             }
+
             cout << "---" << endl;
 
             auto currentBO = buildOrderTracker.buildOrder;
@@ -650,19 +673,21 @@ void Bot::OnStep() {
         });
     }
 
-    // Run MCTS regularly or when we have just seen a large change in the game (since the last mcts)
-    bool largeChange = observationChangeCheck.isLargeObservationChange(deductionManager);
-    if ((ticks % 200) == 1 || largeChange) {
-        if (largeChange) cout << "Detected large observation change. Running MCTS" << endl;
-        runMCTS();
-        observationChangeCheck.reset(deductionManager);
-    }
+    if (!botDisabled) {
+        // Run MCTS regularly or when we have just seen a large change in the game (since the last mcts)
+        bool largeChange = observationChangeCheck.isLargeObservationChange(deductionManager);
+        if ((ticks % 200) == 1 || largeChange) {
+            if (largeChange) cout << "Detected large observation change. Running MCTS" << endl;
+            runMCTS();
+            observationChangeCheck.reset(deductionManager);
+        }
 
-    if ((ticks % 200) == 136) {
-        runMCTSOffBeat(1);
+        if ((ticks % 200) == 136) {
+            runMCTSOffBeat(1);
+        }
     }
-
-    auto boExTuple = executeBuildOrder(ourUnits, lastStartingState, buildOrderTracker, Observation()->GetMinerals(), spendingManager);
+    
+    auto boExTuple = executeBuildOrder(ourUnits, lastStartingState, buildOrderTracker, Observation()->GetMinerals(), spendingManager, saveNextBO);
     currentBuildOrderIndex = boExTuple.first;
 
     // tree->Tick();
@@ -694,14 +719,19 @@ void Bot::OnStep() {
 }
 
 void Bot::OnGameEnd() {
-    Control()->SaveReplay("saved_replays/latest.SC2Replay");
+    string path = resultSavePath != "" ? resultSavePath : "saved_replays/latest.SC2Replay";
+    Control()->SaveReplay(path);
     auto ourUnits = Observation()->GetUnits(Unit::Alliance::Self, IsStructure(Observation()));
     auto enemyUnits = Observation()->GetUnits(Unit::Alliance::Enemy, IsStructure(Observation()));
+    ofstream info(path + ".result");
     if (ourUnits.size() > enemyUnits.size()) {
+        info << "victory" << endl;
         cout << "Victory" << endl;
     } else {
+        info << "defeat" << endl;
         cout << "Defeat" << endl;
     }
+    info.close();
     Shutdown();
 }
 
