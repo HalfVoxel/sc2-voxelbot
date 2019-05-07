@@ -307,7 +307,7 @@ Status Construct::PlaceBuilding(UnitTypeID unitType, Tag loc) {
     const ObservationInterface* observation = bot->Observation();
 
     const UnitTypeData& unitTypeData = getUnitData(unitType);
-    auto& units = bot->ourUnits();
+    // auto& units = bot->ourUnits();
 
     // Check if the tech requirement is available
     /*if (unitTypeData.tech_requirement != UNIT_TYPEID::INVALID) {
