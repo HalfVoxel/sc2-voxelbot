@@ -194,3 +194,8 @@ bool isChangeling(sc2::UNIT_TYPEID type) {
             return false;
     }
 }
+
+bool hasBuff (const Unit* unit, BUFF_ID buff) {
+    for (auto b : unit->buffs) if (b == buff) return true;
+    return false;
+}
