@@ -107,6 +107,10 @@ void init() {
     for (auto pair : unit_type_has_ability) {
         maxAbilityID = max(maxAbilityID, pair.second);
     }
+    int maxUpgradeID = 0;
+    for (auto u : mUpgrades) {
+        maxUpgradeID = max(maxUpgradeID, (int)u.upgrade_id);
+    }
 
     const vector<UnitTypeData>& unitTypes = mUnitTypes;
     const auto& abilities = mAbilities;
@@ -288,8 +292,8 @@ void init() {
         mIsStructure[i] = isStructure(getUnitData((UNIT_TYPEID)i));
     }
 
-    mUpgradeUnitDependency.resize(mUpgrades.size());
-    mUpgradeUpgradeDependency.resize(mUpgrades.size());
+    mUpgradeUnitDependency.resize(maxUpgradeID);
+    mUpgradeUpgradeDependency.resize(maxUpgradeID);
 
     mUpgradeUnitDependency[(int)UPGRADE_ID::PROTOSSGROUNDWEAPONSLEVEL2] = UNIT_TYPEID::PROTOSS_TWILIGHTCOUNCIL;
     mUpgradeUnitDependency[(int)UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL2] = UNIT_TYPEID::PROTOSS_TWILIGHTCOUNCIL;
@@ -312,6 +316,16 @@ void init() {
     addEnumeratedUpgradeDependency(UPGRADE_ID::PROTOSSAIRWEAPONSLEVEL1);
     addEnumeratedUpgradeDependency(UPGRADE_ID::PROTOSSAIRARMORSLEVEL1);
     addEnumeratedUpgradeDependency(UPGRADE_ID::TERRANVEHICLEANDSHIPARMORSLEVEL1);
+
+    // Fix initial healths for some units
+    unit_type_initial_health[(int)UNIT_TYPEID::TERRAN_REACTOR] = {50, 0};
+    unit_type_initial_health[(int)UNIT_TYPEID::TERRAN_TECHLAB] = {50, 0};
+    unit_type_initial_health[(int)UNIT_TYPEID::TERRAN_BARRACKSTECHLAB] = {50, 0};
+    unit_type_initial_health[(int)UNIT_TYPEID::TERRAN_BARRACKSREACTOR] = {50, 0};
+    unit_type_initial_health[(int)UNIT_TYPEID::TERRAN_FACTORYTECHLAB] = {50, 0};
+    unit_type_initial_health[(int)UNIT_TYPEID::TERRAN_FACTORYREACTOR] = {50, 0};
+    unit_type_initial_health[(int)UNIT_TYPEID::TERRAN_STARPORTTECHLAB] = {50, 0};
+    unit_type_initial_health[(int)UNIT_TYPEID::TERRAN_STARPORTREACTOR] = {50, 0};
 }
 
 
