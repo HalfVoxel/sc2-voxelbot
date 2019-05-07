@@ -42,15 +42,46 @@ void removeEmptyGroups(vector<SimulatorUnitGroup>& groups) {
     groups.erase(remainingGroupIndex, groups.end());
 }
 
+static Point2D NormalizeVector (const Point2D p) {
+    float magn = p.x*p.x + p.y*p.y;
+    if (magn > 0) return p / sqrt(magn);
+    else return Point2D(0,0);
+}
+
 void SimulatorState::simulateGroupMovement(float endTime) {
     float deltaTime = endTime - time();
     if (deltaTime < 0) {
         cout << "Unexpected delta time " << deltaTime << " " << endTime << " " << time() << " " << &simulator << " " << shared_ptr<SimulatorContext>(simulator)->simulationStartTime << endl;
     }
     assert(deltaTime >= 0);
-    for (auto& group : groups) {
+
+    vector<Point2D> nextPositions(groups.size());
+    for (size_t i = 0; i < groups.size(); i++) {
+        auto& group = groups[i];
         group.previousPos = group.pos;
-        group.pos = group.futurePosition(deltaTime);
+        auto nextPos = group.futurePosition(deltaTime);
+        auto movementDir = NormalizeVector(nextPos - group.pos);
+
+        for (auto& g2 : groups) {
+            if (group.owner != g2.owner && DistanceSquared2D(group.pos, g2.pos) < 16*16 && !structureGroup(group)) {
+                auto otherMovementDir = g2.futurePosition(deltaTime) - g2.pos;
+                float dot = Dot2D(movementDir, NormalizeVector(otherMovementDir));
+                float clampingDistance;
+                if (dot < 0) clampingDistance = -dot * 0.5f * Distance2D(group.pos, g2.pos);
+                else clampingDistance = dot * sqrt(Dot2D(otherMovementDir, otherMovementDir));
+                auto clampingPoint = g2.pos + clampingDistance * NormalizeVector(otherMovementDir);
+
+                auto clampingDirection = NormalizeVector(clampingPoint - group.pos);
+                float clampingAmount = Dot2D(nextPos - clampingPoint, clampingDirection);
+                if (clampingAmount > 0) nextPos -= clampingAmount * clampingDirection;
+            }
+        }
+        nextPositions[i] = nextPos;
+    }
+
+    for (size_t i = 0; i < groups.size(); i++) {
+        auto& group = groups[i];
+        group.pos = nextPositions[i];    
         if (group.pos == group.order.target) group.order.type = SimulatorOrderType::None;
         // TODO: Update unit energies
     }
