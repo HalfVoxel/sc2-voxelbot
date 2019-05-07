@@ -506,7 +506,7 @@ int main() {
         startState.resources.minerals = inst.startingVespene;
         startState.race = inst.race;
         for (auto u : startingUnits) {
-            if (u.first == UNIT_TYPEID::PROTOSS_WARPGATE && u.second > 0) startState.hasWarpgateResearch = true;
+            if (u.first == UNIT_TYPEID::PROTOSS_WARPGATE && u.second > 0) startState.upgrades.add(UPGRADE_ID::WARPGATERESEARCH);
         }
 
         inst.buildOrderTime = 1000000000;
