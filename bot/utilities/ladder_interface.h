@@ -112,7 +112,7 @@ static void ParseArguments(int argc, char *argv[], ConnectionOptions &connect_op
 		connect_options.StartPort = atoi(StartPortStr.c_str());
 	}
 	std::string bp;
-	if (arg_parser.Get("Bypass", StartPortStr)) {
+	if (arg_parser.Get("Bypass", bp)) {
 		connect_options.Bypass = true;
 	}
 	arg_parser.Get("LadderServer", connect_options.ServerAddress);
