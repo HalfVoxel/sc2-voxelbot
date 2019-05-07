@@ -123,12 +123,17 @@ void CameraController::OnStep() {
     if (weight > 0)
         newTargetPoint = sum / weight;
 
-    double alpha2 = 0.8;
-    targetPoint = targetPoint * alpha2 + newTargetPoint * (1 - alpha2);
+    if (Distance2D(targetPoint, newTargetPoint) > 50) {
+        targetPoint = newTargetPoint;
+        position = targetPoint;
+    } else {
+        double alpha2 = 0.8;
+        targetPoint = targetPoint * alpha2 + newTargetPoint * (1 - alpha2);
 
-    double alpha = 0.96;
+        double alpha = 0.96;
+        position = position * alpha + targetPoint * (1 - alpha);
+    }
 
-    position = position * alpha + targetPoint * (1 - alpha);
     bot->Debug()->DebugMoveCamera(position);
 
     if (get<2>(target) != lastTag) {
