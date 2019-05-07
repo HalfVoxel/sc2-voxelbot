@@ -349,7 +349,7 @@ std::pair<bool, float> ChronoBoostInfo::useChronoBoost(float time) {
     return make_pair(false, 0);
 }
 
-MiningSpeed BuildState::miningSpeed() const {
+MiningSpeed BuildState::miningSpeed(bool debug) const {
     int harvesters = 0;
     int mules = 0;
     int bases = 0;
@@ -827,6 +827,7 @@ void BuildEvent::apply(BuildState& state) const {
 
             if (isAddon(unit)) {
                 // Normalize from e.g. TERRAN_BARRACKSTECHLAB to TERRAN_TECHLAB
+                assert(caster != UNIT_TYPEID::INVALID);
                 state.addUnits(caster, simplifyUnitType(unit), 1);
             } else {
                 state.addUnits(unit, 1);
@@ -845,6 +846,7 @@ void BuildEvent::apply(BuildState& state) const {
         case FinishedUpgrade: {
             state.upgrades.add(abilityToUpgrade(ability));
             // Make the caster unit available again
+            assert(caster != UNIT_TYPEID::INVALID);
             state.makeUnitsBusy(caster, casterAddon, -1);
             break;
         }
@@ -857,6 +859,7 @@ void BuildEvent::apply(BuildState& state) const {
             break;
         }
         case MakeUnitAvailable: {
+            assert(caster != UNIT_TYPEID::INVALID);
             state.makeUnitsBusy(caster, casterAddon, -1);
             break;
         }
@@ -1351,6 +1354,27 @@ float BuildOrderFitness::score() const {
     return s;
 }
 
+pair<vector<int>, vector<int>> calculateStartingUnitCounts(const BuildState& startState, const AvailableUnitTypes& availableUnitTypes) {
+    vector<int> startingUnitCounts(availableUnitTypes.size());
+    vector<int> startingAddonCountPerUnitType(availableUnitTypes.size());
+
+    for (auto p : startState.units) {
+        int index = availableUnitTypes.getIndexMaybe(p.type);
+        if (index != -1) {
+            startingUnitCounts[index] += p.units;
+            if (p.addon != UNIT_TYPEID::INVALID) {
+                startingUnitCounts[availableUnitTypes.getIndex(getSpecificAddonType(p.type, p.addon))] += p.units;
+                startingAddonCountPerUnitType[index] += p.units;
+            }
+        }
+    }
+    for (auto u : startState.upgrades) {
+        auto index = availableUnitTypes.getIndexMaybe(u);
+        if (index != -1) startingUnitCounts[index]++;
+    }
+    return { startingUnitCounts, startingAddonCountPerUnitType };
+}
+
 /** Calculates the fitness of a given build order gene, a higher value is better */
 BuildOrderFitness calculateFitness(const BuildState& startState, const vector<int>& startingUnitCounts, const vector<int>& startingAddonCountPerUnitType, const AvailableUnitTypes& availableUnitTypes, const BuildOrderGene& gene) {
     BuildState state = startState;
@@ -1368,7 +1392,9 @@ BuildOrderFitness calculateFitness(const BuildState& startState, const vector<in
     float totalWeight = 0.00001f;
     for (size_t i = 0; i < finishedTimes.size(); i++) {
         float t = finishedTimes[i];
+        // Really this is just a proxy for if not in economic units. Should fix
         float w = !buildOrder[i].isUnitType() || isArmy(buildOrder[i].typeID()) ? 1.0f : 0.1f;
+        if (!buildOrder[i].isUnitType() && buildOrder[i].upgradeID() == UPGRADE_ID::WARPGATERESEARCH) w = 0.1f;
         totalWeight += w;
         avgTime += w * (t + 20);  // +20 to take into account that we want the finished time of the unit, but we only have the start time
     }
@@ -1382,6 +1408,9 @@ BuildOrderFitness calculateFitness(const BuildState& startState, const vector<in
     state.simulate(60 * 2);
 
     auto miningSpeed = state.miningSpeed();
+    auto resources = state.resources;
+    resources.minerals += miningSpeed.mineralsPerSecond * (time - state.time);
+    resources.vespene += miningSpeed.vespenePerSecond * (time - state.time);
 
     float mineralEndTime = originalTime + 60;
     while(state.time < mineralEndTime) {
@@ -1396,8 +1425,39 @@ BuildOrderFitness calculateFitness(const BuildState& startState, const vector<in
     float dt = max(state.time - originalTime, 1.0f);
     MiningSpeed miningSpeedPerSecond = { (miningSpeed2.mineralsPerSecond - miningSpeed.mineralsPerSecond) / dt, (miningSpeed2.vespenePerSecond - miningSpeed.vespenePerSecond) / dt };
 
-    return BuildOrderFitness(time, state.resources, miningSpeed, miningSpeedPerSecond);
+    return BuildOrderFitness(time, resources, miningSpeed, miningSpeedPerSecond);
     // return -max(avgTime * 2, 2 * 60.0f) + (state.resources.minerals + 2 * state.resources.vespene) * 0.001 + (miningSpeed.mineralsPerSecond + 2 * miningSpeed.vespenePerSecond) * 60 * 0.005;
+}
+
+/** Convenience function */
+BuildOrderFitness calculateFitness(const BuildState& startState, const BuildOrder& buildOrder) {
+    const AvailableUnitTypes& availableUnitTypes = getAvailableUnitsForRace(startState.race, UnitCategory::BuildOrderOptions);
+    const AvailableUnitTypes& allEconomicUnits = getAvailableUnitsForRace(startState.race, UnitCategory::Economic);
+
+    // Simulate the starting state until all current events have finished, only then do we know which exact unit types the player will start with.
+    // This is important for implicit dependencies in the build order.
+    // If say a factory is under construction, we don't want to implictly build another factory if the build order specifies that a tank is supposed to be built.
+    BuildState startStateAfterEvents = startState;
+    startStateAfterEvents.simulate(startStateAfterEvents.time + 1000000);
+
+    vector<int> startingUnitCounts;
+    vector<int> startingAddonCountPerUnitType;
+    tie(startingUnitCounts, startingAddonCountPerUnitType) = calculateStartingUnitCounts(startStateAfterEvents, availableUnitTypes);
+
+    vector<int> economicUnits;
+    for (size_t i = 0; i < allEconomicUnits.size(); i++) {
+        economicUnits.push_back(remapAvailableUnitIndex(i, allEconomicUnits, availableUnitTypes));
+    }
+
+    vector<int> actionRequirements(availableUnitTypes.size());
+    BuildOrderGene gene;
+
+    for (auto item : buildOrder.items) {
+        gene.buildOrder.push_back(availableUnitTypes.getGeneItem(item));
+    }
+
+    auto newFitness = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, gene);
+    return newFitness;
 }
 
 void printMiningSpeedFuture(const BuildState& startState) {
@@ -1641,28 +1701,6 @@ vector<UNIT_TYPEID> unitTypesProtoss = {
     // UNIT_TYPEID::PROTOSS_WARPPRISMPHASING,
     UNIT_TYPEID::PROTOSS_ZEALOT,
 };
-
-
-pair<vector<int>, vector<int>> calculateStartingUnitCounts(const BuildState& startState, const AvailableUnitTypes& availableUnitTypes) {
-    vector<int> startingUnitCounts(availableUnitTypes.size());
-    vector<int> startingAddonCountPerUnitType(availableUnitTypes.size());
-
-    for (auto p : startState.units) {
-        int index = availableUnitTypes.getIndexMaybe(p.type);
-        if (index != -1) {
-            startingUnitCounts[index] += p.units;
-            if (p.addon != UNIT_TYPEID::INVALID) {
-                startingUnitCounts[availableUnitTypes.getIndex(getSpecificAddonType(p.type, p.addon))] += p.units;
-                startingAddonCountPerUnitType[index] += p.units;
-            }
-        }
-    }
-    for (auto u : startState.upgrades) {
-        auto index = availableUnitTypes.getIndexMaybe(u);
-        if (index != -1) startingUnitCounts[index]++;
-    }
-    return { startingUnitCounts, startingAddonCountPerUnitType };
-}
 
 pair<BuildOrder, vector<bool>> expandBuildOrderWithImplicitSteps (const BuildState& startState, BuildOrder buildOrder) {
     const AvailableUnitTypes& availableUnitTypes = getAvailableUnitsForRace(startState.race, UnitCategory::BuildOrderOptions);
@@ -2852,7 +2890,6 @@ bool BuildOrderFitness::operator<(const BuildOrderFitness& other) const {
 
     float estimatedResourcesPerSecond = resourcesPerSecond + (miningSpeedPerSecond.mineralsPerSecond + miningSpeedPerSecond.vespenePerSecond) * dt;
     float otherResourcesPerSecond = other.miningSpeed.mineralsPerSecond + other.miningSpeed.vespenePerSecond;
-
     // MS_a + MSS_a * (t_b - t_a) > MS_b
     // MS_a + MSS_a * 0.5 * (t_b - t_a) > MS_b - MSS_b * 0.5 * (t_b - t_a)
     // (t_b - t_a) > 2*(MS_b - MS_a)/(MSS_a - MSS_b)

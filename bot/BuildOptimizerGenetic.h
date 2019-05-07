@@ -212,11 +212,12 @@ struct BuildOrderFitness {
 };
 
 struct BaseInfo {
-    float remainingMinerals;
-    float remainingVespene1;
-    float remainingVespene2;
+    float remainingMinerals = 0;
+    float remainingVespene1 = 0;
+    float remainingVespene2 = 0;
 
-    BaseInfo (float minerals, float vespene1, float vespene2) : remainingMinerals(minerals), remainingVespene1(vespene1), remainingVespene2(vespene2) {}
+    explicit BaseInfo (float minerals, float vespene1, float vespene2) : remainingMinerals(minerals), remainingVespene1(vespene1), remainingVespene2(vespene2) {}
+    explicit BaseInfo() {}
 
     inline void mineMinerals(float amount) {
         remainingMinerals = fmax(0.0f, remainingMinerals - amount);
@@ -363,7 +364,7 @@ public:
     void killUnits(sc2::UNIT_TYPEID type, sc2::UNIT_TYPEID addon, int count);
 
     /** Returns the current mining speed of (minerals,vespene gas) per second (at normal game speed) */
-    MiningSpeed miningSpeed() const;
+    MiningSpeed miningSpeed(bool debug=false) const;
 
     /** Returns the time it will take to get the specified resources using the given mining speed */
     float timeToGetResources(MiningSpeed miningSpeed, float mineralCost, float vespeneCost) const;
