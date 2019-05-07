@@ -139,7 +139,7 @@ BuildState::BuildState(const ObservationInterface* observation, Unit::Alliance a
 
     vector<Point2D> basePositions;
     for (auto u : ourUnits) {
-        if (isTownHall(u->unit_type)) {
+        if (isTownHall(u->unit_type) && u->build_progress >= 1) {
             basePositions.push_back(u->pos);
             baseInfos.push_back(BaseInfo(0, 0, 0));
 
