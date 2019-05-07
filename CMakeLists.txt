@@ -123,6 +123,8 @@ create_executable(view_replay "" "bot/entrypoints/view_replay.cpp" "SDL2-static"
 create_executable(experiment_combat "" "bot/entrypoints/experiment_combat.cpp" "SDL2-static")
 create_executable(experiment_buildorder "" "bot/entrypoints/experiment_buildorder.cpp" "SDL2-static")
 create_executable(experiment_buildorder_sim "" "bot/entrypoints/experiment_buildorder_sim.cpp" "SDL2-static")
+create_executable(debug_bo "" "bot/entrypoints/debug_bo.cpp" "SDL2-static")
+create_executable(debug_army_comp "" "bot/entrypoints/debug_army_comp.cpp" "SDL2-static")
 
 file (GLOB build_order_train_sources "s2client-api/examples/common/*.h" "bot/*.h" "bot/behaviortree/*.h" "bot/utilities/*.h" "bot/ml/*.h" "bot/generated/*.cpp" "bot/build_order_train/main.cpp")
 # pybind11_add_module(cppbot MODULE ${build_order_train_sources})
