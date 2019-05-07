@@ -151,6 +151,7 @@ const AvailableUnitTypes unitTypesProtossBuildOrder = {
     BuildOrderItem(UPGRADE_ID::PROTOSSSHIELDSLEVEL3),
     BuildOrderItem(UPGRADE_ID::ADEPTPIERCINGATTACK),
     BuildOrderItem(UPGRADE_ID::CHARGE),
+    BuildOrderItem(UPGRADE_ID::EXTENDEDTHERMALLANCE),
 };
 
 const AvailableUnitTypes unitTypesZergBuildOrder = {
@@ -327,6 +328,8 @@ const AvailableUnitTypes unitTypesProtossCombat = {
     BuildOrderItem(UPGRADE_ID::PROTOSSAIRWEAPONSLEVEL1),
     BuildOrderItem(UPGRADE_ID::PROTOSSSHIELDSLEVEL1),
     BuildOrderItem(UPGRADE_ID::ADEPTPIERCINGATTACK),
+    // BuildOrderItem(UPGRADE_ID::CHARGE),
+    BuildOrderItem(UPGRADE_ID::EXTENDEDTHERMALLANCE),
 };
 
 const AvailableUnitTypes unitTypesZergCombat = {

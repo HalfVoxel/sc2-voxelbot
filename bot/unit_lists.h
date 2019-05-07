@@ -93,7 +93,8 @@ struct AvailableUnitTypes {
             case sc2::UPGRADE_ID::PROTOSSAIRARMORSLEVEL1:
             case sc2::UPGRADE_ID::TERRANVEHICLEANDSHIPARMORSLEVEL1:
                 // Enumerable upgrade, there are 3 upgrade levels
-                return 3;
+                // TODO: Build order execution is bugged at the moment, only the first level can be executed
+                return 1;
             default:
                 return 1;
             }
