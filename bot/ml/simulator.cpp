@@ -112,6 +112,7 @@ void SimulatorState::simulateGroupCombat(float endTime) {
                         // The team that has moved the most is the attacker
                         array<float, 2> movementAmount = {{0, 0}};
                         array<float, 2> movementWeight = {{0, 0}};
+                        float averageCombatTime = 0;
 
                         for (auto* group : nearbyGroups) {
                             if (group->order.type != SimulatorOrderType::None) {
@@ -120,10 +121,14 @@ void SimulatorState::simulateGroupCombat(float endTime) {
                                 movementAmount[group->owner-1] += movementDist * group->units.size();
                             }
                             movementWeight[group->owner-1] += group->units.size();
+                            averageCombatTime += group->combatTime * group->units.size();
                         }
 
                         if (movementWeight[0] > 0) movementAmount[0] /= movementWeight[0];
                         if (movementWeight[1] > 0) movementAmount[1] /= movementWeight[1];
+
+                        if (movementWeight[0] + movementWeight[1] > 0) averageCombatTime /= movementWeight[0] + movementWeight[1];
+                        
 
                         int defender = movementAmount[0] < movementAmount[1] ? 1 : 2;
 
@@ -132,11 +137,13 @@ void SimulatorState::simulateGroupCombat(float endTime) {
                             defender = 0;
                         }
 
-                        float maxTime = endTime - time();
+                        float startTime = averageCombatTime;
+                        float maxTime = averageCombatTime + (endTime - time());
+
                         if (simulator->debug) {
                             cout << "Starting combat between " << nearbyGroups.size() << " groups with max time " << maxTime << endl;
                         }
-                        simulator->cache.handleCombat(*this, nearbyGroups, defender, maxTime, simulator->debug);
+                        simulator->cache.handleCombat(*this, nearbyGroups, defender, startTime, maxTime, simulator->debug);
                         #if FALSE
                         // TODO: If both armies had a fight the previous time step as well, then they should already be in position (probably)
                         // TODO: What if the combat drags on longer than to endTime? (probably common in case of harassment, it takes some time for the player to start to defend)
@@ -158,6 +165,13 @@ void SimulatorState::simulateGroupCombat(float endTime) {
                 }
             }
         }
+    }
+
+    // Either update the time the groups have been in combat
+    // or reset the time to zero if they are no longer in combat.
+    for (size_t gi = 0; gi < groups.size(); gi++) {
+        if (processedGroups[gi]) groups[gi].combatTime += endTime - time();
+        else groups[gi].combatTime = 0;
     }
 
     // Remove empty groups
@@ -338,6 +352,7 @@ vector<SimulatorUnitGroup*> SimulatorState::select(int player, std::function<boo
                     // Some units should get the new order
                     newGroup.pos = group.pos;
                     newGroup.owner = group.owner;
+                    newGroup.combatTime = group.combatTime;
                     groups.push_back(move(newGroup));
                     matchingIndices.push_back(groups.size() - 1);
                 }

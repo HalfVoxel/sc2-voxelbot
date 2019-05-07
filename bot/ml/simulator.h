@@ -41,6 +41,7 @@ struct SimulatorUnitGroup {
     sc2::Point2D pos;
     sc2::Point2D previousPos;
     SimulatorOrder order;
+    float combatTime = 0;
 
     SimulatorUnitGroup () = default;
 

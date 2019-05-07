@@ -201,6 +201,18 @@ SimulatorState createSimulatorState(shared_ptr<SimulatorContext> mctsSimulator) 
         startState.addUnit(u);
     }
 
+    // If units 
+    for (auto& g1 : startState.groups) {
+        for (auto& g2 : startState.groups) {
+            if (g1.owner != g2.owner && DistanceSquared2D(g1.pos, g2.pos) < 8*8) {
+                // for (auto& u : g1.units) {
+                //     timeToBeAbleToAttack(mctsSimulator->combatPredictor.defaultEnvironment, u, )
+                // }
+                g1.combatTime = 4;
+            }
+        }
+    }
+
     for (int k = 1; k <= 2; k++) {
         BuildState validation = k == ourID ? ourBuildState : enemyBuildState;
         map<UNIT_TYPEID, int> unitCounts;
@@ -313,6 +325,7 @@ void runMCTS () {
     Point2D ourDefaultPosition = agent->Observation()->GetStartLocation();
     auto mctsSimulator = make_shared<SimulatorContext>(&bot->combatPredictor, vector<Point2D>{ ourDefaultPosition, defaultEnemyPosition });
     auto state = createSimulatorState(mctsSimulator);
+
     int ourPlayerIndex = agent->Observation()->GetPlayerID() - 1;
     w2.stop();
     MCTSSearchSC2 search = findBestActions(state, ourPlayerIndex);

@@ -92,11 +92,11 @@ pair<const BuildState*, BuildOrderState> MCTSCache::simulateBuildOrder(const Bui
     return make_pair(cache.buildState, cache.buildOrder);
 }
 
-void MCTSCache::handleCombat(SimulatorState& state, const vector<SimulatorUnitGroup*>& groups, int defender, float maxTime, bool debug) {
+void MCTSCache::handleCombat(SimulatorState& state, const vector<SimulatorUnitGroup*>& groups, int defender, float startTime, float maxTime, bool debug) {
     bool badMicro = false;
 
     CombatHasher combatHasher;
-    combatHasher.hashParams(defender, badMicro, maxTime);
+    combatHasher.hashParams(defender, badMicro, startTime, maxTime);
     for (auto* group : groups) {
         for (auto& u : group->units) combatHasher.hashUnit(u.combat);
     }
@@ -159,6 +159,8 @@ void MCTSCache::handleCombat(SimulatorState& state, const vector<SimulatorUnitGr
         settings.maxTime = maxTime;
         settings.badMicro = badMicro;
         settings.debug = debug;
+        settings.workersDoNoDamage = true;
+        settings.startTime = startTime;
         CombatResult combatResult = shared_ptr<SimulatorContext>(state.simulator)->combatPredictor->predict_engage(combatState, settings, nullptr, defender);
         applyCombatOutcome(state, groups, combatResult);
 
