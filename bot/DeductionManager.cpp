@@ -191,7 +191,7 @@ vector<pair<UNIT_TYPEID, int>> DeductionManager::ApproximateArmy(float scale) {
                 totalCount += 1;
             }
             k++;
-        } else {
+        } else if (race == Race::Protoss) {
             if ((k % 4) == 0) {
                 result.emplace_back(UNIT_TYPEID::PROTOSS_ZEALOT, 1);
                 totalCount += 1;
@@ -215,6 +215,24 @@ vector<pair<UNIT_TYPEID, int>> DeductionManager::ApproximateArmy(float scale) {
 
             if ((k % 4) == 3) {
                 result.emplace_back(UNIT_TYPEID::PROTOSS_ARCHON, 1);
+                totalCount += 1;
+            }
+
+            k++;
+        } else {
+            if ((k % 10) < 6) {
+                result.emplace_back(UNIT_TYPEID::TERRAN_MARINE, 1);
+                totalCount += 1;
+            }
+
+
+            if ((k % 10) == 6) {
+                result.emplace_back(UNIT_TYPEID::TERRAN_MARAUDER, 1);
+                totalCount += 1;
+            }
+
+            if ((k % 10) == 9) {
+                result.emplace_back(UNIT_TYPEID::TERRAN_MEDIVAC, 1);
                 totalCount += 1;
             }
 
@@ -265,7 +283,8 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
 
     for (const Unit* unit : observedUnitInstances) {
         if (unit->is_alive) {
-            if (ticksToSeconds(agent->Observation()->GetGameLoop() - unit->last_seen_game_loop) < 20 && !isStructure(unit->unit_type)) {
+            // If the unit has been seen recently or it is a building then assume it is still at the last known position.
+            if (ticksToSeconds(agent->Observation()->GetGameLoop() - unit->last_seen_game_loop) < 20 || isStructure(unit->unit_type)) {
                 result.emplace_back(CombatUnit(*unit), unit->pos);
             } else {
                 // If it was a long time since we saw the unit, assume it has moved back to the default position
@@ -303,7 +322,7 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
     // Prior
     int k = 0;
     while((int)result.size() < priorCount) {
-        if (false) {
+        if (race == Race::Zerg) {
             result.emplace_back(makeUnit(playerID, UNIT_TYPEID::ZERG_ROACH), defaultPosition);
 
             result.emplace_back(makeUnit(playerID, UNIT_TYPEID::ZERG_ZERGLING), defaultPosition);
@@ -312,7 +331,7 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
                 result.emplace_back(makeUnit(playerID, UNIT_TYPEID::ZERG_HYDRALISK), defaultPosition);
             }
             k++;
-        } else {
+        } else if (race == Race::Protoss) {
             if ((k % 4) == 0) {
                 result.emplace_back(makeUnit(playerID, UNIT_TYPEID::PROTOSS_ZEALOT), defaultPosition);
             }
@@ -329,6 +348,21 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
             if ((k % 4) == 3) {
                 result.emplace_back(makeUnit(playerID, UNIT_TYPEID::PROTOSS_ZEALOT), defaultPosition);
             }
+            k++;
+        } else {
+            if ((k % 10) < 6) {
+                result.emplace_back(makeUnit(playerID, UNIT_TYPEID::TERRAN_MARINE), defaultPosition);
+            }
+
+
+            if ((k % 10) == 6) {
+                result.emplace_back(makeUnit(playerID, UNIT_TYPEID::TERRAN_MARAUDER), defaultPosition);
+            }
+
+            if ((k % 10) == 9) {
+                result.emplace_back(makeUnit(playerID, UNIT_TYPEID::TERRAN_MEDIVAC), defaultPosition);
+            }
+
             k++;
         }
     }
