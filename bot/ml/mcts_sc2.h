@@ -80,6 +80,7 @@ struct SimulatorMCTSState {
     int player = 0;
     int count = 0;
     int seed = rand();
+    std::array<MCTSAction, 2> lastActions = {{ MCTSAction::None, MCTSAction::None }};
 
     SimulatorMCTSState (SimulatorState state, int player = 0) : state(state), player(player) {}
 
@@ -91,7 +92,7 @@ struct SimulatorMCTSState {
 
     std::vector<std::pair<int, float>> generateMoves();
 
-    float rollout() const;
+    std::array<float, 2> rollout() const;
     std::string to_string() const;
 };
 

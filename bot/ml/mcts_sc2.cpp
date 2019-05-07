@@ -63,17 +63,26 @@ float healthFraction (const SimulatorState& state, int owner) {
             assert(u.combat.owner == g.owner);
             // h += u.combat.health + u.combat.shield;
             auto& data = getUnitData(u.combat.type);
-            h += (data.mineral_cost + data.vespene_cost) * (u.combat.health + u.combat.shield) / (maxHealth(u.combat.type) + maxShield(u.combat.type));
+            h += (data.mineral_cost + data.vespene_cost) * (0.5f + 0.5f * (u.combat.health + u.combat.shield) / (maxHealth(u.combat.type) + maxShield(u.combat.type)));
+            if (!isfinite(h)) {
+                cerr << "Weird health for unit " << getUnitData(u.combat.type).name << " " << h << " " << u.combat.health << " " << u.combat.shield << " " << maxHealth(u.combat.type) << " " << maxShield(u.combat.type) << endl;
+            }
         }
+
+        if (g.owner == owner && structureGroup(g)) {
+            h *= 3;
+        }
+
         if (g.owner == owner) health += h;
         totalHealth += h;
     }
 
-    float healthFraction = totalHealth > 0 ? health / totalHealth : 0.5f;
+    float healthFraction = totalHealth > 0.0001f ? health / totalHealth : 0.5f;
     healthFraction = smoothestStep(healthFraction);
 
     float mult = 100 / (100 + state.time());
     healthFraction = (healthFraction - 0.5f) * mult + 0.5f;
+    assert(isfinite(healthFraction));
     return healthFraction;
 }
 
@@ -151,6 +160,7 @@ bool isValidDestination (vector<SimulatorUnitGroup*> groups, Point2D dest, int c
 }
 
 bool SimulatorMCTSState::executeAction(MCTSAction action, std::function<void(SimulatorUnitGroup&, SimulatorOrder)>* commandListener) {
+    lastActions[player] = (MCTSAction)action;
     int opponentID = (1 - player) + 1;
     int playerID = player + 1;
     switch(action) {
@@ -265,10 +275,20 @@ bool SimulatorMCTSState::internalStep(int action, bool ignoreUnintentionalNOOP) 
     auto simulator = shared_ptr<SimulatorContext>(state.simulator);
     Stopwatch w1;
     if (!executeAction((MCTSAction)action)) {
-        w1.stop();
-        t5 += w1.millis();
-        return false;
+        if (ignoreUnintentionalNOOP) {
+            w1.stop();
+            t5 += w1.millis();
+            return false;
+        }
     }
+
+    {
+        // Repeat the last opponent action
+        player = 1 - player;
+        executeAction(lastActions[player]);
+        player = 1 - player;
+    }
+
     w1.stop();
     t5 += w1.millis();
 
@@ -321,14 +341,14 @@ vector<pair<int, float>> SimulatorMCTSState::generateMoves() {
     return moves;
 }
 
-float SimulatorMCTSState::rollout() const {
+array<float, 2> SimulatorMCTSState::rollout() const {
     auto simulator = shared_ptr<SimulatorContext>(state.simulator);
     Stopwatch w1;
     int w = isWin();
     w1.stop();
     t1 += w1.millis();
-    if (w == -1) return 0.5f;
-    if (w != 0) return player + 1 == w ? 1 : 0;
+    if (w == -1) return {{ 0.5f, 0.5f }};
+    if (w != 0) return {{ w == 1 ? 1.0f : 0.0f, w == 2 ? 1.0f : 0.0f }};
 
     Stopwatch w2;
     // cout << state << endl;
@@ -336,28 +356,19 @@ float SimulatorMCTSState::rollout() const {
     res.count = 0;
     w2.stop();
     t2 += w2.millis();
-    /*while(res.count < 2) {
-        res.internalStep((rand() % 7));
-    }*/
+
     Stopwatch w3;
     for (int i = 0; i < 6; i++) {
         if (i == 3) {
-            res.internalStep((rand() % 9));
+            res.internalStep((rand() % 8), false);
         } else {
-            assert(res.state.time() >= simulator->simulationStartTime);
-            float newEndTime = res.state.time() + 3 + 0.2f * (res.state.time() - simulator->simulationStartTime);
-            if (newEndTime > 10000) {
-                // cerr << "Too large time2 " << res.state.time() << " " << res.simulator.simulationStartTime << " " << res.state.tick << endl;
-                // assert(false);
-            }
-            res.state.simulate(newEndTime);
+            res.internalStep((int)MCTSAction::None, false);
         }
     }
     w3.stop();
     t3 += w3.millis();
 
     Stopwatch w4;
-    float frac = healthFraction(res.state, player + 1);
     w4.stop();
     t4 += w4.millis();
 
@@ -368,7 +379,7 @@ float SimulatorMCTSState::rollout() const {
     // cout << "Simulated to " << res.state.time() << endl;
     // float frac = healthFraction(res.state, 1);
     // cout << "Eval " << player+1 << " -> " << frac << endl;
-    return frac;
+    return {{ healthFraction(res.state, 1), healthFraction(res.state, 2) }};
 }
 
 string SimulatorMCTSState::to_string() const {
