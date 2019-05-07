@@ -54,6 +54,10 @@ bool isCombatRetreat(const UnitGroup* group, Point2D movementTarget) {
     }
     if (group->units.size() > 0) meanPos /= group->units.size();
 
+    // Point is close enough to be sort of in the middle of the group.
+    // This is not a retreat.
+    if (DistanceSquared2D(meanPos, movementTarget) < 7*7) return false;
+
     auto movementDirection = movementTarget - meanPos;
     auto normalizedMovementDirection = NormalizeVector(movementDirection);
     const float DistanceThreshold = 14;
@@ -197,11 +201,17 @@ BOT::Status GroupAttackMove::OnTick() {
                     if (enemy->is_alive && enemy->display_type == Unit::DisplayType::Visible && dist < range*range*1.2f*1.2f) {
                         // Calculate a score which has the unit dps/second
                         // or in other words the average amount we will reduce the enemy dps with if we attack this enemy
-                        float score = env.calculateDPS(cUnit, cUnitEnemy) * bot->combatPredictor.targetScore(cUnitEnemy, hasGround, hasAir);
+                        float dps = env.calculateDPS(cUnit, cUnitEnemy);
+                        if (dps == 0) continue;
+
+                        float score = dps * bot->combatPredictor.targetScore(cUnitEnemy, hasGround, hasAir);
                         score /= enemy->health + enemy->shield;
 
                         // Penalty for moving outside the range
-                        if (dist > range*range) score *= 0.25f;
+                        if (dist > range*range) {
+                            score *= 0.25f;
+                            if (isMelee(unit->unit_type)) continue;
+                        }
 
                         if (score > bestScore) {
                             bestTarget = enemy;
@@ -214,8 +224,10 @@ BOT::Status GroupAttackMove::OnTick() {
                     bot->Debug()->DebugLineOut(unit->pos + Point3D(0, 0, 0.1), bestTarget->pos + Point3D(0, 0, 0.1), Colors::Red);
                 }
 
-                if (bestTarget != nullptr && (unit->orders.empty() || unit->orders[0].target_unit_tag != bestTarget->tag)) {
-                    bot->Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, bestTarget);
+                if (bestTarget != nullptr) {
+                    if (unit->orders.empty() || unit->orders[0].target_unit_tag != bestTarget->tag) {
+                        bot->Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, bestTarget);
+                    }
                 } else if (unit->orders.empty() || Distance2D(target_pos, unit->orders[unit->orders.size() - 1].target_pos) > 1) {
                     bot->Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, target_pos);
                 }
