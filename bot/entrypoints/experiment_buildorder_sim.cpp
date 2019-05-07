@@ -173,7 +173,8 @@ class ExperimentBuildOrderAgent : public Bot {
 
         armyTree->Tick();
 
-        auto doneBuildOrderActions = executeBuildOrder(ourUnits, lastStartingState, tracker, Observation()->GetMinerals(), spendingManager).second;
+        bool serialize = false;
+        auto doneBuildOrderActions = executeBuildOrder(ourUnits, lastStartingState, tracker, Observation()->GetMinerals(), spendingManager, serialize).second;
         bool anyFalse = false;
         // cout << "Tick " << Observation()->GetGameLoop() << " " << ticksToSeconds(Observation()->GetGameLoop()) << endl;
         for (int i = 0; i < doneBuildOrderActions.size(); i++) {
