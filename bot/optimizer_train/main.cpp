@@ -3,6 +3,8 @@
 #include "../BuildOptimizerGenetic.h"
 #include "../build_optimizer_nn.h"
 #include "../utilities/profiler.h"
+#include "../utilities/build_state_serialization.h"
+#include "../unit_lists.h"
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
 #include <random>
@@ -133,7 +135,7 @@ vector<UNIT_TYPEID> unitTypesProtossMilitary = {
     UNIT_TYPEID::PROTOSS_OBSERVER,
     UNIT_TYPEID::PROTOSS_ORACLE,
     // UNIT_TYPEID::PROTOSS_ORACLESTASISTRAP,
-    // UNIT_TYPEID::PROTOSS_PHOENIX,
+    UNIT_TYPEID::PROTOSS_PHOENIX,
     // UNIT_TYPEID::PROTOSS_PHOTONCANNON,
     UNIT_TYPEID::PROTOSS_PROBE,
     // UNIT_TYPEID::PROTOSS_PYLON,
@@ -301,7 +303,7 @@ vector<pair<UNIT_TYPEID, int>> sampleUnitConfig (default_random_engine& rnd, boo
 
     if (guaranteeFood) {
         int food = 0;
-        for (int i = 0; i < result.size(); i++) {
+        for (size_t i = 0; i < result.size(); i++) {
             auto& data = getUnitData(result[i].first);
             food += (data.food_provided - data.food_required) * result[i].second;
         }
@@ -325,6 +327,35 @@ vector<pair<UNIT_TYPEID, int>> sampleUnitConfig (default_random_engine& rnd, boo
     return result;
 }
 
+CombatUpgrades sampleUpgradeConfig (default_random_engine& rnd) {
+    auto availableArmyCompositionUnits = getAvailableUnitsForRace(Race::Protoss, UnitCategory::ArmyCompositionOptions);
+    vector<UPGRADE_ID> availableUpgrades;
+    for (size_t i = 0; i < availableArmyCompositionUnits.size(); i++) {
+        auto item = availableArmyCompositionUnits.getBuildOrderItem(i);
+        if (!item.isUnitType()) {
+            availableUpgrades.push_back(item.upgradeID());
+        }
+    }
+    assert(availableUpgrades.size() > 0);
+    CombatUpgrades upgrades;
+    int nUpgrades = geometric_distribution<int>(1.0f/2.0f)(rnd);
+    auto upgradeDist = uniform_int_distribution<int>(0, availableUpgrades.size() - 1);
+    for (int i = 0; i < nUpgrades; i++) {
+        UPGRADE_ID upgrade = availableUpgrades[upgradeDist(rnd)];
+        upgrades.add(upgrade);
+
+        if (isUpgradeWithLevels(upgrade)) {
+            float p = uniform_real_distribution<float>()(rnd);
+            int level = p < 0.6f ? 1 : (p < 0.9f ? 2 : 3);
+            if (level >= 2) upgrades.add((UPGRADE_ID)((int)upgrade + 1));
+            if (level >= 3) upgrades.add((UPGRADE_ID)((int)upgrade + 2));
+        }
+    }
+
+    return upgrades;
+}
+
+
 struct UnitCount {
     UNIT_TYPEID type;
     int count;
@@ -339,11 +370,15 @@ struct BuildOrderInstance {
     vector<UnitCount> startingUnits;
     vector<UnitCount> targetUnits;
     vector<UNIT_TYPEID> buildOrder;
+    MiningSpeed startingMiningSpeed;
     float buildOrderTime;
     float startingMinerals;
     float startingVespene;
     Race race;
     int version;
+    vector<UPGRADE_ID> startingUpgrades;
+    vector<UPGRADE_ID> targetUpgrades;
+    BuildOrderFitness fitness;
 
     template <class Archive>
     void serialize(Archive& archive) {
@@ -354,7 +389,12 @@ struct BuildOrderInstance {
             CEREAL_NVP(buildOrder),
             CEREAL_NVP(buildOrderTime),
             CEREAL_NVP(startingMinerals),
-            CEREAL_NVP(startingVespene)
+            CEREAL_NVP(startingVespene),
+            CEREAL_NVP(race),
+            CEREAL_NVP(startingUpgrades),
+            CEREAL_NVP(targetUpgrades),
+            CEREAL_NVP(fitness),
+            CEREAL_NVP(startingMiningSpeed)
         );
     }
 };
@@ -488,15 +528,22 @@ int main() {
         inst.race = Race::Protoss;
         auto startingUnits = sampleUnitConfig(rnd, true);
         auto targetUnits = sampleTargetUnitConfig(rnd);
-        auto targetUnitState = targetUnits;
+        auto startingUpgrades = sampleUpgradeConfig(rnd);
+        auto targetUpgrades = sampleUpgradeConfig(rnd);
+
+        vector<pair<BuildOrderItem, int>> targetUnitState;
         for (auto p : targetUnits) {
+            targetUnitState.push_back({ BuildOrderItem(p.first), p.second });
             inst.targetUnits.push_back({ p.first, p.second });
         }
         for (auto p : startingUnits) {
             inst.startingUnits.push_back({ p.first, p.second });
             // Starting units are added on top of the target units.
             // The target units are always "what units do we want *in addition* to the ones we already have"
-            targetUnitState.push_back({ p.first, p.second });
+            targetUnitState.push_back({ BuildOrderItem(p.first), p.second });
+        }
+        for (auto u : targetUpgrades) {
+            targetUnitState.push_back({ BuildOrderItem(u), 1 });
         }
         inst.startingMinerals = mineralDist(rnd);
         inst.startingVespene = vespeneDist(rnd);
@@ -506,23 +553,36 @@ int main() {
         startState.resources.minerals = inst.startingVespene;
         startState.race = inst.race;
         for (auto u : startingUnits) {
-            if (u.first == UNIT_TYPEID::PROTOSS_WARPGATE && u.second > 0) startState.upgrades.add(UPGRADE_ID::WARPGATERESEARCH);
+            if (u.first == UNIT_TYPEID::PROTOSS_WARPGATE && u.second > 0) startingUpgrades.add(UPGRADE_ID::WARPGATERESEARCH);
         }
 
+        targetUpgrades.combine(startingUpgrades);
+        startState.upgrades = startingUpgrades;
+
+        inst.startingMiningSpeed = startState.miningSpeed();
+
         inst.buildOrderTime = 1000000000;
-        inst.version = 6;
+        inst.version = 7;
+        for (auto u : startingUpgrades) inst.startingUpgrades.push_back(u);
+        for (auto u : targetUpgrades) inst.targetUpgrades.push_back(u);
+
         cout << endl << endl;
+
         for (int k = 0; k < 3; k++) {
-            auto buildOrder = findBestBuildOrderGenetic(startState, targetUnitState);
+            BuildOrder buildOrder;
+            BuildOrderFitness fitness;
+            tie(buildOrder, fitness) = findBestBuildOrderGenetic(startState, targetUnitState);
             auto state2 = startState;
             state2.simulateBuildOrder(buildOrder);
             cout << state2.time << endl;
-            if (state2.time < inst.buildOrderTime) {
+            if (k == 0 || inst.fitness < fitness) {
                 inst.buildOrder.clear();
                 for (auto item : buildOrder.items) {
-                    if (item.isUnitType()) inst.buildOrder.push_back(item.typeID());
+                    inst.buildOrder.push_back(item.rawType());
+                    // if (item.isUnitType()) inst.buildOrder.push_back(item.typeID());
                 }
                 inst.buildOrderTime = state2.time;
+                inst.fitness = fitness;
             }
         }
 
@@ -550,7 +610,7 @@ int main() {
 
         if (session.instances.size() > 20) {
             stringstream ss;
-            ss << "training_data/buildorders_time/3/chunk_" << rand() << ".json";
+            ss << "training_data/buildorders_time/4/chunk_" << rand() << ".json";
             ofstream json(ss.str());
             {
                 cereal::JSONOutputArchive archive(json);

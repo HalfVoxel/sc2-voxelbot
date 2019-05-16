@@ -18,7 +18,7 @@ import mappings
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-data_path = "training_data/buildorders_time/3"
+data_path = "training_data/buildorders_time/4"
 
 manualSeed = 123
 np.random.seed(manualSeed)
@@ -112,8 +112,8 @@ ignoreCostUnits = [
     "TERRAN_REFINERY",
 ]
 
-unitLookup = mappings.UnitLookup([u for u in mappings.protossUnits if u[0] in units])
-economicUnitLookup = mappings.UnitLookup([u for u in mappings.protossUnits if u[0] in economicallyRelevantUnitsProtoss])
+unitLookup = mappings.UnitLookup([u for u in mappings.protossUnits if u[0] in units] + mappings.protossUpgrades)
+economicUnitLookup = mappings.UnitLookup([u for u in mappings.protossUnits if u[0] in economicallyRelevantUnitsProtoss] + [u for u in mappings.protossUpgrades if u[0] == "WARPGATERESEARCH"])
 ignoreCostUnitsLookup = mappings.UnitLookup([u for u in mappings.allUnits if u[0] in ignoreCostUnits])
 assert(len(ignoreCostUnitsLookup) == len(ignoreCostUnits))
 
@@ -147,6 +147,10 @@ def load_instance(item):
     if item["buildOrderTime"] > MAX_INSTANCE_TIME:
         return
     
+    if item["fitness"]["time"] == 100000:
+        print("Skipping failed instance")
+        return
+    
     if "version" not in item:
         for v in [37, 38, 39, 49, 41, 42]:
             if v in item["buildOrder"]:
@@ -166,11 +170,26 @@ def load_instance(item):
     for u in item["targetUnits"]:
         targetUnits[unitLookup.unit_index_map[u["type"]]] += u["count"]
 
+    UPGRADE_OFFSET = 1000000
+    for u in item["startingUpgrades"]:
+        id = UPGRADE_OFFSET + u
+        allStartingUnits[unitLookup.unit_index_map[id]] += 1
+
+        if id in economicUnitLookup.unit_index_map:
+            startingUnits[economicUnitLookup.unit_index_map[id]] += 1
+
+    # print("Upgrades", item["targetUpgrades"])
+    for u in item["targetUpgrades"]:
+        # print(unitLookup[UPGRADE_OFFSET + u])
+        # print(unitLookup.unit_index_map[UPGRADE_OFFSET + u])
+        if u not in item["startingUpgrades"]:
+            targetUnits[unitLookup.unit_index_map[UPGRADE_OFFSET + u]] += 1
+
     if allStartingUnits.sum() > 200:
         # print("Skipping item with", startingUnits.sum(), "units")
         return
-    
-    debug = False and len(item["targetUnits"]) == 1 and unitLookup[item["targetUnits"][0]["type"]].name == "PROTOSS_ZEALOT"
+
+    debug = False and len(item["targetUnits"]) == 0 and len(item["targetUpgrades"]) > 0
 
     if debug:
         print("Resources ", item["startingMinerals"], item["startingVespene"])
@@ -178,6 +197,11 @@ def load_instance(item):
             print("Start unit ", unitLookup[u["type"]].name, u["count"])
         for u in item["targetUnits"]:
             print("Target unit ", unitLookup[u["type"]].name, u["count"])
+        print(item)
+        print(targetUnits)
+        print(allStartingUnits)
+        print(startingUnits)
+        exit(0)
 
     additionalMineralCost = 0
     additionalVespeneCost = 0
@@ -187,6 +211,9 @@ def load_instance(item):
             if u == u2["type"]:
                 isTargetUnit = True
         
+        if u >= UPGRADE_OFFSET:
+            isTargetUnit = True
+
         # Only if unit is not nexus/probe & unit is not part of the target units
         if isTargetUnit:
             continue
@@ -208,7 +235,7 @@ def load_instance(item):
 
     # print(targetUnits)
     # print(startingFood)
-    targetUnits = torch.max(torch.tensor(0.0), targetUnits - allStartingUnits)
+    # targetUnits = torch.max(torch.tensor(0.0), targetUnits - allStartingUnits)
     targetFood = (targetUnits * unitFoodRequirementTensor).sum()
     startingFood = (allStartingUnits * unitFoodRequirementTensor).sum()
 
@@ -221,10 +248,10 @@ def load_instance(item):
     targetUnits = torch.cat([targetUnits, targetUnits1, targetUnits2])
 
     meta = torch.zeros(META_SIZE)
-    meta[0] = item["startingMinerals"]
-    meta[1] = item["startingVespene"]
-    meta[2] = startingFood
-    meta[3] = targetFood
+    meta[0] = item["startingMinerals"] / 100
+    meta[1] = item["startingVespene"] / 100
+    meta[2] = startingFood / 10
+    meta[3] = targetFood / 10
 
     # meta[2] = item["buildOrderTime"]
 
@@ -232,7 +259,8 @@ def load_instance(item):
     assert startingUnits.shape == (STARTING_UNIT_TENSOR_SIZE,)
     assert targetUnits.shape == (TARGET_UNIT_TENSOR_SIZE,)
     originalDatas.append(item)
-    memory.add((startingUnits, targetUnits, meta, item["buildOrderTime"], len(originalDatas) - 1, additionalMineralCost, additionalVespeneCost))
+    # memory.add((startingUnits, targetUnits, meta, item["buildOrderTime"], len(originalDatas) - 1, additionalMineralCost, additionalVespeneCost))
+    memory.add((startingUnits, targetUnits, meta, item["fitness"]["time"], len(originalDatas) - 1, additionalMineralCost, additionalVespeneCost))
 
 def predict(startingUnits, resources, targetUnitsList):
     startingUnitsTensor = torch.zeros(NUM_UNITS_ECONOMICAL, dtype=torch.float)
@@ -250,9 +278,15 @@ def predict(startingUnits, resources, targetUnitsList):
     startingUnitsTensor = torch.cat([startingUnitsTensor, startingUnits1, startingUnits2])
     targetUnitTensors = []
     metas = []
+    offsets = []
     for targetUnits in targetUnitsList:
         targetUnitsTensor = torch.zeros(NUM_UNITS, dtype=torch.float)
+        offset = 0
         for u in targetUnits:
+            if u[0] == 141:
+                # Convert archons to 2 high templars
+                u = (75, u[1] * 2)
+
             targetUnitsTensor[unitLookup.unit_index_map[u[0]]] += u[1]
 
         targetFood = (targetUnitsTensor * unitFoodRequirementTensor).sum()
@@ -261,12 +295,13 @@ def predict(startingUnits, resources, targetUnitsList):
         targetUnitsTensor = torch.cat([targetUnitsTensor, targetUnits1, targetUnits2])
 
         meta = torch.zeros(META_SIZE)
-        meta[0] = resources[0]
-        meta[1] = resources[1]
-        meta[2] = startingFood
-        meta[3] = targetFood
+        meta[0] = resources[0] / 100
+        meta[1] = resources[1] / 100
+        meta[2] = startingFood / 10
+        meta[3] = targetFood / 10
         targetUnitTensors.append(targetUnitsTensor)
         metas.append(meta)
+        offsets.append((offset, 50, 50))
         
     
     numInstances = len(targetUnitsList)
@@ -280,7 +315,7 @@ def predict(startingUnits, resources, targetUnitsList):
     with torch.no_grad():
         net.eval()
         result = net(startingUnitsTensor, targetUnitsTensor, metaTensors).numpy()
-        return np.maximum(0.0, result) / np.array([[score_scale, score_scale_minerals, score_scale_vespene]])
+        return np.maximum(0.0, result) / np.array([[score_scale, score_scale_minerals, score_scale_vespene]]) + np.array(offsets)
 
 def load_session(s):
     data = json.loads(s)
@@ -308,9 +343,10 @@ class Net(nn.Module):
     #     self.layers.append(layer)
 
     def __init__(self):
-        M1 = NUM_UNITS * 4
-        M3 = NUM_UNITS * 2
-        M4 = NUM_UNITS
+        N = 50
+        M1 = N * 4
+        M3 = N * 2
+        M4 = N
         M2 = 10
         super(Net, self).__init__()
         self.fc1_1 = nn.Linear(STARTING_UNIT_TENSOR_SIZE, M1)
@@ -318,30 +354,30 @@ class Net(nn.Module):
         layers = []
         layers.append(nn.Linear(M1 * 2 + META_SIZE, M3))
         layers.append(nn.LeakyReLU())
-        # layers.append(nn.BatchNorm1d(M3))
+        layers.append(nn.BatchNorm1d(M3))
         layers.append(nn.Linear(M3, M4))
         layers.append(nn.LeakyReLU())
-        # layers.append(nn.BatchNorm1d(M4))
+        layers.append(nn.BatchNorm1d(M4))
 
         layers.append(nn.Linear(M4, M2))
         layers.append(nn.LeakyReLU())
-        # layers.append(nn.BatchNorm1d(M2))
+        layers.append(nn.BatchNorm1d(M2))
 
         layers.append(nn.Linear(M2, M2))
         layers.append(nn.LeakyReLU())
         # layers.append(nn.Dropout(0.5))
         layers.append(nn.Linear(M2, M2))
         layers.append(nn.LeakyReLU())
-        # layers.append(nn.BatchNorm1d(M2))
+        layers.append(nn.BatchNorm1d(M2))
 
         layers.append(nn.Linear(M2, M2))
         layers.append(nn.LeakyReLU())
         
-        # layers.append(nn.BatchNorm1d(M2))
+        layers.append(nn.BatchNorm1d(M2))
 
         layers.append(nn.Linear(M2, M2))
         layers.append(nn.LeakyReLU())
-        # layers.append(nn.BatchNorm1d(M2))
+        layers.append(nn.BatchNorm1d(M2))
 
         # layers.append(nn.Linear(M2, M2))
         # layers.append(nn.LeakyReLU())
@@ -581,7 +617,7 @@ def test_network():
             worstIndex = item_losses_w.argmax()
             print("Worst index " + str(worstIndex))
             print("Expected time " + str(outputs[worstIndex]/score_scale))
-            # print(originalDatas[origDataIndices[worstIndex].item()])
+            print(originalDatas[origDataIndices[worstIndex].item()])
 
         
         test_loss /= test_loss_counter * score_scale
@@ -703,10 +739,10 @@ def plot_paper_loss():
 
     plt.subplots_adjust(left=0.1, bottom=0.17, right=0.94, top=0.90, wspace=0.38, hspace=0.24)    
     # plt.pause(40)  # pause a bit so that plots are updated
-    pdf = PdfPages(f"/Users/arong/cloud/Skolarbeten/ML-2/thesis/draft/graphics/generated/bo_nn_optimizer_train.pdf")
-    pdf.savefig(fig, dpi=200)
-    pdf.close()
-    # plt.savefig(f"/Users/arong/cloud/Skolarbeten/ML-2/thesis/draft/graphics/generated/bo_nn_optimizer_train.pdf", dpi=100)
+    # pdf = PdfPages(f"/Users/arong/cloud/Skolarbeten/ML-2/thesis/draft/graphics/generated/bo_nn_optimizer_train.pdf")
+    # pdf.savefig(fig, dpi=200)
+    # pdf.close()
+    plt.savefig(f"/Users/arong/cloud/Skolarbeten/ML-2/thesis/draft/graphics/generated/bo_nn_optimizer_train.pdf", dpi=100)
 
     # 
 
@@ -791,17 +827,17 @@ if __name__ == "__main__":
 
     if args.train:
         load_all()
-        for i in range(500):
+        for i in range(150):
             optimize(1)
     
-        torch.save(net.state_dict(), "models/buildorders.weights")
+        torch.save(net.state_dict(), "models/buildorders_mean.weights")
     
     if args.visualize:
         net.load_state_dict(torch.load("models/buildorders.weights"))
         print(predict([
             (unitLookup.findByName("PROTOSS_NEXUS").type_ids[0], 1),
             (unitLookup.findByName("PROTOSS_PROBE").type_ids[0], 16),
-            (unitLookup.findByName("PROTOSS_PYLON").type_ids[0], 3),
+            (unitLookup.findByName("PROTOSS_PYLON").type_ids[0], 2),
             (unitLookup.findByName("PROTOSS_GATEWAY").type_ids[0], 2),
         ], [50, 0], [
             [
@@ -814,8 +850,43 @@ if __name__ == "__main__":
             ],
             [
                 (unitLookup.findByName("PROTOSS_ZEALOT").type_ids[0], 1),
-                (unitLookup.findByName("PROTOSS_IMMORTAL").type_ids[0], 0),
-            ]
+                (unitLookup.findByName("PROTOSS_IMMORTAL").type_ids[0], 1),
+            ],
+            [
+                (unitLookup.findByName("PROTOSS_COLOSSUS").type_ids[0], 2),
+                (unitLookup.findByName("PROTOSS_OBSERVER").type_ids[0], 0),
+            ],
+            [
+                (unitLookup.findByName("PROTOSS_COLOSSUS").type_ids[0], 2),
+                (unitLookup.findByName("PROTOSS_OBSERVER").type_ids[0], 1),
+            ],
+            [
+                (unitLookup.findByName("PROTOSS_COLOSSUS").type_ids[0], 2),
+                (unitLookup.findByName("PROTOSS_OBSERVER").type_ids[0], 0),
+            ],
+            [
+                (unitLookup.findByName("PROTOSS_COLOSSUS").type_ids[0], 2),
+                (unitLookup.findByName("PROTOSS_OBSERVER").type_ids[0], 2),
+            ],
+            [
+                (unitLookup.findByName("PROTOSS_COLOSSUS").type_ids[0], 2),
+                (unitLookup.findByName("PROTOSS_OBSERVER").type_ids[0], 3),
+            ],
+            [
+                (unitLookup.findByName("PROTOSS_COLOSSUS").type_ids[0], 2),
+                (unitLookup.findByName("PROTOSS_OBSERVER").type_ids[0], 4),
+            ],
+            [
+                (unitLookup.findByName("PROTOSS_COLOSSUS").type_ids[0], 2),
+                (unitLookup.findByName("PROTOSS_OBSERVER").type_ids[0], 5),
+            ],
+            [
+                (unitLookup.findByName("PROTOSS_COLOSSUS").type_ids[0], 2),
+                (unitLookup.findByName("PROTOSS_OBSERVER").type_ids[0], 6),
+            ],
+            [
+                (unitLookup.findByName("WARPGATERESEARCH").type_ids[0], 1),
+            ],
         ]))
 
         print(unitLookup.findByName("PROTOSS_GATEWAY").mineral_cost + unitLookup.findByName("PROTOSS_CYBERNETICSCORE").mineral_cost + unitLookup.findByName("PROTOSS_STARGATE").mineral_cost + unitLookup.findByName("PROTOSS_FLEETBEACON").mineral_cost)
@@ -823,10 +894,10 @@ if __name__ == "__main__":
     if args.plot:
         plt.ion()
         load_all()
-        net.load_state_dict(torch.load("models/buildorders.weights"))
+        net.load_state_dict(torch.load("models/buildorders_mean.weights"))
         split_data()
         test_network()
         plot_paper_loss()
 else:
     print("Loading weights")
-    net.load_state_dict(torch.load("models/buildorders.weights"))
+    net.load_state_dict(torch.load("models/buildorders_mean.weights"))
