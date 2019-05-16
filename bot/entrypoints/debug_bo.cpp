@@ -154,6 +154,9 @@ BuildOrderItem(UNIT_TYPEID::PROTOSS_NEXUS, false),
 BuildOrderItem(UNIT_TYPEID::PROTOSS_PROBE, false),
 BuildOrderItem(UNIT_TYPEID::PROTOSS_CYBERNETICSCORE, false),
 BuildOrderItem(UNIT_TYPEID::PROTOSS_SENTRY, false),
+BuildOrderItem(UNIT_TYPEID::PROTOSS_TWILIGHTCOUNCIL, false),
+BuildOrderItem(UNIT_TYPEID::PROTOSS_DARKSHRINE, false),
+
 // BuildOrderItem(UPGRADE_ID::WARPGATERESEARCH, false),
 
     };

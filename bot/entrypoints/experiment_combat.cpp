@@ -387,63 +387,176 @@ class CompositionAnalyzer2 : public sc2::Agent {
 		} },
 
         { {
-            makeUnit(1, UNIT_TYPEID::TERRAN_MARAUDER),
-            makeUnit(1, UNIT_TYPEID::TERRAN_MARAUDER),
-            makeUnit(1, UNIT_TYPEID::TERRAN_MARAUDER),
-            makeUnit(1, UNIT_TYPEID::TERRAN_MARAUDER),
-            makeUnit(1, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ARCHON),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ARCHON),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ARCHON),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ARCHON),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ZEALOT),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ZEALOT),
 
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
-            makeUnit(2, UNIT_TYPEID::ZERG_ZERGLING),
+
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+		} },
+
+        { {
+            makeUnit(1, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_SENTRY),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ARCHON),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ARCHON),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ARCHON),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ARCHON),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ZEALOT),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ZEALOT),
+
+
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+		} },
+
+        { {
+            makeUnit(1, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_SENTRY),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_SENTRY),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_SENTRY),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ARCHON),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ARCHON),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ARCHON),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ARCHON),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ZEALOT),
+
+
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+		} },
+
+        { {
+            makeUnit(1, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_IMMORTAL),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_SENTRY),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_SENTRY),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_SENTRY),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_SENTRY),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ARCHON),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ARCHON),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ARCHON),
+            makeUnit(1, UNIT_TYPEID::PROTOSS_ARCHON),
+
+
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARINE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_MARAUDER),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
+            makeUnit(2, UNIT_TYPEID::TERRAN_BANSHEE),
 		} },
         };
 
@@ -519,16 +632,16 @@ class CompositionAnalyzer2 : public sc2::Agent {
                 }
             }
 
-            vector<CombatSettings> allSettings(6);
-            allSettings[1].enableMeleeBlocking = false;
-            allSettings[2].enableSplash = false;
-            allSettings[3].enableSurroundLimits = false;
-            allSettings[3].debug = true;
-            allSettings[4].enableTimingAdjustment = false;
-            allSettings[5].assumeReasonablePositioning = false;
-
             if (!anyAlive || ticksToSeconds(Observation()->GetGameLoop() - combatStartTime) > 60) {
                 if (recorder != nullptr) {
+                    vector<CombatSettings> allSettings(6);
+                    allSettings[1].enableMeleeBlocking = false;
+                    allSettings[2].enableSplash = false;
+                    allSettings[3].enableSurroundLimits = false;
+                    allSettings[0].debug = true;
+                    allSettings[4].enableTimingAdjustment = false;
+                    allSettings[5].assumeReasonablePositioning = false;
+                
                     stringstream ss;
                     ss << "experiment_results/combat/test" << combatIndex << "_real.csv";
                     recorder->finalize(ss.str());
@@ -593,6 +706,8 @@ int main(int argc, char* argv[]) {
 
     coordinator.SetMultithreaded(true);
 
+    initMappings();
+    
     CompositionAnalyzer2 bot;
     agent = &bot;
     coordinator.SetParticipants({ CreateParticipant(Race::Terran, &bot) });
