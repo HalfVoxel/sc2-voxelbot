@@ -122,7 +122,7 @@ def visualize(units, state_time, health_fraction1, health_fraction2, observation
         actual_time = lerp(last_time, state_time, t)
         print(f"Time: {actual_time}")
         f, axs = plt.subplots(3, 3, num=1, clear=True, figsize=(9, 9))
-        
+
         data = [animate_unit1(u1, u2, t) for (u1, u2) in all_units]
         xs = np.array([v[0] for v in data])
         ys = np.array([v[1] for v in data])
@@ -136,7 +136,7 @@ def visualize(units, state_time, health_fraction1, health_fraction2, observation
         plt.scatter(xs, ys, c=colors, alpha=0.5, s=alphas)
 
         plt.sca(axs[0, 1])
-        plt.ylim(0, 1)
+        # plt.ylim(0, 1)
         plt.bar([1, 2], [health_fraction1, health_fraction2])
 
         for playerIndex in [0, 1]:
@@ -147,7 +147,7 @@ def visualize(units, state_time, health_fraction1, health_fraction2, observation
             names = [lookup[x].name.replace("PROTOSS_", "").title() for x in indices]
             plt.bar(list(range(len(names))), vals, tick_label=names, color=np.array([55,126,184])/255 if playerIndex == 0 else np.array([228,26,28])/255)
             plt.xticks(rotation=90)
-        
+
         if observation is not None:
             mips = [(0, 2), (1, 2), (2, 0), (2, 1), (2, 2)]
             NUM_MINIMAPS = 5
