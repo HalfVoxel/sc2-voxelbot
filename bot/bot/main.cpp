@@ -98,7 +98,7 @@ static bool RunBotLocal(int argc, char *argv[], sc2::Agent *Agent,sc2::Race race
     coordinator.LaunchStarcraft();
 
     bot->OnGameLoading();
-    coordinator.StartGame(ParaSiteLE);
+    coordinator.StartGame(EastwatchLE);
 
     while (coordinator.Update()) {
         // if (PollKeyPress()) {
@@ -124,7 +124,7 @@ int main(int argc, char* argv[]) {
     bot = new Bot();
     agent = bot;
 
-    // if (RunBot(argc, argv, agent, Race::Protoss)) return 0;
+    if (RunBot(argc, argv, agent, Race::Protoss)) return 0;
 
     if (RunBotLocal(argc, argv, agent, Race::Protoss)) return 0;
 
