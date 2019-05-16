@@ -303,7 +303,7 @@ const AvailableUnitTypes unitTypesTerranCombat = {
 const AvailableUnitTypes unitTypesProtossCombat = {
     BuildOrderItem(UNIT_TYPEID::PROTOSS_ADEPT),
     // Archon needs special rules before it is supported by the build optimizer
-    // BuildOrderItem(UNIT_TYPEID::PROTOSS_ARCHON),
+    BuildOrderItem(UNIT_TYPEID::PROTOSS_ARCHON),
     BuildOrderItem(UNIT_TYPEID::PROTOSS_CARRIER),
     BuildOrderItem(UNIT_TYPEID::PROTOSS_COLOSSUS),
     BuildOrderItem(UNIT_TYPEID::PROTOSS_DARKTEMPLAR),
