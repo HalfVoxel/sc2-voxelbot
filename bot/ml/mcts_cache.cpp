@@ -16,6 +16,31 @@ BuildState* MCTSCache::copyState(const BuildState& state) {
     return buildStateAllocator.allocate(state);
 }
 
+void applyReward(SimulatorState& state, const CombatUnit& oldUnit, const CombatUnit& newUnit) {
+    float healthDelta = (newUnit.health + newUnit.shield) - (oldUnit.health + oldUnit.shield);
+
+    if (healthDelta != 0) {
+        // Temporary unit, don't give rewards for it
+        if (newUnit.type == UNIT_TYPEID::ZERG_BROODLING) return;
+
+        // Additional penalty for actually killing a unit
+        if (newUnit.health == 0) healthDelta -= (maxHealth(newUnit.type) + maxShield(newUnit.type)) * 0.25f;
+
+        float rewardDecay = exp(-(state.time() - shared_ptr<SimulatorContext>(state.simulator)->simulationStartTime) / 200.0f);
+        // Kill rewards decay, losses do not
+        // Loosing structures is really bad
+        int playerIndex = newUnit.owner - 1;
+        int opponentIndex = 1 - playerIndex;
+
+        if (shared_ptr<SimulatorContext>(state.simulator)->debug) {
+            cout << "Reward " << healthDelta << " " << rewardDecay << endl;
+        }
+
+        state.rewards[playerIndex] += healthDelta * (isStructure(newUnit.type) ? 3.0f : 1.0f);
+        state.rewards[opponentIndex] -= healthDelta * rewardDecay;
+    }
+}
+
 void MCTSCache::applyCombatOutcome(SimulatorState& state, const vector<SimulatorUnitGroup*>& groups, const CombatResult& outcome) {
     array<BuildState*, 2> newStates = {{ copyState(*state.states[0]), copyState(*state.states[1]) }};
     state.states[0] = newStates[0];
@@ -24,7 +49,9 @@ void MCTSCache::applyCombatOutcome(SimulatorState& state, const vector<Simulator
     int index = 0;
     for (auto* group : groups) {
         for (auto& u : group->units) {
-            u.combat = outcome.state.units[index];
+            auto& newUnit = outcome.state.units[index];
+            applyReward(state, u.combat, newUnit);
+            u.combat = newUnit;
             index++;
 
             if (u.combat.health <= 0) {
@@ -58,7 +85,7 @@ pair<const BuildState*, BuildOrderState> MCTSCache::simulateBuildOrder(const Bui
     // cout << "Simulating " << state.immutableHash() << " to " << endTime << endl;
     simTot++;
     if (simTot % 5000 == 0) {
-        cout << "Stats " << simHits << "/" << simTot << " " << combatHits << "/" << combatTot << endl;
+        // cout << "Stats " << simHits << "/" << simTot << " " << combatHits << "/" << combatTot << endl;
     }
 
     auto ptr = simulationCache.find(hash);
@@ -123,8 +150,10 @@ void MCTSCache::handleCombat(SimulatorState& state, const vector<SimulatorUnitGr
             int index = 0;
             for (auto* group : groups) {
                 for (auto& u : group->units) {
-                    assert(u.combat.type == outcome.state.units[index].type);
-                    u.combat = outcome.state.units[index];
+                    auto& newUnit = outcome.state.units[index];
+                    assert(u.combat.type == newUnit.type);
+                    applyReward(state, u.combat, newUnit);
+                    u.combat = newUnit;
                     index++;
                 }
 
