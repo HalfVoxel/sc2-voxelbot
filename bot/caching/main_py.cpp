@@ -10,6 +10,7 @@
 #include "../utilities/unit_data_caching.h"
 #include "sc2api/sc2_api.h"
 #include "sc2utils/sc2_manage_process.h"
+#include "../unit_lists.h"
 
 using namespace sc2;
 using namespace std;
@@ -92,6 +93,17 @@ void printMappings() {
 
             output << ", " << minerals << ", " << vespene;
             output << ")," << endl;
+        }
+        output << "]" << endl << endl;
+
+        auto& availableUnits = getAvailableUnitsForRace((Race)race, UnitCategory::BuildOrderOptions);
+        output << RaceToString((Race)race) << "Upgrades = [" << endl;
+        for (size_t i = 0; i < availableUnits.size(); i++) {
+            auto item = availableUnits.getBuildOrderItem(i);
+            if (!item.isUnitType()) {
+                auto upgrade = item.upgradeID();
+                output << "    Unit(\"" << UpgradeIDToName(upgrade) << "\", " << "False" << ", [" << (int)item.rawType() << "], \"" << RaceToString((Race)race) << "\"" << ", " << 0 << ", " << getUpgradeData(upgrade).mineral_cost << ", " << getUpgradeData(upgrade).vespene_cost << ")," << endl;
+            }
         }
         output << "]" << endl << endl;
     }

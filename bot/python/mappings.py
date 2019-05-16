@@ -1,6 +1,6 @@
 import numpy as np
 from typing import List
-from generated_mappings import terranUnits, zergUnits, protossUnits, Unit
+from generated_mappings import terranUnits, zergUnits, protossUnits, Unit, terranUpgrades, zergUpgrades, protossUpgrades
 
 allUnits = terranUnits + zergUnits + protossUnits
 ignoredUnits = {

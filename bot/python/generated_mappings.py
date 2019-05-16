@@ -49,6 +49,9 @@ terranUnits = [
    # Unit("TERRAN_KD8CHARGE", False, [830], "terran", 0, 0, 0),
 ]
 
+terranUpgrades = [
+]
+
 zergUnits = [
    Unit("ZERG_INFESTORTERRAN", True, [7], "zerg", 0, 0, 0),
    Unit("ZERG_BANELINGCOCOON", True, [8], "zerg", -0.5, 50, 25),
@@ -103,6 +106,9 @@ zergUnits = [
    Unit("ZERG_OVERLORDTRANSPORT", True, [893], "zerg", 8, 100, 0),
 ]
 
+zergUpgrades = [
+]
+
 protossUnits = [
    Unit("PROTOSS_COLOSSUS", True, [4], "protoss", -6, 300, 200),
    Unit("PROTOSS_MOTHERSHIP", True, [10], "protoss", -8, 400, 400),
@@ -144,5 +150,27 @@ protossUnits = [
    # Unit("PROTOSS_ORACLESTASISTRAP", False, [732], "protoss", 0, 0, 0),
    # Unit("PROTOSS_DISRUPTORPHASED", True, [733], "protoss", -3, 0, 0),
    Unit("PROTOSS_SHIELDBATTERY", False, [1910], "protoss", 0, 100, 0),
+]
+
+protossUpgrades = [
+    Unit("WARPGATERESEARCH", False, [1000084], "protoss", 0, 50, 50),
+    Unit("PROTOSSGROUNDARMORSLEVEL1", False, [1000042], "protoss", 0, 100, 100),
+    Unit("PROTOSSGROUNDARMORSLEVEL2", False, [1000043], "protoss", 0, 150, 150),
+    Unit("PROTOSSGROUNDARMORSLEVEL3", False, [1000044], "protoss", 0, 200, 200),
+    Unit("PROTOSSGROUNDWEAPONSLEVEL1", False, [1000039], "protoss", 0, 100, 100),
+    Unit("PROTOSSGROUNDWEAPONSLEVEL2", False, [1000040], "protoss", 0, 150, 150),
+    Unit("PROTOSSGROUNDWEAPONSLEVEL3", False, [1000041], "protoss", 0, 200, 200),
+    Unit("PROTOSSAIRWEAPONSLEVEL1", False, [1000078], "protoss", 0, 100, 100),
+    Unit("PROTOSSAIRWEAPONSLEVEL2", False, [1000079], "protoss", 0, 175, 175),
+    Unit("PROTOSSAIRWEAPONSLEVEL3", False, [1000080], "protoss", 0, 250, 250),
+    Unit("PROTOSSAIRARMORSLEVEL1", False, [1000081], "protoss", 0, 150, 150),
+    Unit("PROTOSSAIRARMORSLEVEL2", False, [1000082], "protoss", 0, 225, 225),
+    Unit("PROTOSSAIRARMORSLEVEL3", False, [1000083], "protoss", 0, 300, 300),
+    Unit("PROTOSSSHIELDSLEVEL1", False, [1000045], "protoss", 0, 150, 150),
+    Unit("PROTOSSSHIELDSLEVEL2", False, [1000046], "protoss", 0, 225, 225),
+    Unit("PROTOSSSHIELDSLEVEL3", False, [1000047], "protoss", 0, 300, 300),
+    Unit("ADEPTPIERCINGATTACK", False, [1000130], "protoss", 0, 100, 100),
+    Unit("CHARGE", False, [1000086], "protoss", 0, 100, 100),
+    Unit("EXTENDEDTHERMALLANCE", False, [1000050], "protoss", 0, 150, 150),
 ]
 
