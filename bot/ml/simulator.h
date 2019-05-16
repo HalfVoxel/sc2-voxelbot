@@ -61,6 +61,7 @@ struct SimulatorState {
     std::array<const BuildState*, 2> states;
     std::vector<SimulatorUnitGroup> groups;
     std::array<BuildOrderState, 2> buildOrders;
+    std::array<float, 2> rewards = {{ 0, 0 }};
     int tick = 0;
     
     float time() const {
