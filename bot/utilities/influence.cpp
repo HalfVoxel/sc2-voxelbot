@@ -10,12 +10,22 @@
 using namespace std;
 using namespace sc2;
 
-InfluenceMap::InfluenceMap(sc2::ImageData map)
+InfluenceMap::InfluenceMap(const sc2::ImageData map)
     : InfluenceMap(map.width, map.height) {
     assert(map.bits_per_pixel == 8);
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
             weights[y * w + x] = (uint8_t)map.data[(h - y - 1) * w + x] == 255 ? 0.0 : 1.0;
+        }
+    }
+}
+
+InfluenceMap::InfluenceMap(const SC2APIProtocol::ImageData map)
+    : InfluenceMap(map.size().x(), map.size().y()) {
+    auto& data = map.data();
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            weights[y * w + x] = (uint8_t)data[(h - y - 1) * w + x];
         }
     }
 }

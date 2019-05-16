@@ -15,7 +15,8 @@ struct InfluenceMap {
         weights = std::vector<double>(width*height, 0.0);
     }
 
-    InfluenceMap(sc2::ImageData map);
+    InfluenceMap(const sc2::ImageData map);
+    InfluenceMap(const SC2APIProtocol::ImageData map);
 
     inline double& operator()(int x, int y) {
         return weights[y*w + x];
