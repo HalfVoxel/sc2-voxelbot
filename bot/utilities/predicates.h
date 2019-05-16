@@ -34,3 +34,5 @@ bool isMelee(sc2::UNIT_TYPEID type);
 bool isInfantry(sc2::UNIT_TYPEID type);
 bool isChangeling(sc2::UNIT_TYPEID type);
 bool hasBuff (const sc2::Unit* unit, sc2::BUFF_ID buff);
+bool isUpgradeWithLevels(sc2::UPGRADE_ID upgrade);
+bool isTownHall(sc2::UNIT_TYPEID type);

@@ -45,22 +45,6 @@ inline bool isBasicHarvester(sc2::UNIT_TYPEID type) {
     }
 }
 
-inline bool isTownHall(sc2::UNIT_TYPEID type) {
-    switch (type) {
-        case sc2::UNIT_TYPEID::ZERG_HATCHERY:
-        case sc2::UNIT_TYPEID::ZERG_LAIR:
-        case sc2::UNIT_TYPEID::ZERG_HIVE:
-        case sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER:
-        case sc2::UNIT_TYPEID::TERRAN_ORBITALCOMMAND:
-        case sc2::UNIT_TYPEID::TERRAN_ORBITALCOMMANDFLYING:
-        case sc2::UNIT_TYPEID::TERRAN_PLANETARYFORTRESS:
-        case sc2::UNIT_TYPEID::PROTOSS_NEXUS:
-            return true;
-        default:
-            return false;
-    }
-}
-
 inline bool isVespeneHarvester(sc2::UNIT_TYPEID type) {
     switch (type) {
         case sc2::UNIT_TYPEID::TERRAN_REFINERY:

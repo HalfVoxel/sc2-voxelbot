@@ -21,7 +21,7 @@ bool IsFlying::operator()(const Unit& unit) {
 }
 
 bool IsArmy::operator()(const Unit& unit) {
-    auto attributes = observation_->GetUnitTypeData().at(unit.unit_type).attributes;
+    auto attributes = getUnitData(unit.unit_type).attributes;
     for (const auto& attribute : attributes) {
         if (attribute == Attribute::Structure) {
             return false;
@@ -121,7 +121,7 @@ bool IsVespeneGeyser::operator()(const Unit& unit) {
 }
 
 bool IsStructure::operator()(const Unit& unit) {
-    return isStructure(observation_->GetUnitTypeData().at(unit.unit_type));
+    return isStructure(getUnitData(unit.unit_type));
 }
 
 bool isStructure(const UnitTypeData& unitType) {
@@ -198,4 +198,43 @@ bool isChangeling(sc2::UNIT_TYPEID type) {
 bool hasBuff (const Unit* unit, BUFF_ID buff) {
     for (auto b : unit->buffs) if (b == buff) return true;
     return false;
+}
+
+bool isUpgradeWithLevels(sc2::UPGRADE_ID upgrade) {
+    switch(upgrade) {
+    case sc2::UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1:
+    case sc2::UPGRADE_ID::TERRANINFANTRYARMORSLEVEL1:
+    case sc2::UPGRADE_ID::TERRANVEHICLEWEAPONSLEVEL1:
+    case sc2::UPGRADE_ID::TERRANSHIPWEAPONSLEVEL1:
+    case sc2::UPGRADE_ID::PROTOSSGROUNDWEAPONSLEVEL1:
+    case sc2::UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL1:
+    case sc2::UPGRADE_ID::PROTOSSSHIELDSLEVEL1:
+    case sc2::UPGRADE_ID::ZERGMELEEWEAPONSLEVEL1:
+    case sc2::UPGRADE_ID::ZERGGROUNDARMORSLEVEL1:
+    case sc2::UPGRADE_ID::ZERGMISSILEWEAPONSLEVEL1:
+    case sc2::UPGRADE_ID::ZERGFLYERWEAPONSLEVEL1:
+    case sc2::UPGRADE_ID::ZERGFLYERARMORSLEVEL1:
+    case sc2::UPGRADE_ID::PROTOSSAIRWEAPONSLEVEL1:
+    case sc2::UPGRADE_ID::PROTOSSAIRARMORSLEVEL1:
+    case sc2::UPGRADE_ID::TERRANVEHICLEANDSHIPARMORSLEVEL1:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool isTownHall(sc2::UNIT_TYPEID type) {
+    switch (type) {
+        case UNIT_TYPEID::ZERG_HATCHERY:
+        case UNIT_TYPEID::ZERG_LAIR:
+        case UNIT_TYPEID::ZERG_HIVE:
+        case UNIT_TYPEID::TERRAN_COMMANDCENTER:
+        case UNIT_TYPEID::TERRAN_ORBITALCOMMAND:
+        case UNIT_TYPEID::TERRAN_ORBITALCOMMANDFLYING:
+        case UNIT_TYPEID::TERRAN_PLANETARYFORTRESS:
+        case UNIT_TYPEID::PROTOSS_NEXUS:
+            return true;
+        default:
+            return false;
+    }
 }
