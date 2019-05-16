@@ -13,6 +13,7 @@
 #include "sc2utils/sc2_manage_process.h"
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
+#include "sc2utils/sc2_arg_parser.h"
 
 // Protoss:
 // e5242d0a121db241ccfca68150feea57deeb82b9d7000e7d00c84b5cba4e511e.SC2Replay
@@ -83,6 +84,31 @@ class Replay : public sc2::ReplayObserver {
     }
 };
 
+struct ReplayOptions {
+	string path = "";
+	int perspective = 1;
+};
+
+static void ParseArguments(int argc, char *argv[], ReplayOptions& options) {
+	sc2::ArgParser arg_parser(argv[0]);
+
+	std::vector<sc2::Arg> args = {
+		sc2::Arg("-r", "--replay", "Replay path", true),
+		sc2::Arg("-p", "--perspective", "Perspective (0 = both, 1 = player1, 2 = player2", false),
+	};
+	arg_parser.AddOptions(args);
+
+	arg_parser.Parse(argc, argv);
+	std::string p;
+	if (arg_parser.Get("replay", p)) {
+		options.path = p;
+	}
+    if (arg_parser.Get("perspective", p)) {
+        stringstream ss(p);
+        ss >> options.perspective;
+	}
+}
+
 int main(int argc, char* argv[]) {
 
     sc2::Coordinator coordinator;
@@ -96,11 +122,15 @@ int main(int argc, char* argv[]) {
     //     std::cout << "Unable to find replays." << std::endl;
     //     return 1;
     // }
-    vector<string> list = { "/Users/arong/Programming/kth/thesis/laddertest/replays/VoxelbotvKagamine-Bandwidth.SC2Replay"};
+    // vector<string> list = { "/Users/arong/Programming/kth/thesis/laddertest/replays/VoxelbotvAdditionalPylons-Bandwidth.SC2Replay"};
+
+    ReplayOptions options;
+    ParseArguments(argc, argv, options);
+    vector<string> list = { options.path };
     coordinator.LoadReplayList(list);
 
     Replay replay_observer1;
-    replay_observer1.playerID = 1;
+    replay_observer1.playerID = options.perspective;
     coordinator.AddReplayObserver(&replay_observer1);
 
     default_random_engine rnd(time(0));
