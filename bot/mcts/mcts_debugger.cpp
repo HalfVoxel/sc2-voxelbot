@@ -46,7 +46,8 @@ void MCTSDebugger::visualize(SimulatorState& state) {
     }
 
     lock_guard<mutex> lock(python_thread_mutex);
-    visualize_fn(units, state.time(), healthFraction(state, 1), healthFraction(state, 2));
+    // visualize_fn(units, state.time(), healthFraction(state, 1), healthFraction(state, 2));
+    visualize_fn(units, state.time(), state.rewards[0], state.rewards[1]);
 #endif
 }
 
