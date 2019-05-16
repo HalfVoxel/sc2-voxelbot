@@ -312,8 +312,16 @@ RLPlanningEnv RLEnvManager::getEnv() {
         vector<Point2D> spawningPoints(2);
         spawningPoints[0] = nexus1.first->pos;
         spawningPoints[1] = nexus2.first->pos;
+
+        array<vector<Point2D>, 2> extraDestinations = {{ {}, {} }};
+        extraDestinations[0].push_back(Point2D(168/2, 168/2));
+        extraDestinations[0].push_back(Point2D(168, 168));
+        extraDestinations[0].push_back(Point2D(0, 0));
+        extraDestinations[1].push_back(Point2D(168/2, 168/2));
+        extraDestinations[1].push_back(Point2D(168, 168));
+        extraDestinations[1].push_back(Point2D(0, 0));
         
-        auto simulator = make_shared<SimulatorContext>(&combatPredictor, spawningPoints );
+        auto simulator = make_shared<SimulatorContext>(&combatPredictor, spawningPoints, extraDestinations);
         simulatorState.simulator = simulator;
         SimulatorMCTSState mctsState(simulatorState, playerID - 1);
 
