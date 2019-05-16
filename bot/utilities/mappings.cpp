@@ -173,9 +173,19 @@ void init() {
     mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PROTOSSAIRWEAPONSLEVEL2].push_back(UNIT_TYPEID::PROTOSS_CYBERNETICSCORE);
     mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PROTOSSAIRWEAPONSLEVEL3].push_back(UNIT_TYPEID::PROTOSS_CYBERNETICSCORE);
 
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_GRAVITICBOOSTER] = { UNIT_TYPEID::PROTOSS_ROBOTICSBAY };
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_GRAVITICDRIVE] = { UNIT_TYPEID::PROTOSS_ROBOTICSBAY };
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_EXTENDEDTHERMALLANCE] = { UNIT_TYPEID::PROTOSS_ROBOTICSBAY };
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_CHARGE] = { UNIT_TYPEID::PROTOSS_TWILIGHTCOUNCIL };
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_BLINK] = { UNIT_TYPEID::PROTOSS_TWILIGHTCOUNCIL };
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_ADEPTRESONATINGGLAIVES] = { UNIT_TYPEID::PROTOSS_TWILIGHTCOUNCIL };
+    mAbilityToCasterUnit[(int)ABILITY_ID::RESEARCH_PSISTORM] = { UNIT_TYPEID::PROTOSS_TEMPLARARCHIVE };
+    
+
+
     mCanBecome = vector<vector<UNIT_TYPEID>>(unitTypes.size());
     mHasBeen = vector<vector<UNIT_TYPEID>>(unitTypes.size());
-    for (int i = 0; i < unitTypes.size(); i++) {
+    for (size_t i = 0; i < unitTypes.size(); i++) {
         const UnitTypeData& unitTypeData = unitTypes[i];
         mHasBeen[i].push_back(unitTypeData.unit_type_id);
 
@@ -240,7 +250,7 @@ void init() {
         }
     }
 
-    for (int i = 0; i < unitTypes.size(); i++) {
+    for (size_t i = 0; i < unitTypes.size(); i++) {
         if (mCanBecome[i].size() == 0)
             continue;
 
@@ -287,7 +297,7 @@ void init() {
 
     mIsStationary = vector<bool>(mUnitTypes.size());
     mIsStructure = vector<bool>(mUnitTypes.size());
-    for (int i = 0; i < mUnitTypes.size(); i++) {
+    for (size_t i = 0; i < mUnitTypes.size(); i++) {
         mIsStationary[i] = mUnitTypes[i].movement_speed <= 0.0f;
         mIsStructure[i] = isStructure(getUnitData((UNIT_TYPEID)i));
     }
@@ -345,6 +355,8 @@ void assertMappingsInitialized() {
 }
 
 void initMappings(const ObservationInterface* observation) {
+    if (mappingInitialized)
+        return;
     mUnitTypes = observation->GetUnitTypeData();
     mAbilities = observation->GetAbilityData();
     mUpgrades = observation->GetUpgradeData();
@@ -352,6 +364,8 @@ void initMappings(const ObservationInterface* observation) {
 }
 
 void initMappings() {
+    if (mappingInitialized)
+        return;
     mUnitTypes = load_unit_data();
     mAbilities = load_ability_data();
     mUpgrades = load_upgrade_data();
