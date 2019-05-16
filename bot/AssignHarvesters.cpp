@@ -163,7 +163,7 @@ Status AssignHarvesters::MineIdleWorkers(const Unit* worker, AbilityID worker_ga
         if (base->assigned_harvesters < base->ideal_harvesters) score += 1;
         if (base->assigned_harvesters < (base->ideal_harvesters * 3)/2) score += 1;
         score += 0.001f * (base->ideal_harvesters - base->assigned_harvesters);
-        score -= 0.03f * Distance2D(worker->pos, base->pos);
+        score -= 0.02f * Distance2D(worker->pos, base->pos);
         if (score > baseScore) {
             baseScore = score;
             closestBase = base;
