@@ -92,6 +92,20 @@ void SimulatorState::simulateGroupCombat(float endTime) {
     float combatThreshold = 8;
     auto simulator = shared_ptr<SimulatorContext>(this->simulator);
     vector<bool> processedGroups(groups.size());
+
+    map<pair<int,int>, vector<SimulatorUnitGroup*>> groupLookup;
+    for (size_t gi1 = 0; gi1 < groups.size(); gi1++) {
+        auto& group1 = groups[gi1];
+        if (group1.owner == 2) {
+            pair<int,int> p = { (int)(group1.pos.x / combatThreshold), (int)(group1.pos.y / combatThreshold) };
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    groupLookup[{ p.first + dx, p.second + dy }].push_back(&group1);
+                }
+            }
+        }
+    }
+
     for (size_t gi1 = 0; gi1 < groups.size(); gi1++) {
         auto& group1 = groups[gi1];
         if (group1.owner == 1 && group1.units.size() > 0 && !processedGroups[gi1]) {
@@ -100,100 +114,119 @@ void SimulatorState::simulateGroupCombat(float endTime) {
             // E.g. if groups A, B are close to each other and B is an enemy, but groups B and C are also close but not so close that they get included in the A-B fight.
             // Could equally well have done the check only for enemy units but not for our units.
             // Essentially we want to prevent any given pair of groups from being included in a fight more than once
-            for (auto& group2 : groups) {
-                if (group2.owner == 2 && group2.units.size() > 0 && DistanceSquared2D(group1.pos, group2.pos) < combatThreshold*combatThreshold) {
-                    // Possible combat
-                    // Collect all groups nearby
-                    // Check if the groups can fight each other
-                    // Simulate outcome of battle
-                    auto mean = (group1.pos + group2.pos) * 0.5f;
-                    vector<SimulatorUnitGroup*> nearbyGroups;
-                    for (size_t gi3 = 0; gi3 < groups.size(); gi3++) {
-                        auto& group3 = groups[gi3];
-                        // Check if it is close enough
-                        // Also make sure that owner=1 groups are never included twice in a fight
-                        if (DistanceSquared2D(mean, group3.pos) < combatThreshold*combatThreshold && group3.units.size() > 0 && (group3.owner != 1 || !processedGroups[gi3])) {
-                            nearbyGroups.push_back(&group3);
-                            // Mark the group as processed so that we don't include it in a combat again (if it is an ally group)
-                            processedGroups[gi3] = true;
-                        }
-                    }
+            pair<int,int> cell = { (int)(group1.pos.x / combatThreshold), (int)(group1.pos.y / combatThreshold) };
+            
+            // Check if any group might be close
+            if (!groupLookup.count(cell)) continue;
 
-                    // TODO: Handle cloak
+            const vector<SimulatorUnitGroup*>& possiblyNearbyGroups = groupLookup[cell];
 
-                    array<array<float, 2>, 2> dps {{{{0, 0}}, {{0, 0}}}}; // (2, vector<float>(2));
-                    array<array<bool, 2>, 2> hasAirGround {{{{false, false}}, {{false, false}}}};
-                    // vector<vector<bool>> hasAirGround(2, vector<bool>(2));
-                    auto& combatEnv = simulator->combatPredictor->getCombatEnvironment(this->states[0]->upgrades, this->states[1]->upgrades);
-
-                    for (auto* group : nearbyGroups) {
-                        for (auto& unit : group->units) {
-                            dps[group->owner - 1][0] += combatEnv.calculateDPS(1, unit.combat.type, false);
-                            dps[group->owner - 1][1] += combatEnv.calculateDPS(1, unit.combat.type, true);
-                            hasAirGround[group->owner - 1][0] = hasAirGround[group->owner - 1][0] | !unit.combat.is_flying;
-                            hasAirGround[group->owner - 1][1] = hasAirGround[group->owner - 1][1] | canBeAttackedByAirWeapons(unit.combat.type);
-                        }
-                    }
-
-                    // True if any unit can attack any other unit in the opposing team
-                    bool isCombat = (dps[0][0] > 0 && hasAirGround[1][0]) || (dps[0][1] > 0 && hasAirGround[1][1]) || (dps[1][0] > 0 && hasAirGround[0][0]) || (dps[1][1] > 0 && hasAirGround[0][1]);
-
-                    if (isCombat) {
-                        // Determine which groups have moved the most recently
-                        // The team that has moved the most is the attacker
-                        array<float, 2> movementAmount = {{0, 0}};
-                        array<float, 2> movementWeight = {{0, 0}};
-                        float averageCombatTime = 0;
-
-                        for (auto* group : nearbyGroups) {
-                            if (group->order.type != SimulatorOrderType::None) {
-                                // Has target
-                                float movementDist = Distance2D(group->pos, group->previousPos);
-                                movementAmount[group->owner-1] += movementDist * group->units.size();
-                            }
-                            movementWeight[group->owner-1] += group->units.size();
-                            averageCombatTime += group->combatTime * group->units.size();
-                        }
-
-                        if (movementWeight[0] > 0) movementAmount[0] /= movementWeight[0];
-                        if (movementWeight[1] > 0) movementAmount[1] /= movementWeight[1];
-
-                        if (movementWeight[0] + movementWeight[1] > 0) averageCombatTime /= movementWeight[0] + movementWeight[1];
-                        
-
-                        int defender = movementAmount[0] < movementAmount[1] ? 1 : 2;
-
-                        // Check the attackers movement. If it is low then both players become attackers
-                        if (movementAmount[2 - defender] < 4) {
-                            defender = 0;
-                        }
-
-                        float startTime = averageCombatTime;
-                        float maxTime = averageCombatTime + (endTime - time());
-
-                        if (simulator->debug) {
-                            cout << "Starting combat between " << nearbyGroups.size() << " groups with max time " << maxTime << endl;
-                        }
-                        simulator->cache.handleCombat(*this, nearbyGroups, defender, startTime, maxTime, simulator->debug);
-                        #if FALSE
-                        // TODO: If both armies had a fight the previous time step as well, then they should already be in position (probably)
-                        // TODO: What if the combat drags on longer than to endTime? (probably common in case of harassment, it takes some time for the player to start to defend)
-                        // Add a max time to predict_engage and stop. Combat will resume next simulation step.
-                        // Note: have to ensure that combat is resumed properly (without the attacker having to move into range and all that)
-                        CombatResult outcome = simulator->combatPredictor->predict_engage(state, false, false, nullptr, defender);
-
-                        int index = 0;
-                        for (auto* group : nearbyGroups) {
-                            for (auto& u : group->units) {
-                                u.combat = outcome.state.units[index];
-                                index++;
-                            }
-
-                            filterDeadUnits(group);
-                        }
-                        #endif
-                    }
+            Point2D mean = group1.pos;
+            float meanWeight = 1;
+            for (auto& group2 : possiblyNearbyGroups) {
+                // Note: group2.owner == 2
+                if (group2->units.size() > 0 && DistanceSquared2D(group1.pos, group2->pos) < combatThreshold*combatThreshold) {
+                    mean += group2->pos;
+                    meanWeight += 1;
                 }
+            }
+            
+            // No enemy groups within range, skip this combat
+            if (meanWeight == 1) continue;
+
+            mean /= meanWeight;
+
+            // Possible combat
+            // Collect all groups nearby
+            // Check if the groups can fight each other
+            // Simulate outcome of battle
+            
+            // Find all nearby groups (enemies and allies)
+            vector<SimulatorUnitGroup*> nearbyGroups;
+            for (size_t gi3 = 0; gi3 < groups.size(); gi3++) {
+                auto& group3 = groups[gi3];
+                // Check if it is close enough
+                // Also make sure that owner=1 groups are never included twice in a fight
+                if (DistanceSquared2D(mean, group3.pos) < combatThreshold*combatThreshold && group3.units.size() > 0 && (group3.owner != 1 || !processedGroups[gi3])) {
+                    nearbyGroups.push_back(&group3);
+                    // Mark the group as processed so that we don't include it in a combat again (if it is an ally group)
+                    processedGroups[gi3] = true;
+                }
+            }
+
+            // TODO: Handle cloak
+
+            array<array<float, 2>, 2> dps {{{{0, 0}}, {{0, 0}}}}; // (2, vector<float>(2));
+            array<array<bool, 2>, 2> hasAirGround {{{{false, false}}, {{false, false}}}};
+            // vector<vector<bool>> hasAirGround(2, vector<bool>(2));
+            auto& combatEnv = simulator->combatPredictor->getCombatEnvironment(this->states[0]->upgrades, this->states[1]->upgrades);
+
+            for (auto* group : nearbyGroups) {
+                for (auto& unit : group->units) {
+                    dps[group->owner - 1][0] += combatEnv.calculateDPS(1, unit.combat.type, false);
+                    dps[group->owner - 1][1] += combatEnv.calculateDPS(1, unit.combat.type, true);
+                    hasAirGround[group->owner - 1][0] = hasAirGround[group->owner - 1][0] | !unit.combat.is_flying;
+                    hasAirGround[group->owner - 1][1] = hasAirGround[group->owner - 1][1] | canBeAttackedByAirWeapons(unit.combat.type);
+                }
+            }
+
+            // True if any unit can attack any other unit in the opposing team
+            bool isCombat = (dps[0][0] > 0 && hasAirGround[1][0]) || (dps[0][1] > 0 && hasAirGround[1][1]) || (dps[1][0] > 0 && hasAirGround[0][0]) || (dps[1][1] > 0 && hasAirGround[0][1]);
+
+            if (isCombat) {
+                // Determine which groups have moved the most recently
+                // The team that has moved the most is the attacker
+                array<float, 2> movementAmount = {{0, 0}};
+                array<float, 2> movementWeight = {{0, 0}};
+                float averageCombatTime = 0;
+
+                for (auto* group : nearbyGroups) {
+                    if (group->order.type != SimulatorOrderType::None) {
+                        // Has target
+                        float movementDist = Distance2D(group->pos, group->previousPos);
+                        movementAmount[group->owner-1] += movementDist * group->units.size();
+                    }
+                    movementWeight[group->owner-1] += group->units.size();
+                    averageCombatTime += group->combatTime * group->units.size();
+                }
+
+                if (movementWeight[0] > 0) movementAmount[0] /= movementWeight[0];
+                if (movementWeight[1] > 0) movementAmount[1] /= movementWeight[1];
+
+                if (movementWeight[0] + movementWeight[1] > 0) averageCombatTime /= movementWeight[0] + movementWeight[1];
+                
+
+                int defender = movementAmount[0] < movementAmount[1] ? 1 : 2;
+
+                // Check the attackers movement. If it is low then both players become attackers
+                if (movementAmount[2 - defender] < 4) {
+                    defender = 0;
+                }
+
+                float startTime = averageCombatTime;
+                float maxTime = averageCombatTime + (endTime - time());
+
+                if (simulator->debug) {
+                    cout << "Starting combat between " << nearbyGroups.size() << " groups with max time " << maxTime << endl;
+                }
+                simulator->cache.handleCombat(*this, nearbyGroups, defender, startTime, maxTime, simulator->debug);
+                #if FALSE
+                // TODO: If both armies had a fight the previous time step as well, then they should already be in position (probably)
+                // TODO: What if the combat drags on longer than to endTime? (probably common in case of harassment, it takes some time for the player to start to defend)
+                // Add a max time to predict_engage and stop. Combat will resume next simulation step.
+                // Note: have to ensure that combat is resumed properly (without the attacker having to move into range and all that)
+                CombatResult outcome = simulator->combatPredictor->predict_engage(state, false, false, nullptr, defender);
+
+                int index = 0;
+                for (auto* group : nearbyGroups) {
+                    for (auto& u : group->units) {
+                        u.combat = outcome.state.units[index];
+                        index++;
+                    }
+
+                    filterDeadUnits(group);
+                }
+                #endif
             }
         }
     }
