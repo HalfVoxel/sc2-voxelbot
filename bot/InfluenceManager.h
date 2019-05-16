@@ -11,6 +11,7 @@ struct InfluenceManager {
 	InfluenceMap scoutingMap;
 	InfluenceMap scanningMap;
 	InfluenceMap safeBuildingMap;
+	InfluenceMap lastSeenMap;
 
 	void Init();
 	void OnStep();

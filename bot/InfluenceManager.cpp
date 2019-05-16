@@ -2,6 +2,7 @@
 #include "utilities/pathfinding.h"
 #include "utilities/predicates.h"
 #include "utilities/renderer.h"
+#include "sc2api/sc2_proto_to_pods.h"
 #include "Bot.h"
 
 using namespace std;
@@ -33,6 +34,7 @@ void InfluenceManager::Init() {
     scoutingMap = InfluenceMap(pathing_grid.w, pathing_grid.h);
     scanningMap = InfluenceMap(pathing_grid.w, pathing_grid.h);
     distanceCache = InfluenceMap(pathing_grid.w, pathing_grid.h);
+    lastSeenMap = InfluenceMap(pathing_grid.w, pathing_grid.h);
 }
 
 double millis() {
@@ -88,16 +90,19 @@ void InfluenceManager::OnStep() {
             scoutingMap.addInfluence(scoutingUncertainty, p);
         }
 
-        // scoutingMap *= InfluenceMap(observation->GetRawObservation()->map_state().visibility);
+        // 0 = invisible, 1 = partial, 2 = full visibility
+        auto visibilityMap = InfluenceMap(bot->Observation()->GetVisibilityMap());
 
-        for (int i = 0; i < scoutingMap.w; i++) {
-            for (int j = 0; j < scoutingMap.h; j++) {
-                Point2D p = Point2D(i, j);
-                if (observation->GetVisibility(p) != Visibility::Visible && pathing_grid(p) != 0) {
+        for (int y = 0; y < scoutingMap.h; y++) {
+            for (int x = 0; x < scoutingMap.w; x++) {
+                Point2D p = Point2D(x, y);
+                if (visibilityMap(x, y) != 2 && pathing_grid(p) != 0) {
                     scoutingMap.addInfluence(scoutingUncertainty, p);
+                    lastSeenMap.addInfluence(ticksToSeconds(InfluenceFrameInterval), p);
                 } else {
                     scoutingMap.setInfluence(0, p);
                     scanningMap.setInfluence(0, p);
+                    lastSeenMap.setInfluence(0, p);
                 }
             }
         }
@@ -164,11 +169,12 @@ void InfluenceManager::OnStep() {
         d2.renderNormalized(0, 0);
         // enemyDensity.render(0, 1);
         // valueMap.renderNormalized(0, 2);
-        // scoutingMap.render(1, 0);
+        scoutingMap.render(1, 1);
         // flood.render(1, 1);
         // scanningMap.render(1, 1);
         placement_grid.render(0, 1);
         safeBuildingMap.renderNormalized(0, 2);
+        visibilityMap.render(1, 0);
 
         Render();
     }
