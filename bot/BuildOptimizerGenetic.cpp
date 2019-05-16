@@ -25,6 +25,18 @@ const BuildOrderFitness BuildOrderFitness::ReallyBad = { 100000, BuildResources(
 void printBuildOrder(const vector<UNIT_TYPEID>& buildOrder);
 void printBuildOrder(const BuildOrder& buildOrder);
 
+BuildState::BuildState(std::vector<std::pair<sc2::UNIT_TYPEID, int>> unitCounts) {
+    assert(unitCounts.size() > 0);
+    race = getUnitData(unitCounts[0].first).race;
+    for (auto u : unitCounts) {
+        addUnits(u.first, u.second);
+        if (u.first == sc2::UNIT_TYPEID::PROTOSS_NEXUS) {
+            // Add a nexus with some dummy energy
+            for (int i = 0; i < u.second; i++) chronoInfo.addNexusWithEnergy(time, 25);
+        }
+    }
+}
+
 BuildState::BuildState(const ObservationInterface* observation, Unit::Alliance alliance, Race race, BuildResources resources, float time) : time(time), race(race), resources(resources) {
     map<UNIT_TYPEID, int> startingUnitsCount;
     map<UNIT_TYPEID, int> targetUnitsCount;
@@ -36,6 +48,9 @@ BuildState::BuildState(const ObservationInterface* observation, Unit::Alliance a
 
         // Addons are handled when the unit they are attached to are handled
         if (isAddon(unitType)) continue;
+
+        // Exists at the same time as the non-phaseshift unit. Ignore it to avoid duplicates
+        if (unitType == UNIT_TYPEID::PROTOSS_ADEPTPHASESHIFT) continue;
 
         // If the building is still in progress.
         // Don't do this for warpgates as they are just morphed, not in progress really
@@ -1401,8 +1416,8 @@ BuildOrderFitness calculateFitness(const BuildState& startState, const vector<in
 
     avgTime /= totalWeight;
     float originalTime = state.time;
-    // float time = originalTime + (avgTime*2) * 0.001f;
-    float time = avgTime*2;
+    float time = originalTime + (avgTime*2) * 0.001f;
+    // float time = avgTime*2;
 
     // Simulate until at least the 2 minutes mark, this ensures that the agent will do some economic stuff if nothing else
     state.simulate(60 * 2);
@@ -1811,7 +1826,7 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
             actionRequirements[i] = max(0, actionRequirements[i]);
         } else {
             // Check if we already have the upgrade
-            if (startState.upgrades.hasUpgrade(item.upgradeID())) {
+            if (startStateAfterEvents.upgrades.hasUpgrade(item.upgradeID())) {
                 actionRequirements[i] = 0;
             }
         }
@@ -1968,18 +1983,18 @@ pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& 
     // printBuildOrderDetailed(startState, generation[0].constructBuildOrder(startState.race, startState.foodAvailable(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes));
     auto fitness = calculateFitness(startState, startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes, generation[0]);
 
-    for(auto u : startState.units) {
-        cout << "Starting unit " << UnitTypeToName(u.type) << " x" << u.units << endl;
-    }
-    cout << "Implicit build order" << endl;
-    for (auto u : generation[0].buildOrder) {
-        cout << availableUnitTypes.getBuildOrderItem(u.type).name() << endl;
-    }
-    cout << endl;
-    cout << "Explicit build order" << endl;
-    for (auto u : generation[0].constructBuildOrder(startState.race, startState.foodAvailableInFuture(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes).items) {
-        cout << u.name() << endl;
-    }
+    // for(auto u : startState.units) {
+    //     cout << "Starting unit " << UnitTypeToName(u.type) << " x" << u.units << endl;
+    // }
+    // cout << "Implicit build order" << endl;
+    // for (auto u : generation[0].buildOrder) {
+    //     cout << availableUnitTypes.getBuildOrderItem(u.type).name() << endl;
+    // }
+    // cout << endl;
+    // cout << "Explicit build order" << endl;
+    // for (auto u : generation[0].constructBuildOrder(startState.race, startState.foodAvailableInFuture(), startingUnitCounts, startingAddonCountPerUnitType, availableUnitTypes).items) {
+    //     cout << u.name() << endl;
+    // }
 
     /*stack<BuildOrderItem> reqs;
     traceDependencies(startingUnitCounts, availableUnitTypes, reqs, UNIT_TYPEID::PROTOSS_GATEWAY);
@@ -2924,6 +2939,11 @@ void optimizeExistingBuildOrder(const std::vector<const sc2::Unit*>& ourUnits, c
 
     vector<int> economicUnits;
     for (size_t i = 0; i < allEconomicUnits.size(); i++) {
+        // Do not allow more than 8 bases (all the workers start to eat up the supply cap)
+        if (isTownHall(availableUnitTypes.getUnitType(i)) && startingUnitCounts[availableUnitTypes.getIndex(getTownHallForRace(startState.race))] >= 8) continue;
+        // Do not allow more than 100 workers
+        if (isBasicHarvester(availableUnitTypes.getUnitType(i)) && startingUnitCounts[availableUnitTypes.getIndex(getHarvesterUnitForRace(startState.race))] >= 100) continue;
+
         economicUnits.push_back(remapAvailableUnitIndex(i, allEconomicUnits, availableUnitTypes));
     }
 
