@@ -12,6 +12,24 @@
 
 
 template <class Archive>
+void serialize(Archive& archive, MiningSpeed& data) {
+    archive(
+        cereal::make_nvp("mineralsPerSecond", data.mineralsPerSecond),
+        cereal::make_nvp("vespenePerSecond", data.vespenePerSecond)
+    );
+}
+
+template <class Archive>
+void serialize(Archive& archive, BuildOrderFitness& data) {
+    archive(
+        cereal::make_nvp("time", data.time),
+        cereal::make_nvp("resources", data.resources),
+        cereal::make_nvp("miningSpeed", data.miningSpeed),
+        cereal::make_nvp("miningSpeedPerSecond", data.miningSpeedPerSecond)
+    );
+}
+
+template <class Archive>
 void serialize(Archive& archive, BuildOrderItem& data) {
     archive(
         cereal::make_nvp("type", data.internalType),
