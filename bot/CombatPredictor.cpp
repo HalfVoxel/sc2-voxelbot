@@ -162,7 +162,7 @@ float calculateDPS(UNIT_TYPEID attacker, UNIT_TYPEID target, const Weapon& weapo
     return 0;
 }
 
-float WeaponInfo::getDPS(UNIT_TYPEID target) const {
+float WeaponInfo::getDPS(UNIT_TYPEID target, float modifier) const {
     if (!available)
         return 0;
     
@@ -170,11 +170,19 @@ float WeaponInfo::getDPS(UNIT_TYPEID target) const {
         throw std::out_of_range(UnitTypeToName(target));    
     }
 
-    return dpsCache[(int)target];
+    // TODO: Modifier ignores speed upgrades
+    return max(0.0f, dpsCache[(int)target] + modifier*weapon->attacks/weapon->speed);
 }
 
 float WeaponInfo::range() const {
     return weapon != nullptr ? weapon->range : 0;
+}
+
+float UnitCombatInfo::attackInterval() const {
+    float v = numeric_limits<float>::infinity();
+    if (airWeapon.weapon != nullptr) v = airWeapon.weapon->speed;
+    if (groundWeapon.weapon != nullptr) v = min(v, groundWeapon.weapon->speed);
+    return v;
 }
 
 WeaponInfo::WeaponInfo(const Weapon* weapon, UNIT_TYPEID type, const CombatUpgrades& upgrades, const CombatUpgrades& targetUpgrades) {
@@ -256,7 +264,7 @@ void CombatRecording::writeCSV(string filename) {
         }
         output << endl;
         for (auto& f : frames) {
-            output << ((f.tick - frames[0].tick) / 22.4f) << "\t";
+            output << (ticksToSeconds(f.tick - frames[0].tick)) << "\t";
             for (auto p : f.healths) {
                 if (get<1>(p) == owner) {
                     output << get<2>(p) << "\t";
@@ -589,6 +597,9 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
     // sortByValueDescending<CombatUnit*>(units1, [=] (auto u) { return targetScore(*u, true, true); });
     // sortByValueDescending<CombatUnit*>(units2, [=] (auto u) { return targetScore(*u, true, true); });
 
+    array<float, 2> averageHealthByTime = {{ 0, 0 }};
+    array<float, 2> averageHealthByTimeWeight = {{ 0, 0 }};
+
     float maxRangeDefender = 0;
     float fastestAttackerSpeed = 0;
     if (defenderPlayer == 1 || defenderPlayer == 2) {
@@ -616,6 +627,13 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
     int recordingStartTick = 0;
     if (recording != nullptr && !recording->frames.empty()) recordingStartTick = ticksToSeconds(recording->frames.rbegin()->tick) + 1 - time;
 
+    // If the combat starts from scratch, assume all buffs are gone
+    if (settings.startTime == 0) {
+        for (auto& u : state.units) {
+            u.buffTimer = 0;
+        }
+    }
+
     for (int it = 0; it < MAX_ITERATIONS && changed; it++) {
         int hasAir1 = 0;
         int hasAir2 = 0;
@@ -629,6 +647,9 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                 hasGround1 += !u->is_flying;
                 float r = unitRadius(u->type);
                 groundArea1 += r * r;
+
+                averageHealthByTime[0] += time * (u->health + u->shield);
+                averageHealthByTimeWeight[0] += u->health + u->shield;
             }
         }
         for (auto u : units2) {
@@ -637,6 +658,9 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                 hasGround2 += !u->is_flying;
                 float r = unitRadius(u->type);
                 groundArea2 += r * r;
+
+                averageHealthByTime[1] += time * (u->health + u->shield);
+                averageHealthByTimeWeight[1] += u->health + u->shield;
             }
         }
 
@@ -668,6 +692,36 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
         if (debug)
             cout << "Iteration " << it << " Time: " << time << endl;
         changed = false;
+
+        // Check guardian shields.
+        // Guardian shield is approximated as each shield protecting a fixed area of units as long
+        // as the shield is active. The first N units in each army, such that the total area of all units up to unit N, are assumed to be protected
+        const float GuardianShieldUnits = 4.5f*4.5f*M_PI * 0.4f;
+        // Number of units in each army that are shielded by the guardian shield
+        array<float, 2> guardianShieldedUnitFraction = {{ 0, 0 }};
+        array<bool, 2> guardianShieldCoversAllUnits = {{ false, false }};
+
+        for (int group = 0; group < 2; group++) {
+            float guardianShieldedArea = 0;
+            auto& g = group == 0 ? units1 : units2;
+            for (auto* u : g) {
+                if (u->type == UNIT_TYPEID::PROTOSS_SENTRY && u->buffTimer > 0) {
+                    u->buffTimer -= dt;
+                    guardianShieldedArea += GuardianShieldUnits;
+                }
+            }
+
+            float totalArea = 0;
+            for (size_t i = 0; i < g.size(); i++) {
+                float r = unitRadius(g[i]->type);
+                totalArea += r*r*M_PI;
+            }
+
+            guardianShieldCoversAllUnits[group] = guardianShieldedArea > totalArea;
+            guardianShieldedUnitFraction[group] = min(0.8f, guardianShieldedArea / (0.001f+ totalArea));
+        }
+
+
         for (int group = 0; group < 2; group++) {
             // TODO: Group 1 always attacks first
             auto& g1 = group == 0 ? units1 : units2;
@@ -678,6 +732,7 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
             float maxExtraMeleeDistance = sqrt(groundArea1 / M_PI) * M_PI + sqrt(groundArea2 / M_PI) * M_PI;
 
             int numMeleeUnitsUsed = 0;
+            bool didActivateGuardianShield = false;
 
             // Fraction of opponent units that are melee units (and are still alive)
             float opponentFractionMeleeUnits = 0;
@@ -779,6 +834,16 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                         // TODO: Remove from group
                         changed = true;
                         continue;
+                    }
+                }
+
+                if (unit.type == UNIT_TYPEID::PROTOSS_SENTRY && unit.energy >= 75 && !didActivateGuardianShield) {
+                    if (!guardianShieldCoversAllUnits[group]) {
+                        unit.energy -= 75;
+                        unit.buffTimer = 11.0f;
+                        // Make sure only one guardian shield per team gets activated per tick
+                        // If we didn't do this check then all guardian shields would go up in tick 1 even though fewer might be enough
+                        didActivateGuardianShield = true;
                     }
                 }
 
@@ -895,7 +960,8 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                     auto& other = *bestTarget;
                     changed = true;
                     // Pick
-                    auto dps = bestWeapon->getDPS(other.type) * min(1.0f, remainingSplash);
+                    bool shielded = !isUnitMelee && uniform_real_distribution<float>()(rng) < guardianShieldedUnitFraction[1 - group];
+                    auto dps = bestWeapon->getDPS(other.type, shielded ? -2 : 0) * min(1.0f, remainingSplash);
                     float damageMultiplier = 1;
 
                     if (unit.type == UNIT_TYPEID::PROTOSS_CARRIER) {
@@ -933,7 +999,8 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
                             size_t splashIndex = (j + offset) % g2.size();
                             auto* splashOther = g2[splashIndex];
                             if (splashOther != bestTarget && splashOther->health > 0 && (!isUnitMelee || isMelee(splashOther->type))) {
-                                auto dps = bestWeapon->getDPS(splashOther->type) * min(1.0f, remainingSplash);
+                                bool shieldedOther = !isUnitMelee && uniform_real_distribution<float>()(rng) < guardianShieldedUnitFraction[1 - group];
+                                auto dps = bestWeapon->getDPS(splashOther->type, shieldedOther ? -2 : 0) * min(1.0f, remainingSplash);
                                 if (dps > 0) {
                                     splashOther->modifyHealth(-dps * damageMultiplier * dt);
                                     remainingSplash -= 1.0f;
@@ -963,6 +1030,11 @@ CombatResult CombatPredictor::predict_engage(const CombatState& inputState, Comb
     }
 
     result.time = time;
+
+    averageHealthByTime[0] /= max(0.01f, averageHealthByTimeWeight[0]);
+    averageHealthByTime[1] /= max(0.01f, averageHealthByTimeWeight[1]);
+
+    result.averageHealthTime = averageHealthByTime;
 
     // Remove all temporary units
     assert(state.units.size() == inputState.units.size());
@@ -1074,6 +1146,7 @@ float CombatPredictor::mineralScore(const CombatState& initialState, const Comba
     float ourScore = 0;
     float enemyScore = 0;
     float lossScore = 0;
+    float ourSupply = 0;
     for (size_t i = 0; i < initialState.units.size(); i++) {
         auto& unit1 = initialState.units[i];
         auto& unit2 = combatResult.state.units[i];
@@ -1090,6 +1163,7 @@ float CombatPredictor::mineralScore(const CombatState& initialState, const Comba
         } else {
             if (defaultCombatEnvironment.calculateDPS(unit2, false) > 0) {
                 lossScore += cost * (-10 * (1 - damageTakenFraction));
+                ourSupply += unitTypeData.food_required;
             } else {
                 lossScore += cost * (-1 * (1 - damageTakenFraction));
             }
@@ -1122,6 +1196,8 @@ float CombatPredictor::mineralScore(const CombatState& initialState, const Comba
     // cout << "Extra cost " << -ourScore << " " << (timeToProduceUnits[1] + 1.2f * timeToProduceUnits[1]) << endl;
     // TODO: Add pylon costs
     ourScore -= timeToProduceUnits[1] + 1.2f * timeToProduceUnits[2];
+    // Add pylon/overlord/supply depot cost
+    ourSupply -= (ourSupply / 8.0f) * 100;
 
     // float timeScore = -100 * (pow(timeToProduceUnits/(1*60), 2));
     // float timeMult = 2 * 30/(30 + timeToProduceUnits);
@@ -1138,7 +1214,11 @@ float CombatPredictor::mineralScore(const CombatState& initialState, const Comba
             }
         }
 
-        cout << "Estimated time to produce units: " << timeToProduceUnits[0] << " and to beat enemy " << combatResult.time << " " << hasAnyGroundUnits << endl;
+        // cout << "Estimated time to produce units: " << timeToProduceUnits[0] << " and to beat enemy " << combatResult.time << " " << hasAnyGroundUnits << endl;
+        // for (auto u : initialState.units) {
+        //     if (u.owner == player) cout << getUnitData(u.type).name << ", ";
+        // }
+        // cout << endl;
 
         if (!hasAnyGroundUnits) {
             totalScore -= 1000 * (combatResult.time - 20)/20.0f;
@@ -1157,6 +1237,97 @@ float CombatPredictor::mineralScore(const CombatState& initialState, const Comba
 
     // Ea*g(ta) + Ea*g(ta-x) < Eb*g(tb) + Eb*g(tb-x)
     // Ea*g(ta) + Ea*g(ta-x) < Eb*g(tb) + Eb*g(tb-x)
+    // cout << "Score " << totalScore << endl;
+    return totalScore;
+}
+
+float CombatPredictor::mineralScoreFixedTime(const CombatState& initialState, const CombatResult& combatResult, int player, const vector<float>& timeToProduceUnits, const CombatUpgrades upgrades) const {
+    if (combatResult.state.owner_with_best_outcome() != player) {
+        return -10000 + mineralScore(initialState, combatResult, player, timeToProduceUnits, upgrades);
+    }
+
+    assert(timeToProduceUnits.size() == 3);
+    // The combat result may contain more units due to temporary units spawning (e.g. infested terran, etc.) however never fewer.
+    // The first N units correspond to all the N units in the initial state.
+    assert(combatResult.state.units.size() >= initialState.units.size());
+    float totalScore = 0;
+    float ourScore = 0;
+    float enemyScore = 0;
+    float lossScore = 0;
+    float totalCost = 0;
+    float ourDamageTakenCost = 0;
+    for (size_t i = 0; i < initialState.units.size(); i++) {
+        auto& unit1 = initialState.units[i];
+        auto& unit2 = combatResult.state.units[i];
+        assert(unit1.type == unit2.type);
+
+        float healthDiff = (unit2.health - unit1.health) + (unit2.shield - unit1.shield);
+        float damageTakenFraction = -healthDiff / (unit1.health_max + unit1.shield_max);
+        auto& unitTypeData = getUnitData(unit1.type);
+
+        float cost = unitTypeData.mineral_cost + 1.2f * unitTypeData.vespene_cost;
+        if (unit1.owner == player) {
+            totalCost += cost;
+            ourScore += cost * -(1 + damageTakenFraction);
+            ourDamageTakenCost += cost * damageTakenFraction;
+            // if (unit1.type == UNIT_TYPEID::PROTOSS_COLOSSUS) ourScore += 500;
+        } else {
+            if (defaultCombatEnvironment.calculateDPS(unit2, false) > 0) {
+                lossScore += cost * (-10 * (1 - damageTakenFraction));
+            } else {
+                lossScore += cost * (-1 * (1 - damageTakenFraction));
+            }
+            // lossScore += cost * (-100 * (1 - damageTakenFraction));
+            enemyScore += cost * (1 + damageTakenFraction);
+        }
+        // totalScore += score;
+    }
+
+    float lostResourcesFraction = ourDamageTakenCost / (0.001f + ourScore);
+
+    for (auto u : upgrades) {
+        auto& data = getUpgradeData(u);
+        ourScore -= data.mineral_cost + 1.2f * data.vespene_cost;
+    }
+
+    float timeToDefeatEnemy = combatResult.averageHealthTime[0];
+    if (combatResult.state.owner_with_best_outcome() != player) {
+        timeToDefeatEnemy = 20;
+    }
+    timeToDefeatEnemy = std::min(20.0f, timeToDefeatEnemy);
+
+    // cout << "Extra cost " << -ourScore << " " << (timeToProduceUnits[1] + 1.2f * timeToProduceUnits[1]) << endl;
+    // TODO: Add pylon costs
+    ourScore -= timeToProduceUnits[1] + 1.2f * timeToProduceUnits[2];
+
+    // float timeScore = -100 * (pow(timeToProduceUnits/(1*60), 2));
+    // float timeMult = 2 * 30/(30 + timeToProduceUnits);
+
+    enemyScore -= ourDamageTakenCost;
+    float timeMult = 1.0f; // 10/(10 + pow(timeToDefeatEnemy, 2)/5.0f);
+    totalScore = enemyScore*timeMult;
+
+    // Tie breaker
+    totalScore += ourScore*0.001f;
+
+    // cout << ourScore << " " << enemyScore << " " << lossScore << endl;
+
+    if (combatResult.time > 20) {
+        bool hasAnyGroundUnits = false;
+        for (size_t i = 0; i < initialState.units.size(); i++) {
+            if (combatResult.state.units[i].owner == player && combatResult.state.units[i].health > 0 && !combatResult.state.units[i].is_flying) {
+                hasAnyGroundUnits = true;
+            }
+        }
+
+        if (!hasAnyGroundUnits) {
+            totalScore -= 1000 * (combatResult.time - 20)/20.0f;
+        }
+    }
+
+    cout << "Estimated time to produce units: " << timeToProduceUnits[0] << " total cost " << totalCost << endl;
+    // cout << "Estimated time to produce units: " << timeToProduceUnits[0] << " and to beat enemy " << combatResult.time << " (" << combatResult.averageHealthTime[0] << ", " << combatResult.averageHealthTime[1] << ")" << " " << timeToDefeatEnemy << " " << enemyScore << endl;
+
     return totalScore;
 }
 
@@ -1218,31 +1389,14 @@ struct CompositionGene {
 
                     // If this is an enumerated upgrade then add LEVEL1, LEVEL2 up to LEVEL3 depending on the upgrade count.
                     // If it is a normal upgrade, then just add it regardless of the unit count
-                    switch(upgrade) {
-                        case UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1:
-                        case UPGRADE_ID::TERRANINFANTRYARMORSLEVEL1:
-                        case UPGRADE_ID::TERRANVEHICLEWEAPONSLEVEL1:
-                        case UPGRADE_ID::TERRANSHIPWEAPONSLEVEL1:
-                        case UPGRADE_ID::PROTOSSGROUNDWEAPONSLEVEL1:
-                        case UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL1:
-                        case UPGRADE_ID::PROTOSSSHIELDSLEVEL1:
-                        case UPGRADE_ID::ZERGMELEEWEAPONSLEVEL1:
-                        case UPGRADE_ID::ZERGGROUNDARMORSLEVEL1:
-                        case UPGRADE_ID::ZERGMISSILEWEAPONSLEVEL1:
-                        case UPGRADE_ID::ZERGFLYERWEAPONSLEVEL1:
-                        case UPGRADE_ID::ZERGFLYERARMORSLEVEL1:
-                        case UPGRADE_ID::PROTOSSAIRWEAPONSLEVEL1:
-                        case UPGRADE_ID::PROTOSSAIRARMORSLEVEL1:
-                        case UPGRADE_ID::TERRANVEHICLEANDSHIPARMORSLEVEL1: {
-                            int finalUpgrade = (int)upgrade + min(unitCounts[i] - 1, 2);
-                            for (int upgradeIndex = (int)upgrade; upgradeIndex <= finalUpgrade; upgradeIndex++) {
-                                result.add((UPGRADE_ID)upgradeIndex);
-                            }
-                            break;
+                    if(isUpgradeWithLevels(upgrade)) {
+                        int finalUpgrade = (int)upgrade + min(unitCounts[i] - 1, 2);
+                        for (int upgradeIndex = (int)upgrade; upgradeIndex <= finalUpgrade; upgradeIndex++) {
+                            result.add((UPGRADE_ID)upgradeIndex);
                         }
-                        default:
-                            result.add(upgrade);
-                            break;
+                        break;
+                    } else {
+                        result.add(upgrade);
                     }
                 }
             }
@@ -1285,16 +1439,23 @@ struct CompositionGene {
     }
 
     void mutate(float amount, default_random_engine& seed, const AvailableUnitTypes& availableUnitTypes) {
-        bernoulli_distribution shouldMutate(amount);
+        bernoulli_distribution shouldMutateFromNone(amount);
+        bernoulli_distribution shouldMutate(amount * 2);
+        bernoulli_distribution shouldSwapMutate(0.2);
         for (size_t i = 0; i < unitCounts.size(); i++) {
-            if (shouldMutate(seed)) {
+            if (unitCounts[i] > 0 ? shouldMutate(seed) : shouldMutateFromNone(seed)) {
                 int mx = availableUnitTypes.armyCompositionMaximum(i);
                 if (mx == 1) {
                     bernoulli_distribution dist(0.2f);
                     unitCounts[i] = (int)dist(seed);
                 } else {
-                    exponential_distribution<float> dist(1.0f / max(1, unitCounts[i]));
-                    unitCounts[i] = min((int)round(dist(seed)), mx);
+                    if (unitCounts[i] > 0 && shouldSwapMutate(seed)) {
+                        uniform_int_distribution<int> swapIndex(0, unitCounts.size() - 1);
+                        swap(unitCounts[i], unitCounts[swapIndex(seed)]);
+                    } else {
+                        geometric_distribution<int> dist(1.0f / (2+unitCounts[i]));
+                        unitCounts[i] = min(dist(seed), mx);
+                    }
                 }
             }
         }
@@ -1307,17 +1468,14 @@ struct CompositionGene {
         : unitCounts(units) {
     }
 
-    void scale(float scale) {
-        int diff = 0;
+    void scale(float scale, const AvailableUnitTypes& availableUnitTypes) {
+        float offset = 0;
         for (size_t i = 0; i < unitCounts.size(); i++) {
-            if (unitCounts[i] > 100)
-                continue;
-            auto o = unitCounts[i];
-            unitCounts[i] = (int)round(unitCounts[i] * scale);
-            diff += unitCounts[i] - o;
-        }
-        if (diff == 0) {
-            unitCounts[rand() % unitCounts.size()] += 1;
+            int mx = availableUnitTypes.armyCompositionMaximum(i);
+            float nextPoint = offset + unitCounts[i] * scale;
+            unitCounts[i] = (int)round(nextPoint) - (int)round(offset);
+            unitCounts[i] = min(unitCounts[i], mx);
+            offset = nextPoint;
         }
     }
 
@@ -1333,10 +1491,19 @@ struct CompositionGene {
 
     CompositionGene(const AvailableUnitTypes& availableUnitTypes, int meanTotalCount, default_random_engine& seed)
         : unitCounts(availableUnitTypes.size()) {
-        float mean = meanTotalCount / availableUnitTypes.size();
-        exponential_distribution<float> dist(1.0f / mean);
+        int totalUnits = (int)round(exponential_distribution<float>(1.0f / meanTotalCount)(seed));
+        vector<int> splitPoints(unitCounts.size()+1);
+        auto splitDist = uniform_int_distribution<int>(0, totalUnits);
+        for (size_t i = 1; i < unitCounts.size(); i++) {
+            splitPoints[i] = splitDist(seed);
+        }
+        splitPoints[0] = 0;
+        splitPoints[splitPoints.size() - 1] = totalUnits;
+        sort(splitPoints.begin(), splitPoints.end());
+
         for (size_t i = 0; i < unitCounts.size(); i++) {
-            unitCounts[i] = (int)round(dist(seed));
+            unitCounts[i] = splitPoints[i+1] - splitPoints[i];
+            unitCounts[i] = min(availableUnitTypes.armyCompositionMaximum(i), unitCounts[i]);
         }
     }
 
@@ -1354,15 +1521,34 @@ void scaleUntilWinning(const CombatPredictor& predictor, const CombatState& oppo
         gene.addToState(predictor, state, availableUnitTypes, 2);
         if (predictor.predict_engage(state, false, false).state.owner_with_best_outcome() == 2) break;
 
-        gene.scale(1.5f);
+        gene.scale(1.5f, availableUnitTypes);
     }
 }
 
 float calculateFitness(const CombatPredictor& predictor, const CombatState& opponent, const AvailableUnitTypes& availableUnitTypes, CompositionGene& gene, const vector<float>& timeToProduceUnits) {
     CombatState state = opponent;
+    
+    // Upgrades except the ones we already have
+    auto upgrades = gene.getUpgrades(availableUnitTypes);
+    if (state.environment != nullptr) upgrades.remove(state.environment->upgrades[1]);
+
     gene.addToState(predictor, state, availableUnitTypes, 2);
     // TODO: Ignore current upgrades in costs
-    return predictor.mineralScore(state, predictor.predict_engage(state, false, false), 2, timeToProduceUnits, gene.getUpgrades(availableUnitTypes));  // + mineralScore(state, predictor.predict_engage(state, false, true), 2)) * 0.5f;
+    return predictor.mineralScore(state, predictor.predict_engage(state, false, false), 2, timeToProduceUnits, upgrades);  // + mineralScore(state, predictor.predict_engage(state, false, true), 2)) * 0.5f;
+}
+
+float calculateFitnessFixedTime(const CombatPredictor& predictor, const CombatState& opponent, const AvailableUnitTypes& availableUnitTypes, CompositionGene& gene, const vector<float>& timeToProduceUnits) {
+    CombatState state = opponent;
+
+    // Upgrades except the ones we already have
+    auto upgrades = gene.getUpgrades(availableUnitTypes);
+    if (state.environment != nullptr) upgrades.remove(state.environment->upgrades[1]);
+
+    gene.addToState(predictor, state, availableUnitTypes, 2);
+    // TODO: Ignore current upgrades in costs
+    return predictor.mineralScoreFixedTime(state, predictor.predict_engage(state, false, false), 2, timeToProduceUnits, gene.getUpgrades(availableUnitTypes));  // + mineralScore(state, predictor.predict_engage(state, false, true), 2)) * 0.5f;
+    
+    // return predictor.mineralScore(state, predictor.predict_engage(state, false, false), 2, timeToProduceUnits, upgrades);
 }
 
 void logRecordings(CombatState& state, const CombatPredictor& predictor, float spawnOffset, string msg) {
@@ -1405,18 +1591,36 @@ int64_t micros() {
 }
 
 ArmyComposition findBestCompositionGenetic(const CombatPredictor& predictor, const AvailableUnitTypes& availableUnitTypes, const CombatState& opponent, const BuildOptimizerNN* buildTimePredictor, const BuildState* startingBuildState, vector<pair<UNIT_TYPEID,int>>* seedComposition) {
+    CompositionSearchSettings settings(predictor, availableUnitTypes, buildTimePredictor);
+    return findBestCompositionGenetic(opponent, settings, startingBuildState, seedComposition);
+}
+
+ArmyComposition findBestCompositionGenetic(const CombatState& opponent, CompositionSearchSettings settings, const BuildState* startingBuildState, std::vector<std::pair<sc2::UNIT_TYPEID,int>>* seedComposition) {
+    auto& predictor = settings.combatPredictor;
+    auto* buildTimePredictor = settings.buildTimePredictor;
+    auto& availableUnitTypes = settings.availableUnitTypes;
+
     Stopwatch watch;
 
     const int POOL_SIZE = 20;
-    const float mutationRate = 0.1f;
+    const float mutationRate = 0.2f;
     vector<CompositionGene> generation(POOL_SIZE);
     default_random_engine rnd(micros());
     for (auto& gene : generation) {
         gene = CompositionGene(availableUnitTypes, 10, rnd);
+
+        // cout << "Seed ";
+        // for (auto u : gene.getUnits(availableUnitTypes)) {
+        //     cout << getUnitData(u.first).name << " " << u.second << ", ";
+        // }
+        // cout << endl;
     }
 
     vector<pair<int,int>> startingUnitsNN;
-    if (startingBuildState != nullptr && buildTimePredictor != nullptr) for (auto u : startingBuildState->units) startingUnitsNN.push_back({(int)u.type, u.units});
+    if (startingBuildState != nullptr && buildTimePredictor != nullptr) {
+        for (auto u : startingBuildState->units) startingUnitsNN.push_back({(int)u.type, u.units});
+        for (auto u : startingBuildState->upgrades) startingUnitsNN.push_back({ (int)u + UPGRADE_ID_OFFSET, 1 });
+    }
     
     for (int i = 0; i < 50; i++) {
         assert(generation.size() == POOL_SIZE);
@@ -1427,18 +1631,65 @@ ArmyComposition findBestCompositionGenetic(const CombatPredictor& predictor, con
         vector<float> fitness(generation.size());
         vector<int> indices(generation.size());
 
-        vector<vector<pair<int,int>>> targetUnitsNN(generation.size());
-        for (size_t j = 0; j < generation.size(); j++) {
-            assert(generation[j].unitCounts.size() == availableUnitTypes.size());
-            scaleUntilWinning(predictor, opponent, availableUnitTypes, generation[j]);
-            targetUnitsNN[j] = generation[j].getUnitsUntyped(availableUnitTypes);
-        }
+        if (false) {
+            vector<vector<pair<int,int>>> targetUnitsNN(generation.size());
+            for (size_t j = 0; j < generation.size(); j++) {
+                assert(generation[j].unitCounts.size() == availableUnitTypes.size());
+                scaleUntilWinning(predictor, opponent, availableUnitTypes, generation[j]);
+                targetUnitsNN[j] = generation[j].getUnitsUntyped(availableUnitTypes);
+                auto upgrades = generation[j].getUpgrades(availableUnitTypes);
+                upgrades.remove(startingBuildState->upgrades);
+                for (auto u : upgrades) targetUnitsNN[j].push_back({ (int)u + UPGRADE_ID_OFFSET, 1 });
+            }
 
-        vector<vector<float>> timesToProduceUnits = startingBuildState != nullptr && buildTimePredictor != nullptr ? buildTimePredictor->predictTimeToBuild(startingUnitsNN, startingBuildState->resources, targetUnitsNN) : vector<vector<float>>(generation.size(), vector<float>(3));
+            vector<vector<float>> timesToProduceUnits = startingBuildState != nullptr && buildTimePredictor != nullptr ? buildTimePredictor->predictTimeToBuild(startingUnitsNN, startingBuildState->resources, targetUnitsNN) : vector<vector<float>>(generation.size(), vector<float>(3));
 
-        for (size_t j = 0; j < generation.size(); j++) {
-            indices[j] = j;
-            fitness[j] = calculateFitness(predictor, opponent, availableUnitTypes, generation[j], timesToProduceUnits[j]);
+            for (size_t j = 0; j < generation.size(); j++) {
+                indices[j] = j;
+                fitness[j] = calculateFitness(predictor, opponent, availableUnitTypes, generation[j], timesToProduceUnits[j]);
+            }
+        } else {
+            for (int i = 0; i < 4; i++) {
+                vector<vector<pair<int,int>>> targetUnitsNN(generation.size());
+                for (size_t j = 0; j < generation.size(); j++) {
+                    assert(generation[j].unitCounts.size() == availableUnitTypes.size());
+                    targetUnitsNN[j] = generation[j].getUnitsUntyped(availableUnitTypes);
+                    auto upgrades = generation[j].getUpgrades(availableUnitTypes);
+                    upgrades.remove(startingBuildState->upgrades);
+                    for (auto u : upgrades) targetUnitsNN[j].push_back({ (int)u + UPGRADE_ID_OFFSET, 1 });
+                }
+
+                vector<vector<float>> timesToProduceUnits = startingBuildState != nullptr && buildTimePredictor != nullptr ? buildTimePredictor->predictTimeToBuild(startingUnitsNN, startingBuildState->resources, targetUnitsNN) : vector<vector<float>>(generation.size(), vector<float>(3));
+                for (size_t j = 0; j < generation.size(); j++) {
+                    float factor = settings.availableTime / max(0.001f, timesToProduceUnits[j][0]);
+                    factor = max(0.5f, min(1.5f, factor));
+                    if (abs(factor - 1.0) > 0.01f) {
+                        // for (auto u : generation[j].getUnits(availableUnitTypes)) {
+                        //     cout << getUnitData(u.first).name << " " << u.second << ", ";
+                        // }
+                        // cout << endl;
+                        // cout << "Scaling " << factor << endl;
+                        generation[j].scale(factor, availableUnitTypes);
+                    }
+                }
+            }
+
+            {
+                vector<vector<pair<int,int>>> targetUnitsNN(generation.size());
+                for (size_t j = 0; j < generation.size(); j++) {
+                    targetUnitsNN[j] = generation[j].getUnitsUntyped(availableUnitTypes);
+                    auto upgrades = generation[j].getUpgrades(availableUnitTypes);
+                    upgrades.remove(startingBuildState->upgrades);
+                    for (auto u : upgrades) targetUnitsNN[j].push_back({ (int)u + UPGRADE_ID_OFFSET, 1 });
+                }
+
+                vector<vector<float>> timesToProduceUnits = startingBuildState != nullptr && buildTimePredictor != nullptr ? buildTimePredictor->predictTimeToBuild(startingUnitsNN, startingBuildState->resources, targetUnitsNN) : vector<vector<float>>(generation.size(), vector<float>(3));
+
+                for (size_t j = 0; j < generation.size(); j++) {
+                    indices[j] = j;
+                    fitness[j] = calculateFitnessFixedTime(predictor, opponent, availableUnitTypes, generation[j], timesToProduceUnits[j]);
+                }
+            }
         }
 
         sortByValueDescending<int, float>(indices, [&](int index) { return fitness[index]; });

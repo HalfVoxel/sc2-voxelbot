@@ -21,6 +21,7 @@ struct CombatUnit {
 	float shield_max;
 	float energy;
 	bool is_flying;
+	float buffTimer = 0;
 	void modifyHealth(float delta);
 
 	CombatUnit() {}
@@ -67,6 +68,10 @@ struct CombatUpgrades {
 		upgrades |= other.upgrades;
 	}
 
+	void remove(const CombatUpgrades& other) {
+		upgrades &= ~other.upgrades;
+	}
+
 	iterator begin() const { return iterator(*this, 0 ); }
 	iterator end() const { return iterator(*this, upgrades.size() ); }
 };
@@ -84,6 +89,7 @@ struct CombatState {
 
 struct CombatResult {
 	float time = 0;
+	std::array<float, 2> averageHealthTime = {{ 0, 0 }};
 	CombatState state;
 };
 
@@ -112,7 +118,7 @@ struct WeaponInfo {
         return baseDPS;
     }
 
-    float getDPS(sc2::UNIT_TYPEID target) const;
+    float getDPS(sc2::UNIT_TYPEID target, float modifier = 0) const;
 
     float range() const;
 
@@ -140,6 +146,9 @@ struct UnitCombatInfo {
     WeaponInfo groundWeapon;
     WeaponInfo airWeapon;
 
+	// In case the unit has multiple weapons this is the fastest of the two weapons
+	float attackInterval() const;
+	
     UnitCombatInfo(sc2::UNIT_TYPEID type, const CombatUpgrades& upgrades, const CombatUpgrades& targetUpgrades);
 };
 
@@ -176,6 +185,7 @@ public:
 	float targetScore(const CombatUnit& unit, bool hasGround, bool hasAir) const;
 
 	float mineralScore(const CombatState& initialState, const CombatResult& combatResult, int player, const std::vector<float>& timeToProduceUnits, const CombatUpgrades upgrades) const;
+	float mineralScoreFixedTime(const CombatState& initialState, const CombatResult& combatResult, int player, const std::vector<float>& timeToProduceUnits, const CombatUpgrades upgrades) const;
 };
 
 CombatUnit makeUnit(int owner, sc2::UNIT_TYPEID type);
@@ -186,9 +196,36 @@ extern const std::vector<sc2::UNIT_TYPEID> availableUnitTypesProtoss;
 struct ArmyComposition {
     std::vector<std::pair<sc2::UNIT_TYPEID,int>> unitCounts;
     CombatUpgrades upgrades;
+
+	void combine(const ArmyComposition& other) {
+		for (auto u : other.unitCounts) {
+			bool found = false;
+			for (auto& u2 : unitCounts) {
+				if (u2.first == u.first) {
+					u2 = { u2.first, u2.second + u.second };
+					found = true;
+					break;
+				}
+			}
+
+			if (!found) unitCounts.push_back(u);
+		}
+
+		upgrades.combine(other.upgrades);
+	}
+};
+
+struct CompositionSearchSettings {
+	const CombatPredictor& combatPredictor;
+	const AvailableUnitTypes& availableUnitTypes;
+	const BuildOptimizerNN* buildTimePredictor = nullptr;
+	float availableTime = 4 * 60;
+
+	CompositionSearchSettings(const CombatPredictor& combatPredictor, const AvailableUnitTypes& availableUnitTypes, const BuildOptimizerNN* buildTimePredictor = nullptr) : combatPredictor(combatPredictor), availableUnitTypes(availableUnitTypes), buildTimePredictor(buildTimePredictor) {}
 };
 
 ArmyComposition findBestCompositionGenetic(const CombatPredictor& predictor, const AvailableUnitTypes& availableUnitTypes, const CombatState& opponent, const BuildOptimizerNN* buildTimePredictor = nullptr, const BuildState* startingBuildState = nullptr, std::vector<std::pair<sc2::UNIT_TYPEID,int>>* seedComposition = nullptr);
+ArmyComposition findBestCompositionGenetic(const CombatState& opponent, CompositionSearchSettings settings, const BuildState* startingBuildState = nullptr, std::vector<std::pair<sc2::UNIT_TYPEID,int>>* seedComposition = nullptr);
 
 struct CombatRecorder {
 private:
