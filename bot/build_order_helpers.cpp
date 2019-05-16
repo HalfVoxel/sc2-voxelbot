@@ -216,6 +216,9 @@ pair<int, vector<bool>> executeBuildOrder(const vector<const Unit*>& ourUnits, c
             continue;
         }
 
+        // For performance when we are supply blocked at 200/200 and have a huge amount of resources
+        if (index > 20) break;
+
         shared_ptr<TreeNode> node = nullptr;
         Cost cost;
         if (tracker.buildOrder[i].isUnitType()) {
