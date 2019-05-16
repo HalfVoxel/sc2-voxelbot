@@ -47,5 +47,6 @@ if len(sys.argv) > 1:
 
 plot("recording.csv", axs[0,:], "Ground Truth", tmax)
 plot(prefix + "2.csv", axs[1,:], "Simulated", tmax)
-plot(prefix + "3.csv", axs[2,:], "Simulated (bad micro)", tmax)
+# plot(prefix + "4.csv", axs[2,:], "Simulated (bad micro)", tmax)
+plot(prefix + "4.csv", axs[2,:], "Simulated (restarted)", tmax)
 plt.show()

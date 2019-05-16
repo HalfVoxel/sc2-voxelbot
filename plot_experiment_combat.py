@@ -71,6 +71,8 @@ else:
         "Archon": "#3481c3",
         "Zealot": "#326bd3",
         "Stalker": "#3249d3",
+        # "Immortal": "#152bac",
+        # "Sentry": "#000f67",
 
         "Marine": "#cc4646",
         "SiegeTankSieged": "#d6663a",
@@ -85,6 +87,7 @@ else:
 
 def getColor(name):
     if name not in seenUnits:
+        return "#000000"
         seenUnits[name] = defaultCM(len(seenUnits))
     return seenUnits[name]
 
@@ -99,6 +102,7 @@ def parse(filename):
         data = np.array([[float(x) for x in line] for line in lines])
         firstChange = np.argmax(data[:, 1:] != data[0, 1:], axis=0)
         order = firstChange.argsort()
+        assert(len(order) == len(headers))
         results.append((headers, data, order))
 
     return results
@@ -125,7 +129,6 @@ def plot_owner(data_tuple, ax, title, tmax, show_xlabel):
     data = data[:, sortOrder]
     colors = np.array(colors)[sortOrder]
     headers = np.array(headers)[sortOrder]
-    print(sortOrder)
 
     cnt = ax.stackplot(times, np.transpose(data), labels=headers, colors=colors, linewidth=0.3)
     for c in cnt:
@@ -145,10 +148,10 @@ for si in range(6):
     prefix = "experiment_results/combat/test"
 
     indices = [
-        [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)],
+        [(0, 0), (1, 0), (2, 0), (3, 0)],
         [(0, 1), (1, 1), (2, 1), (3, 1), (4, 1)],
         [(1, 0), (1, 2)],
-        [(5, 0), (5, 3)],
+        [(5, 0), (6, 0), (7, 0), (8, 0)],
         [(0, 0), (0, 4)],
         [(0, 5), (1, 5), (2, 5), (3, 5), (4, 5)],
     ]
