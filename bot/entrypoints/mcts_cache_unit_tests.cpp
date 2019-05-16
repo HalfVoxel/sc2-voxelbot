@@ -31,7 +31,15 @@ void test() {
     CombatPredictor combatPredictor;
     combatPredictor.init();
 
-    auto simulator = make_shared<SimulatorContext>(&combatPredictor, vector<Point2D>{ Point2D(0,0), Point2D(100, 100) });
+    array<vector<Point2D>, 2> extraDestinations = {{ {}, {} }};
+    extraDestinations[0].push_back(Point2D(100/2, 100/2));
+    extraDestinations[0].push_back(Point2D(100, 100));
+    extraDestinations[0].push_back(Point2D(0, 0));
+    extraDestinations[1].push_back(Point2D(100/2, 100/2));
+    extraDestinations[1].push_back(Point2D(100, 100));
+    extraDestinations[1].push_back(Point2D(0, 0));
+
+    auto simulator = make_shared<SimulatorContext>(&combatPredictor, vector<Point2D>{ Point2D(0,0), Point2D(100, 100) }, extraDestinations);
     BuildOrder bo1 = { UNIT_TYPEID::PROTOSS_PROBE, UNIT_TYPEID::PROTOSS_PYLON, UNIT_TYPEID::PROTOSS_PYLON, UNIT_TYPEID::PROTOSS_GATEWAY, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT,
         UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_PYLON,
         UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_ZEALOT, UNIT_TYPEID::PROTOSS_PYLON,

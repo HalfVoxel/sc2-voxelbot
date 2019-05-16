@@ -326,10 +326,21 @@ void runMCTS () {
     Stopwatch w2;
     Point2D defaultEnemyPosition = agent->Observation()->GetGameInfo().enemy_start_locations[0];
     Point2D ourDefaultPosition = agent->Observation()->GetStartLocation();
-    auto mctsSimulator = make_shared<SimulatorContext>(&bot->combatPredictor, vector<Point2D>{ ourDefaultPosition, defaultEnemyPosition });
+    int ourPlayerIndex = agent->Observation()->GetPlayerID() - 1;
+
+    array<vector<Point2D>, 2> extraDestinations = {{ {}, {} }};
+    extraDestinations[ourPlayerIndex].push_back(Point2D(168/2, 168/2));
+    extraDestinations[ourPlayerIndex].push_back(bot->deductionManager.sortedExpansionLocations[2]);
+    extraDestinations[ourPlayerIndex].push_back(bot->deductionManager.sortedExpansionLocations[3]);
+
+    extraDestinations[1 - ourPlayerIndex].push_back(Point2D(168/2, 168/2));
+    extraDestinations[1 - ourPlayerIndex].push_back(bot->ourDeductionManager.sortedExpansionLocations[2]);
+    extraDestinations[1 - ourPlayerIndex].push_back(bot->ourDeductionManager.sortedExpansionLocations[3]);
+
+
+    auto mctsSimulator = make_shared<SimulatorContext>(&bot->combatPredictor, vector<Point2D>{ ourDefaultPosition, defaultEnemyPosition }, extraDestinations);
     auto state = createSimulatorState(mctsSimulator);
 
-    int ourPlayerIndex = agent->Observation()->GetPlayerID() - 1;
     w2.stop();
     MCTSSearchSC2 search = findBestActions(state, ourPlayerIndex);
     // cout << "Executing mcts action..." << endl;

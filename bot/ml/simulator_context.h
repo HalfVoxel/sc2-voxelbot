@@ -10,9 +10,12 @@ struct SimulatorContext {
     CombatPredictor* combatPredictor;
     float simulationStartTime = 0;
     std::vector<sc2::Point2D> defaultPositions;
+    std::array<std::vector<sc2::Point2D>, 2> extraDestinations;
     MCTSCache cache;
     bool debug = false;
 
-    SimulatorContext(CombatPredictor* combatPredictor, std::vector<sc2::Point2D> defaultPositions) : combatPredictor(combatPredictor), defaultPositions(defaultPositions) {
+    SimulatorContext(CombatPredictor* combatPredictor, std::vector<sc2::Point2D> defaultPositions, std::array<std::vector<sc2::Point2D>, 2> extraDestinations) : combatPredictor(combatPredictor), defaultPositions(defaultPositions), extraDestinations(extraDestinations) {
+        assert(extraDestinations[0].size() == 3);
+        assert(extraDestinations[1].size() == 3);
     }
 };

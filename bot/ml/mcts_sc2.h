@@ -13,6 +13,7 @@ enum class MCTSAction {
     ArmyConsolidate,
     ArmyMoveC1,
     ArmyMoveC2,
+    ArmyMoveC3,
     None,
     ArmyMoveBase,
     ArmyAttackBase,
@@ -45,6 +46,8 @@ inline std::string MCTSActionName(MCTSAction action) {
             return "ArmyMoveC1";
         case MCTSAction::ArmyMoveC2:
             return "ArmyMoveC2";
+            case MCTSAction::ArmyMoveC3:
+            return "ArmyMoveC3";
         case MCTSAction::None:
             return "None";
         case MCTSAction::ArmyMoveBase:
