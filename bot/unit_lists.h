@@ -1,6 +1,7 @@
 #pragma once
 #include "sc2api/sc2_interfaces.h"
 #include "BuildOptimizerGenetic.h"
+#include "utilities/predicates.h"
 
 /*struct AvailableUnitType {
     sc2::UNIT_TYPEID type;
@@ -76,32 +77,18 @@ struct AvailableUnitTypes {
         assert(index < (int)index2item.size());
         if (!index2item[index].isUnitType()) {
             // This is an upgrade
-            switch(index2item[index].upgradeID()) {
-            case sc2::UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1:
-            case sc2::UPGRADE_ID::TERRANINFANTRYARMORSLEVEL1:
-            case sc2::UPGRADE_ID::TERRANVEHICLEWEAPONSLEVEL1:
-            case sc2::UPGRADE_ID::TERRANSHIPWEAPONSLEVEL1:
-            case sc2::UPGRADE_ID::PROTOSSGROUNDWEAPONSLEVEL1:
-            case sc2::UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL1:
-            case sc2::UPGRADE_ID::PROTOSSSHIELDSLEVEL1:
-            case sc2::UPGRADE_ID::ZERGMELEEWEAPONSLEVEL1:
-            case sc2::UPGRADE_ID::ZERGGROUNDARMORSLEVEL1:
-            case sc2::UPGRADE_ID::ZERGMISSILEWEAPONSLEVEL1:
-            case sc2::UPGRADE_ID::ZERGFLYERWEAPONSLEVEL1:
-            case sc2::UPGRADE_ID::ZERGFLYERARMORSLEVEL1:
-            case sc2::UPGRADE_ID::PROTOSSAIRWEAPONSLEVEL1:
-            case sc2::UPGRADE_ID::PROTOSSAIRARMORSLEVEL1:
-            case sc2::UPGRADE_ID::TERRANVEHICLEANDSHIPARMORSLEVEL1:
+            if (isUpgradeWithLevels(index2item[index].upgradeID())) {
                 // Enumerable upgrade, there are 3 upgrade levels
                 // TODO: Build order execution is bugged at the moment, only the first level can be executed
                 return 1;
-            default:
+            } else {
                 return 1;
             }
         }
 
-        // Essentially infinity
-        return 1000;
+        // Clamp maximum unit counts to something reasonable
+        // In part to avoid giving the neural network too large input which might cause odd output
+        return 20;
     }
 
     sc2::UNIT_TYPEID getUnitType(int index) const {
