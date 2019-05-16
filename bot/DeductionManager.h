@@ -37,7 +37,10 @@ private:
 	std::set<sc2::UNIT_TYPEID> observedUnitTypes;
 	std::vector<int> expectedObservations; // Indexed by unit type
 	std::vector<int> aliveAdjustment;
+	// [start location, first expansion, second reasonable expansion, etc.]
+	// Not the actual expansions but the order in which we expect the enemy to take expansion locations
 public:
+	std::vector<sc2::Point2D> sortedExpansionLocations;
 	void OnGameStart(int playerID);
 	/** Note that the player has some units, but has received them without paying in any way (e.g. starting units) */
 	void ExpectObservation(sc2::UNIT_TYPEID unitType, int count);

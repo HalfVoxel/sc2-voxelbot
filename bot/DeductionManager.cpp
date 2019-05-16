@@ -38,7 +38,7 @@ bool LargeObservationChangeObserver::isLargeObservationChange(const DeductionMan
 
 void DeductionManager::OnGameStart(int playerID) {
     this->playerID = playerID;
-    const auto& unitTypes = bot->Observation()->GetUnitTypeData();
+    const auto& unitTypes = getUnitTypes();
 
     expectedObservations = vector<int>(unitTypes.size());
 
@@ -73,6 +73,17 @@ void DeductionManager::OnGameStart(int playerID) {
             }
         }
     }
+
+    // TODO: Not accurate if playing on a >2 player map
+    Point2D defaultPosition = playerID == bot->Observation()->GetPlayerID() ? bot->startLocation_ : agent->Observation()->GetGameInfo().enemy_start_locations[0];
+
+    sortedExpansionLocations.push_back(defaultPosition);
+    for (auto p : bot->expansions_) {
+        if (Distance2D(p, defaultPosition) > 5) {
+            sortedExpansionLocations.push_back(p);
+        }
+    }
+    sortByValueAscending<Point2D, float>(sortedExpansionLocations, [=](auto p) { return Distance2D(p, defaultPosition); });
 }
 
 vector<pair<UNIT_TYPEID, int>> DeductionManager::GetKnownUnits() {
@@ -101,7 +112,7 @@ void log () {
 }
 
 void DeductionManager::Observe(const vector<const Unit*>& units) {
-    const auto& unitTypes = bot->Observation()->GetUnitTypeData();
+    const auto& unitTypes = getUnitTypes();
 
     for (const Unit* unit : units) {
         Observe(unit);
@@ -167,7 +178,8 @@ vector<pair<UNIT_TYPEID, int>> DeductionManager::ApproximateArmy(float scale) {
     }
 
     // Prior
-    float priorCount = 25 * (200 / (200 + ticksToSeconds(agent->Observation()->GetGameLoop())));
+    // float priorCount = 25 * (200 / (200 + ticksToSeconds(agent->Observation()->GetGameLoop())));
+    int priorCount = 13 + min(30, (int)(1 + pow(ticksToSeconds(agent->Observation()->GetGameLoop())/60.0f, 2)));
     
     priorCount *= scale;
     int k = 0;
@@ -248,6 +260,10 @@ vector<pair<UNIT_TYPEID, int>> DeductionManager::ApproximateArmy(float scale) {
         // }
     }
 
+    for (auto& u : result) {
+        if (u.first == UNIT_TYPEID::TERRAN_SIEGETANK) u = { UNIT_TYPEID::TERRAN_SIEGETANKSIEGED, u.second };
+    }
+
     return result;
 }
 
@@ -316,6 +332,7 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
 
     // Reduce prior as we kill more units
     int priorCount = 13 + min(30, (int)(1 + pow(ticksToSeconds(agent->Observation()->GetGameLoop())/60.0f, 2)));
+    priorCount /= 2;
     priorCount -= numDeadTotal/2;
     assert(priorCount < 10000);
 
@@ -372,12 +389,38 @@ std::vector<std::pair<CombatUnit, Point2D>> DeductionManager::SampleUnitPosition
         result.push_back(result[rand() % result.size()]);
     }
 
+    for (auto& u : result) {
+        if (u.first.type == UNIT_TYPEID::TERRAN_SIEGETANK) u.first.type = UNIT_TYPEID::TERRAN_SIEGETANKSIEGED;
+    }
+
+    float expectedExpansions = ticksToSeconds(agent->Observation()->GetGameLoop()) / (3*60.0f);
+    int killedExpansions = summary[(int)getTownHallForRace(race)].dead;
+    expectedExpansions -= 0.5f * killedExpansions;
+
+    for (size_t i = 0; i < sortedExpansionLocations.size(); i++) {
+        bool found = false;
+        for (auto u : result) {
+            if (isTownHall(u.first.type) && DistanceSquared2D(sortedExpansionLocations[i], u.second) < 5*5) {
+                expectedExpansions -= 1.0f;
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            if (bot->influenceManager.lastSeenMap(sortedExpansionLocations[i]) > 2*60 && expectedExpansions > 0) {
+                expectedExpansions -= 1.5f;
+                result.emplace_back(makeUnit(playerID, getTownHallForRace(race)), sortedExpansionLocations[i]);
+            }
+        }
+    }
+
     return result;
 }
 
 
 vector<UnitTypeInfo> DeductionManager::Summary() const {
-    const auto& unitTypes = bot->Observation()->GetUnitTypeData();
+    const auto& unitTypes = getUnitTypes();
     Spending spending;
     spending.spentMinerals = 0;
     spending.spentGas = 0;
@@ -514,6 +557,10 @@ vector<UnitTypeInfo> DeductionManager::Summary() const {
         spending.spentMinerals += expected * unitTypeData.mineral_cost;
         spending.spentGas += expected * unitTypeData.vespene_cost;
     }
+
+    // Zero out
+    infos[(int)UNIT_TYPEID::ZERG_EGG] = {};
+    infos[(int)UNIT_TYPEID::ZERG_LARVA] = {};
 
     spending.spentMinerals -= freeResources.spentMinerals;
     spending.spentGas -= freeResources.spentGas;
