@@ -2,8 +2,8 @@
 #include <iostream>
 #include <tuple>
 #include <vector>
-#include "utilities/mappings.h"
-#include "utilities/predicates.h"
+#include <libvoxelbot/utilities/mappings.h>
+#include <libvoxelbot/utilities/predicates.h>
 #include "Bot.h"
 #include "sc2api/sc2_api.h"
 

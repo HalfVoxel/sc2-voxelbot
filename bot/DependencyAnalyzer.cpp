@@ -1,8 +1,8 @@
 #include "DependencyAnalyzer.h"
 #include <map>
 #include <stack>
-#include "utilities/mappings.h"
-#include "utilities/predicates.h"
+#include <libvoxelbot/utilities/mappings.h>
+#include <libvoxelbot/utilities/predicates.h>
 #include "Bot.h"
 #include <iostream>
 

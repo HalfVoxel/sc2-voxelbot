@@ -1,9 +1,10 @@
-#include "build_optimizer_nn.h"
+#include <libvoxelbot/buildorder/build_time_estimator.h>
 #include <iostream>
 #include <pybind11/stl.h>
 #include <pybind11/embed.h>
-#include "utilities/python_utils.h"
-#include "BuildOptimizerGenetic.h"
+#include <libvoxelbot/utilities/python_utils.h>
+#include <libvoxelbot/combat/simulator.h>
+#include <libvoxelbot/buildorder/optimizer.h>
 
 using namespace std;
 using namespace sc2;

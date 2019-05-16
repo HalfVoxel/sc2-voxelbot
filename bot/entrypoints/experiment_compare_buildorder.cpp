@@ -1,9 +1,9 @@
-#include "../BuildOptimizerGenetic.h"
+#include <libvoxelbot/buildorder/optimizer.h>
 #include "../build_order_helpers.h"
 #include "sc2lib/sc2_lib.h"
 #include "../behaviortree/TacticalNodes.h"
-#include "../utilities/predicates.h"
-#include "../utilities/profiler.h"
+#include <libvoxelbot/utilities/predicates.h>
+#include <libvoxelbot/utilities/profiler.h>
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
 #include <thread>

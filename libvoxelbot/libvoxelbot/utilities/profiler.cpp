@@ -1,4 +1,4 @@
-#include "profiler.h"
+#include <libvoxelbot/utilities/profiler.h>
 using Clock = std::chrono::high_resolution_clock;
 
 void Stopwatch::start() {

@@ -1,4 +1,4 @@
-#include "influence.h"
+#include <libvoxelbot/utilities/influence.h>
 #include <cmath>
 #include <ctime>
 #include <iomanip>

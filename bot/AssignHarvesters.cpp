@@ -1,4 +1,4 @@
-#include "utilities/predicates.h"
+#include <libvoxelbot/utilities/predicates.h>
 #include "behaviortree/StrategicNodes.h"
 #include "Bot.h"
 

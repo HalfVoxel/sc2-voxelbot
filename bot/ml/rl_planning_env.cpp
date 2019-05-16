@@ -1,7 +1,7 @@
 #include "rl_planning_env.h"
 #include "tensor.h"
 #include "../mcts/mcts_debugger.h"
-#include "../unit_lists.h"
+#include <libvoxelbot/common/unit_lists.h>
 
 using namespace std;
 using namespace sc2;

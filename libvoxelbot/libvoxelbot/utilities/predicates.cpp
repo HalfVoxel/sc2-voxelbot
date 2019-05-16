@@ -1,5 +1,5 @@
-#include "predicates.h"
-#include "mappings.h"
+#include <libvoxelbot/utilities/predicates.h>
+#include <libvoxelbot/utilities/mappings.h>
 
 using namespace sc2;
 
@@ -237,4 +237,23 @@ bool isTownHall(sc2::UNIT_TYPEID type) {
         default:
             return false;
     }
+}
+
+bool isUpgradeDoneOrInProgress(const ObservationInterface* observation, UPGRADE_ID upgrade) {
+    for (auto const i : observation->GetUpgrades()) {
+        if (upgrade == i) {
+            return true;
+        }
+    }
+
+    const UpgradeData& data = getUpgradeData(upgrade);
+    auto upgradeAbility = data.ability_id;
+
+    for (auto const unit : observation->GetUnits(Unit::Alliance::Self)) {
+        // Note: Upgrades with levels use generalized ability IDs
+        if (!unit->orders.empty() && unit->orders[0].ability_id == upgradeAbility) {
+            return true;
+        }
+    }
+    return false;
 }

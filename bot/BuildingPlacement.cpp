@@ -1,6 +1,7 @@
 #include "BuildingPlacement.h"
 #include <vector>
-#include "utilities/predicates.h"
+#include <libvoxelbot/utilities/predicates.h>
+#include "Bot.h"
 #include <random>
 
 using namespace std;

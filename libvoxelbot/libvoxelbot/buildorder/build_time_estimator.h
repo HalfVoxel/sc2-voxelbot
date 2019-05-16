@@ -2,7 +2,7 @@
 //#include <pybind11/embed.h>
 //#include <pybind11/stl.h>
 #include <vector>
-#include "utilities/mappings.h"
+#include <libvoxelbot/utilities/mappings.h>
 #include <pybind11/pybind11.h>
 
 struct BuildResources;

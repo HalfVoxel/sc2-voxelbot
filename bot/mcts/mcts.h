@@ -5,8 +5,8 @@
 #include <array>
 #include <iomanip>
 #include "optional.hpp"
-#include "../utilities/profiler.h"
-#include "../utilities/bump_allocator.h"
+#include <libvoxelbot/utilities/profiler.h>
+#include <libvoxelbot/utilities/bump_allocator.h>
 #include "variance_estimator.h"
 
 static const bool ENABLE_RAVE = false;

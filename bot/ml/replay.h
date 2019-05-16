@@ -3,7 +3,7 @@
 #include "sc2api/sc2_interfaces.h"
 #include "sc2api/sc2_map_info.h"
 #include "../build_order_train/serialized_state.h"
-#include "../utilities/sc2_serialization.h"
+#include <libvoxelbot/utilities/sc2_serialization.h>
 #include <vector>
 #include <string>
 

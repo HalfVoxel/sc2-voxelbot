@@ -1,6 +1,6 @@
 #include "TacticalNodes.h"
-#include "../utilities/pathfinding.h"
-#include "../utilities/predicates.h"
+#include <libvoxelbot/utilities/pathfinding.h>
+#include <libvoxelbot/utilities/predicates.h>
 #include "StrategicNodes.h"
 #include "../Bot.h"
 

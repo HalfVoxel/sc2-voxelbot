@@ -1,10 +1,10 @@
 #include "DeductionManager.h"
 #include <sstream>
 #include "DependencyAnalyzer.h"
-#include "utilities/mappings.h"
-#include "utilities/predicates.h"
+#include <libvoxelbot/utilities/mappings.h>
+#include <libvoxelbot/utilities/predicates.h>
 #include "Bot.h"
-#include "utilities/stdutils.h"
+#include <libvoxelbot/utilities/stdutils.h>
 #include <iostream>
 
 using namespace std;

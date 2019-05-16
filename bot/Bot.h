@@ -11,9 +11,9 @@
 #include "SpendingManager.h"
 #include "DeductionManager.h"
 #include "DependencyAnalyzer.h"
-#include "BuildOptimizerGenetic.h"
-#include "build_optimizer_nn.h"
-#include "CombatPredictor.h"
+#include <libvoxelbot/buildorder/optimizer.h>
+#include <libvoxelbot/buildorder/build_time_estimator.h>
+#include <libvoxelbot/combat/simulator.h>
 #include "ml/ml_movement.h"
 #include "behaviortree/StrategicNodes.h"
 extern int ticks;

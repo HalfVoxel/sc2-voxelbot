@@ -2,7 +2,7 @@
 #include "BehaviorTree.h"
 #include "sc2api/sc2_api.h"
 #include <functional>
-#include "../utilities/mappings.h"
+#include <libvoxelbot/utilities/mappings.h>
 
 struct ConstructionPreparationMovement {
     const sc2::Unit* worker;

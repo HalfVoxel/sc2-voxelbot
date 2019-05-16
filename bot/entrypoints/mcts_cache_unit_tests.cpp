@@ -2,8 +2,8 @@
 #include "../ml/simulator.h"
 #include "../ml/simulator_context.h"
 #include "../ml/mcts_cache.h"
-#include "../CombatPredictor.h"
-#include "../utilities/mappings.h"
+#include <libvoxelbot/combat/simulator.h>
+#include <libvoxelbot/utilities/mappings.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
 

@@ -1,15 +1,7 @@
 #pragma once
 #include "sc2api/sc2_interfaces.h"
-#include "BuildOptimizerGenetic.h"
-#include "utilities/predicates.h"
-
-/*struct AvailableUnitType {
-    sc2::UNIT_TYPEID type;
-    bool allowInBuildOrderWhenNotExplicitlyRequested;
-
-    AvailableUnitType(sc2::UNIT_TYPEID type, bool allowInBuildOrderWhenNotExplicitlyRequested = false) : type(type), allowInBuildOrderWhenNotExplicitlyRequested(allowInBuildOrderWhenNotExplicitlyRequested), allowChronoBoost(allowChronoBoost) {}
-    AvailableUnitType(sc2::UPGRADE_ID type, bool allowInBuildOrderWhenNotExplicitlyRequested = false) : type((sc2::UNIT_TYPEID)((int)type + UPGRADE_ID_OFFSET)), allowInBuildOrderWhenNotExplicitlyRequested(allowInBuildOrderWhenNotExplicitlyRequested), allowChronoBoost(allowChronoBoost) {}
-};*/
+#include <libvoxelbot/buildorder/optimizer.h>
+#include <libvoxelbot/utilities/predicates.h>
 
 struct AvailableUnitTypes {
     std::vector<BuildOrderItem> index2item;

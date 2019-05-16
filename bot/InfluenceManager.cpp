@@ -1,7 +1,7 @@
-#include "utilities/influence.h"
-#include "utilities/pathfinding.h"
-#include "utilities/predicates.h"
-#include "utilities/renderer.h"
+#include <libvoxelbot/utilities/influence.h>
+#include <libvoxelbot/utilities/pathfinding.h>
+#include <libvoxelbot/utilities/predicates.h>
+#include <libvoxelbot/utilities/renderer.h>
 #include "sc2api/sc2_proto_to_pods.h"
 #include "Bot.h"
 

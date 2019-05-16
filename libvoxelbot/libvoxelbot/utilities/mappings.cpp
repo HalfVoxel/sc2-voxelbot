@@ -1,13 +1,13 @@
 #include "mappings.h"
 #include <iostream>
-#include "../generated/abilities.h"
-#include "predicates.h"
+#include <libvoxelbot/generated/abilities.h>
+#include <libvoxelbot/utilities/predicates.h>
 #include "sc2api/sc2_agent.h"
 #include "sc2api/sc2_api.h"
 #include "sc2api/sc2_interfaces.h"
 #include "sc2api/sc2_map_info.h"
-#include "stdutils.h"
-#include "unit_data_caching.h"
+#include <libvoxelbot/utilities/stdutils.h>
+#include <libvoxelbot/utilities/unit_data_caching.h>
 
 using namespace std;
 using namespace sc2;
@@ -386,9 +386,9 @@ vector<UNIT_TYPEID> emptyVector;
  * In particular this is defined for BUILD_* and TRAIN_* abilities.
  */
 const std::vector<UNIT_TYPEID>& abilityToCasterUnit(ABILITY_ID ability) {
-    if ((int)ability >= mAbilityToCasterUnit.size()) return emptyVector;
+    if ((int)ability >= (int)mAbilityToCasterUnit.size()) return emptyVector;
 
-    assert((int)ability < mAbilityToCasterUnit.size());
+    assert((int)ability < (int)mAbilityToCasterUnit.size());
     return mAbilityToCasterUnit[(int)ability];
     /*
     switch (ability) {

@@ -4,10 +4,10 @@
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
 #include "../Bot.h"
-#include "../CombatPredictor.h"
+#include <libvoxelbot/combat/simulator.h>
 #include "../CompositionAnalyzer.h"
 #include "../DependencyAnalyzer.h"
-#include "../utilities/mappings.h"
+#include <libvoxelbot/utilities/mappings.h>
 #include "sc2api/sc2_api.h"
 #include "sc2utils/sc2_manage_process.h"
 
@@ -116,7 +116,7 @@ class CompositionAnalyzer2 : public sc2::Agent {
         }
 
         if (recorder != nullptr && (Observation()->GetGameLoop() % 10) == 0) {
-            recorder->tick();
+            recorder->tick(Observation());
         }
 
         Actions()->SendActions();

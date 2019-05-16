@@ -1,4 +1,4 @@
-#include "pathfinding.h"
+#include <libvoxelbot/utilities/pathfinding.h>
 #include <cmath>
 #include <iostream>
 #include <queue>

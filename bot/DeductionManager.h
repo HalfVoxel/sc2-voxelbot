@@ -1,6 +1,6 @@
 #pragma once
 #include "sc2api/sc2_api.h"
-#include "CombatPredictor.h"
+#include <libvoxelbot/combat/simulator.h>
 #include <set>
 #include <vector>
 

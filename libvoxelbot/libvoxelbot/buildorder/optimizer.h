@@ -4,7 +4,7 @@
 #include <functional>
 #include "sc2api/sc2_interfaces.h"
 #include <iostream>
-#include "CombatPredictor.h"
+#include <libvoxelbot/combat/simulator.h>
 
 struct BuildState;
 struct BuildOrderTracker;
@@ -413,5 +413,5 @@ BuildOrder findBestBuildOrderGenetic(const BuildState& startState, const std::ve
 std::pair<BuildOrder, BuildOrderFitness> findBestBuildOrderGenetic(const BuildState& startState, const std::vector<std::pair<BuildOrderItem, int>>& target, const BuildOrder* seed = nullptr, BuildOptimizerParams params = BuildOptimizerParams());
 void unitTestBuildOptimizer();
 void printBuildOrderDetailed(const BuildState& startState, const BuildOrder& buildOrder, const std::vector<bool>* highlight = nullptr);
-void optimizeExistingBuildOrder(const std::vector<const sc2::Unit*>& ourUnits, const BuildState& buildOrderStartingState, BuildOrderTracker& buildOrder, bool serialize);
+void optimizeExistingBuildOrder(const sc2::ObservationInterface* observation, const std::vector<const sc2::Unit*>& ourUnits, const BuildState& buildOrderStartingState, BuildOrderTracker& buildOrder, bool serialize);
 BuildOrderFitness calculateFitness(const BuildState& startState, const BuildOrder& buildOrder);

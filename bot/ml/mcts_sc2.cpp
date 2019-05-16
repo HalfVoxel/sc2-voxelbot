@@ -1,6 +1,6 @@
 #include "../ml/simulator.h"
-#include "../utilities/predicates.h"
-#include "../utilities/mappings.h"
+#include <libvoxelbot/utilities/predicates.h>
+#include <libvoxelbot/utilities/mappings.h>
 #include <functional>
 #include <random>
 #include <sstream>

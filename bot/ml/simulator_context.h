@@ -1,5 +1,5 @@
 #pragma once
-#include "../CombatPredictor.h"
+#include <libvoxelbot/combat/simulator.h>
 #include "mcts_cache.h"
 #include "sc2lib/sc2_lib.h"
 #include <iostream>

@@ -3,14 +3,13 @@
 #include <map>
 #include <queue>
 #include "../Bot.h"
-#include "../utilities/predicates.h"
+#include <libvoxelbot/utilities/predicates.h>
 #include "../DependencyAnalyzer.h"
-#include "../generated/abilities.h"
-#include "../utilities/mappings.h"
-#include "../utilities/unit_data_caching.h"
+#include <libvoxelbot/utilities/mappings.h>
+#include <libvoxelbot/utilities/unit_data_caching.h>
 #include "sc2api/sc2_api.h"
 #include "sc2utils/sc2_manage_process.h"
-#include "../unit_lists.h"
+#include <libvoxelbot/common/unit_lists.h>
 
 using namespace sc2;
 using namespace std;

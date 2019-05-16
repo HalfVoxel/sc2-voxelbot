@@ -1,6 +1,6 @@
 #pragma once
-#include "../BuildOptimizerGenetic.h"
-#include "../CombatPredictor.h"
+#include <libvoxelbot/buildorder/optimizer.h>
+#include <libvoxelbot/combat/simulator.h>
 #include <vector>
 #include <functional>
 

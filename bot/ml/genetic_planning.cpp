@@ -2,8 +2,8 @@
 #include "genetic_planning.h"
 #include "simulator.h"
 #include "simulator_context.h"
-#include "../CombatPredictor.h"
-#include "../utilities/stdutils.h"
+#include <libvoxelbot/combat/simulator.h>
+#include <libvoxelbot/utilities/stdutils.h>
 
 
 using namespace std;

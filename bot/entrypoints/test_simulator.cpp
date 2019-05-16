@@ -1,7 +1,7 @@
 #include "../ml/simulator.h"
-#include "../utilities/predicates.h"
-#include "../utilities/mappings.h"
-#include "../utilities/profiler.h"
+#include <libvoxelbot/utilities/predicates.h>
+#include <libvoxelbot/utilities/mappings.h>
+#include <libvoxelbot/utilities/profiler.h>
 #include <functional>
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>

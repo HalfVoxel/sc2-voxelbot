@@ -6,7 +6,7 @@
 #include "Bot.h"
 #include "sc2api/sc2_api.h"
 #include "sc2utils/sc2_manage_process.h"
-#include "utilities/cereal_json.h"
+#include <libvoxelbot/utilities/cereal_json.h>
 
 using namespace sc2;
 using namespace std;

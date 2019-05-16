@@ -1,8 +1,8 @@
 #pragma once
 #include "sc2api/sc2_interfaces.h"
-#include "build_optimizer_nn.h"
+#include <libvoxelbot/buildorder/build_time_estimator.h>
+#include <libvoxelbot/utilities/stdutils.h>
 #include <limits>
-#include "utilities/stdutils.h"
 #include <vector>
 
 struct AvailableUnitTypes;
@@ -231,7 +231,7 @@ struct CombatRecorder {
 private:
 	std::vector<std::pair<float, std::vector<sc2::Unit>>> frames;
 public:
-	void tick();
+	void tick(const sc2::ObservationInterface* observation);
 	void finalize(std::string filename="recording.csv");
 };
 

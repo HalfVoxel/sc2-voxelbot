@@ -1,5 +1,5 @@
-#include "unit_data_caching.h"
-#include "sc2_serialization.h"
+#include <libvoxelbot/utilities/unit_data_caching.h>
+#include <libvoxelbot/utilities/sc2_serialization.h>
 #include <string>
 #include <cereal/archives/binary.hpp>
 #include <cereal/types/string.hpp>
@@ -52,8 +52,6 @@ void serialize(Archive & archive, UnitTypeID& u) {
 }*/
 
 void save_unit_data(const vector<UnitTypeData>& unit_types, string path) {
-   
-
     auto stream = ofstream(path);
     stream << unit_types.size() << endl;
     for (const UnitTypeData& type : unit_types) {
@@ -113,6 +111,10 @@ void save_unit_data(const vector<UnitTypeData>& unit_types, string path) {
 
 std::vector<sc2::UnitTypeData> load_unit_data() {
     auto stream = ifstream(UNIT_DATA_CACHE_PATH);
+    if (!stream) {
+        cerr << "Could not open unit data cache file at " << UNIT_DATA_CACHE_PATH << endl;
+        exit(1);
+    }
     int nUnits;
     stream >> nUnits;
     vector<UnitTypeData> unit_types(nUnits);
@@ -261,7 +263,7 @@ void save_ability_data(vector<AbilityData> abilities) {
         abilities2.push_back(a2);
     }
 
-    std::ofstream file("bot/generated/abilities.bin", std::ios::binary);
+    std::ofstream file(ABILITY_DATA_CACHE_PATH, std::ios::binary);
     {
         cereal::BinaryOutputArchive archive(file);
         archive(abilities2);
@@ -270,7 +272,12 @@ void save_ability_data(vector<AbilityData> abilities) {
 }
 
 std::vector<sc2::AbilityData> load_ability_data() {
-    std::ifstream file("bot/generated/abilities.bin", std::ios::binary);
+    std::ifstream file(ABILITY_DATA_CACHE_PATH, std::ios::binary);
+    if (!file) {
+        cerr << "Could not open unit data cache file at " << ABILITY_DATA_CACHE_PATH << endl;
+        exit(1);
+    }
+
     vector<SerializableAbility> abilities2;
     {
         cereal::BinaryInputArchive archive(file);
@@ -305,7 +312,7 @@ std::vector<sc2::AbilityData> load_ability_data() {
 }
 
 void save_upgrade_data(vector<UpgradeData> upgrades) {
-    std::ofstream file("bot/generated/upgrades.bin", std::ios::binary);
+    std::ofstream file(UPGRADE_DATA_CACHE_PATH, std::ios::binary);
     {
         cereal::BinaryOutputArchive archive(file);
         archive(upgrades);
@@ -314,7 +321,12 @@ void save_upgrade_data(vector<UpgradeData> upgrades) {
 }
 
 std::vector<sc2::UpgradeData> load_upgrade_data() {
-    std::ifstream file("bot/generated/upgrades.bin", std::ios::binary);
+    std::ifstream file(UPGRADE_DATA_CACHE_PATH, std::ios::binary);
+    if (!file) {
+        cerr << "Could not open upgrade data cache file at " << UPGRADE_DATA_CACHE_PATH << endl;
+        exit(1);
+    }
+
     vector<sc2::UpgradeData> upgrades;
     {
         cereal::BinaryInputArchive archive(file);

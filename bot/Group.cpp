@@ -2,7 +2,7 @@
 #include <numeric>
 #include "behaviortree/ScoutingNodes.h"
 #include "behaviortree/TacticalNodes.h"
-#include "utilities/stdutils.h"
+#include <libvoxelbot/utilities/stdutils.h>
 
 using namespace sc2;
 using namespace std;

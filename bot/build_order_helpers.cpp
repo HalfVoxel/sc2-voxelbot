@@ -1,11 +1,13 @@
 #include "build_order_helpers.h"
-#include "utilities/mappings.h"
+#include <libvoxelbot/utilities/mappings.h>
 #include "behaviortree/TacticalNodes.h"
 #include "behaviortree/BehaviorTree.h"
-#include "utilities/predicates.h"
-#include "utilities/stdutils.h"
-#include "unit_lists.h"
+#include <libvoxelbot/utilities/predicates.h>
+#include <libvoxelbot/utilities/stdutils.h>
+#include <libvoxelbot/common/unit_lists.h>
+#include <libvoxelbot/buildorder/tracker.h>
 #include <sstream>
+#include "Bot.h"
 
 using namespace std;
 using namespace sc2;
@@ -44,132 +46,15 @@ int countMissingVespeneWorkers (const vector<const Unit*>& ourUnits) {
    return numHiddenHarvesters;
 }
 
-
-BuildOrderTracker::BuildOrderTracker (BuildOrder buildOrder) : buildOrderUnits(buildOrder.size()), buildOrder(buildOrder) {
-}
-
-void BuildOrderTracker::setBuildOrder (BuildOrder buildOrder) {
-    this->buildOrder = buildOrder;
-    buildOrderUnits = vector<const Unit*>(buildOrder.size());
-    assert(buildOrder.size() == buildOrderUnits.size());
-    cout << "Created as " << buildOrder.size() << " " << buildOrderUnits.size() << endl;
-}
-
-void BuildOrderTracker::tweakBuildOrder (std::vector<bool> keepMask, BuildOrder tweakBuildOrder) {
-    assert(keepMask.size() == buildOrder.size());
-    vector<const Unit*> newUnits;
-    BuildOrder newBO;
-
-    for (size_t i = 0; i < buildOrder.size(); i++) {
-        if (keepMask[i]) {
-            newBO.items.push_back(buildOrder[i]);
-            newUnits.push_back(buildOrderUnits[i]);
-        }
-    }
-    
-    for (auto item : tweakBuildOrder.items) {
-        newBO.items.push_back(item);
-        newUnits.push_back(nullptr);
-    }
-
-    buildOrder = move(newBO);
-    buildOrderUnits = move(newUnits);
-}
-
-void BuildOrderTracker::addExistingUnit(const Unit* unit) {
-    knownUnits.insert(unit);
-}
-
-void BuildOrderTracker::ignoreUnit (UNIT_TYPEID type, int count) {
-    ignoreUnits[canonicalize(type)] += count;
-}
-
-vector<bool> BuildOrderTracker::update(const vector<const Unit*>& ourUnits) {
-    assert(buildOrder.size() == buildOrderUnits.size());
-    int loop = agent->Observation()->GetGameLoop();
-    for (auto*& u : buildOrderUnits) {
-        if (u != nullptr) {
-            // If the unit is dead
-            // Not sure if e.g. workers that die inside of a refinery are marked as dead properly
-            // or if they just disappear. So just to be on the same side we make sure we have seen the unit somewhat recently.
-            bool deadOrGone = !u->is_alive || u->last_seen_game_loop - loop > 60;
-
-            // If a structure is destroyed then we should rebuild it to ensure the build order remains valid.
-            // However if units die that is normal and we should not try to rebuild them.
-            if (deadOrGone && (isStructure(u->unit_type) || u->unit_type == UNIT_TYPEID::ZERG_OVERLORD)) {
-                u = nullptr;
-            }
-        }
-    }
-
-    map<UNIT_TYPEID, int> inProgress;
-    for (auto* u : ourUnits) {
-        if (!knownUnits.count(u)) {
-            knownUnits.insert(u);
-            auto canonicalType = canonicalize(u->unit_type);
-
-            // New unit
-            if (ignoreUnits[canonicalType] > 0) {
-                ignoreUnits[canonicalType]--;
-                continue;
-            }
-
-            for (int i = 0; i < buildOrder.size(); i++) {
-                if (buildOrderUnits[i] == nullptr && (buildOrder[i].rawType() == canonicalType)) {
-                    buildOrderUnits[i] = u;
-                    break;
-                }
-            }
-        }
-
-        for (auto order : u->orders) {
-            auto createdUnit = abilityToUnit(order.ability_id);
-            if (createdUnit != UNIT_TYPEID::INVALID) {
-                if (order.target_unit_tag != NullTag) {
-                    auto* unit = bot->Observation()->GetUnit(order.target_unit_tag);
-                    // This unit is already existing and is being constructed.
-                    // It will already have been associated with the build order item
-                    if (unit != nullptr && unit->unit_type == createdUnit) continue;
-                }
-                inProgress[canonicalize(createdUnit)]++;
-            }
-
-            // Only process the first order (this bot should never have more than one anyway)
-            break;
-        }
-    }
-
-    // cout << "In progress ";
-    // for (auto p : inProgress) cout << getUnitData(p.first).name << " x" << p.second << ", ";
-    // cout << endl;
-
-    
-    vector<bool> res(buildOrderUnits.size());
-    for (int i = 0; i < buildOrderUnits.size(); i++) {
-        res[i] = buildOrderUnits[i] != nullptr;
-        if (!buildOrder[i].isUnitType()) {
-            auto hasUpgrade = HasUpgrade(buildOrder[i].upgradeID()).Tick();
-            res[i] = hasUpgrade == Status::Running || hasUpgrade == Status::Success;
-        }
-
-        // No concrete unit may be associated with the item yet, but it may be on its way
-        if (!res[i] && inProgress[buildOrder[i].rawType()] > 0) {
-            inProgress[buildOrder[i].rawType()]--;
-            res[i] = true;
-        }
-    }
-    return res;
-}
-
-pair<int, vector<bool>> executeBuildOrder(const vector<const Unit*>& ourUnits, const BuildState& buildOrderStartingState, BuildOrderTracker& tracker, float currentMinerals, SpendingManager& spendingManager, bool& serialize) {
+pair<int, vector<bool>> executeBuildOrder(const ObservationInterface* observation, const vector<const Unit*>& ourUnits, const BuildState& buildOrderStartingState, BuildOrderTracker& tracker, float currentMinerals, SpendingManager& spendingManager, bool& serialize) {
     // Optimize the current build order, but only if we didn't just do an action because then the 'doneActions' list might be inaccurate
     if ((agent->Observation()->GetGameLoop() % 10) == 0 && agent->Observation()->GetGameLoop() - spendingManager.lastActionFrame > 2) {
         BuildState currentState(agent->Observation(), Unit::Alliance::Self, Race::Protoss, BuildResources(agent->Observation()->GetMinerals(), agent->Observation()->GetVespene()), 0);
-        optimizeExistingBuildOrder(ourUnits, currentState, tracker, serialize);
+        optimizeExistingBuildOrder(observation, ourUnits, currentState, tracker, serialize);
         serialize = false;
     }
 
-    auto doneActions = tracker.update(ourUnits);
+    auto doneActions = tracker.update(observation, ourUnits);
 
     // Keep track of how many units have been created/started to be created since the build order was last updated.
     // This will allow us to ensure that we don't do actions multiple times

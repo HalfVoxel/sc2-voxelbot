@@ -1,7 +1,7 @@
 #pragma once
 #include "sc2api/sc2_api.h"
 #include <functional>
-#include "BuildOptimizerGenetic.h"
+#include <libvoxelbot/buildorder/optimizer.h>
 
 struct Cost {
     int minerals;

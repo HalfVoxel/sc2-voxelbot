@@ -1,13 +1,15 @@
-#include "../BuildOptimizerGenetic.h"
+#include <libvoxelbot/buildorder/optimizer.h>
 #include "../build_order_helpers.h"
 #include "sc2lib/sc2_lib.h"
 #include "../behaviortree/TacticalNodes.h"
-#include "../utilities/predicates.h"
+#include <libvoxelbot/utilities/predicates.h>
+#include <libvoxelbot/buildorder/tracker.h>
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
 #include <thread>
 #include <fstream>
 #include <sstream>
+#include "../Bot.h"
 
 using namespace std;
 using namespace sc2;
@@ -27,7 +29,7 @@ void compareBuildOrder(BuildState startingState, BuildOrder buildOrder, vector<f
 
     BuildState state = startingState;
     // ss << "Time: " << (int)round(buildOrderTime) << endl;
-    bool success = state.simulateBuildOrder(buildOrder, [&](int i) {
+    state.simulateBuildOrder(buildOrder, [&](int i) {
         expectedTimings[i] = state.time;
         // string name = buildOrder[i].isUnitType() ? getUnitData(buildOrder[i].typeID()).name : UpgradeIDToName(buildOrder[i].upgradeID());
         // ss << (int)state.time << "\t" << doneTimes[i] << "\t" << name;
@@ -39,7 +41,7 @@ void compareBuildOrder(BuildState startingState, BuildOrder buildOrder, vector<f
     timings.realTimings = doneTimes;
     timings.buildOrder = vector<int>(buildOrder.size());
     timings.chronoBoosted = vector<bool>(buildOrder.size());
-    for (int i = 0; i < buildOrder.size(); i++) {
+    for (size_t i = 0; i < buildOrder.size(); i++) {
         timings.buildOrder[i] = (int)buildOrder[i].rawType();
         timings.chronoBoosted[i] = buildOrder[i].chronoBoosted;
     }
@@ -168,16 +170,15 @@ class ExperimentBuildOrderAgent : public Bot {
         refreshUnits();
         refreshAbilities();
         auto& ourUnits = this->ourUnits();
-        auto& enemyUnits = this->enemyUnits();
         auto abilities = Query()->GetAbilitiesForUnits(ourUnits, false);
 
         armyTree->Tick();
 
         bool serialize = false;
-        auto doneBuildOrderActions = executeBuildOrder(ourUnits, lastStartingState, tracker, Observation()->GetMinerals(), spendingManager, serialize).second;
+        auto doneBuildOrderActions = executeBuildOrder(Observation(), ourUnits, lastStartingState, tracker, Observation()->GetMinerals(), spendingManager, serialize).second;
         bool anyFalse = false;
         // cout << "Tick " << Observation()->GetGameLoop() << " " << ticksToSeconds(Observation()->GetGameLoop()) << endl;
-        for (int i = 0; i < doneBuildOrderActions.size(); i++) {
+        for (size_t i = 0; i < doneBuildOrderActions.size(); i++) {
             if (doneBuildOrderActions[i] && doneBuildOrderTimes[i] < 0) {
                 cout << "Done at " << Observation()->GetGameLoop() << " " << ticksToSeconds(Observation()->GetGameLoop()) << endl;
                 doneBuildOrderTimes[i] = ticksToSeconds(Observation()->GetGameLoop());
@@ -243,7 +244,6 @@ int main(int argc, char* argv[]) {
 
     coordinator.SetRealtime(false);
     coordinator.LaunchStarcraft();
-    bool do_break = false;
 
     for (int i = 0; i < 100; i++) {
         coordinator.StartGame(ParaSiteLE);

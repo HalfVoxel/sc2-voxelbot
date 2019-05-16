@@ -1,4 +1,4 @@
-#include "BuildOptimizerGenetic.h"
+#include <libvoxelbot/buildorder/optimizer.h>
 #include <algorithm>
 #include <limits>
 #include <map>
@@ -6,15 +6,15 @@
 #include <stack>
 #include <iostream>
 #include <cmath>
-#include "utilities/mappings.h"
-#include "utilities/predicates.h"
-#include "utilities/profiler.h"
-#include "utilities/stdutils.h"
-#include "unit_lists.h"
-#include "build_order_helpers.h"
+#include <libvoxelbot/utilities/mappings.h>
+#include <libvoxelbot/utilities/predicates.h>
+#include <libvoxelbot/utilities/profiler.h>
+#include <libvoxelbot/utilities/stdutils.h>
+#include <libvoxelbot/common/unit_lists.h>
+#include <libvoxelbot/buildorder/tracker.h>
+#include <libvoxelbot/utilities/build_state_serialization.h>
 
 #include <fstream>
-#include "utilities/build_state_serialization.h"
 
 using namespace std;
 using namespace sc2;
@@ -138,16 +138,17 @@ BuildState::BuildState(const ObservationInterface* observation, Unit::Alliance a
         }
     }
 
+    if (alliance == Unit::Alliance::Self) {
     // Add all upgrades
-    auto& availableUnits = getAvailableUnitsForRace(race, UnitCategory::BuildOrderOptions);
-    for (size_t i = 0; i < availableUnits.size(); i++) {
-        auto item = availableUnits.getBuildOrderItem(i);
-        if (!item.isUnitType()) {
-            auto hasUpgrade = HasUpgrade(item.upgradeID()).Tick();
-            // Note: slightly incorrect. Assumes warpgate research is already done when it may actually be in progress.
-            // But since the proper event for upgrades is not added above, this is better than nothing.
-            if (hasUpgrade == BOT::Status::Running || hasUpgrade == BOT::Status::Success) {
-                upgrades.add(item.upgradeID());
+        auto& availableUnits = getAvailableUnitsForRace(race, UnitCategory::BuildOrderOptions);
+        for (size_t i = 0; i < availableUnits.size(); i++) {
+            auto item = availableUnits.getBuildOrderItem(i);
+            if (!item.isUnitType()) {
+                // Note: slightly incorrect. Assumes warpgate research is already done when it may actually be in progress.
+                // But since the proper event for upgrades is not added above, this is better than nothing.
+                if (isUpgradeDoneOrInProgress(observation, item.upgradeID())) {
+                    upgrades.add(item.upgradeID());
+                }
             }
         }
     }
@@ -2921,11 +2922,11 @@ bool BuildOrderFitness::operator<(const BuildOrderFitness& other) const {
     // return s;
 }
 
-void optimizeExistingBuildOrder(const std::vector<const sc2::Unit*>& ourUnits, const BuildState& startState, BuildOrderTracker& buildOrder, bool serialize) {
+void optimizeExistingBuildOrder(const ObservationInterface* observation, const std::vector<const sc2::Unit*>& ourUnits, const BuildState& startState, BuildOrderTracker& buildOrder, bool serialize) {
     const AvailableUnitTypes& availableUnitTypes = getAvailableUnitsForRace(startState.race, UnitCategory::BuildOrderOptions);
     const AvailableUnitTypes& allEconomicUnits = getAvailableUnitsForRace(startState.race, UnitCategory::Economic);
 
-    auto doneItems = buildOrder.update(ourUnits);
+    auto doneItems = buildOrder.update(observation, ourUnits);
 
     // Simulate the starting state until all current events have finished, only then do we know which exact unit types the player will start with.
     // This is important for implicit dependencies in the build order.

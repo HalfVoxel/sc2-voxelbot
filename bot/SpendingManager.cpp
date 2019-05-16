@@ -4,7 +4,7 @@
 #include <iostream>
 #include <map>
 #include <sstream>
-#include "utilities/mappings.h"
+#include <libvoxelbot/utilities/mappings.h>
 #include "Bot.h"
 
 using namespace std;

@@ -1,8 +1,8 @@
 #pragma once
-#include "../CombatPredictor.h"
+#include <libvoxelbot/combat/simulator.h>
 #include "simulator.h"
 #include "mcts_sc2.h"
-#include "../utilities/bump_allocator.h"
+#include <libvoxelbot/utilities/bump_allocator.h>
 #include<numeric>
 
 

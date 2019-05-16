@@ -4,18 +4,17 @@
 #include <queue>
 #include "../Bot.h"
 #include "../DependencyAnalyzer.h"
-#include "../utilities/mappings.h"
-#include "../generated/abilities.h"
+#include <libvoxelbot/utilities/mappings.h>
 #include "sc2api/sc2_api.h"
 #include "sc2utils/sc2_manage_process.h"
 
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
-#include "../utilities/cereal_json.h"
+#include <libvoxelbot/utilities/cereal_json.h>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
 #include <fstream>
-#include "../utilities/stdutils.h"
+#include <libvoxelbot/utilities/stdutils.h>
 #include "cereal/cereal.hpp"
 
 #include <thread>

@@ -1,4 +1,4 @@
-#include "renderer.h"
+#include <libvoxelbot/utilities/renderer.h>
 
 #include <algorithm>
 #include <cassert>

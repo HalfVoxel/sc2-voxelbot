@@ -1,5 +1,5 @@
 #pragma once
-#include "utilities/influence.h"
+#include <libvoxelbot/utilities/influence.h>
 
 struct InfluenceManager {
 	InfluenceMap pathing_grid;

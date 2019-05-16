@@ -1,5 +1,5 @@
 #include "TacticalManager.h"
-#include "utilities/predicates.h"
+#include <libvoxelbot/utilities/predicates.h>
 #include "Bot.h"
 #include <iostream>
 

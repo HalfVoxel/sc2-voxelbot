@@ -3,14 +3,14 @@
 #include "bindings.h"
 #include "../ml/replay.h"
 #include "../build_order_train/serialized_state.h"
-#include "../utilities/sc2_serialization.h"
+#include <libvoxelbot/utilities/sc2_serialization.h>
 #include <fstream>
 #include <cereal/cereal.hpp>
-#include "../utilities/cereal_json.h"
+#include <libvoxelbot/utilities/cereal_json.h>
 #include <cereal/archives/binary.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
-#include "../utilities/profiler.h"
+#include <libvoxelbot/utilities/profiler.h>
 #include "../ml/rl_planning_env.h"
 
 using namespace std;

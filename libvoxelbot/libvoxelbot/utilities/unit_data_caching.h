@@ -3,7 +3,10 @@
 #include <fstream>
 #include <vector>
 
-const std::string UNIT_DATA_CACHE_PATH = "bot/generated/units.data";
+const std::string UNIT_DATA_CACHE_PATH = "libvoxelbot/libvoxelbot/generated/units.data";
+const std::string UPGRADE_DATA_CACHE_PATH = "libvoxelbot/libvoxelbot/generated/upgrades.bin";
+const std::string ABILITY_DATA_CACHE_PATH = "libvoxelbot/libvoxelbot/generated/abilities.bin";
+
 void save_unit_data(const std::vector<sc2::UnitTypeData>& unit_types, std::string path=UNIT_DATA_CACHE_PATH);
 std::vector<sc2::UnitTypeData> load_unit_data();
 void save_ability_data(std::vector<sc2::AbilityData> abilities);

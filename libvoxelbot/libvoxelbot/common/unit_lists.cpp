@@ -1,7 +1,4 @@
-#include "unit_lists.h"
-#include <vector>
-#include "BuildOptimizerGenetic.h"
-#include "utilities/predicates.h"
+#include <libvoxelbot/common/unit_lists.h>
 
 using namespace std;
 using namespace sc2;

@@ -1,7 +1,7 @@
-#include "../BuildOptimizerGenetic.h"
-#include "../utilities/mappings.h"
-#include "../utilities/predicates.h"
-#include "../utilities/stdutils.h"
+#include <libvoxelbot/buildorder/optimizer.h>
+#include <libvoxelbot/utilities/mappings.h>
+#include <libvoxelbot/utilities/predicates.h>
+#include <libvoxelbot/utilities/stdutils.h>
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
 #include <random>
@@ -10,7 +10,7 @@
 #include <iomanip>
 #include <iostream>
 #include <cereal/cereal.hpp>
-#include "../utilities/cereal_json.h"
+#include <libvoxelbot/utilities/cereal_json.h>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
 #include <vector>

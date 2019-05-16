@@ -1,6 +1,6 @@
 #include "simulator.h"
-#include "../utilities/predicates.h"
-#include "../utilities/profiler.h"
+#include <libvoxelbot/utilities/predicates.h>
+#include <libvoxelbot/utilities/profiler.h>
 #include <array>
 #include <random>
 #include "simulator_context.h"

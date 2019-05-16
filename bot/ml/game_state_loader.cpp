@@ -1,10 +1,10 @@
 #include "game_state_loader.h"
 #include <cereal/cereal.hpp>
-#include "../utilities/cereal_json.h"
+#include <libvoxelbot/utilities/cereal_json.h>
 #include <cereal/archives/binary.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
-#include "../unit_lists.h"
+#include <libvoxelbot/common/unit_lists.h>
 #include <fstream>
 #include "simulator_context.h"
 

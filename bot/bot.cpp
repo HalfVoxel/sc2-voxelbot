@@ -14,24 +14,25 @@
 #include <random>
 #include "ml/simulator.h"
 #include "ml/simulator_context.h"
-#include "utilities/profiler.h"
+#include <libvoxelbot/utilities/profiler.h>
 #include "behaviortree/MicroNodes.h"
-#include "utilities/pathfinding.h"
-#include "utilities/predicates.h"
-#include "utilities/renderer.h"
+#include <libvoxelbot/utilities/pathfinding.h>
+#include <libvoxelbot/utilities/predicates.h>
+#include <libvoxelbot/utilities/renderer.h>
 #include "SDL.h"
 #include "ml/mcts_sc2.h"
 #include "ScoutingManager.h"
 #include "behaviortree/TacticalNodes.h"
 #include "BuildingPlacement.h"
-#include "utilities/cereal_json.h"
+#include <libvoxelbot/utilities/cereal_json.h>
 #include <cereal/types/string.hpp>
 #include <fstream>
 #include "cereal/cereal.hpp"
 #include "mcts/mcts_debugger.h"
 #include "build_order_helpers.h"
-#include "unit_lists.h"
-#include "utilities/build_state_serialization.h"
+#include <libvoxelbot/common/unit_lists.h>
+#include <libvoxelbot/utilities/build_state_serialization.h>
+#include <libvoxelbot/buildorder/tracker.h>
 
 using Clock = std::chrono::high_resolution_clock;
 
@@ -535,7 +536,7 @@ void Bot::OnStep() {
         }
     }
     
-    auto boExTuple = executeBuildOrder(ourUnits, lastStartingState, buildOrderTracker, Observation()->GetMinerals(), spendingManager, saveNextBO);
+    auto boExTuple = executeBuildOrder(Observation(), ourUnits, lastStartingState, buildOrderTracker, Observation()->GetMinerals(), spendingManager, saveNextBO);
     currentBuildOrderIndex = boExTuple.first;
 
     // tree->Tick();

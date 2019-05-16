@@ -4,12 +4,12 @@
 #include "sc2api/sc2_map_info.h"
 #include "../build_order_train/serialized_state.h"
 #include "../ml/replay.h"
-#include "../BuildOptimizerGenetic.h"
+#include <libvoxelbot/buildorder/optimizer.h>
 #include <random>
 #include <iostream>
 #include <fstream>
 #include "../DependencyAnalyzer.h"
-#include "../utilities/sc2_serialization.h"
+#include <libvoxelbot/utilities/sc2_serialization.h>
 #include "sc2utils/sc2_manage_process.h"
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>

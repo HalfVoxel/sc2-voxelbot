@@ -1,9 +1,9 @@
 #include "StrategicNodes.h"
 #include <iostream>
-#include "../utilities/mappings.h"
-#include "../utilities/predicates.h"
+#include <libvoxelbot/utilities/mappings.h>
+#include <libvoxelbot/utilities/predicates.h>
 #include "../Bot.h"
-#include "../utilities/stdutils.h"
+#include <libvoxelbot/utilities/stdutils.h>
 
 using namespace BOT;
 using namespace std;

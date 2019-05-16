@@ -1,5 +1,5 @@
 #include "ScoutingNodes.h"
-#include "../utilities/predicates.h"
+#include <libvoxelbot/utilities/predicates.h>
 #include "../Bot.h"
 using namespace sc2;
 using namespace BOT;

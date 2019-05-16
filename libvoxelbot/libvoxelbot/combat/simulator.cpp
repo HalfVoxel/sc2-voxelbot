@@ -1,15 +1,15 @@
-#include "CombatPredictor.h"
+#include <libvoxelbot/combat/simulator.h>
 #include <algorithm>
 #include <fstream>
 #include <functional>
 #include <random>
 #include <iostream>
-#include "Bot.h"
-#include "utilities/mappings.h"
-#include "utilities/profiler.h"
-#include "utilities/stdutils.h"
-#include "utilities/predicates.h"
-#include "unit_lists.h"
+// #include "Bot.h"
+#include <libvoxelbot/utilities/mappings.h>
+#include <libvoxelbot/utilities/profiler.h>
+#include <libvoxelbot/utilities/stdutils.h>
+#include <libvoxelbot/utilities/predicates.h>
+#include <libvoxelbot/common/unit_lists.h>
 #include <sstream>
 #include <chrono>
 
@@ -277,12 +277,12 @@ void CombatRecording::writeCSV(string filename) {
     output.close();
 }
 
-void CombatRecorder::tick() {
+void CombatRecorder::tick(const ObservationInterface* observation) {
     vector<Unit> units;
-    for (auto u : agent->Observation()->GetUnits()) {
+    for (auto u : observation->GetUnits()) {
         units.push_back(*u);
     }
-    frames.push_back(make_pair(agent->Observation()->GetGameLoop(), units));
+    frames.push_back(make_pair(observation->GetGameLoop(), units));
 }
 
 void CombatRecorder::finalize(string filename) {
@@ -1283,8 +1283,6 @@ float CombatPredictor::mineralScoreFixedTime(const CombatState& initialState, co
         // totalScore += score;
     }
 
-    float lostResourcesFraction = ourDamageTakenCost / (0.001f + ourScore);
-
     for (auto u : upgrades) {
         auto& data = getUpgradeData(u);
         ourScore -= data.mineral_cost + 1.2f * data.vespene_cost;
@@ -1349,10 +1347,10 @@ CombatUnit makeUnit(int owner, UNIT_TYPEID type) {
     return unit;
 }
 
-void createState(const CombatState& state, float offset = 0) {
-    if (!agent) return;
+static void createState(DebugInterface* debug, const CombatState& state, float offset = 0) {
+    if (!debug) return;
     for (auto& u : state.units) {
-        agent->Debug()->DebugCreateUnit(u.type, Point2D(40 + 20 * (u.owner == 1 ? -1 : 1), 20 + offset), u.owner);
+        debug->DebugCreateUnit(u.type, Point2D(40 + 20 * (u.owner == 1 ? -1 : 1), 20 + offset), u.owner);
     }
 }
 
@@ -1552,7 +1550,7 @@ float calculateFitnessFixedTime(const CombatPredictor& predictor, const CombatSt
 }
 
 void logRecordings(CombatState& state, const CombatPredictor& predictor, float spawnOffset, string msg) {
-    createState(state, spawnOffset);
+    // createState(state, spawnOffset);
     // cout << "Duration " << watch.millis() << " ms" << endl;
     vector<int> mineralCosts(3);
     vector<int> vespeneCosts(3);

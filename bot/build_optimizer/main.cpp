@@ -1,5 +1,5 @@
-#include "../utilities/mappings.h"
-#include "../BuildOptimizerGenetic.h"
+#include <libvoxelbot/utilities/mappings.h>
+#include <libvoxelbot/buildorder/optimizer.h>
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
 

@@ -2,8 +2,8 @@
 #include <ctime>
 #include <iostream>
 #include <map>
-#include "../utilities/mappings.h"
-#include "../utilities/predicates.h"
+#include <libvoxelbot/utilities/mappings.h>
+#include <libvoxelbot/utilities/predicates.h>
 #include "../Bot.h"
 
 using namespace std;

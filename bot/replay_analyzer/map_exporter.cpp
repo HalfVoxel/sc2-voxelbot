@@ -3,7 +3,7 @@
 #include "sc2api/sc2_interfaces.h"
 #include "sc2api/sc2_map_info.h"
 #include "../build_order_train/serialized_state.h"
-#include "../utilities/influence.h"
+#include <libvoxelbot/utilities/influence.h>
 #include <random>
 #include <iostream>
 #include <fstream>

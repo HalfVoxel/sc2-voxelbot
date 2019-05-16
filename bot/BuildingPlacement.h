@@ -2,7 +2,7 @@
 #include "sc2api/sc2_agent.h"
 #include "sc2api/sc2_interfaces.h"
 #include "sc2api/sc2_map_info.h"
-#include "utilities/influence.h"
+#include <libvoxelbot/utilities/influence.h>
 
 class BuildingPlacement {
     void FindWallPlacements(sc2::Point3D startLocation_);

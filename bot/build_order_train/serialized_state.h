@@ -1,11 +1,11 @@
 #pragma once
-#include "../utilities/cereal_json.h"
+#include <libvoxelbot/utilities/cereal_json.h>
 
 
-#include "../BuildOptimizerGenetic.h"
-#include "../utilities/mappings.h"
-#include "../utilities/predicates.h"
-#include "../utilities/stdutils.h"
+#include <libvoxelbot/buildorder/optimizer.h>
+#include <libvoxelbot/utilities/mappings.h>
+#include <libvoxelbot/utilities/predicates.h>
+#include <libvoxelbot/utilities/stdutils.h>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
 #include <vector>

@@ -1,8 +1,8 @@
 #pragma once
 #include <cereal/cereal.hpp>
-#include "../utilities/cereal_json.h"
-#include "../BuildOptimizerGenetic.h"
-#include "../CombatPredictor.h"
+#include <libvoxelbot/utilities/cereal_json.h>
+#include <libvoxelbot/buildorder/build_time_estimator.h>
+#include <libvoxelbot/combat/simulator.h>
 #include <cereal/types/string.hpp>
 #include <cereal/types/bitset.hpp>
 #include <cereal/types/vector.hpp>

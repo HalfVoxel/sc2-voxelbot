@@ -1,10 +1,10 @@
-#include "../utilities/mappings.h"
-#include "../utilities/predicates.h"
-#include "../BuildOptimizerGenetic.h"
-#include "../build_optimizer_nn.h"
-#include "../utilities/profiler.h"
-#include "../utilities/build_state_serialization.h"
-#include "../unit_lists.h"
+#include <libvoxelbot/utilities/mappings.h>
+#include <libvoxelbot/utilities/predicates.h>
+#include <libvoxelbot/buildorder/optimizer.h>
+#include <libvoxelbot/buildorder/build_time_estimator.h>
+#include <libvoxelbot/utilities/profiler.h>
+#include <libvoxelbot/utilities/build_state_serialization.h>
+#include <libvoxelbot/common/unit_lists.h>
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
 #include <random>
@@ -13,7 +13,7 @@
 #include <iomanip>
 #include <iostream>
 #include <cereal/cereal.hpp>
-#include "../utilities/cereal_json.h"
+#include <libvoxelbot/utilities/cereal_json.h>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
 

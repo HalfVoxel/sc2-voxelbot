@@ -1,6 +1,6 @@
 #include "mcts_debugger.h"
-#include "../utilities/predicates.h"
-#include "../utilities/mappings.h"
+#include <libvoxelbot/utilities/predicates.h>
+#include <libvoxelbot/utilities/mappings.h>
 #include <pybind11/embed.h>
 #include <random>
 #include <ctime>
@@ -8,7 +8,7 @@
 #include <stack>
 #include <sstream>
 #include <iostream>
-#include "../utilities/python_utils.h"
+#include <libvoxelbot/utilities/python_utils.h>
 
 using namespace std;
 using namespace sc2;

@@ -1,10 +1,11 @@
 #include "ml_movement.h"
 #include "replay.h"
-#include "../utilities/mappings.h"
-#include "../utilities/predicates.h"
-#include "../utilities/python_utils.h"
+#include <libvoxelbot/utilities/mappings.h>
+#include <libvoxelbot/utilities/predicates.h>
+#include <libvoxelbot/utilities/python_utils.h>
 #include <sstream>
 #include <iostream>
+#include "../Bot.h"
 
 using namespace std;
 using namespace sc2;
@@ -66,6 +67,7 @@ map<int, float> timeBias;
 void MLMovement::Tick(const ObservationInterface* observation) {
     int playerID = observation->GetPlayerID();
     auto ourUnits = observation->GetUnits(Unit::Alliance::Self);
+    #if false
 
     if ((ticks % 50) == 1) {
         // Create state
@@ -186,4 +188,5 @@ void MLMovement::Tick(const ObservationInterface* observation) {
             }
         }
     }
+    #endif
 }

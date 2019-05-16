@@ -35,6 +35,7 @@ set(CMAKE_CXX_STANDARD 14)
 # Also compile the Starcraft 2 c++ API
 add_subdirectory("s2client-api")
 add_subdirectory("pybind11")
+add_subdirectory("libvoxelbot")
 
 # Add include directories for the SC2 API (the examples one should be removed eventually when our bot doesn't depend on it)
 include_directories("s2client-api/include")
@@ -82,7 +83,7 @@ function (create_executable project_name source_code mainfile extra_libs)
 		target_link_libraries(${project_name} legacy_stdio_definitions)
 	endif ()
 
-    target_link_libraries(${project_name} sc2api sc2lib sc2utils pybind11::embed botlib ${extra_libs})
+    target_link_libraries(${project_name} sc2api sc2lib sc2utils pybind11::embed botlib libvoxelbot ${extra_libs})
 endfunction ()
 
 function (create_library project_name source_code extra_libs)
@@ -97,11 +98,11 @@ function (create_library project_name source_code extra_libs)
 
     # Sets the grouping in IDEs like visual studio (last parameter is the group name)
     set_target_properties(${project_name} PROPERTIES FOLDER target)
-    target_link_libraries(${project_name} sc2api sc2lib sc2utils pybind11 ${extra_libs})
+    target_link_libraries(${project_name} sc2api sc2lib sc2utils pybind11 libvoxelbot ${extra_libs})
 endfunction ()
 
 # Note: trying to add SDL2-static as the extra_libs parameter here causes pybind11 modules to fail to link (for unknown reasons, maybe PIC related?)
-file (GLOB botlib_sources "bot/*.cpp" "bot/behaviortree/*.cpp" "s2client-api/examples/common/*.h" "s2client-api/examples/common/*.cc" "bot/utilities/*.cpp" "bot/ml/*.cpp" "bot/generated/*.cpp" "bot/mcts/*.cpp" "s2client-api/examples/common/*.cc")
+file (GLOB botlib_sources "bot/*.cpp" "bot/behaviortree/*.cpp" "s2client-api/examples/common/*.h" "bot/utilities/*.cpp" "bot/ml/*.cpp" "bot/generated/*.cpp" "bot/mcts/*.cpp")
 # message(STATUS "${botlib_sources}")
 create_library(botlib "${botlib_sources}" "")
 

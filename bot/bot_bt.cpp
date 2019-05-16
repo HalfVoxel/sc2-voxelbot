@@ -10,9 +10,9 @@
 #include <map>
 #include <random>
 #include "behaviortree/MicroNodes.h"
-#include "utilities/pathfinding.h"
-#include "utilities/predicates.h"
-#include "utilities/renderer.h"
+#include <libvoxelbot/utilities/pathfinding.h>
+#include <libvoxelbot/utilities/predicates.h>
+#include <libvoxelbot/utilities/renderer.h>
 #include "SDL.h"
 #include "ScoutingManager.h"
 #include "behaviortree/TacticalNodes.h"

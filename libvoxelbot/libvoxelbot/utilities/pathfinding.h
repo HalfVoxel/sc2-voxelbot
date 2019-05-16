@@ -1,5 +1,5 @@
 #pragma once
-#include "influence.h"
+#include <libvoxelbot/utilities/influence.h>
 #include "sc2api/sc2_api.h"
 #include <vector>
 
