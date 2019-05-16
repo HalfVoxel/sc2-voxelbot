@@ -86,7 +86,7 @@ double DefaultScore(UNIT_TYPEID unitType) {
 }
 
 Cost CostOfUpgrade(UpgradeID upgrade) {
-    auto& data = bot->Observation()->GetUpgradeData()[upgrade];
+    auto& data = getUpgradeData(upgrade);
     Cost result = {
         (int)data.mineral_cost,
         (int)data.vespene_cost,
@@ -98,7 +98,7 @@ Cost CostOfUpgrade(UpgradeID upgrade) {
 }
 
 Cost CostOfUnit(UnitTypeID unit) {
-    auto& unitData = bot->Observation()->GetUnitTypeData()[unit];
+    auto& unitData = getUnitData(unit);
 
     Cost result = {
         unitData.mineral_cost,
@@ -122,21 +122,20 @@ bool HasTechFor(UnitTypeID unitType) {
         return true;
     }
 
-    auto unitData = bot->Observation()->GetUnitTypeData();
-    auto required = unitData[unitType].tech_requirement;
+    auto required = getUnitData(unitType).tech_requirement;
     if (required == UNIT_TYPEID::INVALID) {
         return true;
     }
 
-    for (auto unit : bot->Observation()->GetUnits(Unit::Alliance::Self)) {
+    for (auto unit : bot->ourUnits()) {
         if (unit->build_progress < 1) continue;
 
         if (unit->unit_type == required || simplifyUnitType(unit->unit_type) == required) {
             return true;
         }
 
-        auto& aliases = unitData[unit->unit_type].tech_alias;
-        if (find(aliases.begin(), aliases.end(), required) != aliases.end()) {
+        auto& aliases = getUnitData(unit->unit_type).tech_alias;
+        if (contains(aliases, required)) {
             return true;
         }
     }
