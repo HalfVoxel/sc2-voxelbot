@@ -49,7 +49,7 @@ void CameraController::OnStep() {
 
                 UnitTypeID unitType = simplifyUnitType(abilityToUnit(order.ability_id));
                 if (unitType != UNIT_TYPEID::INVALID) {
-                    const auto& unitData = observation->GetUnitTypeData()[unitType];
+                    const auto& unitData = getUnitData(unitType);
                     double multiplier = (unitData.mineral_cost + unitData.vespene_cost) / 100.0;
 
                     if (order.target_pos != Point2D(0, 0)) {
