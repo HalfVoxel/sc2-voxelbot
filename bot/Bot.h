@@ -85,6 +85,7 @@ public:
     void refreshAbilities();
 
     void clearFields();
+    void RecalculateBuildOrder();
 
     std::string resultSavePath = "";
     std::vector<ConstructionPreparationMovement> constructionPreparation;

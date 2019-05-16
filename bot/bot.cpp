@@ -239,7 +239,7 @@ SimulatorState createSimulatorState(shared_ptr<SimulatorContext> mctsSimulator) 
                         for (auto p : unitCounts) {
                             cout << "Expected " << UnitTypeToName(p.first) << " " << p.second << endl;
                         }
-                        exit(1);
+                        assert(false);
                     }
                 }
             }
@@ -433,7 +433,7 @@ void Bot::OnStep() {
             saveNextBO = true;
         }
         if (msg.message == "disable") {
-            botDisabled = true;
+            botDisabled = !botDisabled;
         }
     }
 
@@ -518,170 +518,7 @@ void Bot::OnStep() {
     }
 
     if (shouldRecalculateBuildOrder) {
-        CombatState startingState;
-        for (auto u : deductionManager.ApproximateArmy(1.0f)) {
-            cout << "Expected enemy unit: " << UnitTypeToName(u.first) << " " << u.second << endl;
-            for (int i = 0; i < u.second; i++) startingState.units.push_back(makeUnit(1, u.first));
-        }
-
-        /*auto knownEnemyUnits = deductionManager.GetKnownUnits();
-        for (auto u : knownEnemyUnits) {
-            for (int i = 0; i < u.second; i++) {
-                startingState.units.push_back(makeUnit(1, u.first));
-            }
-        }
-        
-        for (int i = 0; i < 10; i++) {
-            startingState.units.push_back(makeUnit(1, UNIT_TYPEID::ZERG_ROACH));
-        }
-        for (int i = 0; i < 10; i++) {
-            startingState.units.push_back(makeUnit(1, UNIT_TYPEID::ZERG_ZERGLING));
-        }
-        for (int i = 0; i < 3; i++) {
-            startingState.units.push_back(makeUnit(1, UNIT_TYPEID::ZERG_HYDRALISK));
-        }*/
-
-        for (size_t i = 0; i < ourUnits.size(); i++) {
-            if (isArmy(ourUnits[i]->unit_type)) {
-                startingState.units.push_back(makeUnit(2, ourUnits[i]->unit_type));
-            }
-        }
-
-        map<UNIT_TYPEID, int> targetUnitsCount;
-        BuildState buildOrderStartingState(Observation(), Unit::Alliance::Self, Race::Protoss, BuildResources(Observation()->GetMinerals(), Observation()->GetVespene()), 0);
-        for (const auto& u : buildOrderStartingState.units) {
-            targetUnitsCount[u.type] += u.units;
-        }
-        for (const auto& e : buildOrderStartingState.events) {
-            if (e.type == BuildEventType::FinishedUnit) {
-                auto createdUnit = abilityToUnit(e.ability);
-                if (createdUnit != UNIT_TYPEID::INVALID && !isAddon(createdUnit)) {
-                    targetUnitsCount[createdUnit]++;
-                }
-            }
-        }
-
-        for (auto& b : buildOrderStartingState.baseInfos) {
-            cout << "Base minerals " << b.remainingMinerals << endl;
-        }
-
-        // buildOrderTracker needs to know about units that existed and were in progress when the build order was calculated
-        BuildOrderTracker tracker;
-        tracker.knownUnits = mAllOurUnits;
-        for (auto& e : buildOrderStartingState.events) {
-            if (e.type == BuildEventType::FinishedUnit) {
-                UNIT_TYPEID u = abilityToUnit(e.ability);
-                tracker.ignoreUnit(u, 1);
-            }
-        }
-
-        // Add our current upgrades to the build order state
-        startingState.environment = &combatPredictor.combineCombatEnvironment(startingState.environment, buildOrderStartingState.upgrades, 2);
-        // TODO Use deduction manager to fill in what upgrades we think the enemy might reasonable have at this time?
-        CombatUpgrades enemyUpgrades;
-        if (ticksToSeconds(Observation()->GetGameLoop()) > 60*5) {
-            enemyUpgrades.add(UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1);
-            enemyUpgrades.add(UPGRADE_ID::ZERGMELEEWEAPONSLEVEL1);
-            enemyUpgrades.add(UPGRADE_ID::PROTOSSGROUNDWEAPONSLEVEL1);
-        }
-        if (ticksToSeconds(Observation()->GetGameLoop()) > 60*10) {
-            enemyUpgrades.add(UPGRADE_ID::TERRANINFANTRYARMORSLEVEL1);
-            enemyUpgrades.add(UPGRADE_ID::ZERGGROUNDARMORSLEVEL1);
-            enemyUpgrades.add(UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL1);
-        }
-        startingState.environment = &combatPredictor.combineCombatEnvironment(startingState.environment, enemyUpgrades, 1);
-
-        currentBuildOrderFutureTick = ticks;
-        currentBuildOrderFuture = std::async(std::launch::async, [=]{
-            // return make_tuple(vector<UNIT_TYPEID>(0), buildOrderStartingState, 0.0f, vector<pair<UNIT_TYPEID,int>>(0));
-            // Make sure most buildings are built even though they are currently under construction.
-            // The buildTimePredictor cannot take buildings under construction into account.
-            cout << "Async..." << endl;
-            auto futureState = buildOrderStartingState;
-            futureState.simulate(futureState.time + 40);
-            futureState.resources = buildOrderStartingState.resources;
-
-            Stopwatch watch;
-            map<UNIT_TYPEID, int> targetUnitsCount2;
-            for (auto u : targetUnitsCount) {
-                if (isArmy(u.first)) targetUnitsCount2[u.first] = u.second;
-                else targetUnitsCount2[u.first] = u.second;
-            }
-
-            cout << "Finding best composition" << endl;
-            auto* buildTimePredictorPtr = &buildTimePredictor;
-#if DISABLE_PYTHON
-            buildTimePredictorPtr = nullptr;
-#endif
-
-            auto bestCounter = findBestCompositionGenetic(combatPredictor, getAvailableUnitsForRace(Race::Protoss, UnitCategory::ArmyCompositionOptions), startingState, buildTimePredictorPtr, &futureState, nullptr);
-
-            // auto bestCounter = findBestCompositionGenetic(combatPredictor, availableUnitTypesProtoss, startingState, nullptr, &futureState, &lastCounter);
-            /*vector<pair<UNIT_TYPEID, int>> bestCounter = {
-                { UNIT_TYPEID::TERRAN_MARINE, 30 },
-                { UNIT_TYPEID::TERRAN_SIEGETANK, 10 },
-            };*/
-
-            cout << "Best counter" << endl;
-            for (auto c : bestCounter.unitCounts) {
-                cout << "\t" << UnitTypeToName(c.first) << " " << c.second << endl;
-            }
-            cout << "With upgrades:";
-            for (auto u : bestCounter.upgrades) {
-                cout << " " << UpgradeIDToName(u);
-            }
-            cout << endl;
-
-            int totalTargetCount = 0;
-            for (auto c : bestCounter.unitCounts) {
-                targetUnitsCount2[c.first] += c.second * 1.0;
-                totalTargetCount += c.second * 1.0;
-            }
-
-            // Add some extra units until we are going to produce at least N units
-            const int MinAdditionalUnitsToProduce = 8;
-            while(totalTargetCount < MinAdditionalUnitsToProduce) {
-                UNIT_TYPEID rndUnit;
-                int weight = 0;
-                for (auto& p : targetUnitsCount2) {
-                    if (p.second > 0 && isArmy(p.first)) {
-                        weight += p.second;
-                        if ((rand() % weight) <= p.second) rndUnit = p.first;
-                    }
-                }
-
-                if (weight == 0) break;
-                targetUnitsCount2[rndUnit] += 1;
-                totalTargetCount += 1;
-            }
-
-            targetUnitsCount2[UNIT_TYPEID::PROTOSS_COLOSSUS] = max(targetUnitsCount2[UNIT_TYPEID::PROTOSS_COLOSSUS], 2);
-
-            vector<pair<BuildOrderItem, int>> targetUnits;
-            for (auto p : targetUnitsCount2) targetUnits.push_back({ BuildOrderItem(p.first), p.second });
-            for (auto u : bestCounter.upgrades) targetUnits.push_back({ BuildOrderItem(u), 1 });
-
-            cout << "Additional units to build" << endl;
-            for (auto p : targetUnitsCount2) {
-                int delta = p.second;
-                if (targetUnitsCount.count(p.first)) delta -= targetUnitsCount.at(p.first);
-                if (delta != 0) {
-                    cout << UnitTypeToName(p.first) << ": " << delta << endl;
-                }
-            }
-
-            cout << "---" << endl;
-
-            auto currentBO = buildOrderTracker.buildOrder;
-            auto buildOrder = findBestBuildOrderGenetic(buildOrderStartingState, targetUnits, &currentBO).first;
-            auto state2 = buildOrderStartingState;
-            state2.simulateBuildOrder(buildOrder);
-            watch.stop();
-            cout << "Time " << watch.millis() << endl;
-            BuildOrderTracker trackerTmp = tracker;
-            trackerTmp.setBuildOrder(buildOrder);
-            return make_tuple(buildOrder, buildOrderStartingState, state2.time, bestCounter.unitCounts, trackerTmp);
-        });
+        RecalculateBuildOrder();
     }
 
     if (!botDisabled) {
@@ -702,7 +539,10 @@ void Bot::OnStep() {
     currentBuildOrderIndex = boExTuple.first;
 
     // tree->Tick();
-    armyTree->Tick();
+    if (!botDisabled) {
+        armyTree->Tick();
+    }
+
     // researchTree->Tick();
     if ((ticks % 10) == 0) {
         TickMicro();
@@ -776,4 +616,208 @@ Point2D Bot::GetMapCoordinate(int i) {
 
 int Bot::ManhattanDistance(Point2D p1, Point2D p2) {
     return std::abs(p1.x - p2.x) + std::abs(p1.y - p2.y);
+}
+
+void printCounter(ArmyComposition counter) {
+    cout << "Best counter" << endl;
+    for (auto c : counter.unitCounts) {
+        cout << "\t" << UnitTypeToName(c.first) << " " << c.second << endl;
+    }
+    cout << "With upgrades:";
+    for (auto u : counter.upgrades) {
+        cout << " " << UpgradeIDToName(u);
+    }
+    cout << endl;
+}
+
+map<UNIT_TYPEID, int> calculateStartingUnitCounts(BuildState startingState) {
+    map<UNIT_TYPEID, int> startingUnitCounts;
+    for (const auto& u : startingState.units) {
+        startingUnitCounts[u.type] += u.units;
+    }
+    for (const auto& e : startingState.events) {
+        if (e.type == BuildEventType::FinishedUnit) {
+            auto createdUnit = abilityToUnit(e.ability);
+            if (createdUnit != UNIT_TYPEID::INVALID && !isAddon(createdUnit)) {
+                startingUnitCounts[createdUnit]++;
+            }
+        }
+    }
+
+    return startingUnitCounts;
+}
+
+// Note: always assumes player id 1=enemy, 2=player
+const CombatEnvironment* determineCurrentCombatEnvironment(const CombatPredictor& combatPredictor, CombatUpgrades upgrades, float time) {
+    auto* env = &combatPredictor.combineCombatEnvironment(&combatPredictor.defaultCombatEnvironment, upgrades, 2);
+    // TODO Use deduction manager to fill in what upgrades we think the enemy might reasonable have at this time?
+    CombatUpgrades enemyUpgrades;
+    if (time > 60*5) {
+        enemyUpgrades.add(UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1);
+        enemyUpgrades.add(UPGRADE_ID::ZERGMELEEWEAPONSLEVEL1);
+        enemyUpgrades.add(UPGRADE_ID::PROTOSSGROUNDWEAPONSLEVEL1);
+    }
+    if (time > 60*10) {
+        enemyUpgrades.add(UPGRADE_ID::TERRANINFANTRYARMORSLEVEL1);
+        enemyUpgrades.add(UPGRADE_ID::ZERGGROUNDARMORSLEVEL1);
+        enemyUpgrades.add(UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL1);
+    }
+    env = &combatPredictor.combineCombatEnvironment(env, enemyUpgrades, 1);
+    return env;
+}
+
+void ensureMinimumNumberOfUnitsInCounter(map<UNIT_TYPEID, int>& targetUnitsCount, int minimumUnitCount) {
+    for (auto& p : targetUnitsCount) {
+        minimumUnitCount -= p.second;
+    }
+
+    while(minimumUnitCount > 0) {
+        UNIT_TYPEID rndUnit;
+        int weight = 0;
+        for (auto& p : targetUnitsCount) {
+            if (p.second > 0 && isArmy(p.first)) {
+                weight += p.second;
+                if ((rand() % weight) <= p.second) rndUnit = p.first;
+            }
+        }
+
+        if (weight == 0) break;
+        targetUnitsCount[rndUnit] += 1;
+        minimumUnitCount--;
+    }
+}
+
+vector<pair<BuildOrderItem, int>> convertCounterToBuildTarget(const map<UNIT_TYPEID, int>& startingUnits, const ArmyComposition& bestCounter) {
+    map<UNIT_TYPEID, int> targetUnitsCount;
+
+    for (auto c : bestCounter.unitCounts) {
+        targetUnitsCount[c.first] += c.second * 1.0;
+    }
+
+    // Add some extra units until we are going to produce at least N units
+    const int MinAdditionalUnitsToProduce = 8;
+
+    ensureMinimumNumberOfUnitsInCounter(targetUnitsCount, MinAdditionalUnitsToProduce);
+
+    for (auto u : startingUnits) {
+        targetUnitsCount[u.first] += u.second;
+        // if (isArmy(u.first)) targetUnitsCount[u.first] += u.second;
+        // else targetUnitsCount[u.first] += u.second;
+    }
+
+
+    vector<pair<BuildOrderItem, int>> buildOrderTarget;
+    for (auto p : targetUnitsCount) buildOrderTarget.push_back({ BuildOrderItem(p.first), p.second });
+    for (auto u : bestCounter.upgrades) buildOrderTarget.push_back({ BuildOrderItem(u), 1 });
+    return buildOrderTarget;
+}
+
+void Bot::RecalculateBuildOrder() {
+
+    CombatState startingState;
+    for (auto u : deductionManager.ApproximateArmy(1.0f)) {
+        cout << "Expected enemy unit: " << UnitTypeToName(u.first) << " " << u.second << endl;
+        for (int i = 0; i < u.second; i++) startingState.units.push_back(makeUnit(1, u.first));
+    }
+
+    for (auto* unit : ourUnits()) {
+        if (isArmy(unit->unit_type)) {
+            startingState.units.push_back(makeUnit(2, unit->unit_type));
+        }
+    }
+
+    BuildState buildOrderStartingState(Observation(), Unit::Alliance::Self, Race::Protoss, BuildResources(Observation()->GetMinerals(), Observation()->GetVespene()), 0);
+    map<UNIT_TYPEID, int> startingUnitCounts = calculateStartingUnitCounts(buildOrderStartingState);
+
+    // buildOrderTracker needs to know about units that existed and were in progress when the build order was calculated
+    BuildOrderTracker tracker;
+    tracker.knownUnits = mAllOurUnits;
+    for (auto& e : buildOrderStartingState.events) {
+        if (e.type == BuildEventType::FinishedUnit) {
+            UNIT_TYPEID u = abilityToUnit(e.ability);
+            tracker.ignoreUnit(u, 1);
+        }
+    }
+
+    // Add our current upgrades to the build order state
+    startingState.environment = determineCurrentCombatEnvironment(combatPredictor, buildOrderStartingState.upgrades, ticksToSeconds(Observation()->GetGameLoop()));
+
+    currentBuildOrderFutureTick = ticks;
+    float currentTime = ticksToSeconds(Observation()->GetGameLoop());
+    currentBuildOrderFuture = std::async(std::launch::async, [=]{
+        // Make sure most buildings are built even though they are currently under construction.
+        // The buildTimePredictor cannot take buildings under construction into account.
+        cout << "Async..." << endl;
+
+        auto* buildTimePredictorPtr = &buildTimePredictor;
+#if DISABLE_PYTHON
+        buildTimePredictorPtr = nullptr;
+#endif
+
+        CompositionSearchSettings settings(combatPredictor, getAvailableUnitsForRace(Race::Protoss, UnitCategory::ArmyCompositionOptions), buildTimePredictorPtr);
+        settings.availableTime = 3 * 60;
+
+        auto futureState = buildOrderStartingState;
+        futureState.simulate(futureState.time + 40);
+        futureState.resources = buildOrderStartingState.resources;
+        auto bestCounter1 = findBestCompositionGenetic(startingState, settings, &futureState, nullptr);
+
+        vector<pair<BuildOrderItem, int>> targetUnits1 = convertCounterToBuildTarget(startingUnitCounts, bestCounter1);
+
+        auto currentBO = buildOrderTracker.buildOrder;
+        auto buildOrder1 = findBestBuildOrderGenetic(buildOrderStartingState, targetUnits1, &currentBO).first;
+
+        auto tmpStartingState = startingState;
+        remove_if(tmpStartingState.units.begin(), tmpStartingState.units.end(), [](auto& unit) { return unit.owner == 2; });
+
+        settings.availableTime = 4 * 60;
+        futureState = buildOrderStartingState;
+        futureState.simulateBuildOrder(buildOrder1, nullptr, false);
+        auto resources = futureState.resources;
+        futureState.simulate(futureState.time + 40);
+        futureState.resources = resources;
+        // TODO: Exclude current units here?
+        auto bestCounter2 = findBestCompositionGenetic(tmpStartingState, settings, &futureState, nullptr);
+
+        // Final counter
+        auto bestCounter = bestCounter1;
+        bestCounter.combine(bestCounter2);
+        
+        printCounter(bestCounter);
+
+        vector<pair<BuildOrderItem, int>> targetUnits = convertCounterToBuildTarget(startingUnitCounts, bestCounter);
+
+        /*if (currentTime < 4*60) {
+            targetUnits = {
+                { BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT), 4 },
+                { BuildOrderItem(UNIT_TYPEID::PROTOSS_ADEPT), 4 },
+                { BuildOrderItem(UNIT_TYPEID::PROTOSS_STALKER), 4 },
+                { BuildOrderItem(UNIT_TYPEID::PROTOSS_SENTRY), 1 },
+                { BuildOrderItem(UPGRADE_ID::WARPGATERESEARCH), 1 },
+            };
+        } else if (currentTime < 6*60) {
+            targetUnits = {
+                { BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT), 8 },
+                { BuildOrderItem(UNIT_TYPEID::PROTOSS_STALKER), 4 },
+                { BuildOrderItem(UNIT_TYPEID::PROTOSS_SENTRY), 2 },
+                { BuildOrderItem(UNIT_TYPEID::PROTOSS_IMMORTAL), 8 },
+                { BuildOrderItem(UPGRADE_ID::PROTOSSGROUNDARMORSLEVEL1), 1 },
+            };
+        } else {
+            targetUnits = {
+                { BuildOrderItem(UPGRADE_ID::EXTENDEDTHERMALLANCE), 1 },
+                { BuildOrderItem(UNIT_TYPEID::PROTOSS_ZEALOT), 2 },
+                { BuildOrderItem(UNIT_TYPEID::PROTOSS_COLOSSUS), 6 },
+                { BuildOrderItem(UNIT_TYPEID::PROTOSS_SENTRY), 2 },
+                { BuildOrderItem(UNIT_TYPEID::PROTOSS_IMMORTAL), 8 },
+            };
+        }*/
+
+        auto buildOrder = findBestBuildOrderGenetic(buildOrderStartingState, targetUnits, &currentBO).first;
+        auto state2 = buildOrderStartingState;
+        state2.simulateBuildOrder(buildOrder);
+        BuildOrderTracker trackerTmp = tracker;
+        trackerTmp.setBuildOrder(buildOrder);
+        return make_tuple(buildOrder, buildOrderStartingState, state2.time, bestCounter.unitCounts, trackerTmp);
+    });
 }
