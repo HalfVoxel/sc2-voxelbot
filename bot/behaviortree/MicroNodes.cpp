@@ -175,12 +175,12 @@ Status MicroSentry::OnTick() {
             }
         }
         for (auto other : bot->enemyUnits()) {
-            if (DistanceSquared2D(unit->pos, other->pos) < 8.0f*8.0f) {
+            if (DistanceSquared2D(unit->pos, other->pos) < 9.0f*9.0f) {
                 if (!isMelee(other->unit_type)) nearbyEnemyRangedDPS += env.calculateDPS(1, other->unit_type, false);
             }
         }
 
-        if (nearbyNotBuffed >= 3 && anyEngaged && nearbyEnemyRangedDPS > nearbyAllyDPS*0.2f) {
+        if (nearbyNotBuffed >= 2 && anyEngaged && nearbyEnemyRangedDPS > nearbyAllyDPS*0.2f) {
             lastGuardianShieldTick = agent->Observation()->GetGameLoop();
             agent->Actions()->UnitCommand(unit, ABILITY_ID::EFFECT_GUARDIANSHIELD);
         }
