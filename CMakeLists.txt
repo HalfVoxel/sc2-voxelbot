@@ -49,7 +49,8 @@ add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 # endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -O0 -fno-omit-frame-pointer -DDISABLE_PYTHON=1")
+    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -O0 -fno-omit-frame-pointer -DDISABLE_PYTHON=1 -fsanitize=address -DGLIBCXX_DEBUG")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wmissing-field-initializers -Wuninitialized -O0 -fno-omit-frame-pointer -DGLIBCXX_DEBUG")
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wextra -Wmissing-field-initializers -Wuninitialized -Wsometimes-uninitialized")
 endif()
@@ -125,6 +126,7 @@ create_executable(experiment_buildorder "" "bot/entrypoints/experiment_buildorde
 create_executable(experiment_buildorder_sim "" "bot/entrypoints/experiment_buildorder_sim.cpp" "SDL2-static")
 create_executable(debug_bo "" "bot/entrypoints/debug_bo.cpp" "SDL2-static")
 create_executable(debug_army_comp "" "bot/entrypoints/debug_army_comp.cpp" "SDL2-static")
+create_executable(experiment_compare_buildorder "" "bot/entrypoints/experiment_compare_buildorder.cpp" "SDL2-static")
 
 file (GLOB build_order_train_sources "s2client-api/examples/common/*.h" "bot/*.h" "bot/behaviortree/*.h" "bot/utilities/*.h" "bot/ml/*.h" "bot/generated/*.cpp" "bot/build_order_train/main.cpp")
 # pybind11_add_module(cppbot MODULE ${build_order_train_sources})
