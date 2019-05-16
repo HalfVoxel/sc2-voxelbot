@@ -270,9 +270,7 @@ pair<const Unit*, bool> findClosestWorker(const vector<UNIT_TYPEID> unitTypes, A
 }
 
 Status Construct::PlaceBuilding(UnitTypeID unitType, Point2D location, bool isExpansion = false) {
-    const ObservationInterface* observation = bot->Observation();
-
-    const UnitTypeData& unitTypeData = observation->GetUnitTypeData(false)[unitType];
+    const UnitTypeData& unitTypeData = getUnitData(unitType);
 
     auto ability = unitTypeData.ability_id;
 
@@ -543,7 +541,7 @@ Status BuildGas::OnTick() {
 
 BOT::Status Expand::OnTick() {
     const ObservationInterface* observation = bot->Observation();
-    auto abilityType = observation->GetUnitTypeData(false)[unitType].ability_id;
+    auto abilityType = getUnitData(unitType).ability_id;
 
     float minimum_distance = std::numeric_limits<float>::max();
     Point3D closest_expansion;
