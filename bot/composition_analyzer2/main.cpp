@@ -36,7 +36,6 @@ class CompositionAnalyzer2 : public sc2::Agent {
         BuildOptimizerNN buildTimePredictor;
         buildTimePredictor.init();
         predictor.init();
-        predictor.unitTest(buildTimePredictor);
         Debug()->DebugEnemyControl();
         Debug()->DebugShowMap();
         return;
@@ -138,7 +137,6 @@ int main(int argc, char* argv[]) {
         BuildOptimizerNN buildTimePredictor;
         buildTimePredictor.init();
         predictor.init();
-        predictor.unitTest(buildTimePredictor);
         exit(0);
     }
     

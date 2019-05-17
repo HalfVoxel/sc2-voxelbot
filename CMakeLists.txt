@@ -119,7 +119,7 @@ create_executable(optimizer_train "" "bot/optimizer_train/main.cpp" "SDL2-static
 create_executable(build_order_train "" "bot/build_order_train/main.cpp" "SDL2-static")
 create_executable(combat_predictor_train "" "bot/combat_predictor_train/main.cpp" "SDL2-static")
 create_executable(mcts_test "" "bot/entrypoints/mcts_test.cpp" "SDL2-static")
-create_executable(test_simulator "" "bot/entrypoints/test_simulator.cpp" "SDL2-static")
+# create_executable(test_simulator "" "bot/entrypoints/test_simulator.cpp" "SDL2-static")
 create_executable(mcts_cache_unit_tests "" "bot/entrypoints/mcts_cache_unit_tests.cpp" "SDL2-static")
 create_executable(view_replay "" "bot/entrypoints/view_replay.cpp" "SDL2-static")
 create_executable(experiment_combat "" "bot/entrypoints/experiment_combat.cpp" "SDL2-static")
