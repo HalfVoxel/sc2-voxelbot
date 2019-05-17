@@ -8,7 +8,6 @@
 #include <random>
 #include <iostream>
 #include <fstream>
-#include "../DependencyAnalyzer.h"
 #include <libvoxelbot/utilities/sc2_serialization.h>
 #include "sc2utils/sc2_manage_process.h"
 #include <pybind11/embed.h>
@@ -57,7 +56,7 @@ class Replay : public sc2::ReplayObserver {
     //     return false;
     // }
 
-    virtual bool IgnoreReplay(const ReplayInfo& replay_info, uint32_t& player_id) override {
+    virtual bool IgnoreReplay(const ReplayInfo& replay_info, uint32_t& /* player_id */) override {
         bool version_match = replay_info.base_build == Control()->Proto().GetBaseBuild() && replay_info.data_version == Control()->Proto().GetDataVersion();
         if (!version_match) {
             cerr << "Skipping replay because of version mismatch " << replay_info.base_build << " != " << Control()->Proto().GetBaseBuild() << " || " << replay_info.data_version << " != " << Control()->Proto().GetDataVersion() << endl;
@@ -73,7 +72,7 @@ class Replay : public sc2::ReplayObserver {
     void OnGameStart() final {
     }
 
-    void OnUnitCreated(const sc2::Unit* unit) final {
+    void OnUnitCreated(const sc2::Unit* /* unit */) final {
         return;
     }
 

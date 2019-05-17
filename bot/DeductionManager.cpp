@@ -1,6 +1,6 @@
 #include "DeductionManager.h"
 #include <sstream>
-#include "DependencyAnalyzer.h"
+#include <libvoxelbot/caching/dependency_analyzer.h>
 #include <libvoxelbot/utilities/mappings.h>
 #include <libvoxelbot/utilities/predicates.h>
 #include "Bot.h"

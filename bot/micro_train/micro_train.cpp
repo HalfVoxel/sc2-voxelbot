@@ -3,7 +3,6 @@
 #include <iostream>
 #include <queue>
 #include "../Bot.h"
-#include "../DependencyAnalyzer.h"
 #include <libvoxelbot/utilities/mappings.h>
 #include "sc2api/sc2_api.h"
 #include "sc2utils/sc2_manage_process.h"

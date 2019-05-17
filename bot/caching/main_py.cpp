@@ -4,7 +4,7 @@
 #include <queue>
 #include "../Bot.h"
 #include <libvoxelbot/utilities/predicates.h>
-#include "../DependencyAnalyzer.h"
+#include <libvoxelbot/caching/dependency_analyzer.h>
 #include <libvoxelbot/utilities/mappings.h>
 #include <libvoxelbot/utilities/unit_data_caching.h>
 #include "sc2api/sc2_api.h"

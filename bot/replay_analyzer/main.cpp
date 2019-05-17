@@ -8,7 +8,6 @@
 #include <random>
 #include <iostream>
 #include <fstream>
-#include "../DependencyAnalyzer.h"
 #include <libvoxelbot/utilities/sc2_serialization.h>
 #include "sc2utils/sc2_manage_process.h"
 #include <pybind11/embed.h>
@@ -57,7 +56,7 @@ class Replay : public sc2::ReplayObserver {
     //     return false;
     // }
 
-    virtual bool IgnoreReplay(const ReplayInfo& replay_info, uint32_t& player_id) override {
+    virtual bool IgnoreReplay(const ReplayInfo& replay_info, uint32_t& /* player_id */) override {
         bool version_match = replay_info.base_build == Control()->Proto().GetBaseBuild() && replay_info.data_version == Control()->Proto().GetDataVersion();
         if (!version_match) {
             cerr << "Skipping replay because of version mismatch " << replay_info.base_build << " != " << Control()->Proto().GetBaseBuild() << " || " << replay_info.data_version << " != " << Control()->Proto().GetDataVersion() << endl;
@@ -126,7 +125,7 @@ class Replay : public sc2::ReplayObserver {
 
     int stepIndex = 0;
     void OnStep() final {
-        assert(Observation()->GetPlayerID() == playerID);
+        assert((int)Observation()->GetPlayerID() == playerID);
 
         cout << "Step " << Observation()->GetGameLoop() << endl;
         // About every 10 seconds (faster game speed)
@@ -217,7 +216,7 @@ class Replay : public sc2::ReplayObserver {
     }
 };
 
-void saveSession (ReplaySession& session, default_random_engine& rnd) {
+void saveSession (ReplaySession& session) {
     stringstream json;
     {
         cereal::JSONOutputArchive archive(json);
@@ -266,8 +265,6 @@ int main(int argc, char* argv[]) {
     replay_observer2.playerID = 2;
     coordinator.AddReplayObserver(&replay_observer2);
 
-    default_random_engine rnd(time(0));
-
     coordinator.SetPortStart(mod.attr("getPort")().cast<int>());
 
     while (true) {
@@ -275,7 +272,7 @@ int main(int argc, char* argv[]) {
         if (replay_observer1.finished) {
             assert(replay_observer2.finished);
             auto session = ReplaySession(replay_observer1.session, replay_observer2.session);
-            saveSession(session, rnd);
+            saveSession(session);
             cout << "Saved session" << endl;
         }
 

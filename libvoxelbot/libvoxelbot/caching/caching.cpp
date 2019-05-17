@@ -1,8 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <queue>
-#include "../Bot.h"
-#include "../DependencyAnalyzer.h"
+#include <libvoxelbot/caching/dependency_analyzer.h>
 #include <libvoxelbot/utilities/mappings.h>
 #include <libvoxelbot/utilities/unit_data_caching.h>
 #include "sc2api/sc2_api.h"
@@ -277,7 +276,6 @@ int main(int argc, char* argv[]) {
     coordinator.SetMultithreaded(true);
 
     CachingBot bot;
-    agent = &bot;
     coordinator.SetParticipants({ CreateParticipant(Race::Terran, &bot) });
 
     // Start the game.

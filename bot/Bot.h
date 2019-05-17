@@ -10,7 +10,7 @@
 #include "InfluenceManager.h"
 #include "SpendingManager.h"
 #include "DeductionManager.h"
-#include "DependencyAnalyzer.h"
+#include <libvoxelbot/caching/dependency_analyzer.h>
 #include <libvoxelbot/buildorder/optimizer.h>
 #include <libvoxelbot/buildorder/build_time_estimator.h>
 #include <libvoxelbot/combat/simulator.h>

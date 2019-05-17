@@ -7,7 +7,6 @@
 #include <random>
 #include <iostream>
 #include <fstream>
-#include "../DependencyAnalyzer.h"
 #include "sc2utils/sc2_manage_process.h"
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
