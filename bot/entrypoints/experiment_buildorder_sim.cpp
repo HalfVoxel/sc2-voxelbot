@@ -151,7 +151,7 @@ class ExperimentBuildOrderAgent : public Bot {
         vector<pair<BuildOrderItem, int>> targetItems;
         for (auto p : targetUnitCounts) targetItems.push_back({ BuildOrderItem(p.first), p.second });
 
-        auto boTuple = findBestBuildOrderGenetic(startState, targetItems, nullptr, params);
+        auto boTuple = findBestBuildOrderGeneticWithFitness(startState, targetItems, nullptr, params);
 
         lastStartingState = startState;
         currentBuildOrder = boTuple.first;

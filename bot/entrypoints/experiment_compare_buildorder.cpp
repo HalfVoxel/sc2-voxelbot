@@ -353,7 +353,7 @@ int main() {
         for (auto iterations : its) {
             params.iterations = iterations;
             for (int i = 0; i < 0; i++) {
-                auto boTuple = findBestBuildOrderGenetic(startState, targetItemsFromBO(proBO), nullptr, params);
+                auto boTuple = findBestBuildOrderGeneticWithFitness(startState, targetItemsFromBO(proBO), nullptr, params);
                 // cout << mergeStrings(printBuildOrder(startState, proBO), printBuildOrder(startState, boTuple.first)) << endl;
 
                 // auto f1 = calculateFitness(startState, proBO);

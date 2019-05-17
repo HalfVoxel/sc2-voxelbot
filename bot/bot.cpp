@@ -100,7 +100,7 @@ void Bot::OnGameStart() {
 #endif
     scoutingManager = new ScoutingManager();
 
-    influenceManager.Init();
+    influenceManager.Init(&renderer);
 
     combatPredictor.init();
 
@@ -123,8 +123,8 @@ void DebugUnitPositions() {
 }
 
 void Bot::OnGameLoading() {
-    // InitializeRenderer("Starcraft II Bot", 50, 50, 256 * 3 + 20, 256 * 4 + 30);
-    Render();
+    renderer = MapRenderer("Starcraft II Bot", 50, 50, 256 * 3 + 20, 256 * 4 + 30);
+    renderer.present();
 }
 
 int ticks = 0;
@@ -568,6 +568,7 @@ void Bot::OnStep() {
     Debug()->SendDebug();
 
     Actions()->SendActions();
+    renderer.present();
 }
 
 void Bot::OnGameEnd() {
@@ -584,7 +585,7 @@ void Bot::OnGameEnd() {
         cout << "Defeat" << endl;
     }
     info.close();
-    Shutdown();
+    renderer.shutdown();
 }
 
 void Bot::OnUnitDestroyed(const Unit* unit) {
@@ -766,7 +767,7 @@ void Bot::RecalculateBuildOrder() {
         vector<pair<BuildOrderItem, int>> targetUnits1 = convertCounterToBuildTarget(startingUnitCounts, bestCounter1);
 
         auto currentBO = buildOrderTracker.buildOrder;
-        auto buildOrder1 = findBestBuildOrderGenetic(buildOrderStartingState, targetUnits1, &currentBO).first;
+        auto buildOrder1 = findBestBuildOrderGenetic(buildOrderStartingState, targetUnits1, &currentBO);
 
         auto tmpStartingState = startingState;
         remove_if(tmpStartingState.units.begin(), tmpStartingState.units.end(), [](auto& unit) { return unit.owner == 2; });
@@ -814,7 +815,7 @@ void Bot::RecalculateBuildOrder() {
             };
         }*/
 
-        auto buildOrder = findBestBuildOrderGenetic(buildOrderStartingState, targetUnits, &currentBO).first;
+        auto buildOrder = findBestBuildOrderGenetic(buildOrderStartingState, targetUnits, &currentBO);
         auto state2 = buildOrderStartingState;
         state2.simulateBuildOrder(buildOrder);
         BuildOrderTracker trackerTmp = tracker;

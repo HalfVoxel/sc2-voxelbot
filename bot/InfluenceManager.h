@@ -1,5 +1,6 @@
 #pragma once
 #include <libvoxelbot/utilities/influence.h>
+#include <libvoxelbot/utilities/renderer.h>
 
 struct InfluenceManager {
 	InfluenceMap pathing_grid;
@@ -12,7 +13,8 @@ struct InfluenceManager {
 	InfluenceMap scanningMap;
 	InfluenceMap safeBuildingMap;
 	InfluenceMap lastSeenMap;
+	MapRenderer* renderer = nullptr;
 
-	void Init();
+	void Init(MapRenderer* renderer);
 	void OnStep();
 };

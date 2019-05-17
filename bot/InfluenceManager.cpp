@@ -10,7 +10,9 @@ using namespace sc2;
 
 InfluenceMap distanceCache;
 
-void InfluenceManager::Init() {
+void InfluenceManager::Init(MapRenderer* renderer) {
+    this->renderer = renderer;
+
     // 1 at traversable cells, 0 at walls
     pathing_grid = InfluenceMap(bot->game_info_.pathing_grid);
 
@@ -148,7 +150,7 @@ void InfluenceManager::OnStep() {
             g.propagateMax(0.0, 0.7, g2);
             g.propagateMax(0.0, 0.7, g2);
             g.propagateMax(0.0, 0.7, g2);
-            g.render(1, 2);
+            renderer->renderInfluenceMap(g, 1, 2);
 
             g *= -1;
             g += 1;
@@ -166,16 +168,15 @@ void InfluenceManager::OnStep() {
         // Coordinates in a tile layout with 0,0 being the top-left corner of the debugging window.
         auto d2 = distanceCache;
         d2 *= 1.0 / d2.maxFinite();
-        d2.renderNormalized(0, 0);
+
+        renderer->renderInfluenceMapNormalized(d2, 0, 0);
         // enemyDensity.render(0, 1);
         // valueMap.renderNormalized(0, 2);
-        scoutingMap.render(1, 1);
+        renderer->renderInfluenceMap(scoutingMap, 1, 1);
         // flood.render(1, 1);
         // scanningMap.render(1, 1);
-        placement_grid.render(0, 1);
-        safeBuildingMap.renderNormalized(0, 2);
-        visibilityMap.render(1, 0);
-
-        Render();
+        renderer->renderInfluenceMap(placement_grid, 0, 1);
+        renderer->renderInfluenceMapNormalized(safeBuildingMap, 0, 2);
+        renderer->renderInfluenceMap(visibilityMap, 1, 0);
     }
 }

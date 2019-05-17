@@ -238,7 +238,7 @@ int main() {
         cout << "Mineral score (fixed): " << combatPredictor.mineralScoreFixedTime(tmpCombatState, combatPredictor.predict_engage(tmpCombatState, {}), 2, timesToProduceUnits[0], {}) << endl;
         logRecordings(tmpCombatState, combatPredictor, 0, "debug_army_comp");
 
-        auto buildOrder = findBestBuildOrderGenetic(tmpState, targetUnits, nullptr).first;
+        auto buildOrder = findBestBuildOrderGenetic(tmpState, targetUnits, nullptr);
         cout << printBuildOrder(tmpState, buildOrder) << endl;
 
         tmpState.simulateBuildOrder(buildOrder, nullptr, false);
@@ -262,7 +262,7 @@ int main() {
             targetUnits.push_back({BuildOrderItem((UNIT_TYPEID)p.first), p.second});
         }
 
-        auto buildOrder = findBestBuildOrderGenetic(startState, targetUnits, nullptr).first;
+        auto buildOrder = findBestBuildOrderGenetic(startState, targetUnits, nullptr);
         // startState.simulateBuildOrder(buildOrder, nullptr, false);
         cout << printBuildOrder(startState, buildOrder) << endl;
     }

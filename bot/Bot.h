@@ -90,6 +90,7 @@ public:
     std::string resultSavePath = "";
     std::vector<ConstructionPreparationMovement> constructionPreparation;
 
+    MapRenderer renderer;
     LargeObservationChangeObserver observationChangeCheck;
     SpendingManager spendingManager;
     CameraController cameraController;

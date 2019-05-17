@@ -571,7 +571,7 @@ int main() {
         for (int k = 0; k < 3; k++) {
             BuildOrder buildOrder;
             BuildOrderFitness fitness;
-            tie(buildOrder, fitness) = findBestBuildOrderGenetic(startState, targetUnitState);
+            tie(buildOrder, fitness) = findBestBuildOrderGeneticWithFitness(startState, targetUnitState);
             auto state2 = startState;
             state2.simulateBuildOrder(buildOrder);
             cout << state2.time << endl;

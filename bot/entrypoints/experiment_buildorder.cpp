@@ -161,7 +161,7 @@ int main() {
 
             BuildOrderFitness fitness;
             vector<UNIT_TYPEID> buildOrder;
-            tie(buildOrder, fitness) = findBestBuildOrderGenetic(startState, targetUnits, nullptr, params);
+            tie(buildOrder, fitness) = findBestBuildOrderGeneticWithFitness(startState, targetUnits, nullptr, params);
 
             auto state2 = startState;
             state2.simulateBuildOrder(buildOrder, nullptr, true);
@@ -181,7 +181,7 @@ int main() {
 
             BuildOrderFitness fitness;
             vector<UNIT_TYPEID> buildOrder;
-            tie(buildOrder, fitness) = findBestBuildOrderGenetic(startState, targetUnits, nullptr, params);
+            tie(buildOrder, fitness) = findBestBuildOrderGeneticWithFitness(startState, targetUnits, nullptr, params);
 
             auto state2 = startState;
             state2.simulateBuildOrder(buildOrder, nullptr, true);
@@ -204,7 +204,7 @@ int main() {
 
             BuildOrderFitness fitness;
             BuildOrder buildOrder;
-            tie(buildOrder, fitness) = findBestBuildOrderGenetic(startState, targetUnits2, nullptr, params);
+            tie(buildOrder, fitness) = findBestBuildOrderGeneticWithFitness(startState, targetUnits2, nullptr, params);
 
             auto state2 = startState;
             state2.simulateBuildOrder(buildOrder, nullptr, true);
