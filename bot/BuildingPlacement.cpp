@@ -26,7 +26,7 @@ void BuildingPlacement::FindWallPlacements(Point3D startLocation_) {
     size_t size = game_info_.placement_grid.data.size();
     vector<int> diff(size);
 
-    for (int i = 0; i < size; ++i) {
+    for (size_t i = 0; i < size; ++i) {
         if (game_info_.placement_grid.data[i] == 0 && game_info_.pathing_grid.data[i] == 0) {
             diff[i] = 1;
             Point2D p = bot->GetMapCoordinate(i);
@@ -37,9 +37,9 @@ void BuildingPlacement::FindWallPlacements(Point3D startLocation_) {
     int mapHeuristic = game_info_.height;
     int start_index = bot->GetPositionIndex(startLocation_.x, startLocation_.y);
     Point2D start2D = Point2D(startLocation_.x, startLocation_.y);
-    for (int i = 0; i < size; ++i) {
+    for (size_t i = 0; i < size; ++i) {
         if (diff[i] == 1) {
-            for (int j = 0; j < size; ++j) {
+            for (size_t j = 0; j < size; ++j) {
                 Point2D p = bot->GetMapCoordinate(j);
                 if (Distance2D(bot->GetMapCoordinate(i), p) <= 2 && game_info_.pathing_grid.data[j] == 0 && diff[j] == 0) {
                     if (abs(game_info_.terrain_height.data[j] - game_info_.terrain_height.data[start_index]) < 2 && Distance2D(p, start2D) < mapHeuristic / 4) {  //Height filter messes up on some maps:
@@ -52,7 +52,7 @@ void BuildingPlacement::FindWallPlacements(Point3D startLocation_) {
     }
 
     auto& supplyDepotPositions = locationQueues[UNIT_TYPEID::TERRAN_SUPPLYDEPOT];
-    for (int i = 0; i < size; ++i) {
+    for (size_t i = 0; i < size; ++i) {
         if (diff[i] == 2) {
             Point2D p = bot->GetMapCoordinate(i);
             if (diff[bot->GetPositionIndex(p.x - 1, p.y)] == 2 && diff[bot->GetPositionIndex(p.x - 1, p.y + 1)] == 2 && diff[bot->GetPositionIndex(p.x, p.y + 1)] == 2) {
@@ -141,7 +141,7 @@ Point2D BuildingPlacement::GetReasonablePlacement(sc2::UnitTypeID unitType, sc2:
             ry = random01(rnd);
 
             auto p = Point2D(randomUnit->pos.x + rx * 15.0f, randomUnit->pos.y + ry * 15.0f);
-            if (!isWarping && i < lastKnownGoodPlacements.size()) p = lastKnownGoodPlacements[i];
+            if (!isWarping && i < (int)lastKnownGoodPlacements.size()) p = lastKnownGoodPlacements[i];
 
             double score = bot->influenceManager.safeBuildingMap(p);
 
